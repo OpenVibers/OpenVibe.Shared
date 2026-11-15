@@ -508,7 +508,10 @@ const created = (subject, over = {}) => ({
     // 28.2 KB (4.248.0, 2026-11-14): the ⋯ menu instead of the X, the buttons a notice brings (rich_content.actions), the
     // social-feed rows (the owner: "no spacing … confusing to have an X … more like social media").
     // 28.7 KB (4.249.0): the Unread toggle that says what it does and one-field search (the owner, 11-14).
-    assert.ok(size('notification-ui.js') <= 29.8 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 29.8 KB`);
+    // 31 KB (4.260.0, 2026-11-15): icons on the tabs, the slim bar pinned under them (Clear all, Inbox) instead of the foot,
+    // pages that load themselves as the end comes near, lighter rows and capped chips (the owner: "more minimalist … more
+    // icons … make those fixed on top … auto-load more as you scroll"; 30.52 KB measured).
+    assert.ok(size('notification-ui.js') <= 31 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 31 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

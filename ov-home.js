@@ -964,6 +964,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
                 more.hidden = shown >= items.length;
             };
             more.addEventListener('click', () => { shown += 12; draw(); icons(); });
+            autoPress(more);
             draw();
             const head = sec('Where you were', 'history');
             const full = h('a', 'ovh-link', 'Full history'); full.href = 'https://openvibe.my/history'; head.append(full);
@@ -1651,6 +1652,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         };
         o.pulseReady.then((j) => { if (el.isConnected) draw(j, false); });
         more.addEventListener('click', async () => { more.disabled = true; const j = await loadPulse(o, next); more.disabled = false; if (j) draw(j, true); });
+        autoPress(more);
     }
 
 
@@ -1803,6 +1805,22 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         return null;
     }
     const ACTS = new Set(['member', 'chat', 'event', 'quest', 'wiki', 'stream', 'update']);
+    /** A "Show more" that presses itself as it comes within a screen of view (4.260.0; the owner, 11-15: "auto-load more
+     *  as you scroll down … lazy load … in an optimized async way"). One page at a time: it waits while the button is
+     *  disabled (a page loading) or hidden (nothing more), and looks again when that changes. The button stays for a
+     *  keyboard and for a browser without IntersectionObserver. */
+    function autoPress(btn) {
+        if (!btn || typeof IntersectionObserver !== 'function') return;
+        btn.classList.add('is-auto');
+        const look = () => { io.unobserve(btn); io.observe(btn); };
+        const io = new IntersectionObserver((es) => {
+            if (!es.some((e) => e.isIntersecting) || btn.hidden || btn.disabled || !btn.isConnected) return;
+            btn.click();
+            setTimeout(() => { if (btn.isConnected && !btn.disabled && !btn.hidden) look(); }, 250);
+        }, { rootMargin: '0px 0px 700px 0px' });
+        io.observe(btn);
+        if (typeof MutationObserver === 'function') new MutationObserver(() => { if (!btn.disabled && !btn.hidden) look(); }).observe(btn, { attributes: true, attributeFilter: ['disabled', 'hidden'] });
+    }
     /** The cards a person actually saw, counted as views (4.250.0; the owner, 11-14: "add view count to this feed and
      *  everything in the feed … so you can see analytics … like Twitter does"). A card at least half on screen for a
      *  second is seen, once per page; the ids go to the Network in batches of up to 20 (a beacon, so leaving the page

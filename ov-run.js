@@ -446,7 +446,7 @@
                 try {
                     // The composer notes a failed send itself and keeps the words.
                     root.OpenVibeComposer.mount(slot, { preset: 'agent', placeholder, label: placeholder, examples: o.examples, user: o.me, noDraft: true,
-                        onSubmit: (v) => onSend({ text: v.text, files: v.files, mode: v.mode }) });
+                        onSubmit: (v) => onSend({ text: v.text, files: v.files, mode: v.mode, run: v.run }) });
                 } catch { slot.textContent = ''; plain(); }
             };
             if (C && C.mount) real();
@@ -459,11 +459,13 @@
         }
 
         /** A new run with these words (Vibe answers, or hands the work on), then its thread. */
-        async function start(text, files) {
+        async function start(text, files, choice) {
+            // The composer's choice (4.260.0): who does it, on what model, where (agents.run-start@1); Auto sends none.
+            const how = choice && typeof choice === 'object' ? { ...(choice.agent && choice.agent !== 'auto' ? { agent: choice.agent } : {}), ...(choice.model ? { model: choice.model } : {}), ...(choice.where ? { where: choice.where } : {}) } : {};
             const words = String(text || '').slice(0, 16000);
             const gen0 = pending(words, files);
             let run;
-            try { const attachments = files && files.length ? await uploadFiles(files) : []; run = await api('', { method: 'POST', headers: { 'Idempotency-Key': `ovr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}` }, body: JSON.stringify({ ...(o.start || {}), ...(attachments.length ? { attachments } : {}), text: words }) }); }
+            try { const attachments = files && files.length ? await uploadFiles(files) : []; run = await api('', { method: 'POST', headers: { 'Idempotency-Key': `ovr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}` }, body: JSON.stringify({ ...(o.start || {}), ...how, ...(attachments.length ? { attachments } : {}), text: words }) }); }
             catch (err) {
                 // It did not start: back to the list, the words back in the box, and why, in plain words.
                 if (gen0 !== state.gen) return null;
@@ -615,7 +617,7 @@
                     });
                     box.append(st);
                 }
-                composer(box, { placeholder: o.placeholder || (o.agent ? `Message ${agentName()}` : 'Ask, or say what to make'), onSend: (v) => (typeof o.onStart === 'function' ? o.onStart(v.text, v.files) : start(v.text, v.files)) });
+                composer(box, { placeholder: o.placeholder || (o.agent ? `Message ${agentName()}` : 'Ask, or say what to make'), onSend: (v) => (typeof o.onStart === 'function' ? o.onStart(v.text, v.files, v.run) : start(v.text, v.files, v.run)) });
             }
             place({ filter: state.filter });
             box.querySelectorAll('.ovr-filter').forEach((b) => { const on = b.dataset.filter === state.filter; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
@@ -732,7 +734,8 @@
             place({ ref });
             box.textContent = ''; box.className = `ovr is-thread${how.home ? ' is-home' : ''}`;
             const head = el('div', 'ovr-thead');
-            const back = el('button', 'ovr-ib'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your runs'); back.title = 'Your runs'; back.append(svg('back'));
+            // 4.260.0 (the owner, 11-15: "make the back button easier to see"): a pill with its word, in the accent.
+            const back = el('button', 'ovr-ib ovr-back'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your runs'); back.title = 'Your runs'; back.append(svg('back'), el('span', '', 'Back'));
             back.addEventListener('click', () => { if (typeof o.onBack === 'function') o.onBack(); else list(); });
             const who = el('div', 'ovr-who'); const title = el('b'); const sub = el('small');
             who.append(title, sub);
@@ -954,7 +957,7 @@
                 });
                 box.append(st);
             }
-            composer(box, { placeholder: o.placeholder || `Message ${agentName()}`, onSend: (v) => start(v.text, v.files) });
+            composer(box, { placeholder: o.placeholder || `Message ${agentName()}`, onSend: (v) => start(v.text, v.files, v.run) });
             if (o.agent && !own) loadAgent().then(() => { if (state.view !== 'blank' || !faceSlot.isConnected) return; faceSlot.textContent = ''; faceSlot.append(agentFace('xl')); name.textContent = agentName(); });
         }
         const view = { list, open, start, blank, prefill, destroy() { clearStream(); dropTop(); dropPane(); state.gen++; host.textContent = ''; }, get state() { return { view: state.view, run: state.run, filter: state.filter }; } };
@@ -1124,6 +1127,10 @@ a.ovr-row { color: inherit; text-decoration: none; }
 .ovr-thead { flex: none; display: flex; align-items: center; gap: 10px; padding: 4px 4px 10px; border-bottom: 1px solid var(--border, rgba(255,255,255,.07)); }
 .ovr-ib { all: unset; box-sizing: border-box; flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); transition: background-color .15s, transform .12s; }
 .ovr-ib[hidden] { display: none; } .ovr-ib:active { transform: scale(.92); }
+.ovr-ib.ovr-back { width: auto; display: inline-flex; align-items: center; gap: 2px; padding: 0 14px 0 6px; border-radius: 999px; font-size: 14px; font-weight: 750;
+    color: var(--accent-light, var(--accent, #93c5fd)); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 28%, transparent); }
+.ovr-ib.ovr-back svg { width: 22px; height: 22px; }
+@media (hover: hover) { .ovr-ib.ovr-back:hover { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); } }
 @media (hover: hover) { .ovr-ib:hover { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 13%, transparent); } }
 .ovr-who { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .ovr-who b { font-family: 'OV Brand', Nunito, Inter, sans-serif; font-size: 15.5px; font-weight: 800; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

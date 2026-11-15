@@ -41,7 +41,7 @@ window.chatSent = []; window.saved = [];
 window.chat = C.mount(document.getElementById('b'), { preset: 'chat', id: 'c1', onSubmit: async (v) => { window.chatSent.push({ text: v.text, reply: v.reply }); return true; } });
 window.agent = C.mount(document.getElementById('c'), { preset: 'agent', id: 'g1', mode: { name: 'mode', label: 'Mode', options: [['balanced', 'Balanced'], ['best', 'Best']], value: 'balanced' },
     chips: [{ name: 'effort', label: 'Reasoning', icon: 'gauge', options: [['medium', 'Medium'], ['high', 'High']], value: 'high' }],
-    onSubmit: async (v) => { window.got.push({ mode: v.mode, effort: v.chips.effort }); } });
+    onSubmit: async (v) => { window.got.push({ mode: v.mode, effort: v.chips.effort }); window.runs = (window.runs || []).concat([v.run]); } });
 window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r1', user: { display_name: 'Maticus', avatar_url: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=' }, onSubmit: async () => true });
 </script>`);
 });
@@ -64,14 +64,24 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
             // 4.241.0: what the + shows as a tile (camera, photos, files; attach) is not a button in the row too.
             tools: [...f.querySelectorAll('.ovt-c-tools .ovt-btn:not([hidden])')].map((b) => b.getAttribute('aria-label')).filter((l) => l !== 'Speak' && l !== 'Add: camera, photos, files and more'),
             kept: f.querySelectorAll('.ovt-c-tools input[type=file]').length,
-            avatar: !!f.querySelector('.ovc-head .ovc-av'), full: Math.abs(f.querySelector('textarea').getBoundingClientRect().left - f.querySelector('.ovc-body').getBoundingClientRect().left) < 4, round: f.querySelector('[data-ovt-send]').classList.contains('ovt-send--round'),
-            send: f.querySelector('[data-ovt-send]').textContent.trim(), chips: [...f.querySelectorAll('.ovc-chip-v')].map((c) => c.textContent) })))()`);
+            avatar: !!f.querySelector('.ovc-head .ovc-av'), full: Math.abs(f.querySelector('textarea').getBoundingClientRect().left - f.querySelector('.ovc-body').getBoundingClientRect().left) < 4,
+            line: (() => { const t = f.querySelector('textarea').getBoundingClientRect(), tools = f.querySelector('.ovt-c-tools').getBoundingClientRect(), send = f.querySelector('[data-ovt-send]').getBoundingClientRect();
+                return t.left >= tools.right - 1 && t.right <= send.left + 1 && Math.abs(t.bottom - send.bottom) < 6 && getComputedStyle(f.querySelector('.ovt-c-row')).display === 'contents' && t.height < 56; })(),
+            run: [...f.querySelectorAll('.ovc-run .ovc-chip-v')].map((c) => c.textContent), round: f.querySelector('[data-ovt-send]').classList.contains('ovt-send--round'),
+            send: f.querySelector('[data-ovt-send]').textContent.trim(), chips: [...f.querySelectorAll('.ovc-chips .ovc-chip-v')].map((c) => c.textContent) })))()`);
         assert.deepEqual(shape.map((s) => s.preset), ['post', 'chat', 'agent', 'comment']);
         assert.ok(shape.every((s) => s.lead[s.lead.length - 1] === 'Add: camera, photos, files and more' && (s.lead.length === 1 || s.lead[0] === 'Speak')), `the mic, then the +, lead every row (${JSON.stringify(shape.map((s) => s.lead))})`);
         assert.deepEqual(shape[0].tools.slice(0, 2), ['Emoji', 'Poll'], 'a post: emoji and the site\'s own tool in the row; photos and files in the +');
         assert.ok(shape.every((x) => x.preset === 'agent' || x.kept > 0), 'the file inputs stay in the form, so files still go with it');
         assert.ok(shape[0].avatar && shape[0].send === 'Post' && !shape[0].round);
-        assert.ok(shape.every((x) => x.full), 'the words use the full width: no column kept for the picture');
+        // 4.260.0 (the owner, 11-15: the buttons "fixed on top of the composer so you can type through it"): a post and a
+        // reply keep the words over their row at the full width; a chat's and an agent's words share one line with the
+        // tools and the send, no row and no divider of their own.
+        assert.ok(shape.filter((x) => x.preset === 'post' || x.preset === 'comment').every((x) => x.full), 'a post\'s words use the full width: no column kept for the picture');
+        assert.ok(shape.filter((x) => x.preset === 'chat' || x.preset === 'agent').every((x) => x.line), `a chat's and an agent's words are on the tools' line (${JSON.stringify(shape.map((x) => [x.preset, x.line]))})`);
+        // An agent's box says how it runs: who, on what model, where (agents.run-start@1), unpicked as words.
+        assert.deepEqual(shape[2].run, ['Any agent', 'Auto model', 'Anywhere'], 'an agent: its agent, model and place chips');
+        assert.deepEqual(shape.filter((x) => x.preset !== 'agent').map((x) => x.run.length), [0, 0, 0], 'only an agent\'s box has them');
         assert.deepEqual(shape[0].chips, ['Everyone']);
         assert.deepEqual(shape[1].tools.slice(0, 1), ['Emoji'], 'a chat: emoji in the row; attaching is the +\'s');
         assert.ok(shape[1].round && !shape[1].avatar, 'a chat: a round send, no picture');
@@ -120,6 +130,21 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         assert.equal(await page.evaluate(`window.got.length`), 3, 'and sends nothing');
         await page.evaluate(`agent.setRunning(false)`);
         assert.equal(await page.evaluate(`document.querySelector('#g1 [data-ovt-send]').getAttribute('aria-label')`), 'Send');
+        // 4.260.0: the run's choice goes with the send: nothing picked is Auto, and a pick (from the Agent and Runs on
+        // sheets) is the agent and the place agents.run-start@1 takes, kept for the next box.
+        assert.deepEqual(await page.evaluate(`window.runs[0]`), { agent: 'auto' }, 'unpicked: Auto, no model and no place');
+        await page.evaluate(`document.querySelector('#g1 .ovc-run-c[data-what="Agent"]').click(), true`);
+        for (let i = 0; i < 40 && !(await page.evaluate(`!!document.querySelector('dialog.ovc-sheet .ovc-model-b')`)); i++) await new Promise((r) => setTimeout(r, 50));
+        await page.evaluate(`[...document.querySelectorAll('dialog.ovc-sheet .ovc-model-b')].find((b) => b.querySelector('.ovc-model-t b').textContent === 'Codes').click(), true`);
+        await page.evaluate(`document.querySelector('#g1 .ovc-run-c[data-what="Runs on"]').click(), true`);
+        for (let i = 0; i < 40 && !(await page.evaluate(`!!document.querySelector('dialog.ovc-sheet .ovc-model-b')`)); i++) await new Promise((r) => setTimeout(r, 50));
+        await page.evaluate(`[...document.querySelectorAll('dialog.ovc-sheet .ovc-model-b')].find((b) => b.querySelector('.ovc-model-t b').textContent === 'OpenVibe').click(), true`);
+        assert.deepEqual(await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-run .ovc-chip-v')].map((c) => c.textContent)`), ['Codes', 'Auto model', 'OpenVibe'], 'the chips say what was picked');
+        await page.evaluate(`(() => { const t = agent.text; t.value = 'fix the overlay'; t.dispatchEvent(new Event('input', { bubbles: true })); document.querySelector('#g1 [data-ovt-send]').click(); })()`);
+        for (let i = 0; i < 40 && (await page.evaluate(`window.runs.length`)) < 2; i++) await new Promise((r) => setTimeout(r, 50));
+        assert.deepEqual(await page.evaluate(`window.runs[1]`), { agent: 'codes', where: { kind: 'openvibe', name: 'OpenVibe' } }, 'Codes, on OpenVibe');
+        assert.deepEqual(await page.evaluate(`JSON.parse(localStorage.getItem('ov:composer:run'))`), { agent: 'codes', where: 'openvibe' }, 'kept for the next box');
+        await page.evaluate(`localStorage.removeItem('ov:composer:run'), true`);
 
         // Editing your message in the box (openvibe.design rule 138): a bar says so, the send is Save, Enter saves
         // through onSave (not onSubmit), Esc puts back what was in the box.
@@ -128,8 +153,10 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         assert.deepEqual(ed, { bar: 'Editing your message', text: 'Yo', send: 'Save', editing: true, first: 'ovc-bar' });
         // In the one-line chat box the bar is a line of its own: the words keep the box's width under it.
         const lay = await page.evaluate(`(() => { const f = document.getElementById('c1'), b = f.querySelector('.ovc-bar').getBoundingClientRect(), t = f.querySelector('textarea').getBoundingClientRect(), body = f.querySelector('.ovc-body').getBoundingClientRect();
-            return { barFull: Math.abs(b.width - body.width) < 2, below: t.top >= b.bottom - 1, left: Math.abs(t.left - body.left) < 4 }; })()`);
-        assert.deepEqual(lay, { barFull: true, below: true, left: true }, 'the editing bar spans the chat box and the words sit under it');
+            const tools = f.querySelector('.ovt-c-tools').getBoundingClientRect();
+            return { barFull: Math.abs(b.width - body.width) < 2, below: t.top >= b.bottom - 1, line: t.left >= tools.right - 1 }; })()`);
+        // 4.260.0: the words are on the tools' line under it (the one-line chat box).
+        assert.deepEqual(lay, { barFull: true, below: true, line: true }, 'the editing bar spans the chat box and the words sit under it, on the tools\' line');
         await page.evaluate(`(() => { const t = chat.text; t.value += ' there'; t.dispatchEvent(new Event('input', { bubbles: true })); })()`);
         await page.evaluate(`document.querySelector('#c1 [data-ovt-send]').click()`);
         await until(`window.saved.length === 1`);

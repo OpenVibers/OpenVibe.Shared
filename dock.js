@@ -205,6 +205,11 @@
             .ovdk-thread-h b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14.5px; }
             .ovdk-back { width: 40px; height: 40px; flex: none; border: 0; border-radius: 12px; background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; display: grid; place-items: center; }
             .ovdk-back:hover { background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); color: var(--text-primary, #ececf1); }
+            .ovdk-back.is-pill { width: auto; display: inline-flex; align-items: center; gap: 2px; padding: 0 14px 0 6px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 750;
+                color: var(--accent-light, var(--accent, #93c5fd)); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 28%, transparent); }
+            .ovdk-back.is-pill:hover { color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); }
+            .ovdk-back.is-pill svg { width: 22px; height: 22px; }
+            .ovdk-back.is-pill:active { transform: scale(.95); }
             .ovdk-msgs { list-style: none; margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 3px; }
             .ovdk-msg { display: grid; justify-items: start; max-width: 84%; margin-top: 8px; }
             .ovdk-msg.is-cont { margin-top: 2px; }
@@ -685,7 +690,8 @@
         const conv = (chats.list || []).find((c) => String(c.id) === chats.open);
         panel.textContent = '';
         const head = h('div', 'ovdk-thread-h');
-        const back = h('button', 'ovdk-back'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your chats'); back.append(icon(G.back));
+        // 4.260.0 (the owner, 11-15: "make the back button easier to see"): a pill with its word, in the accent.
+        const back = h('button', 'ovdk-back is-pill'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your chats'); back.append(icon(G.back), h('span', '', 'Chats'));
         back.addEventListener('click', () => { save({ chat: null }); chatList(); });
         // §Z.3: the title's names wear their effect, hat and badge (each person's name in a span of its own).
         const title = titleInto(h('b', ''), conv);

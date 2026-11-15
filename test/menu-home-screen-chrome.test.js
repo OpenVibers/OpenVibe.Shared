@@ -207,9 +207,10 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(wall.entries[0], 'Went live recently');
         assert.ok(wall.entries.includes('<img src=x onerror="window.pwned=1"> a post') && wall.imgs === 0 && !wall.pwned, 'what people wrote is text');
         assert.strictEqual(wall.compose, false, 'signed out: no composer');
-        assert.ok(wall.more, 'Show more when there is more');
-        await p.evaluate(`document.querySelector('[data-sec="wall"] .ovh-all').click(), true`);
-        assert.ok(await until(p, `[...document.querySelectorAll('.ovh-wall .ovh-entry-txt b')].some((b) => b.textContent === 'An older post')`), 'Show more adds the next page');
+        // 4.260.0 (the owner, 11-15: "auto-load more as you scroll down"): Show more presses itself as it comes near, so
+        // the next page arrives with no tap; the button is still there for a keyboard.
+        assert.ok(await p.evaluate(`!!document.querySelector('[data-sec="wall"] .ovh-all.is-auto')`), 'Show more is there, and presses itself');
+        assert.ok(await until(p, `[...document.querySelectorAll('.ovh-wall .ovh-entry-txt b')].some((b) => b.textContent === 'An older post')`), 'the next page comes by itself');
         const news = await p.evaluate(`({ head: ([...document.querySelectorAll('.ovs-group')].find((g) => /What's new/.test(g.textContent)) || {}).textContent || '',
             rows: [...document.querySelectorAll('.ovs-item[data-sec="news"]')].map((r) => [r.querySelector('.ovs-title').firstChild.textContent, (r.querySelector('.ovs-meta') || {}).textContent, (r.querySelector('.ovs-snip') || {}).textContent]) })`);
         assert.match(news.head, /What's new \(2 today\)/, 'the recently updated stay on the Feed, counted (library bumps left out)');
