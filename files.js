@@ -58,6 +58,7 @@ const BROWSER = Object.freeze([
     'messages.js',          // Chat's two views: room lines and texting bubbles (openvibe-shared/messages)
     'ov-thread.js',         // one conversation UI (L55 C4): the drawer, search, composer, copy, streaming turns; markup from openvibe-shared/thread, drawn with thread.css
     'ov-composer.js',       // shared composer
+    'ov-picker.js',         // 4.264.0: OpenVibePicker, the animated picker for every choice (the composer loads it)
     'ov-run.js',            // 4.224.0: the one run thread (OpenVibeRun), loaded beside the navbar
     'ov-harness.js',        // 4.257.0: the coding-harness layout over ov-run.js (projects, threads, changes): openvibe.codes
     'ov-metrics.js',        // 4.232.0: the one way to show numbers (tiles, sparklines, bars, percentiles, splits, tables)
