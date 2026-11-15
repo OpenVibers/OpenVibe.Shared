@@ -25,6 +25,8 @@ const server = http.createServer((req, res) => {
     if (u.pathname === '/api/notifications/unread-by-tab') return json({ tabs: { all: 95, mentions: 12, system: 40, live: 0 } });
     if (u.pathname === '/api/notifications') {
         const offset = Number(u.searchParams.get('offset')) || 0, limit = Number(u.searchParams.get('limit')) || 30;
+        // The earlier ones (read, 4.274.0): none here, every notice is unread.
+        if (u.searchParams.get('read_only') === '1') return json({ notifications: [], total: 0, has_more: false });
         asked.push(offset); queries.push(u.search);
         return setTimeout(() => json({ notifications: NOTES.slice(offset, offset + limit), total: NOTES.length, has_more: offset + limit < NOTES.length }), 80);
     }
@@ -76,6 +78,9 @@ const server = http.createServer((req, res) => {
         // The three offset-0 asks are three different things (4.262.0, after "the first page fetched 3x"): the preview's
         // three, the full first page once, and the check for anything new since; the full page is never asked twice.
         assert.strictEqual(queries.filter((q) => /[?&]offset=0(&|$)/.test(q) && /[?&]limit=30(&|$)/.test(q)).length, 1, `the full first page once (${queries.join(' ')})`);
+        // Past the unread the list asks once for the earlier ones (4.274.0): none here, so the end mark goes.
+        await p.evaluate("(() => { const l = document.querySelector('.ovs-list'); l.scrollTop = l.scrollHeight; })()");
+        await until(p, "!document.querySelector('#host .openvibe-nv-more')", 'the end of the list');
         const after = await p.evaluate(`({ status: document.querySelector('#host .openvibe-nv-bar [data-role="status"]').textContent, more: !!document.querySelector('#host .openvibe-nv-more'),
             barTop: Math.round(document.querySelector('#host .openvibe-nv-tools').getBoundingClientRect().top), listTop: Math.round(document.querySelector('.ovs-list').getBoundingClientRect().top), wide: document.documentElement.scrollWidth })`);
         assert.equal(after.status, '95 of 95 unread');
