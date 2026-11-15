@@ -532,7 +532,7 @@
 a.ovf-tile:hover{color:var(--text-primary,#f1f4fb);background:color-mix(in srgb,var(--accent,#3b82f6) 15%,transparent)}
 a.ovf-tile:active{transform:scale(.96)}
 .ovf-tile b{color:var(--text-primary,#f1f4fb);font-weight:800;font-variant-numeric:tabular-nums}
-.ovf-tile small{color:var(--text-muted,#8b93ad)}
+.ovf-tile small{color:var(--text-secondary,#a8b3c4)}
 .ovf-tile .ovf-ic{font-size:1.15em;color:var(--accent-light,var(--accent,#60a5fa))}
 .ovf-tile.is-live{background:color-mix(in srgb,var(--live-red-text,#ef4444) 15%,transparent)}
 .ovf-tile.is-channel{padding:0 12px;color:var(--text-primary,#f1f4fb)}

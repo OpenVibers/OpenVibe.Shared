@@ -68,7 +68,7 @@
 .ovhr-side-top { display: grid; gap: 8px; padding: 12px; }
 .ovhr-new { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; border: 0; border-radius: 12px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); font: inherit; font-weight: 650; cursor: pointer; }
 .ovhr-find { display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--border, rgba(255,255,255,.1)); background: var(--bg-card, rgba(255,255,255,.03)); color: var(--text-secondary, #a8b3c4); }
-.ovhr-find input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--text-primary, #e8edf5); font: inherit; font-size: 14px; }
+.ovhr-find input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--text-primary, #e8edf5); font: inherit; font-size: 14px; -webkit-appearance: none; appearance: none; }
 .ovhr-projects { flex: 1; overflow: auto; padding: 4px 8px 16px; }
 .ovhr-proj { margin-top: 10px; }
 .ovhr-proj-head { display: flex; align-items: center; gap: 8px; padding: 4px 6px; color: var(--text-secondary, #a8b3c4); font-size: 12.5px; font-weight: 700; letter-spacing: .02em; }

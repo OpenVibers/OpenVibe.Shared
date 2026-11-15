@@ -55,9 +55,11 @@ const page = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewp
 <script>
 window.__events = [];
 const q = new URLSearchParams(location.search);
+if (q.get('hostile')) document.head.insertAdjacentHTML('beforeend', '<style>section{margin-top:40px}header{margin:24px 0}aside{margin:30px;float:left}form{margin:18px}input[type=search]{border:1px solid #3b5bdb;border-radius:10px;padding:6px 10px}input:focus{box-shadow:0 0 0 2px #3b82f6}</style>');
 window.__s = OpenVibeSession.mount(document.getElementById('host'), { base: location.origin + '/api/frame', token: 'signed-in-test', sibling: (f) => '/' + f,
   ...(q.get('open') ? { open: q.get('open') } : {}),
   ...(q.get('actor') ? { actor: true, actions: { base: location.origin } } : {}),
+  ...(q.get('top') ? { top: (slot) => { const d = document.createElement('div'); d.style.padding = '24px'; slot.append(d); window.__lent = d; return {}; } } : {}),
   works: [{ value: 'ada/site', name: 'ada/site', line: 'On OpenVibe.Git' }], starters: [['code', 'Build me a landing page']],
   onEvent: (t, d) => window.__events.push(t) });
 </script></body></html>`;
@@ -220,6 +222,26 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         await until(w, "document.querySelector('.ovse').classList.contains('is-wide') && document.querySelectorAll('.ovse-row:not(.is-ghost)').length >= 3");
         const col = await w.evaluate("(() => { const d = document.querySelector('.ovse-drawer').getBoundingClientRect(), m = document.querySelector('.ovse-main').getBoundingClientRect(); return { d: Math.round(d.width), side: m.left >= d.right - 1 }; })()");
         assert.deepStrictEqual(col, { d: 300, side: true }, 'a 300 px column beside the session');
+        // A host page that styles bare section, header, aside and form elements moves nothing inside the session.
+        const hw = await h.openPage(browser, await browser.newContext(), { width: 1280, height: 820 });
+        await hw.goto(`${base}?open=chat:c_3&hostile=1`, { maxMs: 8000 });
+        await until(hw, "document.querySelector('.ovse').classList.contains('is-wide') && document.querySelector('.ovse-head')");
+        const off = await hw.evaluate("(() => { const top = (s) => Math.round(document.querySelector(s).getBoundingClientRect().top); const left = (s) => Math.round(document.querySelector(s).getBoundingClientRect().left); return { main: top('.ovse-main') - top('.ovse'), head: top('.ovse-head') - top('.ovse-main'), drawer: left('.ovse-drawer') - left('.ovse') }; })()");
+        assert.deepStrictEqual(off, { main: 0, head: 0, drawer: 0 }, 'a host page\'s bare-element rules stay out');
+        // The search is one field: the input inside has no border, radius, ring or platform search look of its own, even
+        // under a page that styles search inputs (11-15, the owner: "a double border instead of just being no border on
+        // the inner one").
+        await hw.evaluate("document.querySelector('.ovse-find input').focus()");
+        const inner = await hw.evaluate("(() => { const cs = getComputedStyle(document.querySelector('.ovse-find input')); return [cs.borderTopWidth, cs.borderTopLeftRadius, cs.boxShadow, cs.appearance, cs.paddingLeft]; })()");
+        assert.deepStrictEqual(inner, ['0px', '0px', 'none', 'none', '0px'], 'the inner input is bare');
+        assert.notStrictEqual(await hw.evaluate("getComputedStyle(document.querySelector('.ovse-find')).boxShadow"), 'none', 'the field itself shows the focus');
+        // A lent top that shows nothing takes no room; once it shows something it appears.
+        const tp = await h.openPage(browser, await browser.newContext(), { width: 1280, height: 820 });
+        await tp.goto(`${base}?open=chat:c_3&top=1`, { maxMs: 8000 });
+        await until(tp, "document.querySelector('.ovse-top') && window.__lent");
+        assert.strictEqual(await tp.evaluate("document.querySelector('.ovse-top').hidden"), true, 'an empty lent panel is hidden');
+        await tp.evaluate("window.__lent.textContent = 'Timer · 4:59'");
+        await until(tp, "document.querySelector('.ovse-top').hidden === false");
         console.log('ov-session-chrome: a coding session (grouped tools, changed files and the diff, a helper and Back, the plan, streaming), an approval answered in place, the drawer, a new session with @ and the one chip, queued words, the column on a computer; your Actor and the Action Center in the list');
     } finally {
         await browser.close();
