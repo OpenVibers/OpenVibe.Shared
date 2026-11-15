@@ -2409,6 +2409,8 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         }
         const skeletons = () => { for (let k = 0; k < 3; k++) list.append(h('span', 'ovfd-skel')); };
         const clearSkels = () => list.querySelectorAll('.ovfd-skel').forEach((x) => x.remove());
+        // 4.266.0: the observer below, kept so a page that ends with the end still in view asks for the next one.
+        let io = null;
         async function more(first) {
             if (busy || done) return;
             busy = true; const my = ++seq;
@@ -2439,6 +2441,10 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             done = !cursor;
             busy = false;
             sentinel.textContent = '';
+            // An observer speaks only when the end comes into view or leaves it. A page that finished with the end still in
+            // view (a short page, a slow answer while the person kept scrolling) would never load the next: observing the
+            // end afresh reports where it is now (a slow macOS runner caught this, menu-feed-v2-chrome).
+            if (!done && io) { io.unobserve(sentinel); io.observe(sentinel); }
             if (done) sentinel.append(h('p', 'ovh-note ovfd-caught', list.querySelector('.ovfd-card,.ovfd-act,.ovfd-update') ? "You're all caught up."
                 : (kind === 'following' ? 'Nothing yet from the people you follow. Follow someone on their profile and what they share shows here.' : 'Nothing here yet.')));
         }
@@ -2455,7 +2461,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             chips.append(b);
         });
         if (typeof IntersectionObserver === 'function') {
-            const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) more(false); }, { root: el.closest('.ovs-list') || null, rootMargin: '600px 0px' });
+            io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) more(false); }, { root: el.closest('.ovs-list') || null, rootMargin: '600px 0px' });
             io.observe(sentinel);
         }
         more(true);

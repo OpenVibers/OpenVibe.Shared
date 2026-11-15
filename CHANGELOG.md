@@ -26,6 +26,12 @@ menu on a computer, search, groups, badges). Where OVForms is on the page, `Open
 hands the select to it and draws nothing of its own. OpenVibePicker is for choices that are not a select: the
 composer's chips, a session's context chip and its menu.
 
+**The feed's next page comes even when the end never moved** (`ov-home.js`). An observer speaks only when the end
+comes into view or leaves it; a page that finished with the end still in view (a short page on a tall screen, a slow
+answer while the person kept scrolling) never asked for the next. After each page the end is observed afresh, which
+reports where it is now. This was `menu-feed-v2-chrome`'s flake on slow macOS runners; the test now holds the first
+page back on a tall screen and needs the second with no scroll.
+
 Tests: `dock-chrome` (the menu on Agents, the sessions and the Action Center answered in place, the agent at work above
 them, your Actor, a starter's session with its answer and chips, Ask your agent), `menu-places-chrome` (one surface, no
 switch, one mount at a time), `menu-home-screen-chrome`, `ov-session-chrome` (your Actor's Pause, an Action Center item
