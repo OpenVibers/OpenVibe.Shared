@@ -357,9 +357,10 @@ const server = http.createServer((req, res) => {
         assert.deepStrictEqual(body.attachments, ['att_01ABCDEFGHJKMNPQRSTVWXYZ01']);
         assert.deepStrictEqual(await s.evaluate(`window.__calls.filter((c) => c.u.endsWith('/attachments') && c.body instanceof FormData).map((c) => c.body.get('file').name)`), ['a.png', 'notes.pdf'], 'the picture and PDF bytes use the two upload routes');
         await s.evaluate(`document.querySelector('.ovs [data-dock="chats"]').click()`);
-        assert.ok(await until(s, `!!document.querySelector('.ovs-door-host .ovdk-chat[aria-label="Open Vibe"]')`), 'the Chat summary is an Open Vibe button');
-        await s.evaluate(`document.querySelector('.ovs-door-host .ovdk-chat[aria-label="Open Vibe"]').click()`);
-        assert.ok(await until(s, `document.querySelector('.ovs [data-dock="vibe"]').getAttribute('aria-selected') === 'true'`), 'the Vibe row selects the menu Vibe tab');
+        // 4.263.0 (the owner, 11-15: "no Vibe row"): the Chat tab opens on its segments; Vibe is the menu's own tab.
+        assert.ok(await until(s, `!!document.querySelector('.ovs-door-host .ovdk-segs') && !document.querySelector('.ovs-door-host .ovdk-chat[aria-label="Open Vibe"]')`), 'the Chat tab opens on its segments, with no Vibe row');
+        await s.evaluate(`document.querySelector('.ovs [data-dock="vibe"]').click()`);
+        assert.ok(await until(s, `document.querySelector('.ovs [data-dock="vibe"]').getAttribute('aria-selected') === 'true'`), 'the menu\'s Vibe tab is its own place');
         // ── 4.220.0 (the owner, 11-12: "one unified UI"): the Dock's open() opens the menu on that place; there is no
         // floating Dock, no pill and no sheet of its own, and close() closes the menu. ──
         await s.evaluate(`(document.querySelector('.ovs.is-open [data-close], .ovs-orb') || { click() {} }).click(), true`);

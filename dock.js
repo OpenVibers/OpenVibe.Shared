@@ -19,6 +19,8 @@
 
     const svg = (p) => `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
     const G = {
+        people: '<circle cx="9" cy="8.5" r="3.3"/><path d="M3.2 19.5c.7-3.4 3-5.3 5.8-5.3s5.1 1.9 5.8 5.3"/><circle cx="17.2" cy="9.4" r="2.6"/><path d="M16 14.4c2.4.2 4.2 1.8 4.8 5"/>',
+        server: '<rect x="4" y="4" width="7" height="7" rx="2.2"/><rect x="13" y="4" width="7" height="7" rx="2.2"/><rect x="4" y="13" width="7" height="7" rx="2.2"/><rect x="13" y="13" width="7" height="7" rx="2.2"/>',
         globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.6 3.6 5.4 3.6 8.5s-1.2 5.9-3.6 8.5c-2.4-2.6-3.6-5.4-3.6-8.5s1.2-5.9 3.6-8.5z"/>',
         plus: '<path d="M12 5v14M5 12h14"/>',
         search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/>',
@@ -182,6 +184,52 @@
             .ovdk-addfriend input { flex: 1; min-width: 0; box-sizing: border-box; height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border, rgba(148,163,184,.2)); background: var(--bg-primary, #0b1220); color: var(--text-primary, #ececf1); font: inherit; font-size: 14px; }
             .ovdk-addfriend input:focus { outline: none; border-color: var(--accent, #3b82f6); }
             .ovdk-addfriend-note { margin: 0 4px; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+            /* 4.263.0, the Chat tab's segments (Messages · Friends · Global · Servers): a quiet track, the chosen one lifted,
+               a red count for what waits; each pane rises in. Calm moves less, Off does not move. */
+            .ovdk-segs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin: 4px 10px 6px; padding: 4px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #ececf1) 6%, transparent); }
+            .ovdk-seg { all: unset; box-sizing: border-box; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 50px; border-radius: 12px; font-size: 12px; font-weight: 650; color: var(--text-secondary, #a8b3c4); cursor: pointer; transition: background-color .18s ease, color .18s ease, box-shadow .18s ease; }
+            .ovdk-seg .ovdk-i svg { width: 19px; height: 19px; }
+            .ovdk-seg-l { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .ovdk-seg[aria-selected="true"] { color: var(--text-primary, #ececf1); background: var(--bg-elevated, #1d1f27); box-shadow: 0 0 0 1px var(--border, rgba(148,163,184,.18)), 0 6px 16px -10px rgba(0,0,0,.6); }
+            .ovdk-seg[aria-selected="true"] .ovdk-i { color: var(--accent-light, var(--accent, #60a5fa)); }
+            .ovdk-seg:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -2px; }
+            .ovdk-seg:active { transform: scale(.96); }
+            .ovdk-seg-n { position: absolute; top: 4px; left: calc(50% + 6px); min-width: 17px; height: 17px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--danger, #ef4444); color: #fff; font-size: 10.5px; font-weight: 800; line-height: 17px; text-align: center; }
+            .ovdk-pane { display: grid; align-content: start; gap: 2px; padding: 4px 6px 10px; animation: ovdk-pane-in .22s cubic-bezier(.2,.8,.2,1) both; }
+            @keyframes ovdk-pane-in { from { opacity: 0; transform: translateY(calc(6px * var(--ov-move, 1))); } }
+            .ovdk-pane .ovdk-sec { padding: 12px 8px 4px; }
+            .ovdk-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+            .ovdk-rows > li { animation: ovdk-pane-in .24s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 22ms); }
+            .ovdk-row { box-sizing: border-box; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 7px 10px; border: 0; border-radius: 14px; background: transparent; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; transition: background-color .15s ease; }
+            li.ovdk-row { cursor: default; }
+            @media (hover: hover) { button.ovdk-row:hover, a.ovdk-row:hover { background: color-mix(in srgb, var(--text-primary, #ececf1) 6%, transparent); } }
+            button.ovdk-row:active, a.ovdk-row:active { transform: scale(.985); }
+            .ovdk-row:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -2px; }
+            .ovdk-row .ovdk-av { width: 44px; height: 44px; }
+            .ovdk-row .ovdk-av.is-online { box-shadow: 0 0 0 2px var(--bg-elevated, #1d1f27), 0 0 0 4px #22c55e; }
+            .ovdk-row-b { display: grid; min-width: 0; gap: 1px; }
+            .ovdk-row-b b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14.5px; }
+            .ovdk-row-p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+            .ovdk-row-go { color: var(--text-muted, #8b8b96); } .ovdk-row-go svg { width: 18px; height: 18px; }
+            .ovdk-row-acts { display: flex; gap: 6px; }
+            .ovdk-request-no { all: unset; box-sizing: border-box; display: inline-grid; place-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 650; color: var(--text-secondary, #a8b3c4); cursor: pointer; background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); }
+            .ovdk-request-no:hover { color: var(--text-primary, #ececf1); }
+            .ovdk-fr-add { display: grid; gap: 6px; padding: 6px 6px 2px; }
+            .ovdk-none-go { all: unset; cursor: pointer; justify-self: center; margin-top: 10px; min-height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 700; color: #fff; background: var(--accent, #3b82f6); }
+            .ovdk-gl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+            .ovdk-gl-row { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 10px; padding: 6px 8px; border-radius: 12px; }
+            .ovdk-gl-row .ovdk-av { width: 32px; height: 32px; }
+            .ovdk-gl-b { display: grid; min-width: 0; gap: 1px; }
+            .ovdk-gl-h { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+            .ovdk-gl-h b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
+            .ovdk-gl-h time { flex: none; font-size: 11.5px; color: var(--text-muted, #8b8b96); }
+            .ovdk-gl-t { font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; color: var(--text-primary, #ececf1); }
+            .ovdk-gl-open, .ovdk-sv-act { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; margin: 8px 4px 0; border-radius: 14px; font-weight: 700; text-decoration: none; color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); transition: background-color .15s ease; }
+            .ovdk-gl-open:hover, .ovdk-sv-act:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
+            .ovdk-gl-open .ovdk-i svg, .ovdk-sv-act .ovdk-i svg { width: 18px; height: 18px; }
+            .ovdk-sv-more { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+            .ovdk-sv-more .ovdk-sv-act { margin: 8px 0 0; }
+            html[data-ov-motion="off"] .ovdk-pane, html[data-ov-motion="off"] .ovdk-rows > li, html[data-ov-motion="off"] .ovdk-seg { animation: none; transition: none; }
             .ovdk-chat { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 10px; border: 0; border-radius: 14px;
                 background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
             .ovdk-chat:hover { background: color-mix(in srgb, var(--text-primary, #ececf1) 5%, transparent); }
@@ -467,9 +515,9 @@
         if (!chats.list) { panel.innerHTML = '<div class="ovdk-wait"><span></span></div>'; }
         const sharing = chats.draft && canWriteChat() ? load('dock-share.js', () => !!(root.OpenVibeDockShare && root.OpenVibeDockShare.bar)) : null;
         try {
-            const [dm, ai, people, srv] = await Promise.all([chatCall('/api/dm/conversations'), chatCall('/api/vibe/conversations').catch(() => null), friendsCall('').catch(() => chatCall('/api/dm/contacts').catch(() => null)), chatCall('/api/chat/servers?limit=12').catch(() => null)]);
+            const [dm, ai, people, srv] = await Promise.all([chatCall('/api/dm/conversations'), Promise.resolve(null), friendsCall('').catch(() => chatCall('/api/dm/contacts').catch(() => null)), chatCall('/api/chat/servers?limit=12').catch(() => null)]);
             chats.servers = srv && Array.isArray(srv.mine) ? srv.mine.slice(0, 12) : [];
-            chats.people = people && Array.isArray(people.mutual) ? { friends: people.mutual, requests: people.requests || [], network: true } : people && Array.isArray(people.friends) ? people : null;
+            chats.people = people && Array.isArray(people.mutual) ? { friends: people.mutual, requests: people.requests || [], asked: people.asked || [], network: true } : people && Array.isArray(people.friends) ? people : null;
             chats.list = dm.conversations || [];
             chats.vibeSummary = ai && ai.count ? { kind: 'vibe', count: ai.count, latest: ai.conversations && ai.conversations[0], last_message_at: ai.conversations && ai.conversations[0] && ai.conversations[0].last_message_at } : null;
         } catch (e) { if (panel !== chats.panel || !panelActive('chats')) return; panel.textContent = ''; panel.append(h('div', 'ovdk-none', e.status === 401 ? 'Sign in to Chat to see your conversations.' : 'Your chats did not load. Check your connection, then open them again.')); chatFoot(panel); return; }
@@ -477,53 +525,73 @@
         if (panel !== chats.panel || !panelActive('chats') || chats.open) return;
         panel.textContent = '';
         if (chats.draft && canWriteChat() && root.OpenVibeDockShare) panel.append(root.OpenVibeDockShare.bar({ draft: chats.draft, h, chatCall, host: inline, cancel: () => { chats.draft = null; chatList(); }, open: (id) => { chats.list = null; return openChat(String(id), true); } }));
-        // Open in Chat, as an icon over your conversations (ask 336).
-        const bar = h('div', 'ovdk-bar'); bar.append(toChat('https://openvibe.chat/messages')); panel.append(bar);
+        // 4.263.0: no row of its own for "Open in Chat" (it held one icon over the segments); Messages ends with the way there.
+        // 4.263.0 (the owner, 11-15: "segments Messages · Friends · Global · Servers; Friends Discord-style … no add field
+        // over the DMs; no Vibe row"): one segment at a time, the last one remembered; each says what waits in it.
+        const SEGS = [['messages', 'Messages', G.chat], ['friends', 'Friends', G.people], ['global', 'Global', G.globe], ['servers', 'Servers', G.server]];
+        let seg = chats.seg || (() => { try { return localStorage.getItem('ovdk-chat-seg') || 'messages'; } catch { return 'messages'; } })();
+        if (!SEGS.some(([id]) => id === seg)) seg = 'messages';
+        const waiting = {
+            messages: chats.list.reduce((n, c) => n + (Number(c.unread_count) || 0), 0),
+            friends: chats.people ? (chats.people.requests || []).filter((p) => !ignoredRequests().has(personKey(p))).length : 0,
+            servers: (chats.servers || []).reduce((n, sv) => n + (Number(sv.unread) || 0), 0),
+        };
+        const segBar = h('div', 'ovdk-segs'); segBar.setAttribute('role', 'tablist'); segBar.setAttribute('aria-label', 'Chat');
         const scroll = h('div', 'ovdk-scroll');
-        scroll.append(railStrip(chats.servers || []));
-        if (chats.people) scroll.append(friendsStrip(chats.people));
-        if (!chats.list.length && !chats.vibeSummary) {
-            const none = h('div', 'ovdk-none');
-            none.append(h('b', '', 'No conversations yet'), document.createTextNode('A message to someone on OpenVibe starts one, and it shows here on every site.'));
-            scroll.append(none);
-        } else {
-            const ul = h('ul', 'ovdk-chats');
-            [...chats.list.filter((c) => !chats.filter || titleOf(c).toLowerCase().includes(chats.filter)), ...(chats.vibeSummary ? [chats.vibeSummary] : [])].sort((a, b) => String(b.last_message_at || b.updated_at || '').localeCompare(String(a.last_message_at || a.updated_at || ''))).forEach((c) => {
-                if (c.kind === 'vibe') {
-                    const li = h('li'), b = h('button', 'ovdk-chat'); b.type = 'button';
-                    const body = h('span', 'ovdk-chat-b'); body.append(h('b', '', 'Vibe'), h('span', 'ovdk-chat-p', `${c.count} chat${c.count === 1 ? '' : 's'}${c.latest && c.latest.name ? ` · ${c.latest.name}` : ''}`));
-                    const meta = h('span', 'ovdk-chat-m'); const at = c.latest && c.latest.last_answer_at;
-                    const t = h('time', '', when(at || c.last_message_at)); if (at) t.title = answered(at); meta.append(t);
-                    const av = h('span', 'ovdk-av ovdk-av-vibe'); const lp = c.latest && c.latest.persona;
-                    // 4.249.0: the latest Vibe chat's persona picture, when it has one (Chat's personas); else Vibe's mark.
-                    if (lp && typeof lp.image_url === 'string' && /^https:\/\//.test(lp.image_url)) { const img = h('img'); img.alt = ''; img.src = lp.image_url; img.loading = 'lazy'; img.onerror = () => { img.remove(); av.append(icon(G.vibe)); }; av.append(img); } else av.append(icon(G.vibe));
-                    b.append(av, body, meta); b.setAttribute('aria-label', 'Open Vibe');
-                    b.addEventListener('click', () => {
-                        if (!b.dispatchEvent(new CustomEvent('openvibe:open-vibe', { bubbles: true, cancelable: true }))) return;
-                        vibeOnList = true; save({ vibe: null }); setTab('vibe', true);
-                    });
-                    li.append(b); ul.append(li); return;
-                }
-                const li = h('li'), b = h('button', 'ovdk-chat');
-                b.type = 'button';
-                const unread = Number(c.unread_count) || 0;
-                const mine = (c.participants || []).some((p) => p.id === c.last_sender_id && p.username === me());
-                const body = h('span', 'ovdk-chat-b');
-                body.append(titleEl(c), h('span', 'ovdk-chat-p', c.last_message ? `${mine ? 'You: ' : ''}${String(c.last_message).replace(/\s+/g, ' ').slice(0, 140)}` : 'No messages yet'));
-                const meta = h('span', 'ovdk-chat-m');
-                meta.append(h('time', '', when(c.last_message_at || c.updated_at)));
-                if (unread) meta.append(h('b', 'ovdk-unread', unread > 99 ? '99+' : String(unread)));
-                b.append(c.is_group ? groupAvatar(c) : avatar(others(c)[0] || {}, false), body, meta);
-                b.setAttribute('aria-label', `${titleOf(c)}${unread ? `, ${unread} unread` : ''}`);
-                if (unread) li.className = 'is-unread';
-                b.addEventListener('click', () => openChat(String(c.id), true));
-                li.append(b); ul.append(li);
-            });
+        const messagesPane = () => {
+            const box = h('div', 'ovdk-pane');
+            if (!chats.list.length) {
+                const none = h('div', 'ovdk-none');
+                none.append(h('b', '', 'No conversations yet'), document.createTextNode('A message to someone on OpenVibe starts one, and it shows here on every site.'));
+                const go = h('button', 'ovdk-none-go', 'Find your friends'); go.type = 'button'; go.addEventListener('click', () => pick('friends'));
+                none.append(go); box.append(none); return box;
+            }
+            const scroll = box;
+                const ul = h('ul', 'ovdk-chats');
+                chats.list.filter((c) => !chats.filter || titleOf(c).toLowerCase().includes(chats.filter)).sort((a, b) => String(b.last_message_at || b.updated_at || '').localeCompare(String(a.last_message_at || a.updated_at || ''))).forEach((c) => {
+                    const li = h('li'), b = h('button', 'ovdk-chat');
+                    b.type = 'button';
+                    const unread = Number(c.unread_count) || 0;
+                    const mine = (c.participants || []).some((p) => p.id === c.last_sender_id && p.username === me());
+                    const body = h('span', 'ovdk-chat-b');
+                    body.append(titleEl(c), h('span', 'ovdk-chat-p', c.last_message ? `${mine ? 'You: ' : ''}${String(c.last_message).replace(/\s+/g, ' ').slice(0, 140)}` : 'No messages yet'));
+                    const meta = h('span', 'ovdk-chat-m');
+                    meta.append(h('time', '', when(c.last_message_at || c.updated_at)));
+                    if (unread) meta.append(h('b', 'ovdk-unread', unread > 99 ? '99+' : String(unread)));
+                    b.append(c.is_group ? groupAvatar(c) : avatar(others(c)[0] || {}, false), body, meta);
+                    b.setAttribute('aria-label', `${titleOf(c)}${unread ? `, ${unread} unread` : ''}`);
+                    if (unread) li.className = 'is-unread';
+                    b.addEventListener('click', () => openChat(String(c.id), true));
+                    li.append(b); ul.append(li);
+                });
             scroll.append(ul);
+            const all = h('a', 'ovdk-gl-open'); all.href = 'https://openvibe.chat/messages'; all.append(icon(G.chat), h('span', '', 'All your messages on Chat'), icon(G.open || G.chat));
+            box.append(all);
+            return box;
+        };
+        const paint = () => {
+            segBar.querySelectorAll('[data-seg]').forEach((b) => { const on = b.dataset.seg === seg; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+            scroll.textContent = ''; scroll.dataset.seg = seg; scroll.scrollTop = 0;
+            scroll.append(seg === 'friends' ? friendsPane(chats.people, () => { chats.list = chats.list || []; paint(); })
+                : seg === 'global' ? globalPane() : seg === 'servers' ? serversPane(chats.servers || []) : messagesPane());
+            wearNames(scroll);
+        };
+        const pick = (id) => { seg = id; chats.seg = id; try { localStorage.setItem('ovdk-chat-seg', id); } catch { /* private mode */ } paint(); };
+        for (const [id, label, glyph] of SEGS) {
+            const b = h('button', 'ovdk-seg'); b.type = 'button'; b.dataset.seg = id; b.setAttribute('role', 'tab');
+            b.append(icon(glyph), h('span', 'ovdk-seg-l', label));
+            const n = waiting[id] || 0;
+            if (n) { b.append(h('b', 'ovdk-seg-n', n > 99 ? '99+' : String(n))); b.setAttribute('aria-label', `${label}, ${n} waiting`); }
+            b.addEventListener('click', () => pick(id));
+            segBar.append(b);
         }
-        panel.append(scroll);
-        // §Z.3: every name in the conversation list wears its effect, hat and badge.
-        wearNames(panel);
+        segBar.addEventListener('keydown', (e) => {
+            if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+            const i = SEGS.findIndex(([id]) => id === seg), next = SEGS[(i + (e.key === 'ArrowRight' ? 1 : SEGS.length - 1)) % SEGS.length][0];
+            e.preventDefault(); pick(next); const nb = segBar.querySelector(`[data-seg="${next}"]`); if (nb) nb.focus();
+        });
+        panel.append(segBar, scroll);
+        paint();
     }
     /**
      * Your friends, on top of your conversations (4.249.0; the owner, 11-14: "our entire OpenVibe.chat product should be a
@@ -540,58 +608,24 @@
         if (!r.ok) { const e = new Error(b.detail || b.error || `HTTP ${r.status}`); e.status = r.status; throw e; }
         return b;
     }
-    /** 4.251.0 (plan §AB.53; the owner: "the same system … like the Discord thing … integrated together as one cohesive
-     *  product, and also available in the menu"): openvibe.chat's rail as a strip on top of the menu's Chat, the same
-     *  places in the same order: Home (your messages), Global, Vibe, your servers (unread marked), New and Explore. */
-    function railStrip(servers) {
-        const CHAT = 'https://openvibe.chat';
-        const wrap = h('nav', 'ovdk-rail'); wrap.setAttribute('aria-label', 'Chat places');
-        const place = (label, glyph, href, extra) => {
-            const a = h(href ? 'a' : 'button', 'ovdk-rail-i'); if (href) a.href = href; else a.type = 'button';
-            const tile = h('span', 'ovdk-rail-t'); tile.append(glyph);
-            a.append(tile, h('span', 'ovdk-rail-n', label)); a.setAttribute('aria-label', label);
-            if (extra) extra(a, tile);
-            return a;
-        };
-        wrap.append(place('Home', icon(G.chat), `${CHAT}/messages`), place('Global', icon(G.globe), `${CHAT}/`));
-        wrap.append(place('Vibe', icon(G.vibe || G.spark), null, (a) => a.addEventListener('click', () => {
-            if (!a.dispatchEvent(new CustomEvent('openvibe:open-vibe', { bubbles: true, cancelable: true }))) return;
-            vibeOnList = true; save({ vibe: null }); setTab('vibe', true);
-        })));
-        if (servers.length) wrap.append(h('span', 'ovdk-rail-div'));
-        servers.forEach((sv) => {
-            const slug = String(sv.slug || ''); if (!/^[a-z0-9][a-z0-9-]{0,63}$/i.test(slug)) return;
-            const name = String(sv.name || slug).slice(0, 40);
-            let hue = 0; for (let i = 0; i < slug.length; i++) hue = (hue * 31 + slug.charCodeAt(i)) % 360;
-            const pic = typeof sv.picture_url === 'string' && /^https:\/\//.test(sv.picture_url) ? sv.picture_url : '';
-            wrap.append(place(name, (() => {
-                if (pic) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.src = pic; return img; }
-                return h('b', '', name.charAt(0).toUpperCase());
-            })(), `${CHAT}/s/${encodeURIComponent(slug)}`, (a, tile) => {
-                tile.classList.add('is-server'); tile.style.setProperty('--rh', String(hue));
-                const n = Number(sv.unread) || 0; if (n) { tile.append(h('i', 'ovdk-rail-dot', n > 99 ? '99+' : String(n))); a.setAttribute('aria-label', `${name}, ${n} unread`); }
-            }));
-        });
-        wrap.append(place('New', icon(G.plus), `${CHAT}/servers#oc-new-server`), place('Explore', icon(G.search), `${CHAT}/servers`));
-        return wrap;
+    // ── 4.263.0: the Chat tab's Friends, Global and Servers (the owner, 11-15) ──
+    const CHAT_SITE = 'https://openvibe.chat';
+    const personKey = (p) => String((p && (p.subject || p.username)) || '');
+    /** Requests you ignored stay out of the list on this device (the Network keeps no request inbox to decline). */
+    function ignoredRequests() { try { return new Set(JSON.parse(localStorage.getItem('ovdk-fr-ignored') || '[]')); } catch { return new Set(); } }
+    function ignoreRequest(p) { try { const s0 = ignoredRequests(); s0.add(personKey(p)); localStorage.setItem('ovdk-fr-ignored', JSON.stringify([...s0].slice(-200))); } catch { /* private mode */ } }
+    /** Your conversation with a friend, or a new one. */
+    async function talkTo(p, people) {
+        const one = (chats.list || []).find((c) => !c.is_group && others(c).some((x) => (p.id != null && Number(x.id) === Number(p.id)) || (p.username && String(x.username || '').toLowerCase() === String(p.username).toLowerCase())));
+        if (one) { openChat(String(one.id), true); return; }
+        try { const out = await chatCall('/api/dm/conversations', { method: 'POST', body: JSON.stringify(p.id != null && !people.network ? { user_ids: [p.id] } : { usernames: [p.username] }) }); const id = out && (out.conversation ? out.conversation.id : out.id); if (id != null) openChat(String(id), true); }
+        catch { /* the list stays */ }
     }
-    function friendsStrip(people) {
-        const box = h('div', 'ovdk-friends');
-        const row = h('div', 'ovdk-friends-row'); row.setAttribute('role', 'list'); row.setAttribute('aria-label', 'Your friends');
-        const talkTo = async (p) => {
-            const one = (chats.list || []).find((c) => !c.is_group && others(c).some((x) => (p.id != null && Number(x.id) === Number(p.id)) || (p.username && String(x.username || '').toLowerCase() === String(p.username).toLowerCase())));
-            if (one) { openChat(String(one.id), true); return; }
-            try { const out = await chatCall('/api/dm/conversations', { method: 'POST', body: JSON.stringify(p.id != null && !people.network ? { user_ids: [p.id] } : { usernames: [p.username] }) }); const id = out && (out.conversation ? out.conversation.id : out.id); if (id) openChat(String(id), true); }
-            catch { /* the list stays */ }
-        };
-        for (const p of (people.friends || []).slice(0, 24)) {
-            const b = h('button', 'ovdk-friend'); b.type = 'button'; b.setAttribute('role', 'listitem');
-            b.setAttribute('aria-label', `Message ${p.display_name || p.username}`);
-            const face = avatar(p, false); if (p.online) { face.classList.add('is-online'); face.title = p.site ? `Online on ${p.site}` : 'Online'; }
-            b.append(face, setSubject(h('span', 'ovdk-friend-n', String(p.display_name || p.username).slice(0, 14)), p));
-            b.addEventListener('click', () => talkTo(p));
-            row.append(b);
-        }
+    /** Friends, Discord-style: add someone at the top, then the requests waiting for you (Accept or Ignore), the ones
+     *  online now (where), the rest, and the ones you asked. A press on a friend opens your conversation. */
+    function friendsPane(people, repaint) {
+        const box = h('div', 'ovdk-pane ovdk-fr');
+        if (!people) { const none = h('div', 'ovdk-none'); none.append(h('b', '', 'Your friends show here'), document.createTextNode('Sign in to OpenVibe to see them and add someone.')); box.append(none); return box; }
         const add = h('form', 'ovdk-addfriend');
         const input = h('input'); input.type = 'text'; input.name = 'username'; input.placeholder = 'Add a friend by username'; input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('aria-label', 'Add a friend by username');
         const go = h('button', 'ovdk-addfriend-go', 'Add'); go.type = 'submit';
@@ -610,16 +644,103 @@
             catch (err) { note.textContent = (err && err.message) || 'That did not send.'; }
             finally { go.disabled = false; }
         });
-        if ((people.friends || []).length) box.append(h('p', 'ovdk-sec', `Friends · ${people.friends.length}`), row);
-        for (const p of (people.requests || []).slice(0, 5)) {
-            const r = h('div', 'ovdk-request');
+        const addBox = h('div', 'ovdk-fr-add'); addBox.append(add, note); box.append(addBox);
+        const section = (title, list, row) => { if (!list.length) return; box.append(h('p', 'ovdk-sec', `${title} · ${list.length}`)); const ul = h('ul', 'ovdk-rows'); list.forEach((p, i) => { const li = row(p); li.style.setProperty('--i', String(Math.min(i, 12))); ul.append(li); }); box.append(ul); };
+        const face = (p) => { const f = avatar(p, false); if (p.online) { f.classList.add('is-online'); f.title = p.site ? `Online on ${p.site}` : 'Online'; } return f; };
+        const nameOf = (p) => String(p.display_name || p.username || 'Someone').slice(0, 60);
+        const ign = ignoredRequests();
+        section('Pending', (people.requests || []).filter((p) => !ign.has(personKey(p))), (p) => {
+            const li = h('li', 'ovdk-row is-request');
+            const body = h('span', 'ovdk-row-b'); body.append(setSubject(h('b', '', nameOf(p)), p), h('span', 'ovdk-row-p', 'Wants to be your friend'));
+            const acts = h('span', 'ovdk-row-acts');
             const ok = h('button', 'ovdk-request-ok', 'Accept'); ok.type = 'button';
-            ok.addEventListener('click', async () => { ok.disabled = true; try { if (people.network) await friendsCall(`/${encodeURIComponent(p.subject || p.username)}/accept`, { method: 'POST', body: '{}' }); else await chatCall(`/api/dm/contacts/${encodeURIComponent(p.id)}/accept`, { method: 'POST', body: '{}' }); chatList(); } catch { ok.disabled = false; } });
-            const who = setSubject(h('b', 'ovdk-request-n', String(p.display_name || p.username).slice(0, 40)), p); const t = h('span', 'ovdk-request-t'); t.append(who, document.createTextNode(' wants to be your friend'));
-            r.append(avatar(p, false), t, ok);
-            box.append(r);
+            const no = h('button', 'ovdk-request-no', 'Ignore'); no.type = 'button';
+            ok.addEventListener('click', async () => {
+                ok.disabled = true; no.disabled = true;
+                try {
+                    if (people.network) await friendsCall(`/${encodeURIComponent(p.subject || p.username)}/accept`, { method: 'POST', body: '{}' });
+                    else await chatCall('/api/dm/contacts', { method: 'POST', body: JSON.stringify({ username: p.username }) });
+                    people.requests = (people.requests || []).filter((x) => personKey(x) !== personKey(p));
+                    people.friends = [{ ...p, online: !!p.online }, ...(people.friends || [])];
+                    repaint();
+                } catch { ok.disabled = false; no.disabled = false; ok.textContent = 'Try again'; }
+            });
+            no.addEventListener('click', () => { ignoreRequest(p); repaint(); });
+            acts.append(ok, no);
+            li.append(face(p), body, acts);
+            return li;
+        });
+        const friend = (p) => {
+            const li = h('li'), b = h('button', 'ovdk-row'); b.type = 'button';
+            const body = h('span', 'ovdk-row-b'); body.append(setSubject(h('b', '', nameOf(p)), p), h('span', 'ovdk-row-p', p.online ? (p.site ? `Online on ${p.site}` : 'Online') : `@${p.username || ''}`));
+            const go = icon(G.chat); go.classList.add('ovdk-row-go');
+            b.append(face(p), body, go); b.setAttribute('aria-label', `Message ${nameOf(p)}${p.online ? ', online' : ''}`);
+            b.addEventListener('click', () => talkTo(p, people));
+            li.append(b); return li;
+        };
+        const all = people.friends || [];
+        section('Online', all.filter((p) => p.online), friend);
+        section('Offline', all.filter((p) => !p.online), friend);
+        section('Asked', people.asked || [], (p) => {
+            const li = h('li', 'ovdk-row is-asked');
+            const body = h('span', 'ovdk-row-b'); body.append(setSubject(h('b', '', nameOf(p)), p), h('span', 'ovdk-row-p', 'Waiting for them to add you back'));
+            li.append(face(p), body); return li;
+        });
+        if (!all.length && !(people.requests || []).length && !(people.asked || []).length) {
+            const none = h('div', 'ovdk-none'); none.append(h('b', '', 'No friends yet'), document.createTextNode('Add someone with the box above; when they add you back, you are friends on every OpenVibe site.'));
+            box.append(none);
         }
-        box.append(add, note);
+        return box;
+    }
+    /** Global: what everyone is saying now, newest last, and the way into the room. */
+    function globalPane() {
+        const box = h('div', 'ovdk-pane ovdk-gl');
+        const open = h('a', 'ovdk-gl-open'); open.href = `${CHAT_SITE}/`; open.append(icon(G.globe), h('span', '', 'Open Global chat'), icon(G.open || G.chat));
+        const list = h('ul', 'ovdk-gl-list'); list.setAttribute('aria-label', 'Global chat, latest');
+        const wait = h('div', 'ovdk-wait'); wait.append(h('span'));
+        box.append(wait);
+        chatCall('/api/chat/global/history?limit=25').then((d) => {
+            wait.remove();
+            const rows = (d && Array.isArray(d.messages) ? d.messages : []).filter((m) => m && !m.is_deleted && m.message).slice(-25);
+            if (!rows.length) { const none = h('div', 'ovdk-none'); none.append(h('b', '', 'It is quiet in Global'), document.createTextNode('Say the first thing.')); box.prepend(none); return; }
+            rows.sort((a, b2) => String(a.timestamp || '').localeCompare(String(b2.timestamp || '')));
+            for (const m of rows) {
+                const li = h('li', 'ovdk-gl-row');
+                const who = { username: m.username, display_name: m.display_name, avatar_url: m.avatar_url };
+                const head = h('span', 'ovdk-gl-h'); head.append(setSubject(h('b', '', String(m.display_name || m.username || 'Someone').slice(0, 40)), who), h('time', '', when(m.timestamp)));
+                const body = h('span', 'ovdk-gl-b'); body.append(head, h('span', 'ovdk-gl-t', String(m.message).replace(/\s+/g, ' ').slice(0, 400)));
+                li.append(avatar(who, false), body); list.append(li);
+            }
+            box.prepend(list);
+            requestAnimationFrame(() => { const sc = box.closest('.ovdk-scroll'); if (sc) sc.scrollTop = sc.scrollHeight; });
+        }).catch(() => { wait.remove(); const none = h('div', 'ovdk-none'); none.append(h('b', '', 'Global chat did not load'), document.createTextNode('Open it on openvibe.chat.')); box.prepend(none); });
+        box.append(open);
+        return box;
+    }
+    /** Servers: yours, unread marked, then start one or find one. */
+    function serversPane(servers) {
+        const box = h('div', 'ovdk-pane ovdk-sv');
+        const ul = h('ul', 'ovdk-rows');
+        servers.forEach((sv, i) => {
+            const slug = String(sv.slug || ''); if (!/^[a-z0-9][a-z0-9-]{0,63}$/i.test(slug)) return;
+            const name = String(sv.name || slug).slice(0, 60);
+            let hue = 0; for (let k = 0; k < slug.length; k++) hue = (hue * 31 + slug.charCodeAt(k)) % 360;
+            const pic = typeof sv.picture_url === 'string' && /^https:\/\//.test(sv.picture_url) ? sv.picture_url : '';
+            const li = h('li'); li.style.setProperty('--i', String(Math.min(i, 12)));
+            const a = h('a', 'ovdk-row'); a.href = `${CHAT_SITE}/s/${encodeURIComponent(slug)}`;
+            const tile = h('span', 'ovdk-rail-t is-server'); tile.style.setProperty('--rh', String(hue));
+            if (pic) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.src = pic; tile.append(img); } else tile.append(h('b', '', name.charAt(0).toUpperCase()));
+            const n = Number(sv.unread) || 0;
+            const body = h('span', 'ovdk-row-b'); body.append(h('b', '', name), h('span', 'ovdk-row-p', n ? `${n > 99 ? '99+' : n} unread` : (sv.member_count ? `${sv.member_count} members` : 'Your server')));
+            a.append(tile, body); if (n) { a.append(h('b', 'ovdk-unread', n > 99 ? '99+' : String(n))); a.setAttribute('aria-label', `${name}, ${n} unread`); }
+            li.append(a); ul.append(li);
+        });
+        if (ul.children.length) { box.append(h('p', 'ovdk-sec', `Your servers · ${ul.children.length}`), ul); }
+        else { const none = h('div', 'ovdk-none'); none.append(h('b', '', 'No servers yet'), document.createTextNode('Start one for your people, or find one to join.')); box.append(none); }
+        const more = h('div', 'ovdk-sv-more');
+        const start = h('a', 'ovdk-sv-act'); start.href = `${CHAT_SITE}/servers#oc-new-server`; start.append(icon(G.plus), h('span', '', 'Start a server'));
+        const find = h('a', 'ovdk-sv-act'); find.href = `${CHAT_SITE}/servers`; find.append(icon(G.search), h('span', '', 'Find servers'));
+        more.append(start, find); box.append(more);
         return box;
     }
     /** "edited", one quiet word after a message's words; when, in its title. */
@@ -910,12 +1031,49 @@
         }
         o = { ...o, ...opts };
         styles();
+        offerSearchRows();
         const kept = store();
         off = !!(kept && kept.off > Date.now());
         if (kept && kept.state && !doc) doc = kept;
         paintStatus();
         if (!bound) { bound = true; document.addEventListener('visibilitychange', () => { if (!document.hidden) read(); }); }
         read();
+    }
+
+    // ── The top bar's rows for Chat (4.263.0; the owner, 11-15: "add a friend … from the top bar"): typed @name, the menu
+    //    offers Message @name and Add @name as a friend. Offered once, for a signed-in Dock. ──
+    let searchRowsOn = false;
+    function offerSearchRows() {
+        if (searchRowsOn) return; searchRowsOn = true;
+        const provider = {
+            id: 'chat',
+            rows(q) {
+                const m = /^@([a-z0-9_.-]{2,40})$/i.exec(String(q || '').trim());
+                if (!m || !o.token || m[1].toLowerCase() === me().toLowerCase()) return [];
+                const u = m[1];
+                return [
+                    { title: `Message @${u}`, meta: 'Your conversation with them, in Chat', icon: 'send', run: () => chatWith(u) },
+                    { title: `Add @${u} as a friend`, meta: 'Friends once they add you back, on every OpenVibe site', icon: 'plus', run: () => befriend(u) },
+                ];
+            },
+        };
+        const S = root.OpenVibeSearch;
+        if (S && typeof S.provide === 'function') S.provide(provider);
+        else (root.OVSearchProviders = root.OVSearchProviders || []).push(provider);
+    }
+    async function chatWith(username) {
+        open({ tab: 'chats' });
+        try {
+            const out = await chatCall('/api/dm/conversations', { method: 'POST', body: JSON.stringify({ usernames: [username] }) });
+            const id = out && (out.conversation ? out.conversation.id : out.id);
+            if (id != null) setTimeout(() => openChat(String(id), true), 120);
+        } catch { /* the list shows; the person can try again there */ }
+    }
+    async function befriend(username) {
+        chats.seg = 'friends'; try { localStorage.setItem('ovdk-chat-seg', 'friends'); } catch { /* private mode */ }
+        try { await friendsCall(`/${encodeURIComponent(username)}`, { method: 'PUT', body: '{}' }); } catch { /* the Friends list says what is so */ }
+        open({ tab: 'chats' });
+        if (chats.panel && panelActive('chats')) chatList();
     }
 
     // ── Open: the menu, on one of its places ──

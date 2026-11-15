@@ -924,6 +924,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             if (it && it.kind === 'dock' && root.OpenVibeNavbar && typeof root.OpenVibeNavbar.openDock === 'function' && ctx.token) {
                 e.preventDefault(); if (!showDoor(it.dock)) { try { root.OpenVibeNavbar.openDock(it.dock); } catch { location.href = it.url; } } return;
             }
+            if (it && it.kind === 'run' && typeof it.run === 'function') { e.preventDefault(); try { it.run(); } catch { /* the provider's own */ } return; }
             if (it && it.kind === 'results') { e.preventDefault(); showResults(input.value.trim()); input.focus(); return; }
             if (it && it.kind === 'recent') { e.preventDefault(); input.value = it.title; paintGhost(); showResults(it.title); input.focus(); return; }
             if (it) remember(it);
@@ -964,6 +965,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             if (door === 'chats') { try { if (root.OpenVibeDock && root.OpenVibeDock.filterChats) root.OpenVibeDock.filterChats(q); } catch { /* Dock is optional */ } return; }
             const it = items[active >= 0 ? active : 0];
             // Enter shows every result, unless the person picked a row or typed a place's exact name (live, tools).
+            if (it && it.kind === 'run' && typeof it.run === 'function' && (moved || /^@/.test(q))) { try { it.run(); } catch { /* the provider's own */ } return; }
             if (q && !moved && view !== 'results' && !exact(it, q)) { showResults(q); return; }
             if (it && it.kind === 'results') { showResults(q); return; }
             if (it && it.kind === 'recent') { input.value = it.title; paintGhost(); showResults(it.title); return; }
@@ -1284,6 +1286,20 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         const n = q.toLowerCase();
         return (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden && (!n || l.label.toLowerCase().includes(n)))
             .slice(0, n ? 4 : 8).map((l) => ({ title: l.label, meta: `Go to · ${here()}`, url: safeUrl(l.href), icon: 'go', drawn: l.icon && typeof ctx.navIcon === 'function' ? ctx.navIcon(l.icon) : '', kind: 'page' })).filter((x) => x.url);
+    }
+    // 4.263.0, the top bar is modular (the owner, 11-15: "add a friend … from the top bar"): any script offers rows for
+    // what is typed with OpenVibeSearch.provide({ id, rows(q) → [{ title, meta, icon, run }] }); a script that loads
+    // before the menu pushes the same object to window.OVSearchProviders. The rows lead the list as "Do it".
+    const providers = new Map();
+    function provide(p) { if (p && typeof p.id === 'string' && typeof p.rows === 'function') providers.set(p.id, p); return api; }
+    function providerRows(q) {
+        const out = [];
+        for (const p of providers.values()) {
+            let rows = [];
+            try { rows = p.rows(q) || []; } catch { rows = []; }
+            for (const r of rows) if (r && r.title && typeof r.run === 'function') out.push({ title: String(r.title).slice(0, 120), meta: String(r.meta || '').slice(0, 160), url: '#', icon: r.icon || 'go', kind: 'run', run: r.run });
+        }
+        return out.slice(0, 4);
     }
     function actions(q) {
         const out = [];
@@ -2470,6 +2486,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             // The rest of OpenVibe: the sites this person uses most come first, Search's own order otherwise.
             const rest = found.filter((s) => !minehere.includes(s)).map((s, i) => [useOf(s.owner) * 1000 - i, s]).sort((a, b) => b[0] - a[0]).map(([, s]) => s);
             return [
+                { title: 'Do it', items: providerRows(q) },
                 { title: 'Go to', items: goTo(q) },
                 { title: `On ${here()}`, items: [...minehere.map(row), ...pagesOf(q)] },
                 { title: 'Your history', items: history },
@@ -2962,6 +2979,10 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         return showDoor('vibe');
     }
     const api = { open, close, door: (id) => showDoor(id), prefill, suggest, siteOf, registerCard, _state: () => ({ tab, door, from: ctx.from }) };
+    api.provide = provide;
     root.OpenVibeSearch = api;
+    // Providers that came before the menu (4.263.0); from now on a push is a provide.
+    try { const early = root.OVSearchProviders; if (Array.isArray(early)) early.forEach(provide); } catch { /* */ }
+    root.OVSearchProviders = { push: (p) => { provide(p); return 1; } };
     if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
