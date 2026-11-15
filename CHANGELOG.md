@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.273.0 — 2026-11-15
+
+**Rename a session.**
+- **Session (`ov-session.js`), Rename** (plan §AD.8, the header's ⋯ menu): an Actor conversation's or a coding run's
+  menu offers Rename; the title becomes a field in place (Enter saves, Escape or leaving cancels, empty gives it back its
+  first words); the Frame's `PATCH /api/frame/runs/:ref { title }` (Network #1009) names it in Actor (#533) or Codes
+  (#508). The header and the drawer's row say the new name; `session.renamed` goes to the host.
+
 ## 4.272.0 — 2026-11-15
 
 **The price before it runs, and a coding run's replay from the session.**

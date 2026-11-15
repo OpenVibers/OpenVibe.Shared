@@ -676,6 +676,8 @@
             if (r && (isLive(r) || r.status === 'waiting')) rows.push({ id: 'stop', name: 'Stop it', line: 'It stops after the step it is on', icon: 'stop' });
             if (r && httpsUrl(r.url)) { rows.push({ id: 'copy', name: 'Copy the link', line: 'Its own page, for you or anyone you share it with', icon: 'link' }); rows.push({ id: 'page', name: 'Open its own page', line: new URL(httpsUrl(r.url)).hostname, icon: 'open' }); }
             if (r && changed().length) rows.push({ id: 'changes', name: 'What it changed', line: `${changed().length} file(s)`, icon: 'file' });
+            // Rename (plan §AD.8): Actor's conversations and coding runs; the name is edited in place in the header.
+            if (r && /^(actor|codes):/.test(String(state.ref || ''))) rows.push({ id: 'rename', name: 'Rename', line: 'Give this session a name of your own', icon: 'edit' });
             // A coding run's replay (Codes' /r/<token>, plan §AD.8): anyone with the link reads it, no sign-in.
             if (r && /^codes:/.test(String(state.ref || ''))) {
                 rows.push(state.replay
@@ -691,6 +693,7 @@
                 else if (id === 'page') root.open(httpsUrl(r.url), '_blank', 'noopener');
                 else if (id === 'changes') openChanges();
                 else if (id === 'share') shareReplay();
+                else if (id === 'rename') renameInPlace();
                 else if (id === 'unshare') stopReplay();
                 else if (id === 'new') blank();
                 else if (id === 'sessions') setDrawer(true);
@@ -1250,6 +1253,34 @@
             const next = state.queue.shift();
             say(next.text, next.files).catch((err) => { next.node.classList.add('is-failed'); next.node.querySelector('.ovse-queued').textContent = (err && err.message) || 'That did not send'; state.queue.unshift(next); });
         }
+        /** The title becomes a field: Enter saves (empty gives it back its first line), Escape or leaving it cancels. */
+        function renameInPlace() {
+            const r = state.run;
+            if (!r || !state.ref || who.querySelector('.ovse-rename')) return;
+            const ref = state.ref;
+            const input = el('input', 'ovse-rename'); input.type = 'text'; input.maxLength = 200; input.value = titleOf(r);
+            input.setAttribute('aria-label', 'Name this session'); input.enterKeyHint = 'done';
+            titleN.hidden = true; who.insertBefore(input, titleN);
+            let done = false;
+            const close = () => { if (done) return; done = true; input.remove(); titleN.hidden = false; };
+            const save = async () => {
+                if (done) return;
+                const title = input.value.replace(/\s+/g, ' ').trim();
+                close();
+                if (title === titleOf(r)) return;
+                try {
+                    const out = await api(`/runs/${encodeURIComponent(ref)}`, { method: 'PATCH', body: JSON.stringify({ title: title || null }) });
+                    if (state.ref !== ref) return;
+                    state.run = { ...state.run, title: (out && out.title) || title || state.run.title };
+                    paintHead(); flash(title ? 'Renamed' : 'Back to its first words');
+                    emit('session.renamed', { ref, title: state.run.title });
+                    const row = state.runs.find((x) => (x.ref || x.id) === ref); if (row) { row.title = state.run.title; paintRuns(); }
+                } catch (err) { flash((err && err.message) || 'The name was not saved'); }
+            };
+            input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } else if (e.key === 'Escape') { e.preventDefault(); close(); } });
+            input.addEventListener('blur', () => close());
+            input.focus(); input.select();
+        }
         async function shareReplay() {
             if (!state.ref) return;
             try {
@@ -1477,6 +1508,8 @@
 .ovse-head { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 8px 8px 6px; padding-top: max(8px, env(safe-area-inset-top, 0px)); border-bottom: 1px solid var(--ovse-line); }
 .ovse-who { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .ovse-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15.5px; }
+.ovse-rename { min-width: 0; width: 100%; height: 30px; padding: 0 8px; border: 1px solid var(--ovse-line); border-radius: 8px; background: var(--ovse-card); color: var(--ovse-fg); font: 600 15px/1 inherit; outline: none; }
+.ovse-rename:focus-visible { border-color: var(--ovse-acc); }
 .ovse-stat { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--ovse-mute); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .ovse-stat span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ovse-mute); flex: none; }
