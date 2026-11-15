@@ -291,7 +291,9 @@ const SERVICE = {
     'OpenVibe-Git': 'git',
     'OpenVibe.AI': 'ai',
     'OpenVibe.Actor': 'actor',
-    'OpenVibe.Bench': 'bench',
+    // Bench runs inside OpenVibe.Compare since 2026-11-13 (server/bench there is the live code): a Bench pin merges and
+    // never deploys, or it would restart the retired openvibe-bench.service beside Compare (it did, 11-14 and 11-15).
+    'OpenVibe.Bench': null,
     'OpenVibe.Billing': 'billing',
     'OpenVibe.Blog': 'blog',
     'OpenVibe.Bot': 'bot',
