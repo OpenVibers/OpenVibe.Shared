@@ -306,7 +306,9 @@
             .openvibe-nv-unread svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
             .openvibe-nv-tabs { display: flex; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin: 0 -12px; padding: 0 6px; }
             .openvibe-nv-tabs::-webkit-scrollbar { display: none; }
-            .openvibe-nv-tabs.is-more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+            /* 4.274.0 (the owner's phone, 11-15: the arrow sat over the System count with the next tab peeking beside it): the
+               tabs fade out before the arrow and are clear under it, so the arrow sits on nothing. */
+            .openvibe-nv-tabs.is-more { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 64px), transparent calc(100% - 34px)); mask-image: linear-gradient(90deg, #000 calc(100% - 64px), transparent calc(100% - 34px)); }
             .openvibe-nv-tabs button { flex: none; position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 10px; border: 0; background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
             .openvibe-nv-tabs button:hover, .openvibe-nv-tabs button[aria-selected="true"] { color: var(--text-primary, #ececf1); }
             .openvibe-nv-tabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2.5px; border-radius: 2px 2px 0 0; background: var(--accent, #3b82f6); }
@@ -315,7 +317,7 @@
                 /* 4.260.0 (the owner, 11-15: "make the little badges red, since that indicates … unread alerts"). */
                 color: #fff; background: var(--danger, #ef4444); }
             .openvibe-nv-tabs .n:empty { display: none; }
-            .openvibe-nv-tabs.is-more { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); }
+            
 
             .openvibe-nv-list { flex: 1; overflow-y: auto; padding: 2px 0 6px; overscroll-behavior: contain; }
             .openvibe-nv-day { position: sticky; top: 0; z-index: 1; padding: 10px 16px 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #8b8b96); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); }
@@ -384,6 +386,11 @@
             .openvibe-notif-dock .openvibe-nv-tools { position: sticky; top: 0; z-index: 3; flex-wrap: wrap; background: var(--ovn-bg, var(--bg-elevated, #1d1f27)); padding-bottom: 2px; }
             .openvibe-notif-dock .openvibe-nv-tabs { flex: 1 1 0; }   /* shrinks beside search and Unread; the bar has its own line */
             .openvibe-notif-dock .openvibe-nv-day { position: static; background: transparent; padding: 12px 16px 6px; }
+            /* 4.274.0: past the unread, the earlier ones (read) under one quiet line. */
+            .openvibe-nv-earlier { display: flex; align-items: center; gap: 10px; margin: 14px 16px 2px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
+            .openvibe-nv-earlier::before, .openvibe-nv-earlier::after { content: ""; flex: 1; height: 1px; background: var(--border, rgba(255,255,255,.1)); }
+            .ovn-caught { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px 16px 4px; color: var(--text-secondary, #b6b6c0); font-size: 13.5px; font-weight: 650; }
+            .ovn-caught svg { width: 16px; height: 16px; fill: none; stroke: var(--success, #22c55e); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
             .openvibe-nv-bar { order: 2; flex: 1 1 100%; display: flex; align-items: center; gap: 4px; min-height: 36px; padding: 2px 0 6px; border-top: 1px solid color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); }
             .openvibe-nv-bar [data-role="status"] { margin-right: auto; padding-left: 2px; font-size: 12px; font-weight: 650; color: var(--text-muted, #8b8b96); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
             .ovn-bar-b { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 10px; border: 0; border-radius: 999px; background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 12.5px; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; }
@@ -452,8 +459,8 @@
             .openvibe-nv:not(.openvibe-notif-dock) .ovn-unread-w, .openvibe-notif-inbox .ovn-unread-w { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
             .ovn-tabs-wrap { position: relative; flex: 1 1 0; min-width: 0; order: 0; display: flex; }
             .ovn-tabs-wrap > .openvibe-nv-tabs { flex: 1 1 auto; min-width: 0; }
-            .openvibe-nv-tabs.is-back.is-more { -webkit-mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 36px), transparent); }
-            .openvibe-nv-tabs.is-back:not(.is-more) { -webkit-mask-image: linear-gradient(90deg, transparent, #000 36px); mask-image: linear-gradient(90deg, transparent, #000 36px); }
+            .openvibe-nv-tabs.is-back.is-more { -webkit-mask-image: linear-gradient(90deg, transparent 34px, #000 64px, #000 calc(100% - 64px), transparent calc(100% - 34px)); mask-image: linear-gradient(90deg, transparent 34px, #000 64px, #000 calc(100% - 64px), transparent calc(100% - 34px)); }
+            .openvibe-nv-tabs.is-back:not(.is-more) { -webkit-mask-image: linear-gradient(90deg, transparent 34px, #000 64px); mask-image: linear-gradient(90deg, transparent 34px, #000 64px); }
             .ovn-tabs-go { position: absolute; top: 50%; z-index: 2; display: grid; place-items: center; width: 30px; height: 30px; margin-top: -15px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
               color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--bg-secondary, #141a24) 88%, var(--text-primary, #ececf1));
               box-shadow: 0 4px 14px -4px rgba(0, 0, 0, .6), inset 0 0 0 1px var(--border, rgba(255, 255, 255, .12)); transition: transform .18s cubic-bezier(.2, .8, .2, 1), opacity .18s;
@@ -1343,7 +1350,10 @@
         }).join('');
         v.lastDay = lastDay;
         if (!append) list.innerHTML = v.tab === 'agents' ? `<button type="button" class="ovn-ac-link" data-act="ac">${svg(GLYPH.spark)}<span>Everything your agents are doing: running, waiting for you, done</span></button>` : '';
-        if (!v.items.length) {
+        if (!v.items.length && !append && earlierNext(view || v)) {
+            list.insertAdjacentHTML('beforeend', `<p class="ovn-caught">${svg(ICON.read)}<span>You're all caught up</span></p><div class="openvibe-nv-more"><span class="spinner"></span></div>`);
+            Promise.resolve().then(() => loadMore(view || v));   // right after the first page's load settles
+        } else if (!v.items.length) {
             const [t0, s0] = TAB_EMPTY[v.tab] || TAB_EMPTY.all;
             const acLink = v.tab === 'agents' ? `<button type="button" class="ovn-ac-link" data-act="ac">${svg(GLYPH.spark)}<span>Everything your agents are doing: running, waiting for you, done</span></button>` : '';
             const title = v.q ? 'Nothing matches that search' : (v.unread ? 'You\'re all caught up' : t0);
@@ -1352,10 +1362,20 @@
         } else {
             const old = list.querySelector('.openvibe-nv-more'); if (old) old.remove();
             list.insertAdjacentHTML('beforeend', html);
-            if (v.hasMore) moreMark(view || v, list);   // the real view, never the tail's copy (its offset is stale)
+            if (v.hasMore || earlierNext(view || v)) moreMark(view || v, list);   // the real view, never the tail's copy (its offset is stale)
         }
         const st = v.root.querySelector('[data-role="status"]');
-        if (st) st.textContent = v.total != null ? `${v.items.length} of ${v.total}${v.unread ? ' unread' : ''}` : '';
+        if (st) st.textContent = statusText(view || v);
+    }
+
+    /** 4.274.0 (the owner's phone, 11-15: "not loading": the alerts opened on 11 unread and the other 710 never came):
+     *  with Unread on, the list opens on what is unread and, past it, goes on to the earlier ones (read) under an
+     *  Earlier line, a page at a time as you scroll, like a phone's notification centre. A search stays within the unread. */
+    const earlierNext = (v) => !!(v.unread && !v.q && !v.hasMore && v.earlier && v.earlier.hasMore);
+    function statusText(v) {
+        if (v.total == null) return '';
+        if (v.unread && v.earlier && v.earlier.total > 0) return `${v.total} unread · ${v.total + v.earlier.total} in all`;
+        return `${v.items.length} of ${v.total}${v.unread ? ' unread' : ''}`;
     }
 
     /** The end of a list with more behind it (4.260.0; the owner, 11-15: "auto-load more as you scroll down … lazy load
@@ -1372,16 +1392,17 @@
         list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-more is-auto" aria-hidden="true"><span class="spinner"></span></div>');
         const mark = list.querySelector('.openvibe-nv-more.is-auto');
         v.io = new IntersectionObserver((entries) => {
-            if (!entries.some((e) => e.isIntersecting) || v.loading || !v.hasMore) return;
+            if (!entries.some((e) => e.isIntersecting) || v.loading || (!v.hasMore && !earlierNext(v))) return;
             v.io.disconnect(); v.io = null;
             loadMore(v);
         }, { rootMargin: '0px 0px 900px 0px' });
         v.io.observe(mark);
     }
     const _pagesInFlight = new Map();
-    async function fetchPage(v, offset) {
+    async function fetchPage(v, offset, { earlier = false } = {}) {
         const params = new URLSearchParams({ limit: String(v.pageSize || PAGE_SIZE), offset: String(offset) });
-        if (v.unread) params.set('unread_only', '1');
+        if (earlier) params.set('read_only', '1');
+        else if (v.unread) params.set('unread_only', '1');
         if (v.tab && v.tab !== 'all') params.set('tab', v.tab);
         if (v.q) params.set('q', v.q);
         // 4.262.0: the same page asked for twice at once is one request (as the menu opened, the inbox's own load, the
@@ -1398,6 +1419,7 @@
         loadTabCounts();
         if (v.fade) setTimeout(v.fade, 0);
         v.loading = true; v.offset = 0; v.items = []; v.ids = new Set(); v.hasMore = false; v.total = null; v.lastDay = null;
+        v.earlier = v.unread ? { offset: 0, hasMore: true, total: null, started: false } : null;
         if (v.io) { v.io.disconnect(); v.io = null; }
         const list = v.root.querySelector('[data-role="list"]');
         list.innerHTML = '<div class="openvibe-nv-more"><span class="spinner"></span></div>';
@@ -1414,26 +1436,35 @@
         } finally { if (seq === v.seq) v.loading = false; }
     }
     async function loadMore(v) {
-        if (v.loading || !v.hasMore) return;
+        const earlier = earlierNext(v);
+        if (v.loading || (!v.hasMore && !earlier)) return;
         const seq = v.seq; v.loading = true;
         const more = v.root.querySelector('.openvibe-nv-more'); if (more) more.innerHTML = '<span class="spinner"></span>';
         try {
-            const data = await fetchPage(v, v.offset);
+            const data = await fetchPage(v, earlier ? v.earlier.offset : v.offset, { earlier });
             if (seq !== v.seq) return;
-            const fresh = (data.notifications || []).filter(n => !v.ids.has(String(n.id)));
+            const fresh = (data.notifications || []).filter(n => !v.ids.has(String(n.id)) && (!earlier || isRead(n)));
             fresh.forEach(n => v.ids.add(String(n.id)));
-            v.items = v.items.concat(fresh); v.hasMore = !!data.has_more; v.offset += (data.notifications || []).length; v.total = data.total ?? v.total;
+            v.items = v.items.concat(fresh);
+            if (earlier) { v.earlier.offset += (data.notifications || []).length; v.earlier.hasMore = !!data.has_more && (data.notifications || []).length > 0; v.earlier.total = data.total ?? v.earlier.total; }
+            else { v.hasMore = !!data.has_more; v.offset += (data.notifications || []).length; v.total = data.total ?? v.total; }
             // Re-render only the tail to keep the scroll position.
             const old = v.root.querySelector('.openvibe-nv-more'); if (old) old.remove();
+            const list = v.root.querySelector('[data-role="list"]');
+            if (earlier && !v.items.length && !v.earlier.hasMore) { v.earlier = null; renderItems(v); return; }
+            if (earlier && fresh.length && !v.earlier.started) {
+                v.earlier.started = true; v.lastDay = null;
+                if (list) list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-earlier" role="separator">Earlier</div>');
+            }
             if (fresh.length) { const tail = { ...v, items: fresh }; renderItems(tail, { append: true, view: v }); v.lastDay = tail.lastDay; }
-            else if (v.hasMore) moreMark(v, v.root.querySelector('[data-role="list"]'));
+            else if (v.hasMore || earlierNext(v)) moreMark(v, list);
             const st = v.root.querySelector('[data-role="status"]');
-            if (st) st.textContent = v.total != null ? `${v.items.length} of ${v.total}${v.unread ? ' unread' : ''}` : '';
+            if (st) st.textContent = statusText(v);
         } catch {
             // Keep what we have; the end of the list offers the page again.
             const list = v.root.querySelector('[data-role="list"]');
             const old = v.root.querySelector('.openvibe-nv-more'); if (old) old.remove();
-            if (list && v.hasMore) { list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-more"><button type="button" data-act="more">Load more</button></div>'); const b = list.querySelector('[data-act="more"]'); if (b) b.addEventListener('click', () => loadMore(v)); }
+            if (list && (v.hasMore || earlierNext(v))) { list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-more"><button type="button" data-act="more">Load more</button></div>'); const b = list.querySelector('[data-act="more"]'); if (b) b.addEventListener('click', () => loadMore(v)); }
         }
         finally { v.loading = false; }
     }

@@ -50,6 +50,7 @@
  * bytes as the npm tarball), and cached in $XDG_CACHE_HOME/openvibe-shared (or ~/.cache/openvibe-shared).
  * Chrome: CHROME_BIN or the usual paths; `--no-sandbox` unless chrome.sandbox is true.
  */
+const { RINGS } = require('./field-rings');
 const { spawn } = require('child_process');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -57,7 +58,7 @@ const os = require('os');
 const path = require('path');
 
 const WIDTHS = [390, 768, 1280];
-const CHECKS = ['status', 'errors', 'overflow', 'scripts', 'nojs', 'canonical', 'jsonld', 'axe', 'text'];
+const CHECKS = ['status', 'errors', 'overflow', 'scripts', 'nojs', 'canonical', 'jsonld', 'axe', 'text', 'rings'];
 
 // Words a template, a serializer or a double escape leaves in a page (11-02 found each on a live site: a status page's
 // "released undefined", /kit's "[object Object]", a changelog's "&lt;ul&gt;", a summary's "covers ."). Text a
@@ -529,6 +530,8 @@ function checkRoute(route, r, { minText, ignoreErrors }) {
     checks.errors = want('errors') ? (r.errors.length ? 'fail' : 'pass') : 'skip';
     checks.overflow = want('overflow') ? (r.widths.some((w) => w.overflow) ? 'fail' : 'pass') : 'skip';
     checks.scripts = want('scripts') ? (r.widths.some((w) => w.duplicateScripts.length) ? 'fail' : 'pass') : 'skip';
+    // One ring per field (design rule one-ring-per-field, 4.274.0): a field drawn with two rings fails.
+    checks.rings = !want('rings') || !r.rings || r.rings.error ? 'skip' : r.rings.doubles.length ? 'fail' : 'pass';
     if (r.nojs && !r.nojs.error) {
         const n = r.nojs;
         checks.nojs = !want('nojs') ? 'skip' : n.textChars >= minText ? 'pass' : 'fail';
@@ -638,6 +641,7 @@ function format(report, { markdown = false } = {}) {
             }
         }
         for (const t of r.textSmells || []) d(`text: ${t.smell}: …${JSON.stringify(t.sample)}…`);
+        for (const x of (r.rings && r.rings.doubles) || []) d(`rings: ${code(x.field)}: ${x.why.join('; ')}`);
         if (r.axe && r.axe.error) d(`axe: ${r.axe.error}`);
         for (const v of (r.axe && r.axe.violations) || []) {
             if (v.impact === 'minor') continue;
@@ -733,6 +737,10 @@ async function checkOneRoute(browser, context, route, o) {
             if (width === axeWidth && o.checks.axe !== false && route.checks.axe !== false) {
                 try { r.axe = await runAxe(page, await axeSource(o.axe)); } catch (e) { r.axe = { error: e.message }; }
             } else if (width === axeWidth) r.axe = { skipped: true };
+            // Rings at the narrowest width (a phone, where the owner looks first): each field at rest and focused.
+            if (width === Math.min(...widths) && o.checks.rings !== false && route.checks.rings !== false) {
+                try { r.rings = await page.evaluate(`(${RINGS})()`, 60000); } catch (e) { r.rings = { error: e.message }; }
+            }
             r.widths.push(w);
         } finally { await page.close(); }
     }

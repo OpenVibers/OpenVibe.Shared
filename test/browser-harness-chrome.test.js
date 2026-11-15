@@ -73,11 +73,11 @@ const AXE_STUB = `window.axe = { run: () => Promise.resolve({ violations: locati
     const text = h.format(report);
 
     assert.ok(/^Chrome\/|HeadlessChrome\//.test(report.chrome), report.chrome);
-    assert.deepStrictEqual(good.checks, { status: 'pass', errors: 'pass', overflow: 'pass', scripts: 'pass', nojs: 'pass', canonical: 'pass', jsonld: 'pass', axe: 'pass', text: 'pass' }, text);
+    assert.deepStrictEqual(good.checks, { status: 'pass', errors: 'pass', overflow: 'pass', scripts: 'pass', rings: 'pass', nojs: 'pass', canonical: 'pass', jsonld: 'pass', axe: 'pass', text: 'pass' }, text);
     assert.strictEqual(good.canonical.href, `${base}/`);
     assert.deepStrictEqual(good.jsonld.entities.map((e) => e.found), ['html', 'html'], 'a list folded in a closed <details> counts as on the page');
 
-    assert.deepStrictEqual(bad.checks, { status: 'pass', errors: 'fail', overflow: 'fail', scripts: 'fail', nojs: 'fail', canonical: 'fail', jsonld: 'fail', axe: 'fail', text: 'warn' }, text);
+    assert.deepStrictEqual(bad.checks, { status: 'pass', errors: 'fail', overflow: 'fail', scripts: 'fail', rings: 'pass', nojs: 'fail', canonical: 'fail', jsonld: 'fail', axe: 'fail', text: 'warn' }, text);
     assert.ok(bad.errors.some((e) => e.startsWith('console: boom from b (')), bad.errors.join(' | '));
     assert.ok(bad.errors.some((e) => /^exception: .*TypeError/.test(e)), bad.errors.join(' | '));
     assert.deepStrictEqual(bad.widths.map((w) => [w.width, w.overflow]), [[390, true], [1280, true]]);

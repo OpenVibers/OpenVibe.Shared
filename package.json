@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.273.0",
+  "version": "4.274.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -28,6 +28,7 @@
     "./brand": "./brand.js",
     "./bottom": "./bottom.js",
     "./browser-harness": "./browser-harness.js",
+    "./field-rings": "./field-rings.js",
     "./builtin-themes": "./builtin-themes.js",
     "./cache-policy": "./cache-policy.js",
     "./config": "./config.js",
