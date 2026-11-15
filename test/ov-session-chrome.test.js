@@ -86,6 +86,7 @@ const server = http.createServer(async (req, res) => {
         const ref = decodeURIComponent(m[1]); const rest = m[2] || '';
         const run = runs.find((r) => r.ref === ref) || (ref === 'codes:tsk_1c' ? { ref, kind: 'code', title: 'A helper checks the page', status: 'done' } : null);
         if (!run) return json(res, 404, { error: 'Not found' });
+        if (!rest && req.method === 'PATCH') { const body = await read(req); said.renames = (said.renames || []).concat([[ref, body.title]]); return json(res, 200, { ...run, title: body.title || run.title }); }
         if (!rest) return json(res, 200, run);
         if (rest === '/steps') return json(res, 200, { steps: steps[ref] || [] });
         if (rest === '/events') {
@@ -174,6 +175,14 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row, .ovse-mini-b')].find((r) => r.textContent.includes('Stop sharing')).click()");
         await until(p, "!document.querySelector('.ovp')");
         assert.deepStrictEqual(said.replays, [['codes:tsk_1', 'POST'], ['codes:tsk_1', 'DELETE']]);
+        // ── ⋯ → Rename (plan §AD.8): the title becomes a field; Enter saves ──
+        await p.evaluate("document.querySelector('.ovse-more').click()");
+        await until(p, "!!document.querySelector('.ovp.is-in .ovp-row, .ovse-mini-b')");
+        await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row, .ovse-mini-b')].find((r) => r.textContent.includes('Rename')).click()");
+        await until(p, "!!document.querySelector('.ovse-rename') && document.activeElement === document.querySelector('.ovse-rename')", 3000);
+        await p.evaluate("(() => { const i = document.querySelector('.ovse-rename'); i.value = 'Dark mode work'; i.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); })()");
+        await until(p, "document.querySelector('.ovse-title').textContent === 'Dark mode work' && !document.querySelector('.ovse-rename')");
+        assert.deepStrictEqual(said.renames, [['codes:tsk_1', 'Dark mode work']]);
 
         // ── the drawer, and a session that asks first ──
         await p.evaluate("document.querySelector('.ovse-menu').click()");
