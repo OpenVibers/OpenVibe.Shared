@@ -306,7 +306,9 @@
             .openvibe-nv-unread svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
             .openvibe-nv-tabs { display: flex; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin: 0 -12px; padding: 0 6px; }
             .openvibe-nv-tabs::-webkit-scrollbar { display: none; }
-            .openvibe-nv-tabs.is-more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+            /* 4.274.0 (the owner's phone, 11-15: the arrow sat over the System count with the next tab peeking beside it): the
+               tabs fade out before the arrow and are clear under it, so the arrow sits on nothing. */
+            .openvibe-nv-tabs.is-more { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 64px), transparent calc(100% - 34px)); mask-image: linear-gradient(90deg, #000 calc(100% - 64px), transparent calc(100% - 34px)); }
             .openvibe-nv-tabs button { flex: none; position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 10px; border: 0; background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
             .openvibe-nv-tabs button:hover, .openvibe-nv-tabs button[aria-selected="true"] { color: var(--text-primary, #ececf1); }
             .openvibe-nv-tabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2.5px; border-radius: 2px 2px 0 0; background: var(--accent, #3b82f6); }
@@ -315,7 +317,7 @@
                 /* 4.260.0 (the owner, 11-15: "make the little badges red, since that indicates … unread alerts"). */
                 color: #fff; background: var(--danger, #ef4444); }
             .openvibe-nv-tabs .n:empty { display: none; }
-            .openvibe-nv-tabs.is-more { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); }
+            
 
             .openvibe-nv-list { flex: 1; overflow-y: auto; padding: 2px 0 6px; overscroll-behavior: contain; }
             .openvibe-nv-day { position: sticky; top: 0; z-index: 1; padding: 10px 16px 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #8b8b96); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); }
@@ -457,8 +459,8 @@
             .openvibe-nv:not(.openvibe-notif-dock) .ovn-unread-w, .openvibe-notif-inbox .ovn-unread-w { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
             .ovn-tabs-wrap { position: relative; flex: 1 1 0; min-width: 0; order: 0; display: flex; }
             .ovn-tabs-wrap > .openvibe-nv-tabs { flex: 1 1 auto; min-width: 0; }
-            .openvibe-nv-tabs.is-back.is-more { -webkit-mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 36px), transparent); }
-            .openvibe-nv-tabs.is-back:not(.is-more) { -webkit-mask-image: linear-gradient(90deg, transparent, #000 36px); mask-image: linear-gradient(90deg, transparent, #000 36px); }
+            .openvibe-nv-tabs.is-back.is-more { -webkit-mask-image: linear-gradient(90deg, transparent 34px, #000 64px, #000 calc(100% - 64px), transparent calc(100% - 34px)); mask-image: linear-gradient(90deg, transparent 34px, #000 64px, #000 calc(100% - 64px), transparent calc(100% - 34px)); }
+            .openvibe-nv-tabs.is-back:not(.is-more) { -webkit-mask-image: linear-gradient(90deg, transparent 34px, #000 64px); mask-image: linear-gradient(90deg, transparent 34px, #000 64px); }
             .ovn-tabs-go { position: absolute; top: 50%; z-index: 2; display: grid; place-items: center; width: 30px; height: 30px; margin-top: -15px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
               color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--bg-secondary, #141a24) 88%, var(--text-primary, #ececf1));
               box-shadow: 0 4px 14px -4px rgba(0, 0, 0, .6), inset 0 0 0 1px var(--border, rgba(255, 255, 255, .12)); transition: transform .18s cubic-bezier(.2, .8, .2, 1), opacity .18s;

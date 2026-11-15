@@ -23,6 +23,8 @@
     (`GET /api/notifications?read_only=1`, Network #1015).
   - The status says both counts ("11 unread · 721 in all").
   - With nothing unread, one short line says so and the earlier ones follow.
+  - The tabs fade out before the arrow at the end of their row and are clear under it: the arrow no longer sat over
+    the System count with the next tab peeking beside it.
 - Tests:
   - `one-ring-every-field-chrome` (12 input types, textarea, select, OpenVibe's select and contenteditable; plain, in
     pills, a card, a composer, a chip, the kit, and drawn later). It fails without the guard.
