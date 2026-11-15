@@ -133,7 +133,7 @@ const CSS = `
 .sc-frame-phone{max-width:340px;margin:0 auto;border-radius:34px;padding:10px}
 .sc-frame-phone .sc-frame-body{border-radius:26px;background:var(--bg-primary,#0b1220);min-height:420px}
 .sc-reel,.sc-numbers,.sc-flow{margin:36px 0}
-.sc-reel-list{list-style:none;margin:14px calc(-1 * var(--ovk-gutter,16px)) 0;padding:4px var(--ovk-gutter,16px) 10px;display:grid;grid-auto-flow:column;grid-auto-columns:min(78%,280px);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.sc-reel-list{list-style:none;margin:14px calc(-1 * var(--ovk-gutter,16px)) 0;padding:4px var(--ovk-gutter,16px) 10px;display:grid;grid-auto-flow:column;grid-auto-columns:min(78%,280px);gap:12px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none}
 .sc-reel-list::-webkit-scrollbar{display:none}
 @media (min-width:900px){.sc-reel-list{grid-auto-flow:row;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));overflow:visible;margin:14px 0 0;padding:4px 0}}
 .sc-reel-card{scroll-snap-align:start;border-radius:18px;background:var(--bg-secondary,#111827);border:1px solid var(--border,#263244);transition:transform .25s cubic-bezier(.2,.8,.2,1),border-color .25s,box-shadow .25s;opacity:0;transform:translateY(10px)}

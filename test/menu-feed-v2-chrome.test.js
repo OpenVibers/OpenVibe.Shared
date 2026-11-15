@@ -102,6 +102,14 @@ const server = http.createServer((req, res) => {
         const beacon = await p.evaluate(`JSON.parse(window.__beacons.find((b) => b.u.endsWith('/api/v1/feed/views')).t)`);
         assert.ok(beacon.ids.length >= 1 && beacon.ids.length <= 20 && beacon.ids.every((id) => /^f:video:/.test(id)) && new Set(beacon.ids).size === beacon.ids.length, `card ids, each once (${beacon.ids})`);
         assert.ok(/^[A-Za-z0-9_-]{8,64}$/.test(beacon.session), 'with the page session');
+        // 4.259.0 (the owner, 11-15: "why is there no view count on everything on the feed?"): every card shows its views,
+        // 0 included (a live card shows who watched), and a card the person saw says one more in place.
+        const views = await p.evaluate(`(() => { const cards = [...document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post')];
+            const counted = [...document.querySelectorAll('.ovfd-views[data-bumped]')];
+            return { cards: cards.length, bare: cards.filter((c) => !c.querySelector('.ovfd-views, [aria-label$="watched"]')).map((c) => c.className), bumped: counted.length,
+                bumpOk: counted.every((v) => v.getAttribute('aria-label') === Number(v.dataset.n).toLocaleString('en-US') + ' views') }; })()`);
+        assert.deepStrictEqual(views.bare, [], `every card shows its views (${views.cards} cards)`);
+        assert.ok(views.bumped >= 1 && views.bumpOk, `a seen card says one more view (${views.bumped})`);
         // 4.250.0 (§AA.21): Comment opens the thread in a sheet over the menu, never a new page; what people wrote is text.
         await p.evaluate("document.querySelector('.ovfd-post .ovfd-acts .ovfd-act-b').click(), true");
         assert.ok(await until(p, "document.querySelectorAll('.ovfd-sheet .ovfd-cm').length === 2"), 'the comments and their reply, in a sheet');
@@ -153,7 +161,7 @@ const server = http.createServer((req, res) => {
         const kinds = await p.evaluate(`(() => { const q = (s) => document.querySelector(s);
             return { stat: (q('.ovfd-k-report .ovfd-stat-n') || {}).textContent, trend: (q('.ovfd-k-report .ovfd-trend') || {}).textContent, was: (q('.ovfd-k-report .ovfd-stat-was') || {}).textContent,
                 up: !!q('.ovfd-k-report .ovfd-trend.is-up'), group: [...document.querySelectorAll('.ovfd-k-work .ovfd-group-i')].map((r) => r.textContent), more: (q('.ovfd-k-work .ovfd-group-more') || {}).textContent,
-                groupImgs: document.querySelectorAll('.ovfd-k-work .ovfd-group-i img').length, jobs: (q('.ovfd-k-work .ovfd-counts') || {}).textContent, voted: (q('.ovfd-k-poll .ovfd-counts') || {}).textContent,
+                groupImgs: document.querySelectorAll('.ovfd-k-work .ovfd-group-i img').length, jobs: (q('.ovfd-k-work .ovfd-counts > span') || {}).textContent, voted: (q('.ovfd-k-poll .ovfd-counts > span') || {}).textContent,
                 about: (q('.ovfd-k-rundown .ovfd-who small') || {}).textContent || '' }; })()`);
         assert.deepStrictEqual([kinds.stat, kinds.trend, kinds.was, kinds.up], ['1,204', '▲ 12%', 'was 1,075', true], 'a report: its number, which way it moved, and from what');
         assert.deepStrictEqual(kinds.group, ['GIS engineer', 'Product manager', 'Infra lead'], 'a folded run: its first three');

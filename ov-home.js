@@ -210,7 +210,7 @@ html[data-ov-motion=off] .ovh-head-t { animation: none; }
 .ovh-own-i { display: inline-flex; align-items: center; min-height: 36px; padding: 0 13px; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent); color: var(--text-secondary, #a8b3c4); font: 600 13px/1 inherit; text-decoration: none; cursor: pointer; transition: background-color .15s, color .15s; }
 .ovh-own-i:hover, .ovh-own-i:focus-visible { background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); color: var(--text-primary, #e8ecf3); }
 @media (pointer: coarse) { .ovh-own-i { min-height: 44px; } }
-.ovh-rail { display: flex; gap: 8px; margin: 0 -2px; padding: 2px 6px 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding: 0 6px; scrollbar-width: none;
+.ovh-rail { display: flex; gap: 8px; margin: 0 -2px; padding: 2px 6px 8px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding: 0 6px; scrollbar-width: none;
     -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
 .ovh-rail::-webkit-scrollbar { display: none; }
 .ovh-rail.is-end { -webkit-mask-image: none; mask-image: none; }
@@ -1754,6 +1754,9 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         const meta = h('small', '');
         if (icon) meta.append(glyph(icon));
         meta.append(document.createTextNode(` ${[what, site ? (c.site_name || c.site) : '', when(c.at)].filter(Boolean).join(' · ')}`));
+        // A line's views too (4.259.0: every card in the feed says how many saw it), at the end of its meta line.
+        const seenBy = countsRow(c.counts).querySelector('.ovfd-views, [aria-label$="watched"]');
+        if (seenBy) { seenBy.classList.add('ovfd-act-views'); meta.append(seenBy); }
         body.append(meta);
         if (text) body.append(h('span', 'ovfd-act-more', String(text).slice(0, 200)));
         a.append(tile, body);
@@ -1828,7 +1831,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         const counted = (card, id) => {
             timers.delete(id);
             if (sent.has(id) || !card.isConnected || document.visibilityState === 'hidden') return;
-            sent.add(id); io.unobserve(card); queue.push(id);
+            sent.add(id); io.unobserve(card); queue.push(id); bumpViews(card);
             if (queue.length >= 20) flush(); else if (!flushT) flushT = setTimeout(flush, 4000);
         };
         const io = new IntersectionObserver((es) => {
@@ -1842,17 +1845,37 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         addEventListener('pagehide', flush);
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
         return {
-            watch(card, id) { if (!card || !card.dataset || typeof id !== 'string' || !/^f:/.test(id) || sent.has(id)) return; card.dataset.feedId = id; io.observe(card); },
+            // f: one thing's card; g: a run of them (an hour of deals or jobs), counted under its own id (4.259.0).
+            watch(card, id) { if (!card || !card.dataset || typeof id !== 'string' || !/^[fg]:/.test(id) || sent.has(id)) return; card.dataset.feedId = id; io.observe(card); },
             flush,
         };
     }
+    /** A card's numbers (4.259.0; the owner, 11-15: "why is there no view count on everything on the feed?"): every
+     *  card shows its views, 0 included, like a post anywhere else (a live card shows who watched instead); likes and
+     *  replies only when there are some. The views span carries its number, so seeing the card adds one in place. */
     function countsRow(n) {
+        const watched = Number(n && n.watchers) > 0;
         const parts = [['views', 'eye', 'views'], ['watchers', 'eye', 'watched'], ['likes', 'heart', 'likes'], ['comments', 'reply', 'replies']]
-            .filter(([k]) => Number(n && n[k]) > 0);
-        if (!parts.length) return null;
+            .filter(([k]) => Number(n && n[k]) > 0 || (k === 'views' && !watched));
         const row = h('span', 'ovfd-counts');
-        parts.forEach(([k, g, word]) => { const s = h('span', ''); s.setAttribute('aria-label', `${num(n[k])} ${word}`); s.title = `${num(n[k])} ${word}`; s.append(glyph(g), document.createTextNode(count(n[k]))); row.append(s); });
+        parts.forEach(([k, g, word]) => {
+            const v = Math.max(0, Number(n && n[k]) || 0);
+            const s = h('span', k === 'views' ? 'ovfd-views' : '');
+            if (k === 'views') s.dataset.n = String(v);
+            s.setAttribute('aria-label', `${num(v)} ${word}`); s.title = `${num(v)} ${word}`;
+            s.append(glyph(g), document.createTextNode(count(v)));
+            row.append(s);
+        });
         return row;
+    }
+    /** The person just saw this card: its views say one more (once a page, like the view the beacon sends). */
+    function bumpViews(card) {
+        const s = card && card.querySelector && card.querySelector('.ovfd-views');
+        if (!s || s.dataset.bumped) return;
+        const v = (Number(s.dataset.n) || 0) + 1;
+        s.dataset.n = String(v); s.dataset.bumped = '1';
+        s.setAttribute('aria-label', `${num(v)} views`); s.title = `${num(v)} views`;
+        if (s.lastChild && s.lastChild.nodeType === 3) s.lastChild.nodeValue = count(v);
     }
     /** A length as people read it: 5203 → 1:26:43, 95 → 1:35; a length already written ("12:04") stays. */
     function lenOf(v) {
@@ -2119,7 +2142,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         if (SOCIAL.has(kind)) {
             // 4.241.0: a post reads like a post: the card, then reply, likes and share under it (outside its link).
             if (people) { const row = h('span', 'ovfd-counts'); row.append(people); a.append(row); }
-            else if (counts && Number((c.counts || {}).views) > 0) { const row = h('span', 'ovfd-counts'); const v = counts.querySelector('[aria-label$="views"], [aria-label$="watched"]'); if (v) { row.append(v); a.append(row); } }
+            else { const row = h('span', 'ovfd-counts'); const v = counts.querySelector('.ovfd-views, [aria-label$="watched"]'); if (v) { row.append(v); a.append(row); } }
             const post = h('article', `ovfd-post ovfd-k-${kind.replace(/[^a-z]/g, '')}`);
             post.append(a, actsOf(c, url, o));
             return post;
@@ -2406,9 +2429,9 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         if (document.getElementById('ovfd-styles')) return;
         const st = document.createElement('style'); st.id = 'ovfd-styles';
         st.textContent = `
-.ovfd-chips{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 4px;margin:0 -4px;background:var(--bg-secondary,#141a24)}
+.ovfd-chips{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:8px 4px;margin:0 -4px;background:var(--bg-secondary,#141a24)}
 .ovfd-chips::-webkit-scrollbar{display:none}
-.ovfd-examples{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 4px 6px;margin:0 -4px}.ovfd-examples::-webkit-scrollbar{display:none}.ovfd-examples[hidden]{display:none}
+.ovfd-examples{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:2px 4px 6px;margin:0 -4px}.ovfd-examples::-webkit-scrollbar{display:none}.ovfd-examples[hidden]{display:none}
 .ovfd-ex{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;border-radius:999px;border:0;background:color-mix(in srgb,var(--accent,#3b82f6) 12%,transparent);color:var(--accent-light,var(--accent,#60a5fa));font:inherit;font-size:13px;font-weight:650;cursor:pointer;white-space:nowrap;transition:background .15s}
 .ovfd-ex::before{content:"";width:12px;height:12px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center/contain no-repeat;opacity:.8}
 .ovfd-ex:hover,.ovfd-ex:focus-visible{background:color-mix(in srgb,var(--accent,#3b82f6) 22%,transparent)}
@@ -2505,6 +2528,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-act-txt{min-width:0;display:grid;gap:3px;padding-top:1px}
 .ovfd-act-txt b{font-size:14px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .ovfd-act-txt small{display:flex;align-items:center;gap:5px;min-width:0;font-size:12px;color:var(--text-muted,#93a0b4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ovfd-act-txt small .ovfd-act-views{flex:none;display:inline-flex;align-items:center;gap:4px;margin-left:auto;padding-left:8px;font-weight:650;font-variant-numeric:tabular-nums}
 .ovfd-act-more{font-size:13px;line-height:1.45;color:var(--text-secondary,#a8b3c4);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .ovfd-tile{box-sizing:border-box;display:grid;place-items:center;border-radius:12px;font-variant-numeric:tabular-nums}
 .ovfd-tile-num{position:relative;background:linear-gradient(150deg,hsl(152 62% 48% / .32),hsl(152 60% 32% / .16));color:hsl(152 70% 78%)}

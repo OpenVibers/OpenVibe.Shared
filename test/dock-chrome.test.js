@@ -194,7 +194,9 @@ const server = http.createServer((req, res) => {
             const bad = { kind: 'video', url: 'javascript:alert(1)', title: '<img src=x>', line: 'x', image: 'https://evil.example/p.png', action: { label: 'Go', href: 'javascript:alert(2)' } };
             const all = [{ id: 101, username: 'kai', display_name: 'Kai Moreno', message: 'see the shots?', card, created_at: iso(240e3) }, { id: 102, username: 'ada', display_name: 'Ada', message: '<b>on it</b>', card: bad, created_at: iso(120e3) }]
                 .concat(said.map((m, i) => ({ id: 901 + i, username: 'ada', display_name: 'Ada', message: m, created_at: iso(0) })));
-            return json(200, { messages: all.filter((m) => m.id > after) });
+            // Chat answers the first page newest first (getMessagesPage: ORDER BY m.id DESC), and a page after an id
+            // oldest first: the thread puts both in order (4.259.0).
+            return json(200, { messages: after ? all.filter((m) => m.id > after) : all.slice().reverse() });
         }
         if (u.pathname === '/api/vibe/conversations') return json(200, scenario.vibe || { conversations: [], count: 0 });
         if (u.pathname === '/api/vibe/chat') {
@@ -390,7 +392,11 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             assert.deepStrictEqual(rows, ['Kai Moreno, 2 unread | see the shots?', 'Design crit | You: Shipped it'], 'named for the other person (or the group), unread first, mine as "You:"');
             await p.evaluate("document.querySelector('.ovdk .ovdk-chat').click()");
             const thread = await until(p, "(() => { const m = [...document.querySelectorAll('.ovdk .ovdk-msg')]; return m.length === 2 ? m.map((x) => (x.classList.contains('is-mine') ? 'me: ' : 'them: ') + x.querySelector('.ovdk-text').textContent) : null; })()", 'the thread');
-            assert.deepStrictEqual(thread, ['them: see the shots?', 'me: <b>on it</b>'], 'theirs and mine, and what people wrote is text, never markup');
+            assert.deepStrictEqual(thread, ['them: see the shots?', 'me: <b>on it</b>'], 'theirs and mine, oldest first though the page came newest first, and what people wrote is text, never markup');
+            // 4.259.0 (the owner, 11-15: "missing dates and timestamps"): a day line, and each sender's run says when.
+            const when = await p.evaluate("({ day: [...document.querySelectorAll('.ovdk .ovdk-day')].map((d) => d.textContent), times: [...document.querySelectorAll('.ovdk .ovdk-msg .ovdk-time')].map((t) => /^\\d{1,2}:\\d{2}/.test(t.textContent) && !!t.dateTime) })");
+            assert.deepStrictEqual(when.day, ['Today'], 'one day line over today\'s messages');
+            assert.deepStrictEqual(when.times, [true, true], 'each run of messages says the time it was sent');
             // The menu redraws when its own loads arrive and hands its (empty) search words on again: the open chat stays.
             await p.evaluate("OpenVibeDock.filterChats(''), true");
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovdk .ovdk-msg').length"), 2, 'a menu redraw never swaps the open chat for the list'));

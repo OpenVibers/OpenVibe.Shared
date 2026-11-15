@@ -44,7 +44,7 @@
             .ovdc-box:focus-within { border-color: color-mix(in srgb, var(--accent, #3b82f6) 60%, var(--border, rgba(255,255,255,.1))); }
             .ovdc-text { display: block; width: 100%; box-sizing: border-box; min-height: 44px; max-height: 30vh; padding: 2px 0; border: 0; outline: 0; resize: none; background: none; color: var(--text-primary, #ececf1); font: inherit; font-size: 15.5px; line-height: 1.45; }
             .ovdc-row { display: flex; align-items: center; gap: 6px; }
-            .ovdc-modes { flex: 1; min-width: 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+            .ovdc-modes { flex: 1; min-width: 0; display: flex; gap: 4px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
             .ovdc-mode { flex: none; height: 32px; padding: 0 11px; border-radius: 999px; border: 1px solid transparent; background: none; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
             .ovdc-mode:hover { color: var(--text-primary, #ececf1); background: var(--bg-hover, rgba(255,255,255,.06)); }
             .ovdc-mode[aria-checked="true"] { color: var(--accent-light, #93c5fd); border-color: color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); }

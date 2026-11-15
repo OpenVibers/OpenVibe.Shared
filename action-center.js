@@ -99,7 +99,7 @@
             .ovac-acts button.spin svg { animation: ovac-pulse 1s ease-in-out infinite; }
             @keyframes ovac-pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
             .ovac-acts [data-act="close"] { display: none; }
-            .ovac-tabs { display: flex; overflow-x: auto; scrollbar-width: none; padding: 0 6px; border-bottom: 1px solid var(--border, rgba(255,255,255,.08)); }
+            .ovac-tabs { display: flex; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding: 0 6px; border-bottom: 1px solid var(--border, rgba(255,255,255,.08)); }
             .ovac-tabs::-webkit-scrollbar { display: none; }
             .ovac-tabs button { flex: none; position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 10px; border: 0; background: transparent;
                 color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }

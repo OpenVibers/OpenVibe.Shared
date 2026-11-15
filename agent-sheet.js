@@ -32,7 +32,7 @@
 .ovas-open { flex: none; display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 10px; color: var(--accent-light, #60a5fa);
   font-size: 13px; font-weight: 650; text-decoration: none; }
 .ovas-open:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); }
-.ovas-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; overflow-x: auto; scrollbar-width: none; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
+.ovas-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
 .ovas-tabs::-webkit-scrollbar { display: none; }
 @media (max-width: 520px) { .ovas-tabs { -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); } }
 .ovas-tab { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 13px; border: 0; border-radius: 999px; background: none;

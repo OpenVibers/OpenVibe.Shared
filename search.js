@@ -496,7 +496,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
 .ovs-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovs-link.is-here { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 42%, transparent); color: var(--text-primary, #e6edf3); }
 .ovs-link.is-here svg { color: var(--accent, #3b82f6); }
-.ovs-livebar { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 8px 6px 2px; }
+.ovs-livebar { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding: 8px 6px 2px; }
 .ovs-livebar::-webkit-scrollbar { display: none; }
 .ovs-live { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); color: inherit; text-decoration: none; font-size: 13.5px; font-weight: 650; }
 .ovs-live.is-count { border-color: color-mix(in srgb, var(--danger, #ef4444) 45%, transparent); background: color-mix(in srgb, var(--danger, #ef4444) 10%, transparent); }
@@ -548,7 +548,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
 .ovs-snip { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-size: 13px; line-height: 1.4; color: var(--text-secondary, #a8b3c4); white-space: normal; }
 .ovs-results-on .ovs-item a { align-items: flex-start; padding: 9px 10px; }
 .ovs-results-on .ovs-ic { margin-top: 1px; text-transform: lowercase; }
-.ovs-rtabs { overflow-x: auto; scrollbar-width: none; padding-top: 8px; }
+.ovs-rtabs { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding-top: 8px; }
 .ovs-rtabs::-webkit-scrollbar { display: none; }
 .ovs-rtabs .ovs-tab[hidden] { display: none; }
 .ovs-skels { display: grid; gap: 6px; padding: 4px 6px 8px; }

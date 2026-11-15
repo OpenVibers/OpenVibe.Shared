@@ -41,7 +41,7 @@
 .ovc-check input { flex: none; width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--ovc-accent); }
 .ovc-check input:checked + span { color: var(--ovc-muted); text-decoration: line-through; }
 .ovc-check input:disabled { cursor: default; }
-.ovc-table { max-width: 100%; overflow-x: auto; border-radius: 10px; border: 1px solid var(--ovc-line); }
+.ovc-table { max-width: 100%; overflow-x: auto; overflow-y: auto; border-radius: 10px; border: 1px solid var(--ovc-line); }
 .ovc-table table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .ovc-table th, .ovc-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--ovc-line); white-space: nowrap; }
 .ovc-table th { font-size: 12px; font-weight: 800; color: var(--ovc-muted); background: var(--ovc-panel); }

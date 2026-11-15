@@ -51,7 +51,7 @@
 .ovt-send:disabled { opacity: .5; }
 .ovt-composer .ovc-file.ovc-image { height: auto; min-height: 100px; flex-wrap: wrap; overflow: visible; }
 .ovt-composer .ovc-image input { flex: 1 0 100%; min-width: 0; min-height: 36px; box-sizing: border-box; border: 1px solid var(--border, rgba(148,163,184,.18)); border-radius: 8px; background: var(--bg-primary, #0b1220); color: inherit; font: inherit; }
-.ovc-files { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px; margin: 0 0 2px -4px; scrollbar-width: thin; }
+.ovc-files { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 0 8px; margin: 0 0 2px -4px; scrollbar-width: thin; }
 .ovc-files[hidden] { display: none; }
 .ovc-file { position: relative; flex: none; display: flex; align-items: center; gap: 9px; max-width: 230px; height: 52px; padding: 5px 30px 5px 5px; box-sizing: border-box; border-radius: 14px;
     border: 1px solid var(--ovt-line, var(--border, rgba(148, 163, 184, .18))); background: color-mix(in srgb, var(--text-primary, #fff) 4%, transparent); overflow: hidden; animation: ovc-in .2s cubic-bezier(.2, .9, .3, 1) both; }
@@ -149,7 +149,7 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 .ovc-v2 textarea { display: block; width: 100%; min-height: 26px; max-height: 40vh; box-sizing: border-box; margin: 0; padding: 8px 2px 4px; border: 0; outline: 0; resize: none; overflow-y: auto; background: transparent; color: var(--text-primary, #e6edf7); font: inherit; font-size: 17px; line-height: 1.45; }
 .ovc-v2 textarea::placeholder { color: var(--text-muted, #7386a3); }
 .ovc-v2 .ovt-c-row { display: flex; align-items: center; gap: 4px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--ovt-line, rgba(148, 163, 184, .18)) 70%, transparent); }
-.ovc-v2 .ovt-c-tools { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.ovc-v2 .ovt-c-tools { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .ovc-v2 .ovt-c-tools::-webkit-scrollbar { display: none; }
 .ovc-v2 .ovt-btn { position: relative; flex: none; display: grid; place-items: center; width: 40px; height: 40px; box-sizing: border-box; padding: 0; border-radius: 50%; border: 0; background: none; color: var(--ovt-accent, var(--accent-light, var(--accent, #60a5fa))); cursor: pointer; transition: background-color .15s, transform .12s; }
 .ovc-v2 .ovt-btn:hover, .ovc-v2 .ovt-btn:focus-visible { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); }
@@ -246,7 +246,7 @@ html[data-ov-motion=off] .ovc-cam-shutter { transition: none; }
 .ovc-v2 .ovc-verb[data-verb="ask"][aria-pressed="true"] svg { color: #c084fc; }
 .ovc-v2 .ovc-verb[data-verb="do"][aria-pressed="true"] svg { color: #fbbf24; }
 @media (max-width: 520px) { .ovc-v2 .ovc-verb:not([aria-pressed="true"]) span { display: none; } .ovc-v2 .ovc-verb:not([aria-pressed="true"]) { width: 34px; padding: 0; justify-content: center; } }
-.ovc-v2 .ovc-ask-chips { display: flex; gap: 6px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.ovc-v2 .ovc-ask-chips { display: flex; gap: 6px; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .ovc-v2 .ovc-ask-chips::-webkit-scrollbar { display: none; }
 .ovc-v2 .ovc-ask-chips > * { flex: none; }
 .ovc-v2:not(.is-asking) .ovc-ask-chips { display: none; }

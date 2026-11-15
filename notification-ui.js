@@ -302,7 +302,7 @@
             .openvibe-nv-unread:hover { color: var(--text-primary, #ececf1); }
             .openvibe-nv-unread[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); border-color: transparent; color: var(--on-accent-strong, var(--on-accent, #fff)); }
             .openvibe-nv-unread svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-            .openvibe-nv-tabs { display: flex; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 0 6px; }
+            .openvibe-nv-tabs { display: flex; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin: 0 -12px; padding: 0 6px; }
             .openvibe-nv-tabs::-webkit-scrollbar { display: none; }
             .openvibe-nv-tabs.is-more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
             .openvibe-nv-tabs button { flex: none; position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 10px; border: 0; background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
