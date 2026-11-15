@@ -21,7 +21,7 @@ const iso = (s) => new Date(now - s * 1000).toISOString();
 const runs = [
     { ref: 'codes:tsk_1', kind: 'code', title: 'Add a dark mode switch', status: 'running', created_at: iso(134), started_at: iso(134), updated_at: iso(3), cost: { usd: 0.034 }, doing: { text: 'Running the tests' }, agent: { id: 'claude-code', name: 'Claude Code', hue: 25 }, model: { id: 'claude-sonnet-5-5', name: 'Sonnet 5.5' }, where: { kind: 'machine', name: 'Studio PC' }, target: { repo: 'ada/site' }, url: 'https://openvibe.codes/t/tsk_1' },
     { ref: 'actor:run_2', kind: 'task', title: 'Book a table for Friday', status: 'waiting', waiting: { for: 'approval' }, created_at: iso(900), updated_at: iso(600), agent: { id: 'actor', name: 'Actor', hue: 265 } },
-    { ref: 'chat:c_3', kind: 'chat', title: 'A good first synth', status: 'waiting', waiting: { for: 'message' }, created_at: iso(5000), updated_at: iso(4000), agent: { id: 'vibe', name: 'Vibe' } },
+    { ref: 'chat:c_3', kind: 'chat', title: 'A good first synth', status: 'waiting', waiting: { for: 'message' }, created_at: iso(3 * 86400 + 600), updated_at: iso(3 * 86400), agent: { id: 'vibe', name: 'Vibe' } },   // days old: Earlier in any time zone
 ];
 const T = (seq, x) => ({ seq, status: 'done', from: 'agent', started_at: iso(130 - seq * 6), ended_at: iso(127 - seq * 6), ...x });
 const steps = {
