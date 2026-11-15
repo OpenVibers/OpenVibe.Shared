@@ -239,7 +239,7 @@ const PARTS_CSS = (() => {
     };
     return [
         '.ov-parts-r,.ov-parts-bar{display:none}',
-        '.ov-parts-bar{gap:4px;margin:18px 0 14px;padding:4px;border-radius:14px;background:color-mix(in srgb,var(--text-primary,#e6edf7) 5%,transparent);overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}.ov-parts-bar::-webkit-scrollbar{display:none}',
+        '.ov-parts-bar{gap:4px;margin:18px 0 14px;padding:4px;border-radius:14px;background:color-mix(in srgb,var(--text-primary,#e6edf7) 5%,transparent);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;overscroll-behavior-x:contain}.ov-parts-bar::-webkit-scrollbar{display:none}',
         '.ov-parts-bar label{flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:0 14px;border-radius:10px;font-size:13.5px;font-weight:700;color:var(--text-secondary,#a8b3c4);white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color .2s,color .2s}',
         '.ov-parts-bar label:active{transform:scale(.97)}',
         '.pick .ov-part+.ov-part{margin-top:26px}.pick .ov-parts-bar{margin-top:10px}',
@@ -739,7 +739,7 @@ a.sc-card:hover .sc-ic,a.sc-card:focus-visible .sc-ic{scale:1.06}.sc-ic{transiti
 .sc-code pre{margin:0;padding:14px;overflow:auto;font-size:13px;line-height:1.55}
 .sc-demo{border-radius:16px;border:1px solid var(--border,rgba(255,255,255,.08));overflow:hidden;background:var(--bg-secondary,#101828)}
 .sc-demo iframe{display:block;width:100%;border:0;background:var(--bg-primary,#0a0f1c)}
-.sc-table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border,rgba(255,255,255,.08))}
+.sc-table-wrap{overflow-x:auto;overflow-y:auto;border-radius:14px;border:1px solid var(--border,rgba(255,255,255,.08))}
 .sc-table{width:100%;border-collapse:collapse;font-size:14px}
 .sc-table th,.sc-table td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--border,rgba(255,255,255,.08))}
 .sc-table thead th{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted,#7386a3);background:var(--bg-secondary,#101828)}
@@ -776,7 +776,7 @@ a.sc-card:hover .sc-ic,a.sc-card:focus-visible .sc-ic{scale:1.06}.sc-ic{transiti
 a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-cards{list-style:none;margin:0;padding:0;display:grid;gap:14px}
 .sc-cards.sc-wrap{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
-.sc-cards.sc-rail{grid-auto-flow:column;grid-auto-columns:minmax(240px,300px);overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:thin}
+.sc-cards.sc-rail{grid-auto-flow:column;grid-auto-columns:minmax(240px,300px);overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:thin}
 .sc-cards.sc-rail>li{scroll-snap-align:start}
 .sc-tile{display:flex;flex-direction:column;height:100%;border-radius:16px;overflow:hidden;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);color:inherit;text-decoration:none;transition:border-color .15s,transform .2s,box-shadow .2s}
 .sc-tile:hover,.sc-tile:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.28);outline:0}
@@ -833,7 +833,7 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 /* A list that is one sideways row on a phone (scroll snap, the next card peeking) and whatever the page made it on wide
    screens. Every item stays in the HTML. --sc-row-w sets a card's width (82% by default; 46% for small tiles). */
 @media (max-width:599px){
-.sc-row.sc-row{position:relative;display:flex;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;gap:10px;margin-left:-16px;margin-right:-16px;padding:0 16px 4px;grid-template-columns:none}
+.sc-row.sc-row{position:relative;display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;gap:10px;margin-left:-16px;margin-right:-16px;padding:0 16px 4px;grid-template-columns:none}
 .sc-row.sc-row::-webkit-scrollbar{display:none}
 .sc-row.sc-row>*{flex:0 0 var(--sc-row-w,82%);min-width:0;scroll-snap-align:start}
 .sc-fold-hint{display:none}

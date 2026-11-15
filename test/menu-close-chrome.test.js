@@ -71,6 +71,14 @@ async function openMenu(p) {
         assert.deepStrictEqual([x.label, x.icon, x.word], ['Close the menu', true, false], 'the orb, named for a screen reader');
         await eventually(async () => assert.strictEqual(await p.evaluate(`(() => { const o = document.querySelector('.ovs.is-open .ovs-orb'); return o.classList.contains('is-x') && o.querySelectorAll('.ovmb .ovmb-app').length === 3 && getComputedStyle(o.querySelector('.ovmb-bar')).transform !== 'none'; })()`), true, 'its bar and three apps have crossed into an x'));
         await eventually(async () => assert.strictEqual(await p.evaluate(`getComputedStyle(document.querySelector('.ovs.is-open .ovs-x')).display`), 'none', 'one close: the round x steps aside for the orb'));
+        // 4.260.0 (the owner, 11-15: "the close button is offset which causes wasted space"): the close's right edge is the
+        // tabs' (their gutter), the field ends one 6 px gap before it, and both are centred on one line.
+        await eventually(async () => {
+            const row = await p.evaluate(`(() => { const o = document.querySelector('.ovs.is-open .ovs-orb').getBoundingClientRect(), b = document.querySelector('.ovs.is-open .ovs-bar').getBoundingClientRect();
+                const t = document.querySelector('.ovs.is-open .ovs-tabs'); const tr = t.getBoundingClientRect(); const pad = parseFloat(getComputedStyle(t).paddingRight) || 0;
+                return { right: Math.round(o.right - (tr.right - pad)), gap: Math.round(o.left - b.right), mid: Math.round((o.top + o.bottom) / 2 - (b.top + b.bottom) / 2), left: Math.round(b.left - (tr.left + (parseFloat(getComputedStyle(t).paddingLeft) || 0))) }; })()`);
+            assert.ok(Math.abs(row.right) <= 1 && Math.abs(row.gap - 6) <= 1 && Math.abs(row.mid) <= 1 && Math.abs(row.left) <= 1, `the field and its close line up with the tabs: ${JSON.stringify(row)}`);
+        });
         const hit = await p.evaluate(`(() => { const b = document.querySelector('.ovs.is-open .ovs-orb').getBoundingClientRect(); const e = document.elementFromPoint(b.left - 2, b.top + b.height / 2); return !!e && !!e.closest('.ovs-orb'); })()`);
         assert.ok(hit, 'the hit area reaches past the circle');
         await eventually(async () => assert.ok(await p.evaluate('document.activeElement.classList.contains("ovs-orb")'), 'the phone menu keeps focus on its orb'));

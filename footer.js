@@ -526,7 +526,7 @@
 .ovf-now:has(>.ovf-who[open])>.ovf-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,140px),1fr));gap:5px;margin:4px 0 0;padding:0;overflow:visible}
 .ovf-now:has(>.ovf-who[open])>.ovf-tiles>.ovf-tile{border-radius:10px;white-space:normal;min-height:38px;padding-block:4px}
 @media (min-width:900px){.ovf-who[open] .ovf-split-l{grid-template-columns:repeat(4,minmax(0,1fr))}}
-.ovf-tiles{display:flex;gap:6px;margin:0 -14px;padding:0 14px 2px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}
+.ovf-tiles{display:flex;gap:6px;margin:0 -14px;padding:0 14px 2px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:none}
 .ovf-tiles::-webkit-scrollbar{display:none}
 .ovf-tile{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;box-sizing:border-box;padding:0 12px 0 10px;border-radius:999px;white-space:nowrap;font-weight:500!important;color:var(--text-secondary,#b6bdd2);background:color-mix(in srgb,var(--text-primary,#f1f4fb) 5%,transparent);transition:background-color .15s,transform .12s}
 a.ovf-tile:hover{color:var(--text-primary,#f1f4fb);background:color-mix(in srgb,var(--accent,#3b82f6) 15%,transparent)}

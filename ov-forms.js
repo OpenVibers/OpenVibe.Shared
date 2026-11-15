@@ -428,7 +428,18 @@
         const base = scope && scope.querySelectorAll ? scope : doc;
         if (base.tagName === 'SELECT') { enhanceOne(base); return; }
         Array.prototype.forEach.call(base.querySelectorAll('select'), enhanceOne);
+        Array.prototype.forEach.call(base.querySelectorAll('input[type="range"]'), fill);
     }
+    /** A slider's track is filled up to its thumb (4.259.0): --ov-fill, 0 to 1, which ov-forms.css reads. */
+    function fill(r) {
+        if (!r || r.type !== 'range' || !r.style) return;
+        const min = Number(r.min || 0), max = Number(r.max === '' || r.max == null ? 100 : r.max), v = Number(r.value);
+        const f = max > min && Number.isFinite(v) ? Math.min(1, Math.max(0, (v - min) / (max - min))) : 0;
+        r.style.setProperty('--ov-fill', String(Math.round(f * 1000) / 1000));
+    }
+    doc.addEventListener('input', (e) => { if (e.target && e.target.type === 'range') fill(e.target); }, true);
+    doc.addEventListener('change', (e) => { if (e.target && e.target.type === 'range') fill(e.target); }, true);
+    doc.addEventListener('reset', (e) => { const f = e.target; if (f && f.querySelectorAll) setTimeout(() => Array.prototype.forEach.call(f.querySelectorAll('input[type="range"]'), fill), 0); }, true);
 
     // New markup (a boosted page move, a dialog, a list a script drew): looked at once the page is quiet again.
     let soon = 0;
@@ -436,7 +447,7 @@
         if (typeof root.MutationObserver !== 'function' || !doc.body) return;
         new root.MutationObserver((records) => {
             for (const r of records) for (const n of r.addedNodes) {
-                if (n.nodeType === 1 && (n.tagName === 'SELECT' || (n.querySelector && n.querySelector('select')))) {
+                if (n.nodeType === 1 && (n.tagName === 'SELECT' || n.tagName === 'INPUT' || (n.querySelector && n.querySelector('select, input[type="range"]')))) {
                     if (!soon) soon = setTimeout(() => { soon = 0; enhance(doc); }, 60);
                     return;
                 }
@@ -446,7 +457,7 @@
 
     root.OVForms = {
         enhance: (scope) => sheetReady.then((ok) => { if (ok !== false) enhance(scope); }),
-        refresh: (s) => { const st = done.get(s); if (st) { sync(st); if (open === st) draw(st); } },
+        refresh: (s) => { if (s && s.type === 'range') { fill(s); return; } const st = done.get(s); if (st) { sync(st); if (open === st) draw(st); } },
         open: (s) => { const st = done.get(s); if (st) show(st); },
         close: () => close(true),
     };

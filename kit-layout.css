@@ -55,7 +55,7 @@
 .ov-switcher { display: flex; flex-wrap: wrap; gap: var(--gap, var(--space-s)); }
 .ov-switcher > * { flex-grow: 1; flex-basis: calc((var(--min, 32rem) - 100%) * 999); min-inline-size: 0; }
 .ov-grid { display: grid; gap: var(--gap, var(--space-s)); grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--min, 16rem)), 1fr)); }
-.ov-rail { display: grid; grid-auto-flow: column; grid-auto-columns: var(--item, min(80%, 18rem)); gap: var(--gap, var(--space-s)); overflow-x: auto; overscroll-behavior-x: contain;
+.ov-rail { display: grid; grid-auto-flow: column; grid-auto-columns: var(--item, min(80%, 18rem)); gap: var(--gap, var(--space-s)); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory; scroll-padding-inline: var(--pad, 0px); padding-inline: var(--pad, 0px); padding-block-end: var(--space-2xs); scrollbar-width: thin; }
 .ov-rail > * { scroll-snap-align: start; min-inline-size: 0; }
 .ov-cover { display: flex; flex-direction: column; min-block-size: var(--min, 100svh); padding: var(--pad, var(--space-m)); box-sizing: border-box; }
@@ -86,10 +86,10 @@
 :where(.ov-base) :where(blockquote) { padding: .2em 0 .2em 1em; border-inline-start: 3px solid var(--ovk-accent); color: var(--ovk-muted); }
 :where(.ov-base) :where(code, kbd, samp, pre) { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em; }
 :where(.ov-base) :where(:not(pre) > code, kbd) { padding: .1em .35em; border-radius: 6px; background: var(--ovk-panel-2); }
-:where(.ov-base) :where(pre) { padding: var(--space-xs) var(--space-s); overflow-x: auto; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius-sm); background: var(--ovk-panel); line-height: 1.5; }
+:where(.ov-base) :where(pre) { padding: var(--space-xs) var(--space-s); overflow-x: auto; overflow-y: auto; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius-sm); background: var(--ovk-panel); line-height: 1.5; }
 :where(.ov-base) :where(img, video, svg, canvas, iframe) { max-inline-size: 100%; }
 :where(.ov-base) :where(img, video) { block-size: auto; border-radius: var(--ovk-radius-sm); }
-:where(.ov-base) :where(table) { inline-size: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; display: block; overflow-x: auto; }
+:where(.ov-base) :where(table) { inline-size: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; display: block; overflow-x: auto; overflow-y: auto; }
 :where(.ov-base) :where(th, td) { padding: .55em .7em; border-block-end: 1px solid var(--ovk-line); text-align: start; vertical-align: top; }
 :where(.ov-base) :where(th) { font-size: var(--step--1); font-weight: 700; letter-spacing: .03em; color: var(--ovk-muted); }
 :where(.ov-base) :where(details) { padding: .6em .9em; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius-sm); background: var(--ovk-panel); }
@@ -168,7 +168,7 @@
     .ov-places {
         position: sticky; top: var(--ovnav-real-h, 52px); z-index: 20; flex-direction: row; gap: 6px;
         margin: 0 calc(-1 * var(--ov-gutter, 16px)); padding: 8px var(--ov-gutter, 16px);
-        overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+        overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none;
         background: color-mix(in srgb, var(--bg-primary, #0b1220) 86%, transparent);
         -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
     }

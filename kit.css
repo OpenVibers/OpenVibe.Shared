@@ -228,7 +228,7 @@ html[data-ov-motion=off] .ovk-btn--primary, html[data-ov-motion=off] .ovk-btn--p
 .ovk-heading-icon > .ovk-i { width: 22px; height: 22px; }
 .ovk-heading-icon.ovk-i { box-sizing: border-box; width: 40px; height: 40px; padding: 9px; vertical-align: middle; }
 .ovk-titled.ovk-titled { display: flex; align-items: center; gap: 10px; white-space: normal; overflow-wrap: anywhere; }
-.ovk-tabs { position: relative; display: flex; gap: 4px; margin: -6px -16px 0; padding: 6px 16px 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.ovk-tabs { position: relative; display: flex; gap: 4px; margin: -6px -16px 0; padding: 6px 16px 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .ovk-tabs::-webkit-scrollbar { display: none; }
 .ovk-tabs a { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 36px; padding: 6px 14px; border-radius: 999px; color: var(--ovk-muted); font-size: .9rem; font-weight: 650; text-decoration: none; white-space: nowrap; }
 .ovk-tabs a:hover { color: var(--ovk-text); background: var(--ovk-panel-2); }
@@ -390,7 +390,7 @@ html[data-ov-motion=off] .ovk-switch, html[data-ov-motion=off] .ovk-switch::afte
 }
 
 /* ── Numbers, empty states, notices, code, sheets ── */
-.ovk-stats { position: relative; display: flex; gap: 8px; margin: 6px -16px; padding: 6px 16px; overflow-x: auto; scrollbar-width: none; }
+.ovk-stats { position: relative; display: flex; gap: 8px; margin: 6px -16px; padding: 6px 16px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .ovk-stats::-webkit-scrollbar { display: none; }
 .ovk-stats > div { display: flex; flex-direction: column-reverse; flex: 0 0 auto; min-width: 104px; box-sizing: border-box; padding: 8px 14px; border: 1px solid var(--ovk-line); border-radius: calc(var(--ov-radius-1) + 2px); background: var(--ovk-panel); }
 .ovk-stats dt { margin: 0; color: var(--ovk-muted); font-size: .76rem; line-height: 1.25; }

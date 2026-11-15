@@ -87,7 +87,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '9419bb5b07f2', 'dock-code.js': 'cb97274524d0', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '759f07eebc81', 'dock-timeline.js': '8b4ef634d9ab', 'dock-actor.js': '1b6262204e91', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
+    const DOCK_REV = { 'dock-vibe.js': '57e566614edf', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -148,7 +148,7 @@
             .ovdk-ib:hover, .ovdk-ib:focus-visible { background: var(--hover-bg, rgba(127,127,127,.12)); color: var(--text-primary, #ececf1); }
             .ovdk-thread-h .ovdk-ib { margin-left: auto; }
             .ovdk-chats { list-style: none; margin: 0; padding: 6px; display: grid; gap: 2px; }
-            .ovdk-rail { display: flex; gap: 8px; overflow-x: auto; padding: 10px 10px 8px; scrollbar-width: none; border-bottom: 1px solid var(--border, rgba(148,163,184,.14)); }
+            .ovdk-rail { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 10px 10px 8px; scrollbar-width: none; border-bottom: 1px solid var(--border, rgba(148,163,184,.14)); }
             .ovdk-rail::-webkit-scrollbar { display: none; }
             .ovdk-rail-i { all: unset; flex: none; display: grid; justify-items: center; gap: 4px; width: 54px; cursor: pointer; text-decoration: none; }
             .ovdk-rail-t { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--ov-app-corner, 22.5%); color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e6edf3) 7%, transparent); transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), background-color .2s; }
@@ -164,7 +164,7 @@
             html[data-ov-motion="off"] .ovdk-rail-t { transition: none; }
             .ovdk-friends { display: grid; gap: 8px; padding: 8px 10px 4px; border-bottom: 1px solid var(--border, rgba(148,163,184,.14)); }
             .ovdk-sec { margin: 0 2px; font-size: 11.5px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
-            .ovdk-friends-row { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 6px; scrollbar-width: none; }
+            .ovdk-friends-row { display: flex; gap: 10px; overflow-x: auto; overflow-y: hidden; padding: 4px 2px 6px; scrollbar-width: none; }
             .ovdk-friends-row::-webkit-scrollbar { display: none; }
             .ovdk-friend { all: unset; flex: none; display: grid; justify-items: center; gap: 4px; width: 58px; cursor: pointer; }
             .ovdk-friend .ovdk-av { width: 46px; height: 46px; transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), box-shadow .2s ease; }
@@ -205,9 +205,19 @@
             .ovdk-thread-h b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14.5px; }
             .ovdk-back { width: 40px; height: 40px; flex: none; border: 0; border-radius: 12px; background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; display: grid; place-items: center; }
             .ovdk-back:hover { background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); color: var(--text-primary, #ececf1); }
+            .ovdk-back.is-pill { width: auto; display: inline-flex; align-items: center; gap: 2px; padding: 0 14px 0 6px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 750;
+                color: var(--accent-light, var(--accent, #93c5fd)); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 28%, transparent); }
+            .ovdk-back.is-pill:hover { color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); }
+            .ovdk-back.is-pill svg { width: 22px; height: 22px; }
+            .ovdk-back.is-pill:active { transform: scale(.95); }
             .ovdk-msgs { list-style: none; margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 3px; }
             .ovdk-msg { display: grid; justify-items: start; max-width: 84%; margin-top: 8px; }
-            .ovdk-msg.is-cont { margin-top: 0; }
+            .ovdk-msg.is-cont { margin-top: 2px; }
+            .ovdk-who-row { display: inline-flex; align-items: baseline; gap: 8px; margin: 0 4px 3px; min-width: 0; max-width: 100%; }
+            .ovdk-who-row .ovdk-who { margin: 0; }
+            .ovdk-time { font-size: 11.5px; font-weight: 600; color: var(--text-muted, #93a0b4); font-variant-numeric: tabular-nums; white-space: nowrap; }
+            .ovdk-day { list-style: none; display: flex; align-items: center; gap: 10px; margin: 14px 4px 6px; font-size: 11.5px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
+            .ovdk-day::before, .ovdk-day::after { content: ''; flex: 1; height: 1px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 10%, transparent); }
             .ovdk-msg.is-mine { align-self: flex-end; justify-items: end; }
             .ovdk-who { margin: 0 0 3px 10px; font-size: 11.5px; font-weight: 700; color: var(--text-muted, #8b8b96); }
             .ovdk-text { padding: 8px 12px; border-radius: 16px; font-size: 14px; line-height: 1.42; white-space: pre-wrap; overflow-wrap: anywhere;
@@ -624,13 +634,36 @@
         const card = li.querySelector('.ovdk-card'); if (card) card.remove();
         if (m.card) load('dock-card.js', () => !!root.OpenVibeDockCard).then((ok) => { if (ok && li.isConnected) { const c = root.OpenVibeDockCard(m.card, h); if (c) li.append(c); } });
     }
+    /** When a message was sent, as a number (0 when it does not say). */
+    const sentAt = (m) => { const t = Date.parse(String((m && m.created_at) || '')); return Number.isFinite(t) ? t : 0; };
+    /** The day line over a thread's first message of a day (4.259.0; the owner, 11-15: "missing dates and timestamps"). */
+    function dayLine(t) {
+        const d = new Date(t), now = new Date();
+        const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+        const ago = Math.round((day(now) - day(d)) / 86400000);
+        const words = ago === 0 ? 'Today' : ago === 1 ? 'Yesterday' : ago < 7 ? d.toLocaleDateString(undefined, { weekday: 'long' })
+            : d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}) });
+        const li = h('li', 'ovdk-day'); li.setAttribute('role', 'separator'); li.append(h('span', '', words));
+        return li;
+    }
+    const sameDay = (a, b) => { const x = new Date(a), y = new Date(b); return x.getFullYear() === y.getFullYear() && x.getMonth() === y.getMonth() && x.getDate() === y.getDate(); };
+    /** One sender's run of messages: a new one starts with another sender, or after ten quiet minutes. */
+    const sameRun = (m, prev) => !!prev && prev.username === m.username && sentAt(m) - sentAt(prev) < 10 * 60000 && sameDay(sentAt(m), sentAt(prev));
     function bubble(m, prev) {
         const mine = m.username === me();
-        const li = h('li', `ovdk-msg${mine ? ' is-mine' : ''}${prev && prev.username === m.username ? ' is-cont' : ''}`);
-        if (!mine && !(prev && prev.username === m.username)) {
-            // §Z.3: the name wears its effect, hat and badge (the message's subject, when it carries one).
-            const who = setSubject(h('span', 'ovdk-who'), m); who.textContent = m.display_name || m.username || '';
-            li.append(who);
+        const cont = sameRun(m, prev);
+        const li = h('li', `ovdk-msg${mine ? ' is-mine' : ''}${cont ? ' is-cont' : ''}`);
+        if (!cont) {
+            // A run's head: the sender (not you) and the time it was sent (4.259.0).
+            const head = h('span', 'ovdk-who-row');
+            if (!mine) {
+                // §Z.3: the name wears its effect, hat and badge (the message's subject, when it carries one).
+                const who = setSubject(h('span', 'ovdk-who'), m); who.textContent = m.display_name || m.username || '';
+                head.append(who);
+            }
+            const at = sentAt(m);
+            if (at) { const tm = h('time', 'ovdk-time', new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })); tm.dateTime = new Date(at).toISOString(); head.append(tm); }
+            if (head.childNodes.length) li.append(head);
         }
         li.dataset.id = String(m.id);
         const words = h('span', 'ovdk-text', String(m.message || ''));
@@ -657,7 +690,8 @@
         const conv = (chats.list || []).find((c) => String(c.id) === chats.open);
         panel.textContent = '';
         const head = h('div', 'ovdk-thread-h');
-        const back = h('button', 'ovdk-back'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your chats'); back.append(icon(G.back));
+        // 4.260.0 (the owner, 11-15: "make the back button easier to see"): a pill with its word, in the accent.
+        const back = h('button', 'ovdk-back is-pill'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your chats'); back.append(icon(G.back), h('span', '', 'Chats'));
         back.addEventListener('click', () => { save({ chat: null }); chatList(); });
         // §Z.3: the title's names wear their effect, hat and badge (each person's name in a span of its own).
         const title = titleInto(h('b', ''), conv);
@@ -763,7 +797,14 @@
         if (id !== chats.open || !panelActive('chats')) return;
         if (first) list.textContent = '';
         const atEnd = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 40;
-        got.forEach((m) => { if (chats.msgs.some((x) => x.id === m.id)) return; list.append(bubble(m, chats.msgs[chats.msgs.length - 1])); chats.msgs.push(m); chats.last = Math.max(chats.last, Number(m.id) || 0); });
+        // Oldest first, whatever order the page came in (Chat answers the latest 50 newest first: the thread read upside
+        // down; the owner, 11-15: "the conversations aren't ordered correctly"), with a day line where the day changes.
+        got.slice().sort((a, b) => (sentAt(a) - sentAt(b)) || ((Number(a.id) || 0) - (Number(b.id) || 0))).forEach((m) => {
+            if (chats.msgs.some((x) => x.id === m.id)) return;
+            const prev = chats.msgs[chats.msgs.length - 1];
+            if (sentAt(m) && (!prev || !sameDay(sentAt(m), sentAt(prev)))) list.append(dayLine(sentAt(m)));
+            list.append(bubble(m, prev)); chats.msgs.push(m); chats.last = Math.max(chats.last, Number(m.id) || 0);
+        });
         // §Z.3: every name in the room wears its effect, hat and badge.
         wearNames(list);
         if (first && !chats.msgs.length) list.append(h('li', 'ovdk-none', 'No messages yet. Say hello.'));

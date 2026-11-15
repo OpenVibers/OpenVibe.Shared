@@ -110,7 +110,7 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
 @media (max-width: 640px) {
     .ovas-head { padding: 10px 12px; border-radius: 14px; } .ovas-msg { font-size: 14.5px; }
     .ovas-code, .ovas-out, .ovas-diff { font-size: 12px; max-height: 45vh; }
-    .ovas-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 0 2px; } .ovas-bar::-webkit-scrollbar { display: none; }
+    .ovas-bar { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding: 0 2px; } .ovas-bar::-webkit-scrollbar { display: none; }
     .ovas-chip { flex: none; } .ovas-icons .ovas-kind + .ovas-kind { display: none; }
 }
 

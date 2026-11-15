@@ -66,5 +66,11 @@ assert.ok(dock.includes('focus: () => o.task || null'), 'the Dock tells the pane
 const navbar = fs.readFileSync(path.join(__dirname, '..', 'navbar.js'), 'utf8');
 assert.ok(/function openDock\(tab, opts\)/.test(navbar), 'the navbar opens the Dock with the step to point at');
 
+// 4.259.0 (the owner, 11-15: a "Run (3)" chip over the menu's conversations, "why"): quiet draws no mode chips and no
+// list, and gone is display:none!important, because the chips' own display:flex beats the hidden attribute.
+assert.ok(/if \(quiet\) \{[^}]*chips\.classList\.add\('ovdt-gone'\); list\.classList\.add\('ovdt-gone'\);/.test(panel), 'quiet hides the chips and the list for real');
+assert.ok(/function renderChips\(counts\) \{\s*chips\.textContent = '';\s*if \(quiet\) return;/.test(panel), 'quiet never paints a mode chip');
+assert.ok(panel.includes("'.ovdt .ovdt-gone{display:none!important}'"), 'gone beats a display of its own');
+
 console.log('dock timeline: now, needs you, the timeline, the folds and the filters');
 console.log('all passed');

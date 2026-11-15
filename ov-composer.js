@@ -51,7 +51,7 @@
 .ovt-send:disabled { opacity: .5; }
 .ovt-composer .ovc-file.ovc-image { height: auto; min-height: 100px; flex-wrap: wrap; overflow: visible; }
 .ovt-composer .ovc-image input { flex: 1 0 100%; min-width: 0; min-height: 36px; box-sizing: border-box; border: 1px solid var(--border, rgba(148,163,184,.18)); border-radius: 8px; background: var(--bg-primary, #0b1220); color: inherit; font: inherit; }
-.ovc-files { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px; margin: 0 0 2px -4px; scrollbar-width: thin; }
+.ovc-files { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 0 8px; margin: 0 0 2px -4px; scrollbar-width: thin; }
 .ovc-files[hidden] { display: none; }
 .ovc-file { position: relative; flex: none; display: flex; align-items: center; gap: 9px; max-width: 230px; height: 52px; padding: 5px 30px 5px 5px; box-sizing: border-box; border-radius: 14px;
     border: 1px solid var(--ovt-line, var(--border, rgba(148, 163, 184, .18))); background: color-mix(in srgb, var(--text-primary, #fff) 4%, transparent); overflow: hidden; animation: ovc-in .2s cubic-bezier(.2, .9, .3, 1) both; }
@@ -148,8 +148,27 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 .ovc-v2 .ovc-files { max-width: 100%; }
 .ovc-v2 textarea { display: block; width: 100%; min-height: 26px; max-height: 40vh; box-sizing: border-box; margin: 0; padding: 8px 2px 4px; border: 0; outline: 0; resize: none; overflow-y: auto; background: transparent; color: var(--text-primary, #e6edf7); font: inherit; font-size: 17px; line-height: 1.45; }
 .ovc-v2 textarea::placeholder { color: var(--text-muted, #7386a3); }
+/* 4.260.0, one line (the owner, 11-15, circling the mic and + under a divider: "make these buttons so they're fixed on
+   top of the composer so you can type through it … better use of space"): a chat's or an agent's box is the words
+   between its tools and its send, on one line that grows; no row of its own, no divider. What sits above the words
+   (the reply bar, the files, the chips) keeps a line of its own. A post and a reply keep their row. */
+.ovc-v2:is([data-preset=chat], [data-preset=agent]) .ovc-body { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 4px; }
+.ovc-v2:is([data-preset=chat], [data-preset=agent]) .ovc-body > * { flex: 1 1 100%; }
+.ovc-v2:is([data-preset=chat], [data-preset=agent]) .ovt-c-row { display: contents; }
+.ovc-v2:is([data-preset=chat], [data-preset=agent]) .ovt-c-row > :is(.ovc-chips, .ovc-verbs) { order: 40; flex: 1 1 100%; }
+.ovc-v2:is([data-preset=chat], [data-preset=agent]) .ovt-c-row > .ovc-chips:empty { display: none; }
+.ovc-v2:is([data-preset=chat], [data-preset=agent]) .ovt-c-row > .ovt-c-tools { order: 50; flex: none; }
+.ovc-v2:is([data-preset=chat], [data-preset=agent]) .ovc-body > textarea { order: 51; flex: 1 1 0; min-width: 0; min-height: 40px; padding: 9px 4px; }
+.ovc-v2:is([data-preset=chat], [data-preset=agent]) .ovc-body > textarea:placeholder-shown { height: 40px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovc-v2:is([data-preset=chat], [data-preset=agent]) .ovt-c-row > .ovc-ring { order: 52; flex: none; align-self: center; }
+.ovc-v2:is([data-preset=chat], [data-preset=agent]) .ovt-c-row > .ovt-send { order: 53; flex: none; }
+.ovc-v2.ovt-composer:is([data-preset=chat], [data-preset=agent]) { padding: 6px 6px 6px 8px; border-radius: 24px; }
+.ovc-v2 .ovc-run { display: flex; gap: 6px; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding: 2px 2px 0; }
+.ovc-v2 .ovc-run::-webkit-scrollbar { display: none; }
+.ovc-v2 .ovc-run .ovc-chip { flex: none; }
+.ovc-v2 .ovc-run .ovc-chip-v { max-width: 150px; }
 .ovc-v2 .ovt-c-row { display: flex; align-items: center; gap: 4px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--ovt-line, rgba(148, 163, 184, .18)) 70%, transparent); }
-.ovc-v2 .ovt-c-tools { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.ovc-v2 .ovt-c-tools { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .ovc-v2 .ovt-c-tools::-webkit-scrollbar { display: none; }
 .ovc-v2 .ovt-btn { position: relative; flex: none; display: grid; place-items: center; width: 40px; height: 40px; box-sizing: border-box; padding: 0; border-radius: 50%; border: 0; background: none; color: var(--ovt-accent, var(--accent-light, var(--accent, #60a5fa))); cursor: pointer; transition: background-color .15s, transform .12s; }
 .ovc-v2 .ovt-btn:hover, .ovc-v2 .ovt-btn:focus-visible { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); }
@@ -246,7 +265,7 @@ html[data-ov-motion=off] .ovc-cam-shutter { transition: none; }
 .ovc-v2 .ovc-verb[data-verb="ask"][aria-pressed="true"] svg { color: #c084fc; }
 .ovc-v2 .ovc-verb[data-verb="do"][aria-pressed="true"] svg { color: #fbbf24; }
 @media (max-width: 520px) { .ovc-v2 .ovc-verb:not([aria-pressed="true"]) span { display: none; } .ovc-v2 .ovc-verb:not([aria-pressed="true"]) { width: 34px; padding: 0; justify-content: center; } }
-.ovc-v2 .ovc-ask-chips { display: flex; gap: 6px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.ovc-v2 .ovc-ask-chips { display: flex; gap: 6px; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .ovc-v2 .ovc-ask-chips::-webkit-scrollbar { display: none; }
 .ovc-v2 .ovc-ask-chips > * { flex: none; }
 .ovc-v2:not(.is-asking) .ovc-ask-chips { display: none; }
@@ -628,6 +647,9 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         retry: 'M4 12a8 8 0 1 0 2.3-5.7L4 8.5M4 4v4.5h4.5',
         bolt: 'M13 3L5 13.5h6L10 21l9-11h-6.2z',
         model: 'M12 3l7.5 4.3v8.4L12 20l-7.5-4.3V7.3zM12 8v4.2M12 12.2l3.6 2.1M12 12.2l-3.6 2.1',
+        // 4.260.0, the run line's: an agent (a head with an antenna) and a computer (a screen on its stand).
+        agent: 'M7.5 8.5h9a2.5 2.5 0 0 1 2.5 2.5v5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16v-5a2.5 2.5 0 0 1 2.5-2.5zM12 8.5V5.2M9.6 13.2h.01M14.4 13.2h.01M2.8 12.2v2.6M21.2 12.2v2.6',
+        computer: 'M4.5 5h15a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM9 20h6M12 16v4',
         layers: 'M12 4l8.5 4.5L12 13 3.5 8.5zM3.5 13L12 17.5 20.5 13',
         ext: 'M14 5h5v5M19 5l-8 8M10 6H6a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4',
     };
@@ -981,7 +1003,8 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         }
         text.addEventListener('input', syncSend);
         if (form.classList.contains('ovc-v2')) {
-            const grow = () => { text.style.height = 'auto'; text.style.height = `${Math.min(text.scrollHeight + 2, Math.round((root.innerHeight || 800) * 0.4))}px`; };
+            // Empty, the box is its rows (4.260.0: a long placeholder wrapped in a one-line box made it four lines tall).
+            const grow = () => { text.style.height = 'auto'; if (!text.value) { text.style.height = ''; return; } text.style.height = `${Math.min(text.scrollHeight + 2, Math.round((root.innerHeight || 800) * 0.4))}px`; };
             text.addEventListener('input', grow);
             requestAnimationFrame(grow);
         }
@@ -1361,7 +1384,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     const PRESET = {
         post: { tools: ['photo', 'camera', 'file', 'emoji', 'voice'], send: 'Post', avatar: true, rows: 2, max: 2000, ring: true, resize: 2560 },
         chat: { tools: ['attach', 'emoji', 'voice'], send: '', avatar: false, rows: 1, max: 4000, ring: false, resize: 2560 },
-        agent: { tools: ['attach', 'camera', 'voice'], send: '', avatar: false, rows: 2, max: 16000, ring: false, resize: 1568 },
+        agent: { tools: ['attach', 'camera', 'voice'], send: '', avatar: false, rows: 1, max: 16000, ring: false, resize: 1568 },
         comment: { tools: ['photo', 'emoji'], send: 'Reply', avatar: true, rows: 1, max: 2000, ring: true, resize: 2560 },
     };
     const EMOJI = '😀 😂 🥹 😊 😍 🥰 😘 😎 🤩 🥳 😇 🙂 😉 😌 🤔 🤨 😐 🙄 😏 😬 😮 😱 😭 😤 😡 🤯 🥶 🥵 😴 🤤 🤗 🫡 🤝 👍 👎 👏 🙌 🙏 💪 👀 🫶 ❤️ 🧡 💛 💚 💙 💜 🖤 🤍 💔 ✨ 🔥 💯 🎉 🎊 🏆 🎮 🎧 🎵 📸 🎬 🍕 🍔 🍿 ☕ 🍻 🌈 🌙 ⭐ ⚡ 💥 💀 🤖 👻 🐐 🦆 🐸 🚀 ✅ ❌ ⚠️ ❓ 👋 🫠'.split(' ');
@@ -1759,6 +1782,69 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         paintModel(); paintSources();
         modelChip.addEventListener('click', () => openModels());
         srcChip.addEventListener('click', () => openSources());
+        // 4.260.0, how it runs (the owner, 11-15: "you need to be able to choose your harness … configure your model … it's
+        // able to interact with link, and you can choose a node … the shared node or your own"): an agent's box says who
+        // does it (your Actor, Codes, a coding harness), on what model, and where (OpenVibe, your computer through Link,
+        // a computer shared with you, a Codes runner). The lists are the Frame's (GET /api/frame/run-options and
+        // /choices), the same on every site; a page may hand its own (o.runOptions) or turn the line off (run: false).
+        // The choice is kept on this device and goes with the run (agents.run-start@1 agent, model, where).
+        const runOn = name === 'agent' && o.run !== false;
+        let runPick = { agent: 'auto', where: 'auto' };
+        try { runPick = Object.assign(runPick, JSON.parse(localStorage.getItem('ov:composer:run') || '{}')); } catch { /* private mode */ }
+        const runChips = el('div', 'ovc-run'); runChips.setAttribute('role', 'group'); runChips.setAttribute('aria-label', 'How it runs');
+        const runChip = (path, label) => { const b = el('button', 'ovc-chip ovc-chip--btn ovc-run-c', `${svg(path)}<span class="ovc-chip-v"></span>`); b.type = 'button'; b.setAttribute('aria-haspopup', 'dialog'); b.dataset.what = label; return b; };
+        const agentChip = runChip(IC.agent || IC.spark, 'Agent'), runModelChip = runChip(IC.model, 'Model'), whereChip = runChip(IC.computer || IC.globe, 'Runs on');
+        let runOpts = null;
+        const fallbackRun = () => ({ agents: [{ id: 'auto', name: 'Auto', line: 'The right one for what you ask' }, { id: 'actor', name: 'Actor', line: 'Your agent' }, { id: 'codes', name: 'Codes', line: 'Writes and changes code' }], places: [{ kind: 'auto', name: 'Auto', line: 'Wherever it fits best' }, { kind: 'openvibe', name: 'OpenVibe', line: "OpenVibe's computers" }] });
+        const placeKey = (pl) => (pl.kind === 'auto' ? 'auto' : pl.id ? `${pl.kind}:${pl.id}` : pl.kind);
+        const paintRun = () => {
+            const opts = runOpts || o.runOptions || fallbackRun();
+            const a = (opts.agents || []).find((x) => x.id === runPick.agent) || { name: runPick.agent === 'auto' ? 'Auto' : runPick.agent };
+            const w = (opts.places || []).find((x) => placeKey(x) === runPick.where) || { name: runPick.where === 'auto' ? 'Auto' : 'OpenVibe' };
+            // Unpicked, each says what it is (three bare "Auto" chips said nothing).
+            const auto = (v, word) => (v === 'Auto' ? word : v);
+            const m = model.name || model.model;
+            agentChip.querySelector('.ovc-chip-v').textContent = auto(a.name, 'Any agent'); agentChip.setAttribute('aria-label', `Agent: ${a.name}. Change it`);
+            runModelChip.querySelector('.ovc-chip-v').textContent = auto(m, 'Auto model'); runModelChip.setAttribute('aria-label', `Model: ${m}. Change it`);
+            whereChip.querySelector('.ovc-chip-v').textContent = auto(w.name, 'Anywhere'); whereChip.setAttribute('aria-label', `Runs on: ${w.name}. Change it`);
+            agentChip.classList.toggle('is-on', runPick.agent !== 'auto'); whereChip.classList.toggle('is-on', runPick.where !== 'auto');
+        };
+        const saveRun = () => { try { localStorage.setItem('ov:composer:run', JSON.stringify(runPick)); } catch { /* private mode */ } paintRun(); };
+        const loadRun = async () => {
+            if (o.runOptions) return o.runOptions;
+            if (runOpts) return runOpts;
+            const tok = viewerToken();
+            try {
+                const r = await fetch(`${frame}/run-options`, { credentials: tok ? 'omit' : 'include', headers: { Accept: 'application/json', ...(tok ? { Authorization: `Bearer ${tok}` } : {}) } });
+                if (r.ok) { const d = await r.json(); if (d && Array.isArray(d.agents) && Array.isArray(d.places)) runOpts = d; }
+            } catch { /* the short list stands */ }
+            return runOpts || fallbackRun();
+        };
+        const pickSheet = (title, rows, isOn, onPick) => sheet(title, (b, close) => {
+            const list = el('div', 'ovc-models');
+            rows.forEach((row) => {
+                const r = el('div', 'ovc-model');
+                const btn = el('button', 'ovc-model-b'); btn.type = 'button'; btn.setAttribute('aria-pressed', String(isOn(row)));
+                if (row.disabled) btn.disabled = true;
+                const mark = el('span', 'ovc-model-m'); mark.textContent = String(row.name || '?').trim().charAt(0).toUpperCase();
+                const t = el('span', 'ovc-model-t'); const nm = el('b'); nm.textContent = row.name; const ln = el('small'); ln.textContent = row.line || '';
+                t.append(nm, ln); btn.append(mark, t);
+                btn.addEventListener('click', () => { onPick(row); close(); ta.focus(); });
+                r.append(btn); list.append(r);
+            });
+            b.append(list);
+        });
+        agentChip.addEventListener('click', async () => { const opts = await loadRun(); pickSheet('Agent', opts.agents || [], (x) => x.id === runPick.agent, (x) => { runPick.agent = x.id; saveRun(); }); });
+        whereChip.addEventListener('click', async () => { const opts = await loadRun(); pickSheet('Runs on', opts.places || [], (x) => placeKey(x) === runPick.where, (x) => { runPick.where = placeKey(x); saveRun(); }); });
+        runModelChip.addEventListener('click', () => openModels());
+        if (runOn) { runChips.append(agentChip, runModelChip, whereChip); paintRun(); loadRun().then(paintRun); }
+        const runValue = () => {
+            if (!runOn) return null;
+            const opts = runOpts || o.runOptions || fallbackRun();
+            const where = runPick.where === 'auto' ? null : (opts.places || []).find((x) => placeKey(x) === runPick.where) || null;
+            const m = model && model.model && model.model !== 'openvibe/auto' ? { id: model.model, source: model.source || 'openvibe', ...(model.machine ? { machine: model.machine } : {}), ...(model.name ? { name: model.name } : {}) } : null;
+            return { agent: runPick.agent || 'auto', ...(m ? { model: m } : {}), ...(where && where.kind !== 'auto' ? { where: { kind: where.kind, ...(where.id ? { id: where.id } : {}), ...(where.name ? { name: where.name } : {}) } } : {}) };
+        };
         row.appendChild(tools);
         if (!above) row.appendChild(chips);
         if (ring) row.appendChild(ring);
@@ -1767,6 +1853,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         if (head.children.length) body.appendChild(head);
         // Ask and Do's chips: a line of their own above the words (scrolls sideways on a narrow screen, never wider).
         if (verbs.includes('ask') || verbs.includes('do')) body.appendChild(askChips);
+        if (runOn) body.appendChild(runChips);
         body.append(ta, row);
         const note = el('p', 'ovc-note'); note.setAttribute('data-ovt-note', ''); note.setAttribute('role', 'status');
         form.append(body, note);
@@ -1891,7 +1978,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 const pick = (row) => {
                     model = { model: row.model, source: row.source || 'openvibe', ...(row.machine ? { machine: row.machine } : {}), name: row.name || row.model };
                     try { localStorage.setItem(`ov:composer:model:${askTask}`, JSON.stringify(model)); } catch { /* private mode */ }
-                    paintModel(); close(); ta.focus();
+                    paintModel(); if (runOn) paintRun(); close(); ta.focus();
                 };
                 const rowEl = (row, rec) => {
                     const r = el('div', 'ovc-model');
@@ -2044,7 +2131,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (form.classList.contains('is-busy')) return;
-                const value = { text: ta.value.trim(), files: api.files(), uploads: api.uploads(), audience: aud ? aud.querySelector('select').value : null, mode: md ? md.querySelector('select').value : null, chips: values(), reply: replying ? replying.data : null };
+                const value = { run: runValue(), text: ta.value.trim(), files: api.files(), uploads: api.uploads(), audience: aud ? aud.querySelector('select').value : null, mode: md ? md.querySelector('select').value : null, chips: values(), reply: replying ? replying.data : null };
                 setBusy(true);
                 let keep = false;
                 try { keep = (await o.onSubmit(value, api)) === false; }

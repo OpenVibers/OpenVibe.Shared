@@ -86,6 +86,8 @@
     const CATEGORY_TONE = { stream: 'live', social: 'accent', chat: 'accent', game: 'accent', economy: 'gold', achievement: 'gold', moderation: 'warn', system: 'muted', service: 'accent', admin: 'accent' };
     // The bell's tabs. Network defines what each holds (server/notifications/tabs.js, ?tab= and /unread-by-tab).
     const TABS = [['all', 'All'], ['mentions', 'Mentions'], ['live', 'Live'], ['alerts', 'Deals & alerts'], ['system', 'System'], ['agents', 'Agents']];
+    // 4.260.0 (the owner, 11-15: "more minimalist … use more icons"): each tab says what it holds with its glyph too.
+    const TAB_GLYPH = { all: 'bell', mentions: 'chat', live: 'live', alerts: 'tag', system: 'pulse', agents: 'agent' };
     const TAB_EMPTY = {
         all: ['No notifications yet', 'When something happens across OpenVibe, it lands here.'],
         mentions: ['No mentions yet', 'When someone mentions you, replies to you or messages you, it shows here.'],
@@ -302,7 +304,7 @@
             .openvibe-nv-unread:hover { color: var(--text-primary, #ececf1); }
             .openvibe-nv-unread[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); border-color: transparent; color: var(--on-accent-strong, var(--on-accent, #fff)); }
             .openvibe-nv-unread svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-            .openvibe-nv-tabs { display: flex; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 0 6px; }
+            .openvibe-nv-tabs { display: flex; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin: 0 -12px; padding: 0 6px; }
             .openvibe-nv-tabs::-webkit-scrollbar { display: none; }
             .openvibe-nv-tabs.is-more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
             .openvibe-nv-tabs button { flex: none; position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 10px; border: 0; background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
@@ -310,7 +312,8 @@
             .openvibe-nv-tabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2.5px; border-radius: 2px 2px 0 0; background: var(--accent, #3b82f6); }
             .openvibe-nv-tabs button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -3px; border-radius: 10px; }
             .openvibe-nv-tabs .n { min-width: 18px; padding: 2px 5px; box-sizing: border-box; border-radius: 999px; font-size: 10.5px; font-weight: 750; line-height: 1.2; text-align: center; font-variant-numeric: tabular-nums;
-                color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--accent, #3b82f6) 24%, transparent); }
+                /* 4.260.0 (the owner, 11-15: "make the little badges red, since that indicates … unread alerts"). */
+                color: #fff; background: var(--danger, #ef4444); }
             .openvibe-nv-tabs .n:empty { display: none; }
             .openvibe-nv-tabs.is-more { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); }
 
@@ -360,7 +363,35 @@
             .openvibe-notif-item .meta { font-size: 11.5px; color: var(--text-muted, #8b8b96); margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
             .openvibe-notif-item .meta .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .6; }
             .openvibe-notif-item .unread-dot { position: absolute; right: 14px; top: 50%; margin-top: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent, #3b82f6); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
-            .openvibe-notif-item.unread .ovn-row { box-shadow: inset 3px 0 0 var(--accent, #3b82f6); }
+            /* 4.260.0 (the owner, 11-15: "more minimalist … nicer organization … more icons"): unread is a tint and a dot at
+               the right, not a bar down the side. */
+            .openvibe-notif-item.unread .ovn-row::after { content: ''; position: absolute; right: 14px; top: 18px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent, #3b82f6); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); }
+            .openvibe-notif-dock .openvibe-notif-item { margin: 0 8px 6px; border-radius: 14px; }
+            .openvibe-notif-dock .openvibe-notif-item .ovn-row { grid-template-columns: 40px minmax(0, 1fr); gap: 11px; padding: 11px 34px 11px 12px; border-radius: 14px; }
+            .openvibe-notif-dock .openvibe-notif-item .ovn-row.has-thumb { grid-template-columns: 40px minmax(0, 1fr) 52px; }
+            .openvibe-notif-dock .openvibe-notif-item:not(.unread) .ovn-row { background: transparent; }
+            .openvibe-notif-dock .openvibe-notif-item:not(.unread):hover .ovn-row { background: color-mix(in srgb, var(--text-primary, #ececf1) 4%, transparent); }
+            .openvibe-notif-dock .openvibe-notif-item .ovn-glyph { width: 40px; height: 40px; border-radius: 12px; background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 13%, transparent); }
+            .openvibe-notif-dock .openvibe-notif-item .ovn-glyph svg { width: 21px; height: 21px; }
+            .openvibe-notif-dock .openvibe-notif-item .ovn-glyph.ovn-avatar { border-radius: 50%; background: var(--bg-tertiary, #2a2b33); }
+            .openvibe-notif-dock .openvibe-notif-item .ovn-glyph.ovn-avatar img { width: 40px; height: 40px; }
+            .openvibe-notif-dock .openvibe-notif-item .ovn-go { display: none; }
+            .ovn-chip.is-more { background: transparent; border-style: dashed; }
+            .openvibe-nv-tabs .ovn-tab-ic { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
+            .openvibe-nv-tabs button[aria-selected="true"] .ovn-tab-ic { opacity: 1; color: var(--accent-light, var(--accent, #60a5fa)); }
+            /* The top of the menu's list: the tabs, then a slim bar (how many, Clear all, Inbox) that stays while the list
+               scrolls under it (the owner: "make those fixed on top so that there's more space"). */
+            .openvibe-notif-dock .openvibe-nv-tools { position: sticky; top: 0; z-index: 3; flex-wrap: wrap; background: var(--ovn-bg, var(--bg-elevated, #1d1f27)); padding-bottom: 2px; }
+            .openvibe-notif-dock .openvibe-nv-tabs { flex: 1 1 0; }   /* shrinks beside search and Unread; the bar has its own line */
+            .openvibe-notif-dock .openvibe-nv-day { position: static; background: transparent; padding: 12px 16px 6px; }
+            .openvibe-nv-bar { order: 2; flex: 1 1 100%; display: flex; align-items: center; gap: 4px; min-height: 36px; padding: 2px 0 6px; border-top: 1px solid color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); }
+            .openvibe-nv-bar [data-role="status"] { margin-right: auto; padding-left: 2px; font-size: 12px; font-weight: 650; color: var(--text-muted, #8b8b96); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+            .ovn-bar-b { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 10px; border: 0; border-radius: 999px; background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 12.5px; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; }
+            .ovn-bar-b:hover, .ovn-bar-b:focus-visible { background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); color: var(--text-primary, #ececf1); outline: 0; }
+            .ovn-bar-b.is-go { color: var(--accent-light, var(--accent, #93c5fd)); }
+            .ovn-bar-b svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+            @media (pointer: coarse) { .ovn-bar-b { min-height: 40px; } }
+            .openvibe-nv-more.is-auto { padding: 14px 0 22px; }
             .openvibe-notif-item .ovn-row { padding-right: 40px; }
             .openvibe-notif-item .ovn-go { position: absolute; right: 12px; top: 50%; width: 20px; height: 20px; margin-top: -10px; display: grid; place-items: center; color: var(--text-muted, #8b8b96); opacity: .55; transition: opacity .15s ease, transform .2s cubic-bezier(.2, .8, .2, 1), color .15s ease; pointer-events: none; }
             .openvibe-notif-item .ovn-go svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -591,7 +622,11 @@
     }
     function chipsHtml(p, extra = []) {
         const sev = p.severity ? [`<span class="ovn-chip sev" style="--ovn-tone:${TONE[p.tone] || TONE.accent}">${esc(p.severity)}</span>`] : [];
-        const all = sev.concat((p.chips || []).concat(extra).map(c => `<span class="ovn-chip">${esc(c)}</span>`));
+        const rest = (p.chips || []).concat(extra);
+        // 4.260.0 (minimal): the severity and three more; the rest are counted, and named in the title.
+        const shown = rest.slice(0, 3).map(c => `<span class="ovn-chip">${esc(c)}</span>`);
+        if (rest.length > 3) shown.push(`<span class="ovn-chip is-more" title="${esc(rest.slice(3).join(', '))}">+${rest.length - 3}</span>`);
+        const all = sev.concat(shown);
         return all.length ? `<div class="ovn-chips">${all.join('')}</div>` : '';
     }
 
@@ -1015,11 +1050,12 @@
                     <button type="button" class="openvibe-nv-unread" aria-pressed="${v.unread ? 'true' : 'false'}" title="Show only unread notices"><span class="ovn-dot" aria-hidden="true"></span>Unread</button>
                 </div>
                 <div class="openvibe-nv-tabs" role="tablist" aria-label="Notifications">
-                    ${TABS.map(([id, label]) => `<button type="button" role="tab" data-tab="${id}" aria-selected="${id === 'all'}" tabindex="${id === 'all' ? '0' : '-1'}">${esc(label)}<span class="n" data-n="${id}"></span></button>`).join('')}
+                    ${TABS.map(([id, label]) => `<button type="button" role="tab" data-tab="${id}" aria-selected="${id === 'all'}" tabindex="${id === 'all' ? '0' : '-1'}"><svg class="ovn-tab-ic" viewBox="0 0 24 24" aria-hidden="true">${GLYPH[TAB_GLYPH[id]] || GLYPH.bell}</svg>${esc(label)}<span class="n" data-n="${id}"></span></button>`).join('')}
                 </div>
+                ${mode === 'dock' ? `<div class="openvibe-nv-bar"><span data-role="status"></span><button type="button" class="ovn-bar-b" data-act="read-all-foot" title="Mark every notification read">${svg(ICON.checkAll)}<span>Clear all</span></button><a class="ovn-bar-b is-go" href="${esc(inboxUrl())}" title="Open the full inbox">${svg(ICON.open)}<span>Inbox</span></a></div>` : ''}
             </div>
             <div class="openvibe-nv-list" data-role="list" role="tabpanel" aria-label="All"></div>
-            <div class="openvibe-nv-foot"><span data-role="status"></span>${mode === 'dock' ? `<button type="button" class="ovn-foot-read" data-act="read-all-foot">${svg(ICON.checkAll)}Clear all</button>` : ''}${mode === 'panel' || mode === 'dock' ? `<a href="${esc(inboxUrl())}">Full inbox${svg(ICON.go)}</a>` : ''}</div>`;
+            ${mode === 'panel' ? `<div class="openvibe-nv-foot"><span data-role="status"></span><a href="${esc(inboxUrl())}">Full inbox${svg(ICON.go)}</a></div>` : mode === 'dock' ? '' : '<div class="openvibe-nv-foot"><span data-role="status"></span></div>'}`;
         const list = root.querySelector('[data-role="list"]');
         const input = root.querySelector('input[type="search"]');
         let qTimer = null;
@@ -1217,7 +1253,7 @@
         done();
     }
 
-    function renderItems(v, { append = false } = {}) {
+    function renderItems(v, { append = false, view = null } = {}) {
         const list = v.root.querySelector('[data-role="list"]');
         // The same notice repeated back to back ("X is live!" six times; three browser checks failing) reads as one
         // row with a count and the sites it covers.
@@ -1271,13 +1307,32 @@
         } else {
             const old = list.querySelector('.openvibe-nv-more'); if (old) old.remove();
             list.insertAdjacentHTML('beforeend', html);
-            if (v.hasMore) list.insertAdjacentHTML('beforeend', `<div class="openvibe-nv-more"><button type="button" data-act="more">Load more</button></div>`);
-            const more = list.querySelector('[data-act="more"]'); if (more) more.addEventListener('click', () => loadMore(v));
+            if (v.hasMore) moreMark(view || v, list);   // the real view, never the tail's copy (its offset is stale)
         }
         const st = v.root.querySelector('[data-role="status"]');
         if (st) st.textContent = v.total != null ? `${v.items.length} of ${v.total}${v.unread ? ' unread' : ''}` : '';
     }
 
+    /** The end of a list with more behind it (4.260.0; the owner, 11-15: "auto-load more as you scroll down … lazy load
+     *  … in an optimized async way"): a quiet mark the next page loads behind when it comes within a screen of view,
+     *  one page at a time. Without IntersectionObserver it is the old Load more button. */
+    function moreMark(v, list) {
+        if (!list) return;
+        if (v.io) { v.io.disconnect(); v.io = null; }
+        if (typeof IntersectionObserver !== 'function') {
+            list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-more"><button type="button" data-act="more">Load more</button></div>');
+            const b = list.querySelector('[data-act="more"]'); if (b) b.addEventListener('click', () => loadMore(v));
+            return;
+        }
+        list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-more is-auto" aria-hidden="true"><span class="spinner"></span></div>');
+        const mark = list.querySelector('.openvibe-nv-more.is-auto');
+        v.io = new IntersectionObserver((entries) => {
+            if (!entries.some((e) => e.isIntersecting) || v.loading || !v.hasMore) return;
+            v.io.disconnect(); v.io = null;
+            loadMore(v);
+        }, { rootMargin: '0px 0px 900px 0px' });
+        v.io.observe(mark);
+    }
     async function fetchPage(v, offset) {
         const params = new URLSearchParams({ limit: String(v.pageSize || PAGE_SIZE), offset: String(offset) });
         if (v.unread) params.set('unread_only', '1');
@@ -1290,6 +1345,7 @@
         loadTabCounts();
         if (v.fade) setTimeout(v.fade, 0);
         v.loading = true; v.offset = 0; v.items = []; v.ids = new Set(); v.hasMore = false; v.total = null; v.lastDay = null;
+        if (v.io) { v.io.disconnect(); v.io = null; }
         const list = v.root.querySelector('[data-role="list"]');
         list.innerHTML = '<div class="openvibe-nv-more"><span class="spinner"></span></div>';
         try {
@@ -1316,11 +1372,16 @@
             v.items = v.items.concat(fresh); v.hasMore = !!data.has_more; v.offset += (data.notifications || []).length; v.total = data.total ?? v.total;
             // Re-render only the tail to keep the scroll position.
             const old = v.root.querySelector('.openvibe-nv-more'); if (old) old.remove();
-            if (fresh.length) { const tail = { ...v, items: fresh }; renderItems(tail, { append: true }); v.lastDay = tail.lastDay; }
-            else if (v.hasMore) { const list = v.root.querySelector('[data-role="list"]'); list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-more"><button type="button" data-act="more">Load more</button></div>'); list.querySelector('[data-act="more"]').addEventListener('click', () => loadMore(v)); }
+            if (fresh.length) { const tail = { ...v, items: fresh }; renderItems(tail, { append: true, view: v }); v.lastDay = tail.lastDay; }
+            else if (v.hasMore) moreMark(v, v.root.querySelector('[data-role="list"]'));
             const st = v.root.querySelector('[data-role="status"]');
             if (st) st.textContent = v.total != null ? `${v.items.length} of ${v.total}${v.unread ? ' unread' : ''}` : '';
-        } catch { /* keep what we have */ }
+        } catch {
+            // Keep what we have; the end of the list offers the page again.
+            const list = v.root.querySelector('[data-role="list"]');
+            const old = v.root.querySelector('.openvibe-nv-more'); if (old) old.remove();
+            if (list && v.hasMore) { list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-more"><button type="button" data-act="more">Load more</button></div>'); const b = list.querySelector('[data-act="more"]'); if (b) b.addEventListener('click', () => loadMore(v)); }
+        }
         finally { v.loading = false; }
     }
     function applyReadLocally(v, ids, all) {
@@ -1350,7 +1411,21 @@
                 el.textContent = n ? (n > 99 ? '99+' : String(n)) : '';
                 el.parentNode.setAttribute('aria-label', n ? `${label}, ${n} unread` : label);
             }
+            sortTabs(v);
         }
+    }
+    /** The tabs in the order that helps (4.260.0; the owner, 11-15: "sorted by … which one has the most notifications, or
+     *  … a default order that makes the most sense"): All first, then the tabs with the most unread, then the rest in
+     *  their own order (Mentions, Live, Deals & alerts, System, Agents). The open tab stays open wherever it lands. */
+    function sortTabs(v) {
+        const bar = v.root.querySelector('.openvibe-nv-tabs');
+        if (!bar) return;
+        const n = (id) => (id === 'all' || !_tabCounts ? 0 : Math.max(0, Number(_tabCounts[id]) || 0));
+        const order = TABS.map(([id], i) => ({ id, i, n: n(id) }))
+            .sort((a, b) => (a.id === 'all' ? -1 : b.id === 'all' ? 1 : (b.n - a.n) || (a.i - b.i)));
+        const now = [...bar.querySelectorAll('[data-tab]')].map((b) => b.dataset.tab).join(',');
+        if (now === order.map((x) => x.id).join(',')) return;
+        for (const x of order) { const b = bar.querySelector(`[data-tab="${x.id}"]`); if (b) bar.appendChild(b); }
     }
     function listShowing() { return [..._views.values()].some((v) => v.mode !== 'panel' || (_panelEl && _panelEl.classList.contains('open'))); }
 

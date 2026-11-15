@@ -5,7 +5,7 @@
 .ov-ai-sheet header{align-items:flex-start}.ov-ai-sheet header>div{flex:1;min-width:0}.ov-ai-sub{margin:2px 0 0;color:var(--text-secondary,#aab2c0);font-size:13px}
 .ov-ai-x{flex:none;display:inline-grid;place-items:center;width:40px;height:40px;min-height:40px;border:0;border-radius:50%;background:color-mix(in srgb,var(--text-primary,#edf0f5) 8%,transparent);color:inherit;font-size:22px;line-height:1;cursor:pointer}
 .ov-ai-x:hover{background:color-mix(in srgb,var(--text-primary,#edf0f5) 14%,transparent)}
-.ov-ai-order{display:flex;gap:2px;margin:0 20px 8px;padding:3px;border:1px solid var(--border,#687080);border-radius:999px;overflow-x:auto;scrollbar-width:none}
+.ov-ai-order{display:flex;gap:2px;margin:0 20px 8px;padding:3px;border:1px solid var(--border,#687080);border-radius:999px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .ov-ai-order::-webkit-scrollbar{display:none}
 .ov-ai-order button{flex:1 0 auto;min-height:36px;padding:0 12px;border:0;border-radius:999px;background:transparent;color:var(--text-secondary,#aab2c0);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 .ov-ai-order button[aria-pressed=true]{background:color-mix(in srgb,var(--accent,#87b8ff) 20%,transparent);color:var(--text-primary,#edf0f5)}

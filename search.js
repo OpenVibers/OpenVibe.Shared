@@ -496,7 +496,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
 .ovs-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovs-link.is-here { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 42%, transparent); color: var(--text-primary, #e6edf3); }
 .ovs-link.is-here svg { color: var(--accent, #3b82f6); }
-.ovs-livebar { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 8px 6px 2px; }
+.ovs-livebar { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding: 8px 6px 2px; }
 .ovs-livebar::-webkit-scrollbar { display: none; }
 .ovs-live { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); color: inherit; text-decoration: none; font-size: 13.5px; font-weight: 650; }
 .ovs-live.is-count { border-color: color-mix(in srgb, var(--danger, #ef4444) 45%, transparent); background: color-mix(in srgb, var(--danger, #ef4444) 10%, transparent); }
@@ -548,7 +548,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
 .ovs-snip { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-size: 13px; line-height: 1.4; color: var(--text-secondary, #a8b3c4); white-space: normal; }
 .ovs-results-on .ovs-item a { align-items: flex-start; padding: 9px 10px; }
 .ovs-results-on .ovs-ic { margin-top: 1px; text-transform: lowercase; }
-.ovs-rtabs { overflow-x: auto; scrollbar-width: none; padding-top: 8px; }
+.ovs-rtabs { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding-top: 8px; }
 .ovs-rtabs::-webkit-scrollbar { display: none; }
 .ovs-rtabs .ovs-tab[hidden] { display: none; }
 .ovs-skels { display: grid; gap: 6px; padding: 4px 6px 8px; }
@@ -688,7 +688,10 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
 .ovs-foot kbd svg { width: 12px; height: 12px; vertical-align: -1px; }
 @media (max-width: 640px) {
   .ovs.ovs-anchored .ovs-x { display: none; }
-  .ovs.ovs-anchored .ovs-bar { margin-right: 58px; }
+  /* 4.260.0 (the owner, 11-15: "the close button is offset which causes wasted space"): the field and its close share
+     the tabs' gutter (10 px) and one 6 px gap; placeOrb sets the room the close takes (--ovs-orb-room: its size + 6). */
+  .ovs.ovs-anchored .ovs-bar { margin-left: 10px; margin-right: calc(10px + var(--ovs-orb-room, 54px)); gap: 6px; }
+  .ovs.ovs-anchored .ovs-tabs { padding-left: 10px; padding-right: 10px; }
   .ovs.ovs-anchored .ovs-orb { position: fixed; z-index: 3; left: var(--orb-x, calc(100vw - 52px)); top: var(--orb-y, 12px); width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
     background: color-mix(in srgb, var(--accent, #3b82f6) 16%, var(--bg-primary, #0b0f19)); color: var(--text-primary, #e6edf7); -webkit-tap-highlight-color: transparent;
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-light, #60a5fa) 35%, transparent), 0 6px 18px -6px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent);
@@ -2711,7 +2714,12 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         const r = bar.getBoundingClientRect(); if (!r.height) return;
         const size = Math.max(44, Math.min(56, Math.round(r.height)));
         orbEl.style.setProperty('--orb-size', `${size}px`);
-        orbEl.style.setProperty('--orb-x', `${Math.round(Math.min(innerWidth - size - 4, r.right + 8))}px`);
+        el.style.setProperty('--ovs-orb-room', `${size + 6}px`);
+        // Its right edge is the tabs' (their padding in from the sheet's edge), so the row lines up with the rows under it.
+        const tabs = el.querySelector('.ovs-tabs');
+        let right = innerWidth - 12;
+        if (tabs) { const t = tabs.getBoundingClientRect(); const pad = parseFloat(getComputedStyle(tabs).paddingRight) || 0; if (t.width) right = t.right - pad; }
+        orbEl.style.setProperty('--orb-x', `${Math.round(Math.min(innerWidth - size - 4, right - size))}px`);
         orbEl.style.setProperty('--orb-y', `${Math.round(r.top + (r.height - size) / 2)}px`);
     }
     function settleOrb() {

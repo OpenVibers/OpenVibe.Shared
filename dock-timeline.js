@@ -94,7 +94,7 @@
             '@media (hover:hover){.ovdt-btn:not(.is-primary):hover,.ovdt-chip:hover{background:color-mix(in srgb,var(--text-primary,#ececf1) 7%,transparent)}.ovdt-btn.is-primary:hover{filter:brightness(1.08)}}',
             '.ovdt-chip{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.12));background:transparent;color:var(--text-secondary,#a8b3c4);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer;white-space:nowrap;flex:none}',
             '.ovdt-chip[aria-pressed="true"]{color:color-mix(in srgb,var(--accent,#3b82f6) 72%,var(--text-primary,#ececf1));border-color:color-mix(in srgb,var(--accent,#3b82f6) 55%,transparent);background:color-mix(in srgb,var(--accent,#3b82f6) 14%,transparent)}',
-            '.ovdt-chips{display:flex;gap:8px;overflow-x:auto;margin:4px -12px 0;padding:6px 12px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}',
+            '.ovdt-chips{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;margin:4px -12px 0;padding:6px 12px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}',
             '.ovdt-chips::-webkit-scrollbar{display:none}',
             '.ovdt-fold{width:100%;text-align:left;min-height:44px;margin:0 0 8px;padding:0 14px;border-radius:12px;border:1px dashed var(--border,rgba(255,255,255,.16));background:transparent;color:var(--text-secondary,#a8b3c4);font:inherit;font-weight:650;cursor:pointer}',
             '.ovdt-card.ovdt-focus{border-color:color-mix(in srgb,var(--accent,#3b82f6) 55%,transparent)}',
@@ -140,7 +140,9 @@
         // happening shows (a timer, an agent at work, something that needs you); no idle line, no "Nothing needs you",
         // no timeline folds (those are History's). The Dock's own Agents panel keeps everything.
         const quiet = !!opts.quiet;
-        if (quiet) { wrap.classList.add('is-quiet'); chips.hidden = true; list.hidden = true; }
+        // 4.259.0 (the owner, 11-15, circling a "Run (3)" chip above the conversations: "why … a waste of space"): the
+        // chips' own display:flex beat the hidden attribute, so the mode filters showed in the menu. Gone means gone.
+        if (quiet) { wrap.classList.add('is-quiet'); chips.hidden = true; list.hidden = true; chips.classList.add('ovdt-gone'); list.classList.add('ovdt-gone'); }
         // 4.249.0 (the owner crossed out Now / Needs you): quiet has no headings, and what needs you is in the list below.
         if (quiet) { nowHead.classList.add('ovdt-gone'); needsHead.classList.add('ovdt-gone'); needsBox.classList.add('ovdt-gone'); }
         container.appendChild(wrap);
@@ -367,6 +369,7 @@
 
         function renderChips(counts) {
             chips.textContent = '';
+            if (quiet) return;
             for (const m of MODES) {
                 const n = counts && counts[m.id];
                 if (!n) continue;
