@@ -2113,7 +2113,10 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             // then what it is and when, never "Community · Community".
             who.append(h('b', '', String(c.label && !/^system$/i.test(String(c.label)) ? c.label : c.site_name || '').slice(0, 60)));
             // A report says its sentence beside its number (statOf); a member card says it here.
-            const what = kind === 'member' ? String(c.text || '').slice(0, 60) : kind === 'report' ? '' : KIND_WORD[kind] || '';
+            const what0 = kind === 'member' ? String(c.text || '').slice(0, 60) : kind === 'report' ? '' : KIND_WORD[kind] || '';
+            // 4.261.0 (the owner, 11-15, circling "Deals · Deals · 57 min ago"): the kind's word only when it adds something.
+            const named = String(c.label && !/^system$/i.test(String(c.label)) ? c.label : c.site_name || '').trim().toLowerCase();
+            const what = what0 && what0.toLowerCase() === named ? '' : what0;
             meta.append(siteIcon(c.site || 'ov', 18), document.createTextNode(` ${[what, when(c.at)].filter(Boolean).join(' · ')}`));
             // The site's live line ("79 new deals today") lands here once the feed has it (siteLines, plan §AB.46).
             if (SITE_ID.test(String(c.site || ''))) meta.setAttribute('data-ovfd-site', String(c.site));
@@ -2165,6 +2168,8 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             post.append(a, actsOf(c, url, o));
             return post;
         }
+        // A run of deals says its views once, over its rows (4.261.0); the count row would say the same again.
+        if (many && kind === 'deal' && many.querySelector('.ovfd-group-sum')) return a;
         if (people || counts) { const row = counts || h('span', 'ovfd-counts'); if (people) row.prepend(people); a.append(row); }
         return a;
     }
@@ -2206,8 +2211,19 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         const money = (p) => { try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: p.currency }).format(Number(p.amount)); } catch { return `${Number(p.amount).toFixed(2)} ${p.currency}`; } };
         const isDeal = c.kind === 'deal';
         if (isDeal) list.classList.add('is-deals');
-        g.slice(0, isDeal ? 4 : 3).forEach((x) => {
+        // 4.261.0 (the owner, 11-15: "improve … redo … views … total views"): the run says how many saw it in all (the
+        // feed's group.views when Network sends it, feed.item@1 1.3.0, else the card's own views), each row its own views.
+        const viewsOf = (x) => (x && Number.isFinite(Number(x.views)) ? Math.max(0, Number(x.views)) : null);
+        const total = Number.isFinite(Number(c.group.views)) ? Math.max(0, Number(c.group.views)) : g.some((x) => viewsOf(x) != null) ? g.reduce((n, x) => n + (viewsOf(x) || 0), 0) : null;
+        if (isDeal && total != null) {
+            const sum = h('span', 'ovfd-group-sum');
+            sum.setAttribute('aria-label', `${num(total)} views across ${num(Number(c.group.count))} deals`);
+            sum.append(glyph('eye'), h('b', '', count(total)), document.createTextNode(` views across ${num(Number(c.group.count))} deals`));
+            list.append(sum);
+        }
+        g.slice(0, isDeal ? 4 : 3).forEach((x, i) => {
             const row = h('span', 'ovfd-group-i');
+            row.style.setProperty('--i', String(i));
             const th = pic(x);
             // Rows line up: where one has a picture, the others hold its place (a deal's: its store's first letter).
             if (th) {
@@ -2224,6 +2240,8 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
                 if (p && Number(x.was) > Number(p.amount)) { line.append(h('s', '', money({ amount: x.was, currency: p.currency }))); line.append(h('em', '', `-${Math.round((1 - Number(p.amount) / Number(x.was)) * 100)}%`)); }
                 const store = x.store || (/\s[—-]\s([^—-]{2,40})$/.exec(String(x.title || '')) || [])[1];
                 if (store) line.append(h('small', '', String(store).slice(0, 40)));
+                const seen = viewsOf(x);
+                if (seen != null) { const vv = h('small', 'ovfd-row-views'); vv.setAttribute('aria-label', `${num(seen)} views`); vv.append(glyph('eye'), document.createTextNode(count(seen))); line.append(vv); }
                 if (line.childNodes.length) t.append(line);
             }
             row.append(t);
@@ -2231,7 +2249,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         });
         const more = Number(c.group.count) - Math.min(c.kind === 'deal' ? 4 : 3, g.length);
         if (more > 0) list.append(h('small', 'ovfd-group-more', `and ${num(more)} more`));
-        if (more > 0 && isDeal) list.lastChild.textContent = `See all ${num(Number(c.group.count))} deals`;
+        if (more > 0 && isDeal) { list.lastChild.textContent = `See all ${num(Number(c.group.count))} deals`; list.lastChild.append(glyph('go')); }
         return list;
     }
     /** What `counts.people` means for a kind: jobs, voters, people online; nothing where it means nothing. */
@@ -2631,6 +2649,23 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-group.is-deals .ovfd-group-more{justify-self:start;padding:4px 2px;font-size:13px;font-weight:700;color:var(--accent-light,#93c5fd)}
 @media (min-width:900px){.ovfd-group.is-deals{grid-template-columns:repeat(2,minmax(0,1fr))}.ovfd-group.is-deals .ovfd-group-more{grid-column:1/-1}}
 @media (prefers-color-scheme:light){.ovfd-lvl{color:#92400e}.ovfd-price b,.ovfd-price em{color:#15803d}.ovfd-group-ph.is-deal{color:#a16207}}
+/* 4.261.0, a run of deals (the owner, 11-15: "improve … redo … views … total views"): the total views over the run, each
+   row a product tile, its price, its store and its views, rising in turn; one full-width press to all of them. */
+.ovfd-group-sum{display:inline-flex;align-items:center;gap:6px;justify-self:start;margin:0 0 2px;padding:4px 10px;border-radius:999px;font-size:12.5px;color:var(--text-secondary,#a8b3c4);background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent)}
+.ovfd-group-sum b{color:var(--text-primary,#e8ecf3);font-weight:800}.ovfd-group-sum .ovfd-gl{width:15px;height:15px}
+.ovfd-group.is-deals .ovfd-group-i{padding:8px;gap:12px;border-radius:14px;animation:ovfd-row-in .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 50ms);transition:background-color .18s,transform .15s}
+.ovfd-group.is-deals .ovfd-group-i:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 8%,transparent)}
+.ovfd-group.is-deals .ovfd-group-i:active{transform:scale(.985)}
+.ovfd-group.is-deals .ovfd-group-i img{width:56px;height:56px;border-radius:12px;object-fit:contain;background:#fff;padding:3px;box-sizing:border-box;box-shadow:0 0 0 1px color-mix(in srgb,var(--text-primary,#e8ecf3) 10%,transparent)}
+.ovfd-group.is-deals .ovfd-group-ph.is-deal{width:56px;height:56px;border-radius:12px}
+.ovfd-group.is-deals .ovfd-group-t{flex:1 1 auto}.ovfd-row-views{display:inline-flex;align-items:center;gap:3px;margin-left:auto;color:var(--text-muted,#93a0b4)}.ovfd-row-views .ovfd-gl{width:13px;height:13px}
+.ovfd-group.is-deals .ovfd-price{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px}
+.ovfd-group.is-deals .ovfd-group-more{justify-self:stretch;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;margin-top:2px;border-radius:12px;background:color-mix(in srgb,var(--accent,#3b82f6) 12%,transparent);transition:background-color .18s}
+.ovfd-group.is-deals .ovfd-group-more .ovfd-gl{width:16px;height:16px;transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+.ovfd-card:hover .ovfd-group.is-deals .ovfd-group-more{background:color-mix(in srgb,var(--accent,#3b82f6) 18%,transparent)}
+.ovfd-card:hover .ovfd-group.is-deals .ovfd-group-more .ovfd-gl{transform:translateX(calc(3px * var(--ov-move,1)))}
+@keyframes ovfd-row-in{from{opacity:0;transform:translateY(calc(8px * var(--ov-move,1)))}}
+html[data-ov-motion=off] .ovfd-group.is-deals .ovfd-group-i{animation:none}
 :root[data-theme=light] .ovfd-lvl{color:#92400e} :root[data-theme=light] .ovfd-price b,:root[data-theme=light] .ovfd-price em{color:#15803d}
 html[data-ov-motion=off] :is(.ovfd-chip,.ovfd-act-b){transition:none}
 `;

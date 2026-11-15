@@ -298,6 +298,30 @@ html[data-ov-motion=off] .ovc-cam-shutter { transition: none; }
 .ovc-model-x { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; color: var(--text-muted, #93a0b4); }
 .ovc-model-x:hover { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #fff) 6%, transparent); }
 .ovc-model-x svg, .ovc-sheet-more svg { width: 16px; height: 16px; }
+/* 4.261.0, the model sheet organized: filters, sort, what each model can do, a colour per lab. */
+.ovc-sheet-find, .ovc-mfilters, .ovc-msort { flex: none; }
+/* A sideways scroller in the sheet's grid needs its own height: overflow makes its automatic minimum 0 (it was 6 px). */
+.ovc-mfilters { display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding: 2px 0 4px; min-height: 42px; }
+.ovc-mfilters::-webkit-scrollbar { display: none; }
+.ovc-mchip { flex: none; min-height: 36px; padding: 0 13px; border: 1px solid var(--border, rgba(148, 163, 184, .2)); border-radius: 999px; background: none; color: var(--text-secondary, #b6c2d4); font-family: inherit; font-size: 13px; font-weight: 650; line-height: 1; cursor: pointer; transition: background-color .18s, color .18s, transform .1s; }
+.ovc-mchip:active { transform: scale(.96); }
+.ovc-mchip[aria-pressed="true"] { background: var(--ovt-accent, var(--accent, #3b82f6)); border-color: transparent; color: #fff; }
+.ovc-msort { display: inline-flex; gap: 2px; padding: 3px; margin: 2px 0 4px; border-radius: 12px; background: color-mix(in srgb, var(--text-primary, #fff) 6%, transparent); }
+.ovc-msort-b { min-height: 32px; padding: 0 12px; border: 0; border-radius: 9px; background: none; color: var(--text-muted, #93a0b4); font-family: inherit; font-size: 12.5px; font-weight: 650; line-height: 1; cursor: pointer; transition: background-color .18s, color .18s; }
+.ovc-msort-b[aria-checked="true"] { background: var(--bg-card, #141a24); color: var(--text-primary, #e6edf7); box-shadow: 0 2px 8px -4px rgba(0, 0, 0, .5); }
+.ovc-mcount { margin-left: 6px; font-weight: 600; opacity: .7; letter-spacing: 0; }
+.ovc-model-m { color: hsl(var(--ovc-h, 215) 80% 72%); background: color-mix(in srgb, hsl(var(--ovc-h, 215) 70% 55%) 20%, transparent); font-weight: 800; }
+.ovc-model-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 1px; }
+.ovc-model-tags:empty { display: none; }
+.ovc-mtag { padding: 1px 7px; border-radius: 999px; font-family: inherit; font-size: 12px; font-weight: 700; line-height: 1.6; font-style: normal; color: var(--text-secondary, #b6c2d4); background: color-mix(in srgb, var(--text-primary, #fff) 7%, transparent); }
+.ovc-mtag.is-free { color: #86efac; background: color-mix(in srgb, #22c55e 16%, transparent); }
+.ovc-mtag.is-fast { color: #fcd34d; background: color-mix(in srgb, #f59e0b 16%, transparent); }
+.ovc-mtag.is-vision { color: #c4b5fd; background: color-mix(in srgb, #8b5cf6 16%, transparent); }
+.ovc-mtag.is-tools { color: #93c5fd; background: color-mix(in srgb, #3b82f6 16%, transparent); }
+.ovc-models .ovc-model { animation: ovc-mrow .32s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 18ms); }
+@keyframes ovc-mrow { from { opacity: 0; transform: translateY(calc(6px * var(--ov-move, 1))); } }
+html[data-ov-motion=off] .ovc-models .ovc-model { animation: none; }
+@media (prefers-color-scheme: light) { .ovc-mtag.is-free { color: #15803d; } .ovc-mtag.is-fast { color: #b45309; } .ovc-mtag.is-vision { color: #6d28d9; } .ovc-mtag.is-tools { color: #1d4ed8; } .ovc-model-m { color: hsl(var(--ovc-h, 215) 70% 38%); } }
 .ovc-sheet-more { display: inline-flex; align-items: center; gap: 6px; margin: 10px 8px 0; color: var(--ovt-accent, var(--accent-light, #60a5fa)); font-size: 14px; font-weight: 600; text-decoration: none; }
 .ovc-src { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 10px; border-radius: 12px; cursor: pointer; }
 .ovc-src:hover { background: color-mix(in srgb, var(--text-primary, #fff) 5%, transparent); }
@@ -1629,19 +1653,31 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     const SOURCES = [['web', 'Web', 'globe'], ['openvibe', 'OpenVibe', 'layers'], ['mine', 'Mine', 'file'], ['page', 'This page', 'photo']];
     const choicesCache = new Map();
     // The Frame's model list for a task, in one shape whatever answered (the Frame's groups, or AI's own options).
-    async function loadChoices(frame, task) {
+    // 4.261.0 (the owner, 11-15, on "Loading the models…": "massively optimized, cached … local cache and server cache"):
+    // the list is kept on this device for a day and shown at once; the network's answer replaces it when it comes.
+    const CHOICES_LOCAL_MS = 24 * 60 * 60 * 1000;
+    const localKey = (frame, task) => `ov:composer:choices:${task}:${String(frame).replace(/^https?:\/\//, '').slice(0, 60)}`;
+    function localChoices(frame, task) {
+        try { const v = JSON.parse(localStorage.getItem(localKey(frame, task)) || 'null'); return v && Date.now() - v.at < CHOICES_LOCAL_MS && v.data && Array.isArray(v.data.groups) ? v.data : null; } catch { return null; }
+    }
+    async function loadChoices(frame, task, { fresh = false } = {}) {
         const key = `${frame}|${task}`;
-        if (choicesCache.has(key)) return choicesCache.get(key);
+        if (!fresh && choicesCache.has(key)) return choicesCache.get(key);
         const job = fetch(`${frame}/choices?task=${encodeURIComponent(task)}`, { credentials: 'include', headers: { Accept: 'application/json' } })
             .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Models are unavailable right now.'))))
             .then((d) => {
-                if (Array.isArray(d.groups)) return d;
-                const o = d.options || {};
-                return { recommended: d.recommended, groups: [['openvibe', 'OpenVibe'], ['keys', 'Your keys'], ['machines', 'Your computers']].map(([id, title]) => ({ id, title, rows: o[id] || [] })) };
+                const data = Array.isArray(d.groups) ? d : (() => { const o = d.options || {}; return { recommended: d.recommended, groups: [['openvibe', 'OpenVibe'], ['keys', 'Your keys'], ['machines', 'Your computers']].map(([id, title]) => ({ id, title, rows: o[id] || [] })) }; })();
+                try { localStorage.setItem(localKey(frame, task), JSON.stringify({ at: Date.now(), data })); } catch { /* full or private: memory only */ }
+                return data;
             });
         choicesCache.set(key, job);
         job.catch(() => choicesCache.delete(key));
         return job;
+    }
+    /** Ahead of time, when the page is idle: the sheet then opens on a list already here. */
+    function warmChoices(frame, task) {
+        const go = () => { if (!localChoices(frame, task)) loadChoices(frame, task).catch(() => {}); else loadChoices(frame, task).catch(() => {}); };
+        try { if (typeof requestIdleCallback === 'function') requestIdleCallback(go, { timeout: 4000 }); else setTimeout(go, 1500); } catch { /* no timers: nothing ahead */ }
     }
     const money = (row) => {
         if (row.free || (row.price && row.price.in === 0) || row.price_estimate_usd === 0) return 'Free';
@@ -1785,6 +1821,8 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         askChips.append(modelChip, srcChip, depthChip);
         paintModel(); paintSources();
         modelChip.addEventListener('click', () => openModels());
+        // 4.261.0: the list is asked for ahead of time, so the sheet opens on it (kept on the device too).
+        warmChoices(frame, askTask);
         srcChip.addEventListener('click', () => openSources());
         // 4.260.0, how it runs (the owner, 11-15: "you need to be able to choose your harness … configure your model … it's
         // able to interact with link, and you can choose a node … the shared node or your own"): an agent's box says who
@@ -1845,6 +1883,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         const placesFor = (opts) => (coding(opts) ? (opts.places || []).filter((x) => x.kind !== 'openvibe').map((x) => (x.kind === 'auto' ? { ...x, line: 'A shared node or your own computer' } : x)) : (opts.places || []));
         whereChip.addEventListener('click', async () => { const opts = await loadRun(); pickSheet('Runs on', placesFor(opts), (x) => placeKey(x) === runPick.where, (x) => { runPick.where = placeKey(x); saveRun(); }); });
         runModelChip.addEventListener('click', () => openModels());
+        warmChoices(frame, askTask);
         // A page's own choices lead the line (4.260.0; Codes' "Works on"): { id, icon, label, value, options: [{ value,
         // name, line, disabled }], onPick(value) }, each a chip that opens the same sheet as the others.
         // options may be a list or a function (read when the sheet opens: a page's list can grow after the box mounts).
@@ -1992,48 +2031,124 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         }
         function openModels() {
             sheet('Model', async (b, close) => {
-                const find = el('input', 'ovc-sheet-find'); find.type = 'search'; find.placeholder = 'Find a model'; find.setAttribute('aria-label', 'Find a model');
+                // 4.261.0 (the owner, 11-15: "better organization and more features … different and better"): search; filters
+                // (free, fast, vision, tools, your keys, your computers); sort (best, cheapest, fastest); Recommended and your
+                // recent picks first, then every lab in its own group with its count; each row says what the model can do.
+                const find = el('input', 'ovc-sheet-find'); find.type = 'search'; find.placeholder = 'Find a model, a lab or a feature'; find.setAttribute('aria-label', 'Find a model');
+                const chips = el('div', 'ovc-mfilters'); chips.setAttribute('role', 'toolbar'); chips.setAttribute('aria-label', 'Show');
+                const sorts = el('div', 'ovc-msort'); sorts.setAttribute('role', 'radiogroup'); sorts.setAttribute('aria-label', 'Sort by');
                 const list = el('div', 'ovc-models');
-                b.append(find, list);
+                b.append(find, chips, sorts, list);
+                const recentKey = `ov:composer:recent:${askTask}`;
+                const recent = (() => { try { return JSON.parse(localStorage.getItem(recentKey) || '[]').filter((x) => x && x.model).slice(0, 4); } catch { return []; } })();
                 const pick = (row) => {
                     model = { model: row.model, source: row.source || 'openvibe', ...(row.machine ? { machine: row.machine } : {}), name: row.name || row.model };
-                    try { localStorage.setItem(`ov:composer:model:${askTask}`, JSON.stringify(model)); } catch { /* private mode */ }
+                    try {
+                        localStorage.setItem(`ov:composer:model:${askTask}`, JSON.stringify(model));
+                        const next = [{ model: model.model, source: model.source, machine: model.machine || null }, ...recent.filter((x) => !(x.model === model.model && (x.source || 'openvibe') === model.source))].slice(0, 4);
+                        localStorage.setItem(recentKey, JSON.stringify(next));
+                    } catch { /* private mode */ }
                     paintModel(); if (runOn) paintRun(); close(); ta.focus();
+                };
+                const hue = (t) => { let x = 7; for (const c of String(t || 'ov')) x = (x * 31 + c.codePointAt(0)) % 360; return x; };
+                // The lab that made a model (its id: openrouter/<lab>/<model> or <lab>/<model>), never the host it runs on.
+                const LABS = { anthropic: 'Anthropic', google: 'Google', openai: 'OpenAI', 'meta-llama': 'Meta', meta: 'Meta', qwen: 'Qwen', deepseek: 'DeepSeek', mistralai: 'Mistral', mistral: 'Mistral',
+                    nvidia: 'NVIDIA', cohere: 'Cohere', 'x-ai': 'xAI', xai: 'xAI', moonshotai: 'Moonshot', kimi: 'Moonshot', 'z-ai': 'Z.ai', glm: 'Z.ai', liquid: 'Liquid', minimax: 'MiniMax', microsoft: 'Microsoft',
+                    amazon: 'Amazon', ibm: 'IBM', 'ibm-granite': 'IBM', baidu: 'Baidu', tencent: 'Tencent', bytedance: 'ByteDance', perplexity: 'Perplexity', inception: 'Inception', 'dots-studio': 'Dots Studio' };
+                const HOSTS = new Set(['openrouter', 'together', 'fireworks', 'groq', 'deepinfra', 'novita', 'nebius', 'hyperbolic', 'baseten', 'siliconflow', 'chutes', 'parasail', 'featherless', 'cerebras', 'sambanova', 'venice', 'nanogpt', 'iteracompute', 'shared', 'local']);
+                const labOf = (row) => {
+                    const parts = String(row.model || '').split('/');
+                    const id = (parts.length > 2 || (parts.length > 1 && HOSTS.has(parts[0]))) ? parts[1] : parts[0];
+                    const key = String(id || '').toLowerCase().replace(/:.*$/, '');
+                    if (row.source === 'machines') return String(row.maker || 'Your computer');
+                    return LABS[key] || (key ? key.replace(/(^|[-_])([a-z])/g, (m, a, c) => (a ? ' ' : '') + c.toUpperCase()) : String(row.maker || 'Other'));
+                };
+                const hostOf = (row) => { const parts = String(row.model || '').split('/'); return parts.length > 2 || (parts.length > 1 && HOSTS.has(parts[0])) ? String(row.maker || parts[0]).replace(/\s*\([^)]*\)\s*$/, '') : ''; };
+                // "Google: Gemma 4 26B (free)" reads "Gemma 4 26B" under Google, its Free tag beside it.
+                const shortName = (row) => String(row.name || row.model).replace(/^[^:]{2,40}:\s+/, '').replace(/\s*\(free\)\s*$/i, '');
+                const kb = (n) => (n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1000 ? `${Math.round(n / 1000)}K` : String(n));
+                const fast = (row) => Number.isFinite(Number(row.speed)) && Number(row.speed) <= 1200;
+                const cheap = (row) => (row.free ? -1 : row.price && row.price.out != null ? Number(row.price.out) : row.price && row.price.in != null ? Number(row.price.in) : Infinity);
+                const priceWords = (row) => {
+                    if (row.free || (row.price && row.price.in === 0 && (row.price.out === 0 || row.price.out == null))) return '';
+                    const p = row.price || {};
+                    const f = (v) => `$${Number(v) < 1 ? Number(v).toFixed(2) : Number(v).toFixed(Number(v) < 10 ? 1 : 0)}`;
+                    if (p.in != null && p.out != null) return `${f(p.in)} in · ${f(p.out)} out`;
+                    return money(row);
                 };
                 const rowEl = (row, rec) => {
                     const r = el('div', 'ovc-model');
                     const btn = el('button', 'ovc-model-b'); btn.type = 'button';
                     btn.setAttribute('aria-pressed', String(row.model === model.model && (row.source || 'openvibe') === (model.source || 'openvibe')));
-                    const mark = el('span', 'ovc-model-m'); mark.textContent = String(row.maker || row.name || row.model || '?').trim().charAt(0).toUpperCase();
-                    const t = el('span', 'ovc-model-t'); const line = el('span', 'ovc-model-n'); const n = el('b'); n.textContent = row.name || row.model; line.appendChild(n); const d = el('small');
-                    d.textContent = [money(row), row.speed ? `${row.speed}` : '', row.maker || ''].filter(Boolean).join(' · ') || row.detail || '';
+                    const maker = row.model === 'openvibe/auto' ? 'OpenVibe' : labOf(row);
+                    const mark = el('span', 'ovc-model-m'); mark.textContent = maker.charAt(0).toUpperCase(); mark.style.setProperty('--ovc-h', String(hue(maker)));
+                    const t = el('span', 'ovc-model-t'); const line = el('span', 'ovc-model-n'); const n = el('b'); n.textContent = row.model === 'openvibe/auto' ? 'Auto' : shortName(row); n.title = row.name || row.model; line.appendChild(n);
                     if (rec) { const badge = el('em', 'ovc-model-rec'); badge.textContent = 'Recommended'; line.appendChild(badge); }
-                    t.append(line, d); btn.append(mark, t);
+                    const tags = el('span', 'ovc-model-tags');
+                    const tag = (cls, words, title) => { const g = el('i', `ovc-mtag ${cls}`); g.textContent = words; if (title) g.title = title; tags.appendChild(g); };
+                    if (row.free) tag('is-free', 'Free');
+                    if (fast(row)) tag('is-fast', 'Fast', `Answers in about ${Math.round(Number(row.speed))} ms`);
+                    if (row.vision) tag('is-vision', 'Vision', 'Reads pictures');
+                    if (row.tools) tag('is-tools', 'Tools', 'Can use tools');
+                    if (row.context) tag('is-ctx', kb(Number(row.context)), `Reads up to ${Number(row.context).toLocaleString('en-US')} tokens`);
+                    const d = el('small'); d.textContent = [priceWords(row), row.detail && !row.price ? row.detail : '', row.source === 'keys' ? 'your key' : row.source === 'machines' ? 'your computer' : hostOf(row) ? `via ${hostOf(row)}` : ''].filter(Boolean).join(' · ');
+                    t.append(line, tags, d); btn.append(mark, t);
                     btn.addEventListener('click', () => pick(row));
                     r.appendChild(btn);
                     if (row.url) { const a = el('a', 'ovc-model-x', svg(IC.ext)); a.href = row.url; a.target = '_blank'; a.rel = 'noopener'; a.title = 'Compare on OpenVibe.Exchange'; a.setAttribute('aria-label', `${row.name || row.model} on OpenVibe.Exchange`); r.appendChild(a); }
-                    r.dataset.find = `${row.name || ''} ${row.model || ''} ${row.maker || ''}`.toLowerCase();
+                    r.dataset.find = `${row.name || ''} ${row.model || ''} ${maker} ${row.maker || ''} ${row.free ? 'free' : ''} ${row.vision ? 'vision' : ''} ${row.tools ? 'tools' : ''}`.toLowerCase();
                     return r;
                 };
-                const auto = { model: 'openvibe/auto', source: 'openvibe', name: 'Auto', detail: 'OpenVibe picks a model for each question' };
-                list.appendChild(rowEl(auto));
-                const wait = el('p', 'ovc-sheet-note'); wait.textContent = 'Loading the models…'; list.appendChild(wait);
-                try {
-                    const data = await loadChoices(frame, askTask);
-                    wait.remove();
-                    const rec = data.recommended;
-                    (data.groups || []).forEach((g) => {
-                        if (!g.rows || !g.rows.length) return;
-                        const h = el('h3'); h.textContent = g.title || g.id; list.appendChild(h);
-                        g.rows.forEach((row) => list.appendChild(rowEl(row, rec && rec.model === row.model && (rec.source || 'openvibe') === (row.source || 'openvibe'))));
-                    });
+                const auto = { model: 'openvibe/auto', source: 'openvibe', name: 'Auto', detail: 'OpenVibe picks the best model for each question', maker: 'OpenVibe' };
+                let data = localChoices(frame, askTask);
+                let filter = 'all', sort = 'best';
+                const FILTERS = [['all', 'All'], ['free', 'Free'], ['fast', 'Fast'], ['vision', 'Vision'], ['tools', 'Tools'], ['keys', 'Your keys'], ['machines', 'Your computers']];
+                const SORTS = [['best', 'Best'], ['cheap', 'Cheapest'], ['fast', 'Fastest']];
+                const rowsOf = (d) => (d && Array.isArray(d.groups) ? d.groups.flatMap((g) => (g.rows || []).map((r) => ({ ...r, source: g.id === 'keys' || g.id === 'machines' ? g.id : (r.source || g.id) }))) : []);
+                const passes = (r) => filter === 'all' || (filter === 'free' && r.free) || (filter === 'fast' && fast(r)) || (filter === 'vision' && r.vision) || (filter === 'tools' && r.tools) || (filter === r.source);
+                const order = (a, c) => (sort === 'cheap' ? cheap(a) - cheap(c) : sort === 'fast' ? (Number(a.speed) || 9e9) - (Number(c.speed) || 9e9) : (Number(c.score) || 0) - (Number(a.score) || 0)) || String(a.name).localeCompare(String(c.name));
+                function paint() {
+                    const rows = rowsOf(data);
+                    const has = (id) => id === 'all' || rows.some((r) => (id === 'keys' || id === 'machines' ? r.source === id : id === 'free' ? r.free : id === 'fast' ? fast(r) : r[id]));
+                    chips.textContent = '';
+                    FILTERS.filter(([id]) => has(id)).forEach(([id, word]) => { const c = el('button', 'ovc-mchip'); c.type = 'button'; c.textContent = word; c.setAttribute('aria-pressed', String(filter === id)); c.addEventListener('click', () => { filter = id; paint(); }); chips.appendChild(c); });
+                    sorts.textContent = '';
+                    SORTS.forEach(([id, word]) => { const c = el('button', 'ovc-msort-b'); c.type = 'button'; c.setAttribute('role', 'radio'); c.textContent = word; c.setAttribute('aria-checked', String(sort === id)); c.addEventListener('click', () => { sort = id; paint(); }); sorts.appendChild(c); });
+                    list.textContent = '';
+                    const q = find.value.trim().toLowerCase();
+                    const rec = data && data.recommended;
+                    const isRec = (r) => rec && rec.model === r.model && (rec.source || 'openvibe') === (r.source || 'openvibe');
+                    if (!q && filter === 'all') list.appendChild(rowEl(auto));
+                    if (!data) { const wait = el('p', 'ovc-sheet-note'); wait.textContent = 'Loading the models…'; list.appendChild(wait); return; }
+                    const shown = rows.filter(passes).filter((r) => !q || `${r.name || ''} ${r.model || ''} ${r.maker || ''} ${labOf(r)} ${r.free ? 'free' : ''} ${r.vision ? 'vision' : ''} ${r.tools ? 'tools' : ''}`.toLowerCase().includes(q));
+                    const section = (title, items, count) => {
+                        if (!items.length) return;
+                        const h = el('h3'); h.textContent = title; if (count) { const c = el('span', 'ovc-mcount'); c.textContent = String(count); h.appendChild(c); } list.appendChild(h);
+                        items.forEach((r, i) => { const x = rowEl(r, isRec(r)); x.style.setProperty('--i', String(Math.min(i, 8))); list.appendChild(x); });
+                    };
+                    if (q || filter !== 'all' || sort !== 'best') { section(q ? 'Found' : 'Models', shown.sort(order), shown.length); }
+                    else {
+                        const top = shown.filter(isRec);
+                        const mine = recent.map((x) => shown.find((r) => r.model === x.model && (r.source || 'openvibe') === (x.source || 'openvibe'))).filter((r) => r && !isRec(r));
+                        section('Recommended', top);
+                        section('Recent', mine);
+                        section('Your keys', shown.filter((r) => r.source === 'keys').sort(order), 0);
+                        section('Your computers', shown.filter((r) => r.source === 'machines').sort(order), 0);
+                        const labs = new Map();
+                        // Each model once: the recommended one is not listed again under its lab.
+                        shown.filter((r) => (r.source || 'openvibe') === 'openvibe' && !isRec(r)).forEach((r) => { const k = labOf(r); if (!labs.has(k)) labs.set(k, []); labs.get(k).push(r); });
+                        [...labs.entries()].sort((a, c) => c[1].length - a[1].length || a[0].localeCompare(c[0])).forEach(([lab, items]) => section(lab, items.sort(order), items.length));
+                    }
+                    if (!shown.length) { const none = el('p', 'ovc-sheet-note'); none.textContent = q ? `Nothing matches “${find.value.trim()}”.` : 'No model here yet.'; list.appendChild(none); }
                     const more = el('a', 'ovc-sheet-more', `Every model, compared, on OpenVibe.Exchange ${svg(IC.ext)}`); more.href = 'https://openvibe.exchange/models'; more.target = '_blank'; more.rel = 'noopener';
                     list.appendChild(more);
-                } catch (err) { wait.textContent = (err && err.message) || 'Models are unavailable right now.'; }
-                find.addEventListener('input', () => {
-                    const q = find.value.trim().toLowerCase();
-                    list.querySelectorAll('.ovc-model').forEach((r) => { r.hidden = !!q && !r.dataset.find.includes(q); });
-                });
+                }
+                paint();
+                find.addEventListener('input', paint);
+                // The kept list is shown at once; the network's answer repaints it when it differs.
+                const keptJson = data ? JSON.stringify(data) : '';
+                loadChoices(frame, askTask, { fresh: !!data }).then((d) => { if (JSON.stringify(d) !== keptJson && b.isConnected) { data = d; paint(); } })
+                    .catch((err) => { if (!data && b.isConnected) { list.textContent = ''; const e = el('p', 'ovc-sheet-note'); e.textContent = (err && err.message) || 'Models are unavailable right now.'; list.appendChild(e); } });
                 find.focus();
             });
         }
