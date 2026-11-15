@@ -188,11 +188,14 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         await p.evaluate("document.querySelector('.ovp.is-in .ovp-row[data-id=\"openvibe|anthropic/claude-opus-5-5\"]').click()");
         await until(p, "document.querySelector('.ovse-ctx span').textContent === 'Any agent · Opus 5.5'");
         await until(p, "!document.querySelector('.ovp')");
+        // The price before it runs (plan §AD.6): a typical message on Opus 5.5 at $15 / $75 per million tokens.
+        assert.deepStrictEqual(await p.evaluate("(() => { const c = document.querySelector('.ovse-cost'); return [c.hidden, c.textContent, /2,000 tokens in and 800 out/.test(c.title)]; })()"), [false, '≈ $0.09 a message', true]);
         await typeIn(p, '@claude-code Build me a landing page for my band');
         await p.evaluate("document.querySelector('.ovse-compose form') ? document.querySelector('.ovse-compose form').requestSubmit() : document.querySelector('.ovse-compose textarea').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))");
         await until(p, "[...document.querySelectorAll('.ovse-say')].some((s) => s.textContent === 'On it: a sketch first.')");
         assert.deepStrictEqual([said.starts.length, said.starts[0].text, said.starts[0].agent, said.starts[0].model && said.starts[0].model.id], [1, 'Build me a landing page for my band', 'claude-code', 'anthropic/claude-opus-5-5'], 'the mention picks the agent, the chip the model');
         assert.strictEqual(await p.evaluate("document.querySelector('.ovse-me .ovse-bubble').textContent"), 'Build me a landing page for my band');
+        assert.strictEqual(await p.evaluate("document.querySelector('.ovse-cost').hidden"), true, 'an open session shows what its turns cost instead');
         // It is still working: the next words are queued.
         await typeIn(p, 'Make it purple');
         await p.evaluate("document.querySelector('.ovse-compose form') ? document.querySelector('.ovse-compose form').requestSubmit() : document.querySelector('.ovse-compose textarea').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))");

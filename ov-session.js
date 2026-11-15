@@ -107,6 +107,8 @@
         const d = Math.round(s / 86400); return d === 1 ? 'yesterday' : `${d} d`;
     };
     const clock = (sec) => { const s = Math.max(0, Math.round(sec)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}` : `${m}:${String(r).padStart(2, '0')}`; };
+    // A small amount of money in words: $0.0042, $0.012, $1.20.
+    const costWords = (usd) => (usd >= 1 ? `$${usd.toFixed(2)}` : usd >= 0.01 ? `$${usd.toFixed(3).replace(/0$/, '')}` : `$${Number(usd.toPrecision(2))}`);
     const spent = (cost) => {
         if (!cost || typeof cost !== 'object') return '';
         const usd = Number(cost.usd);
@@ -413,7 +415,9 @@
         const ctxRow = el('div', 'ovse-ctxrow');
         const ctxB = btn('ovse-ctx', 'How it runs: change it', 'spark', ''); ctxB.setAttribute('aria-haspopup', 'dialog');
         const ctxInfo = el('span', 'ovse-ctxinfo');
-        ctxRow.append(ctxB, ctxInfo);
+        // The price before it runs (plan §AD.6): a chosen model's typical message, from its own price.
+        const ctxCost = el('span', 'ovse-cost'); ctxCost.hidden = true;
+        ctxRow.append(ctxB, ctxCost, ctxInfo);
         const composeSlot = el('div', 'ovse-compose');
         foot.append(planBox, slash, ctxRow, composeSlot);
         main.append(head, body, foot);
@@ -999,7 +1003,7 @@
             if (r) {
                 // An open session says how it runs; the chip's choice is for the next new one.
                 const bits = [r.agent && (r.agent.name || r.agent.harness), r.model && (r.model.name || r.model.id), r.where && (r.where.name || ({ openvibe: 'OpenVibe', machine: 'your computer', runner: 'a runner', 'this-computer': 'this computer' })[r.where.kind || r.where]), r.target && r.target.repo ? String(r.target.repo).replace(/^https:\/\/github\.com\//, '') : ''].filter(Boolean);
-                ctxB.hidden = true; ctxInfo.hidden = !bits.length; ctxInfo.textContent = bits.join(' · ');
+                ctxB.hidden = true; ctxCost.hidden = true; ctxInfo.hidden = !bits.length; ctxInfo.textContent = bits.join(' · ');
                 return;
             }
             ctxB.hidden = false; ctxInfo.hidden = true;
@@ -1008,6 +1012,22 @@
             ctxB.querySelector('span').textContent = said.join(' · ');
             ctxB.setAttribute('aria-label', `How it runs: ${said.join(', ')}. Change it`);
             ctxB.classList.toggle('is-on', pick.agent !== 'auto' || !!pick.model || pick.where !== 'auto' || !!pick.works);
+            paintCost();
+        }
+        /**
+         * What a message costs on the chosen model, before it is sent: Exchange's estimate of a typical turn (2,000 tokens
+         * in, 800 out) at the model's own price. Auto says nothing: the router picks within the person's budget. An open
+         * session's turns say what they really cost (spent()).
+         */
+        function paintCost() {
+            const m = !state.run && pick.model;
+            const cost = m && m.price && Number.isFinite(Number(m.price.in)) && Number.isFinite(Number(m.price.out))
+                ? (2000 * Number(m.price.in) + 800 * Number(m.price.out)) / 1e6 : null;
+            if (!m || (!m.free && cost == null)) { ctxCost.hidden = true; return; }
+            ctxCost.hidden = false;
+            ctxCost.textContent = m.free || cost === 0 ? 'Free' : `≈ ${costWords(cost)} a message`;
+            ctxCost.title = m.free || cost === 0 ? `${m.name || m.id} is free to use.`
+                : `${m.name || m.id}: $${m.price.in} per million tokens in, $${m.price.out} out. A typical message is about 2,000 tokens in and 800 out; long work takes more, and your free allowance comes first.`;
         }
         ctxB.append(el('span'));
         async function openCtx(section) {
@@ -1036,14 +1056,16 @@
             } else if (section === 'model') {
                 const d = await loadModels();
                 const sections = [{ title: '', rows: [{ id: 'auto', name: 'Auto', line: 'The best fit for what you ask, within your budget' }] }];
+                const priced = new Map();   // row id → { price, free }, kept with the pick for the price before it runs
                 for (const g of d.groups || []) {
+                    for (const x of (g.rows || []).slice(0, 800)) priced.set(`${x.source || 'openvibe'}|${x.model}`, { price: x.price && Number.isFinite(x.price.in) ? { in: x.price.in, out: x.price.out } : null, free: !!x.free });
                     const rows = (g.rows || []).slice(0, 800).map((x) => ({ id: `${x.source || 'openvibe'}|${x.model}`, name: x.name || x.model, line: [x.maker, x.free ? 'Free' : x.price && Number.isFinite(x.price.in) ? `$${x.price.in} / $${x.price.out} per 1M` : ''].filter(Boolean).join(' · '), badge: x.free ? 'Free' : '' }));
                     if (rows.length) sections.push({ title: g.title || g.id, rows });
                 }
                 const value = pick.model ? `${pick.model.source || 'openvibe'}|${pick.model.id}` : 'auto';
                 P.open({ anchor: ctxB, title: 'Model', search: true, value, sections, onPick: (row) => {
                     if (row.id === 'auto') pick.model = null;
-                    else { const [source, ...rest] = String(row.id).split('|'); pick.model = { id: rest.join('|'), source, name: row.name }; }
+                    else { const [source, ...rest] = String(row.id).split('|'); pick.model = { id: rest.join('|'), source, name: row.name, ...(priced.get(row.id) || {}) }; }
                     savePick();
                 } });
             }
@@ -1572,6 +1594,7 @@ details.ovse-tool > .ovse-tool-h { cursor: pointer; } details.ovse-tool > .ovse-
 .ovse-ctx .ovse-g { width: 15px; height: 15px; color: var(--ovse-acc2); }
 .ovse-ctx:hover, .ovse-ctx.is-on { color: var(--ovse-fg); border-color: color-mix(in srgb, var(--ovse-acc) 45%, var(--ovse-line)); }
 .ovse-ctx:active { transform: scale(.97); }
+.ovse-cost { flex: none; color: var(--ovse-mute); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ovse-ctxinfo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ovse-mute); font-size: 12.5px; padding-left: 4px; }
 .ovse-plainbox { display: flex; align-items: flex-end; gap: 8px; padding: 6px 6px 6px 14px; border-radius: 22px; border: 1px solid var(--ovse-line); background: var(--ovse-card); }
 .ovse .ovse-plainbox textarea, .ovse .ovse-plainbox textarea:focus, .ovse .ovse-plainbox textarea:focus-visible { flex: 1; min-width: 0; resize: none; border: 0; background: transparent; color: inherit; font: inherit; padding: 8px 0; outline: 0; max-height: 40vh; caret-color: var(--ovse-acc); -webkit-appearance: none; appearance: none; border-radius: 0; box-shadow: none; margin: 0; }
