@@ -181,7 +181,7 @@
             .openvibe-bell svg { color: var(--text-secondary, #b0b0b8); width: 22px; height: 22px; fill: none; stroke: var(--text-secondary, #b0b0b8); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; transition: stroke .2s; }
             .openvibe-bell:hover svg, .openvibe-bell.open svg { stroke: var(--accent-light, var(--accent, #60a5fa)); }
             .openvibe-bell:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
-            .openvibe-bell .badge { position: absolute; top: 1px; right: 0; min-width: 17px; height: 17px; padding: 0 5px; box-sizing: border-box; background: var(--live-red, #e5484d); color: #fff; border-radius: 999px;
+            .openvibe-bell .badge { position: absolute; top: 1px; right: 0; min-width: 17px; height: 17px; padding: 0 5px; box-sizing: border-box; background: color-mix(in srgb, var(--live-red, #e5484d), #000 20%); color: #fff; border-radius: 999px;
                 font-size: 10px; font-weight: 750; display: flex; align-items: center; justify-content: center; line-height: 1; pointer-events: none; box-shadow: 0 0 0 2px var(--bg-primary, #111);
                 font-variant-numeric: tabular-nums; animation: ovn-badge-pop .36s ease; }
             .openvibe-bell .badge.hidden { display: none; }
@@ -281,7 +281,7 @@
 
             .openvibe-nv-head { padding: 14px 14px 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
             .openvibe-nv-head h3 { font-size: 17px; font-weight: 750; letter-spacing: -.01em; margin: 0; display: flex; align-items: center; gap: 8px; }
-            .openvibe-nv-head h3 .count { font-size: 11px; font-weight: 750; background: var(--live-red, #e5484d); color: #fff; border-radius: 999px; padding: 2px 7px; font-variant-numeric: tabular-nums; }
+            .openvibe-nv-head h3 .count { font-size: 11px; font-weight: 750; background: color-mix(in srgb, var(--live-red, #e5484d), #000 20%); color: #fff; border-radius: 999px; padding: 2px 7px; font-variant-numeric: tabular-nums; }
             .openvibe-nv-head h3 .count.zero { display: none; }
             .openvibe-nv-actions { display: flex; gap: 2px; align-items: center; }
             .openvibe-nv-actions button, .openvibe-nv-actions a { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; border: none; background: transparent; color: var(--text-muted, #8b8b96); cursor: pointer; text-decoration: none; }

@@ -224,7 +224,7 @@ html[data-ov-motion=off] .ovh-head-t { animation: none; }
 .ovh-card small > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovh-card.is-live { background: color-mix(in srgb, var(--live, #ef4444) 9%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--live, #ef4444) 40%, transparent); }
 .ovh-card.is-live .ovh-ic { animation: ovh-onair 2.4s ease-in-out infinite; }
-.ovh-live { flex: none; padding: 2px 6px; border-radius: 6px; background: var(--live, #ef4444); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .05em; line-height: 1.2; }
+.ovh-live { flex: none; padding: 2px 6px; border-radius: 6px; background: color-mix(in srgb, var(--live, #ef4444), #000 20%); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .05em; line-height: 1.2; }
 @media (hover: hover) { .ovh-card:hover { background: var(--bg-hover, rgba(255,255,255,.08)); } }
 @media (min-width: 861px) { .ovh-card { width: 232px; } }
 .ovh-use { margin: 0 4px 8px; padding: 12px 12px 4px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); }
@@ -2553,7 +2553,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-line{display:inline-flex;align-items:center;gap:4px;margin-left:2px;padding:1px 7px;border-radius:999px;font-weight:600;font-size:11.5px;color:color-mix(in srgb,var(--accent,#5b8cff) 70%,var(--text-primary,#e6edf7));background:color-mix(in srgb,var(--accent,#5b8cff) 12%,transparent);white-space:nowrap}
 .ovfd-line::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8}
 .ovfd-who small[data-ovfd-site]{flex-wrap:wrap;row-gap:3px}
-.ovfd-livechip{margin-left:auto;padding:2px 8px;border-radius:6px;background:var(--live,#ef4444);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;animation:ovfd-onair 2.4s ease-in-out infinite}
+.ovfd-livechip{margin-left:auto;padding:2px 8px;border-radius:6px;background:color-mix(in srgb,var(--live,#ef4444),#000 20%);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;animation:ovfd-onair 2.4s ease-in-out infinite}
 .ovfd-card.is-on{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--live,#ef4444) 45%,transparent);background:color-mix(in srgb,var(--live,#ef4444) 7%,transparent)}
 @keyframes ovfd-onair{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--live,#ef4444) 25%,transparent)}}
 .ovfd-faces{display:flex;flex:none}.ovfd-faces .ovfd-face{width:30px;height:30px;box-shadow:0 0 0 2px var(--bg-secondary,#141a24)}.ovfd-faces .ovfd-face+.ovfd-face{margin-left:-9px}
@@ -2585,7 +2585,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-tile-num b{font-size:15px;font-weight:800;letter-spacing:-.02em}
 .ovfd-tile-num svg.ovfd-gl{position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;padding:2px;border-radius:50%;background:var(--bg-secondary,#141a24);color:hsl(152 70% 70%)}
 .ovfd-tile-date{grid-template-rows:auto 1fr;place-items:stretch;overflow:hidden;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 8%,transparent);text-align:center}
-.ovfd-tile-date small{display:block;padding:1px 0;background:var(--live,#ef4444);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.ovfd-tile-date small{display:block;padding:1px 0;background:color-mix(in srgb,var(--live,#ef4444),#000 20%);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 .ovfd-tile-date b{display:grid;place-items:center;font-size:16px;font-weight:800;line-height:1}
 .ovfd-tile-wrap{position:relative}
 .ovfd-tile-wrap .ovfd-face{width:40px;height:40px}
@@ -2656,13 +2656,13 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-group-t{min-width:0;display:grid;gap:2px}
 .ovfd-group-n{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:650;color:var(--text-primary,#e8ecf3)}
 .ovfd-price{display:flex;align-items:baseline;gap:7px;min-width:0;font-size:13px;white-space:nowrap}
-.ovfd-price b{font-size:14.5px;font-weight:800;color:#4ade80;font-variant-numeric:tabular-nums}
+.ovfd-price b{font-size:14.5px;font-weight:800;color:color-mix(in srgb,#22c55e 55%,var(--text-primary,#e6edf7));font-variant-numeric:tabular-nums}
 .ovfd-price s{color:var(--text-muted,#93a0b4);font-variant-numeric:tabular-nums}
-.ovfd-price em{font-style:normal;font-weight:800;font-size:11.5px;padding:1px 6px;border-radius:6px;color:#4ade80;background:color-mix(in srgb,#22c55e 14%,transparent)}
+.ovfd-price em{font-style:normal;font-weight:800;font-size:11.5px;padding:1px 6px;border-radius:6px;color:color-mix(in srgb,#22c55e 55%,var(--text-primary,#e6edf7));background:color-mix(in srgb,#22c55e 14%,transparent)}
 .ovfd-price small{min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted,#93a0b4)}
 .ovfd-group.is-deals .ovfd-group-more{justify-self:start;padding:4px 2px;font-size:13px;font-weight:700;color:var(--accent-light,#93c5fd)}
 @media (min-width:900px){.ovfd-group.is-deals{grid-template-columns:repeat(2,minmax(0,1fr))}.ovfd-group.is-deals .ovfd-group-more{grid-column:1/-1}}
-@media (prefers-color-scheme:light){:root:not([data-theme=dark]) .ovfd-lvl{color:#92400e}:root:not([data-theme=dark]) .ovfd-price b,:root:not([data-theme=dark]) .ovfd-price em{color:#15803d}:root:not([data-theme=dark]) .ovfd-group-ph.is-deal{color:#a16207}}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]) .ovfd-lvl{color:#92400e}:root:not([data-theme=dark]) .ovfd-price b,:root:not([data-theme=dark]) .ovfd-price em{color:color-mix(in srgb,#22c55e 55%,var(--text-primary,#e6edf7))}:root:not([data-theme=dark]) .ovfd-group-ph.is-deal{color:#a16207}}
 /* 4.261.0, a run of deals (the owner, 11-15: "improve … redo … views … total views"): the total views over the run, each
    row a product tile, its price, its store and its views, rising in turn; one full-width press to all of them. */
 .ovfd-group-sum{display:inline-flex;align-items:center;gap:6px;justify-self:start;margin:0 0 2px;padding:4px 10px;border-radius:999px;font-size:12.5px;color:var(--text-secondary,#a8b3c4);background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent)}
@@ -2680,7 +2680,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-card:hover .ovfd-group.is-deals .ovfd-group-more .ovfd-gl{transform:translateX(calc(3px * var(--ov-move,1)))}
 @keyframes ovfd-row-in{from{opacity:0;transform:translateY(calc(8px * var(--ov-move,1)))}}
 html[data-ov-motion=off] .ovfd-group.is-deals .ovfd-group-i{animation:none}
-:root[data-theme=light] .ovfd-lvl{color:#92400e} :root[data-theme=light] .ovfd-price b,:root[data-theme=light] .ovfd-price em{color:#15803d}
+:root[data-theme=light] .ovfd-lvl{color:#92400e} :root[data-theme=light] .ovfd-price b,:root[data-theme=light] .ovfd-price em{color:color-mix(in srgb,#22c55e 55%,var(--text-primary,#e6edf7))}
 html[data-ov-motion=off] :is(.ovfd-chip,.ovfd-act-b){transition:none}
 `;
         document.head.appendChild(st);
