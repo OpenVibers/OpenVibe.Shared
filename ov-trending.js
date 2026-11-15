@@ -34,7 +34,7 @@
 
     const motion = () => {
         const m = document.documentElement.getAttribute('data-ov-motion');
-        if (m === 'off' || (root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches)) return 'off';
+        if (m === 'off') return 'off';
         return m === 'calm' || m === 'reduced' ? 'calm' : 'full';
     };
     const css = () => {
@@ -50,8 +50,7 @@
             + '.ovt-tab{position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:.72em;padding:1px 6px;border:1px solid currentColor;border-radius:6px;opacity:.55;font-weight:600}'
             + '@keyframes ovt-shine{from{background-position:100% 0}to{background-position:0 0}}'
             + '.ovt-tab{opacity:.8}'
-            + 'html[data-ov-motion="off"] .ovt-line{transition:none}html[data-ov-motion="off"] .ovt-term{animation:none;-webkit-text-fill-color:currentColor;background:none}'
-            + '@media (prefers-reduced-motion:reduce){.ovt-line{transition:none}.ovt-term{animation:none;-webkit-text-fill-color:currentColor;background:none}}';
+            + 'html[data-ov-motion="off"] .ovt-line{transition:none}html[data-ov-motion="off"] .ovt-term{animation:none;-webkit-text-fill-color:currentColor;background:none}';
         document.head.appendChild(st);
     };
 
