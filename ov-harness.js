@@ -12,7 +12,7 @@
  *     open: 'codes:tsk_…',                 // a run to open first
  *     link: (run) => url,                  // a run's own full page (default: run.url)
  *   });
- *   h.open(ref); h.blank(target?); h.refresh(); h.destroy();
+ *   h.open(ref); h.blank(target?); h.prefill(words); h.refresh(); h.destroy();
  *
  * A computer: three columns (the changes column from 1180 px). A phone: Projects · Task · Changes as tabs, one at a
  * time; opening a thread shows Task. Everything a run says is set as text, never markup.
@@ -339,6 +339,8 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
         refresh();
         return {
             open, blank, refresh,
+            /** Words waiting in the box, unsent (a ?prompt= link). */
+            prefill(text) { if (view && typeof view.prefill === 'function') view.prefill(String(text || '')); },
             get target() { return target; },
             destroy() { destroyed = true; clearTimeout(timer); if (view) { try { view.destroy(); } catch { /* */ } } host.textContent = ''; },
         };
