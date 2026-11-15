@@ -1337,6 +1337,9 @@
 .ovse { --ovse-fg: var(--text-primary, #e6edf7); --ovse-dim: var(--text-secondary, #a8b3c4); --ovse-mute: var(--text-muted, #93a0b4); --ovse-line: var(--border, rgba(255,255,255,.09)); --ovse-card: var(--bg-card, rgba(255,255,255,.035)); --ovse-bg: var(--bg-primary, #0b0f17); --ovse-acc: var(--accent, #3b82f6); --ovse-acc2: var(--accent-light, #60a5fa);
   position: relative; display: grid; grid-template-columns: minmax(0, 1fr); height: 100%; min-height: 0; color: var(--ovse-fg); font: 15px/1.5 var(--font-body, system-ui, sans-serif); overflow: hidden; background: var(--ovse-bg); }
 .ovse * { box-sizing: border-box; }
+/* A host page's rules for bare elements stay out of the frame (11-15: openvibe.design's .ds section margin-top
+   pushed the thread 40 px down; a site's header, aside or form margins would do the same). */
+.ovse > .ovse-drawer, .ovse > .ovse-main, .ovse > .ovse-main > .ovse-head, .ovse .ovse-plainbox { margin: 0; float: none; }
 .ovse [hidden], .ovse-sheet [hidden] { display: none !important; }
 .ovse-g { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .ovse button { font: inherit; color: inherit; }
