@@ -8,6 +8,9 @@
   Community's feed in the browser check, 11-15). The red under white text is a fifth darker
   (`color-mix(in srgb, var(--live-red, #ef4444), #000 20%)`), about 5.4:1. Dots and borders keep the bright red.
   `test/live-ink-contrast.test.js` fails on any new white-on-live-red rule.
+- **Feed prices** (`ov-home.js` `.ovfd-price b` and `em`): the price's bright green failed on light pages, and its
+  light-theme override (#15803d, keyed on `:root:not([data-theme=dark])`) also matched named dark themes, putting dark
+  green on a dark page (axe on Community /pulse, 11-15). Every case now leans the green toward the theme's text colour.
 
 ## 4.270.0 — 2026-11-15
 
