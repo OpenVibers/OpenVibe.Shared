@@ -21,6 +21,11 @@ OpenVibeSession grows what the door needed:
 - `s.start(words)` and `s.list()`; a `results` card (what a quick action did, as chips); the menu starters' glyphs.
 - Each session row is a list item that holds its button (the button had the `listitem` role, which hid it as a button).
 
+**One system for a `<select>`.** Every select on every site is already OVForms' (`ov-forms.js`: a sheet on a phone, a
+menu on a computer, search, groups, badges). Where OVForms is on the page, `OpenVibePicker.enhance(select)` (4.264.0)
+hands the select to it and draws nothing of its own. OpenVibePicker is for choices that are not a select: the
+composer's chips, a session's context chip and its menu.
+
 Tests: `dock-chrome` (the menu on Agents, the sessions and the Action Center answered in place, the agent at work above
 them, your Actor, a starter's session with its answer and chips, Ask your agent), `menu-places-chrome` (one surface, no
 switch, one mount at a time), `menu-home-screen-chrome`, `ov-session-chrome` (your Actor's Pause, an Action Center item
