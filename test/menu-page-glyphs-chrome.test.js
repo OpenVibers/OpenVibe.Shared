@@ -1,7 +1,7 @@
 'use strict';
 // Every page row in the menu wears its own glyph (4.253.0, plan §AA.38): the site's own (links[].icon) when it names one,
 // else one read from the page's name ("Jobs" a briefcase, "Live tours" a broadcast, "Watchlists" an eye, not a video),
-// else the arrow. In a real headless Chrome with the menu's search opened on a site's links.
+// else a page icon (4.262.0: never the arrow). In a real headless Chrome with the menu's search opened on a site's links.
 const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
@@ -37,8 +37,8 @@ const server = http.createServer((req, res) => {
         await page.goto(`http://127.0.0.1:${server.address().port}/`, { maxMs: 6000 });
         assert.ok(await wait(`document.querySelectorAll('.ovs-link').length >= 7`), 'the page rows show');
         const got = await page.evaluate(`Object.fromEntries([...document.querySelectorAll('.ovs-link')].map((a) => [a.textContent.trim(), (a.querySelector('svg[data-fa]') || {}).getAttribute ? a.querySelector('svg[data-fa]').getAttribute('data-fa') : 'arrow']))`);
-        assert.deepStrictEqual(got, { Home: 'fa-house', Jobs: 'fa-briefcase', 'Live tours': 'fa-tower-broadcast', Watchlists: 'fa-eye', Settings: 'fa-star', Companies: 'arrow', 'Your pictures': 'fa-image' },
+        assert.deepStrictEqual(got, { Home: 'fa-house', Jobs: 'fa-briefcase', 'Live tours': 'fa-tower-broadcast', Watchlists: 'fa-eye', Settings: 'fa-star', Companies: 'fa-file-lines', 'Your pictures': 'fa-image' },
             JSON.stringify(got));
-        console.log('menu-page-glyphs-chrome: own icon first, else read from the name, else the arrow');
+        console.log('menu-page-glyphs-chrome: own icon first, else read from the name, else a page icon');
     } finally { await page.close(); await browser.close(); server.close(); }
 })().catch((e) => { console.error(e); server.close(); process.exitCode = 1; });
