@@ -1,6 +1,5 @@
 # Changelog
 
-
 ## 4.276.0 — 2026-11-15
 
 **Sticky things follow a phone's navbar** (the owner's openvibe.exchange/search screenshot, 11-15).
