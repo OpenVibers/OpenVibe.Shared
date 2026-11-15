@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.277.0 — 2026-11-15
+
+**Every search box shows what is trending** (the owner, 11-15: "it scrolls thru what's trending with a cool
+animation/effects in the search input itself … across all sites"; plan §AD.13 (1)).
+- New `ov-trending.js` (`openvibe-shared/trending`). While a search box is empty, its placeholder gives way to the
+  trending searches, one at a time in the box itself: "Try <term>". The line slides up and out with a soft blur, the
+  next slides in, and a shine sweeps across the term once. Calm is slower; Off and reduced motion show the first one,
+  still.
+- Tab takes the term shown, and a Tab hint appears on focus with a keyboard. Typing hides the line and clearing brings
+  it back. A box named only by its placeholder keeps that name.
+- A search sent from the box goes out as one beacon (`/api/frame/searched`, text/plain, no preflight). Nothing is sent
+  with Do Not Track or Global Privacy Control on, and the same query is sent once per ten seconds.
+- The list comes from `/api/frame/trending` through openvibe.network (Network #1023, OpenVibe.Search #339), kept five
+  minutes in the tab. An empty list draws nothing.
+- `navbar.js` loads it on any page with an `input[type=search]` or `[data-ov-trending]`. Opt out with
+  `data-ov-trending="off"` on a box, or on `<html>` for a whole site.
+- Test: `trending-box-chrome`.
 ## 4.276.0 — 2026-11-15
 
 **Sticky things follow a phone's navbar** (the owner's openvibe.exchange/search screenshot, 11-15).
