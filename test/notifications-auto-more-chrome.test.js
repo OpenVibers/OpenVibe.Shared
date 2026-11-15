@@ -16,6 +16,7 @@ if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) { console.log('notif
 const root = path.join(__dirname, '..');
 const NOTES = Array.from({ length: 95 }, (_, i) => ({ id: i + 1, type: 'mention', category: 'social', service: 'chat', title: `kai mentioned you ${i + 1}`, message: 'look at the shots?', priority: 'normal', is_read: 0, created_at: new Date(Date.now() - i * 3600e3).toISOString() }));
 const asked = [];
+const queries = [];
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     const json = (b) => { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify(b)); };
@@ -24,7 +25,7 @@ const server = http.createServer((req, res) => {
     if (u.pathname === '/api/notifications/unread-by-tab') return json({ tabs: { all: 95, mentions: 12, system: 40, live: 0 } });
     if (u.pathname === '/api/notifications') {
         const offset = Number(u.searchParams.get('offset')) || 0, limit = Number(u.searchParams.get('limit')) || 30;
-        asked.push(offset);
+        asked.push(offset); queries.push(u.search);
         return setTimeout(() => json({ notifications: NOTES.slice(offset, offset + limit), total: NOTES.length, has_more: offset + limit < NOTES.length }), 80);
     }
     res.writeHead(200, { 'content-type': 'text/html' });
@@ -72,6 +73,9 @@ const server = http.createServer((req, res) => {
         assert.equal(await p.evaluate("document.querySelectorAll('#host .openvibe-notif-item').length"), 95, 'every notice loaded by scrolling alone');
         // The first page is asked for by the preview, Show all and the count's refresh; the pages after it once each.
         assert.deepEqual(asked.filter((o) => o > 0), [30, 60, 90], `one page at a time, never twice (${asked})`);
+        // The three offset-0 asks are three different things (4.262.0, after "the first page fetched 3x"): the preview's
+        // three, the full first page once, and the check for anything new since; the full page is never asked twice.
+        assert.strictEqual(queries.filter((q) => /[?&]offset=0(&|$)/.test(q) && /[?&]limit=30(&|$)/.test(q)).length, 1, `the full first page once (${queries.join(' ')})`);
         const after = await p.evaluate(`({ status: document.querySelector('#host .openvibe-nv-bar [data-role="status"]').textContent, more: !!document.querySelector('#host .openvibe-nv-more'),
             barTop: Math.round(document.querySelector('#host .openvibe-nv-tools').getBoundingClientRect().top), listTop: Math.round(document.querySelector('.ovs-list').getBoundingClientRect().top), wide: document.documentElement.scrollWidth })`);
         assert.equal(after.status, '95 of 95 unread');

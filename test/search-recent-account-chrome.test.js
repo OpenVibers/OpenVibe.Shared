@@ -48,10 +48,9 @@ const server = http.createServer((req, res) => {
     const context = await browser.newContext();
     const page = await h.openPage(browser, context, { width: 390, height: 844 });
     const wait = async (expr, tries = 120) => { for (let n = 0; n < tries; n++) { if (await page.evaluate(expr)) return true; await new Promise((ok) => setTimeout(ok, 50)); } return false; };
-    // The group's heading is its own row; its chips are the rows after it, up to the next heading.
-    const chips = `(() => { const g = [...document.querySelectorAll('.ovs-group')].find((x) => /Recent searches/.test(x.textContent)); const out = [];
-        for (let n = g && g.nextElementSibling; n && !n.classList.contains('ovs-group'); n = n.nextElementSibling) n.querySelectorAll('a, button').forEach((a) => { const t = a.textContent.trim(); if (t) out.push(t); });
-        return out; })()`;
+    // Recent searches are the list under the field while it is focused and empty (4.262.0, was a section on the site tab).
+    const chips = `(() => { const i = document.querySelector('.ovs-input'); if (i && !i.value && document.activeElement !== i) i.focus();
+        return [...document.querySelectorAll('.ovs-recent:not([hidden]) .ovs-recent-row')].map((b) => b.textContent.trim()); })()`;
     try {
         await page.goto(`http://127.0.0.1:${server.address().port}/`, { maxMs: 6000 });
         assert.ok(await wait(`${chips}.includes('lofi streams')`), 'the account\'s recent search shows');
@@ -72,7 +71,8 @@ const server = http.createServer((req, res) => {
         // Clear empties both.
         await page.evaluate(`(() => { const i = document.querySelector('.ovs input, input[type="search"]'); i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); })()`);
         await page.evaluate(`OpenVibeSearch.close(); OpenVibeSearch.open({ service: 'site', token: 'tok_1', user: { id: 7, username: 'ada' }, apiBase: 'https://openvibe.network', sibling: (n) => '/shared/' + n })`);
-        assert.ok(await wait(`!!document.querySelector('[data-ovs-clear]')`), 'the Clear button shows');
+        assert.ok(await wait(`(${chips}, !!document.querySelector('.ovs-recent:not([hidden]) [data-ovs-clear]'))`), 'the Clear button shows, under the field');
+        assert.ok(await page.evaluate(`![...document.querySelectorAll('.ovs-group')].some((g) => /Recent searches/.test(g.textContent))`), 'and no Recent searches section on the tab');
         await page.evaluate(`document.querySelector('[data-ovs-clear]').click()`);
         assert.ok(await wait(`window.__calls.some((c) => c.m === 'DELETE' && c.u === 'https://openvibe.network/api/history/type/search' && c.auth === 'Bearer tok_1')`), 'Clear empties the account\'s searches');
         assert.strictEqual(await page.evaluate(`localStorage.getItem('ov_search_recent')`), null, 'and this browser\'s');

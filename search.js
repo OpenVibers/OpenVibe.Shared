@@ -97,6 +97,7 @@
     };
     let el = null, input = null, ghost = null, listEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
     let tab = 'here', mine = null, catalog = null, completion = '';
+    let repaintRecent = null;   // the list of recent searches under the field (4.262.0), once the account's arrive
     // The results view (4.29.0): Enter shows the Search Fabric's answer here, by scope, instead of leaving the page.
     const RTABS = [['all', 'All'], ['openvibe', 'OpenVibe'], ['web', 'Web'], ['video', 'Video'], ['news', 'News'], ['products', 'Products'], ['mine', 'Yours']];
     const PROVIDER = { open_index: 'OpenVibe\'s index', deepseek: 'DeepSeek', wikipedia: 'Wikipedia', brave: 'Brave', exa: 'Exa', tavily: 'Tavily' };
@@ -685,6 +686,20 @@ html[data-ov-motion=off] :is(.ovs-plus-x, .ovs-plus-x path, .ovs-plus-p circle) 
 @keyframes ovs-mic { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--live-red, #ef4444) 25%, transparent); } }
 html[data-ov-motion=off] .ovs-send, html[data-ov-motion=off] .ovs-mic.is-on { animation: none; }
 .ovs-panel { position: relative; }
+/* 4.262.0: recent searches under the field while it is focused and empty: a small sheet of rows that rise in turn. */
+.ovs-bar { position: relative; }
+.ovs-recent { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 40; display: grid; padding: 6px; border-radius: 16px; background: var(--bg-card, #151b28); box-shadow: 0 0 0 1px var(--border, rgba(255,255,255,.12)), 0 18px 40px -16px rgba(0,0,0,.55); animation: ovs-recent-in .18s cubic-bezier(.2,.8,.2,1) both; }
+.ovs-recent[hidden] { display: none; }
+.ovs-recent-h { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 6px; font-size: 12px; font-weight: 700; letter-spacing: .02em; color: var(--text-muted, #93a0b4); }
+.ovs-recent-clear { all: unset; cursor: pointer; min-height: 32px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 650; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-recent-clear:focus-visible, .ovs-recent-row:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -2px; }
+.ovs-recent-row { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 12px; color: var(--text-primary, #e6edf7); font-size: 14.5px; animation: ovs-recent-in .22s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 25ms); }
+.ovs-recent-row svg { flex: none; width: 18px; height: 18px; color: var(--text-muted, #93a0b4); }
+.ovs-recent-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (hover: hover) { .ovs-recent-row:hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); } }
+.ovs-recent-row:active { transform: scale(.985); }
+@keyframes ovs-recent-in { from { opacity: 0; transform: translateY(calc(-4px * var(--ov-move, 1))); } }
+html[data-ov-motion=off] .ovs-recent, html[data-ov-motion=off] .ovs-recent-row { animation: none; }
 /* The list fills the menu's height (You's notifications put their foot at the bottom: the owner, 11-13: "take up the full height properly"). */
 .ovs-panel > .ovs-list { flex: 1 1 auto; min-height: 0; }
 .ovs-youpanel { position: absolute; z-index: 6; left: 8px; right: 8px; top: var(--ovs-you-top, 64px); max-height: calc(100% - var(--ovs-you-top, 64px) - 12px); overflow: auto; overscroll-behavior: contain;
@@ -842,6 +857,36 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         });
         document.addEventListener('openvibe-notifications-count', () => { if (el && el.classList.contains('is-open')) paintTabs(); });
         input.addEventListener('input', () => { moved = false; if (view === 'results') leaveResults(); paintGhost(); schedule(input.value); });
+        // Recent searches drop under the field while it is focused and empty (4.262.0, the owner: "recent searches … under the
+        // field when it is focused", not a section on the site tab). A press fills the field and searches; Clear empties them.
+        const recentEl = document.createElement('div');
+        recentEl.className = 'ovs-recent'; recentEl.hidden = true; recentEl.setAttribute('role', 'listbox'); recentEl.setAttribute('aria-label', 'Recent searches');
+        el.querySelector('.ovs-bar').append(recentEl);
+        const paintRecent = () => {
+            const list = recent.get();
+            const show = document.activeElement === input && !input.value && list.length > 0;
+            recentEl.hidden = !show;
+            if (!show) return;
+            recentEl.textContent = '';
+            const head = document.createElement('div'); head.className = 'ovs-recent-h';
+            const t = document.createElement('span'); t.textContent = 'Recent searches';
+            const clear = document.createElement('button'); clear.type = 'button'; clear.className = 'ovs-recent-clear'; clear.setAttribute('data-ovs-clear', ''); clear.textContent = 'Clear';
+            clear.addEventListener('pointerdown', (e) => e.preventDefault());
+            clear.addEventListener('click', () => { recent.clear(); recentEl.hidden = true; input.focus(); });
+            head.append(t, clear); recentEl.append(head);
+            list.forEach((q, n) => {
+                const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-recent-row'; b.setAttribute('role', 'option'); b.style.setProperty('--i', String(n));
+                b.innerHTML = ICON.clock; const w = document.createElement('span'); w.textContent = q; b.append(w);
+                b.addEventListener('pointerdown', (e) => e.preventDefault());
+                b.addEventListener('click', () => { input.value = q; recentEl.hidden = true; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus(); });
+                recentEl.append(b);
+            });
+        };
+        repaintRecent = paintRecent;
+        input.addEventListener('focus', paintRecent);
+        input.addEventListener('input', paintRecent);
+        input.addEventListener('blur', () => { recentEl.hidden = true; });
+        input.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !recentEl.hidden) { recentEl.hidden = true; e.stopPropagation(); } }, true);
         input.addEventListener('keydown', onKey);
         listEl.addEventListener('click', (e) => {
             const clear = e.target.closest && e.target.closest('[data-ovs-clear]');
@@ -2106,13 +2151,32 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // its name ("Jobs" a briefcase, "Live tours" a broadcast), else the arrow.
         // 4.261.0 (the owner's shot of "Pages on Network": Network and Link wore the arrow): a site's icon the menu's set
         // does not have (fa-desktop, fa-laptop) is drawn by its nearest one, else the name's, so no row falls to the arrow.
-        const NEAR = { 'fa-desktop': 'fa-display', 'fa-laptop': 'fa-display', 'fa-computer': 'fa-display', 'fa-mobile': 'fa-display', 'fa-network': 'fa-circle-nodes', 'fa-sitemap': 'fa-diagram-project' };
+        // 4.262.0: every icon the sites hand the menu, mapped to the nearest one the menu draws (the shot of "Pages on Live":
+        // Content's fa-film and Chat's fa-comment still wore the arrow). Read from the sites' own links, 11-15.
+        const NEAR = { 'fa-desktop': 'fa-display', 'fa-laptop': 'fa-display', 'fa-computer': 'fa-display', 'fa-mobile': 'fa-display', 'fa-network': 'fa-circle-nodes', 'fa-sitemap': 'fa-diagram-project',
+            'fa-film': 'fa-photo-film', 'fa-clapperboard': 'fa-video', 'fa-camera-retro': 'fa-camera', 'fa-images': 'fa-image', 'fa-photo': 'fa-image',
+            'fa-comment': 'fa-comments', 'fa-message': 'fa-comments', 'fa-messages': 'fa-comments', 'fa-paper-plane': 'fa-envelope',
+            'fa-users': 'fa-people-group', 'fa-user-group': 'fa-people-group', 'fa-user-friends': 'fa-people-group', 'fa-circle-user': 'fa-user', 'fa-user-gear': 'fa-gear',
+            'fa-calendar': 'fa-clock', 'fa-calendar-days': 'fa-clock', 'fa-calendar-day': 'fa-clock', 'fa-hourglass-half': 'fa-clock', 'fa-hourglass': 'fa-clock', 'fa-stopwatch': 'fa-clock',
+            'fa-sliders': 'fa-gear', 'fa-cog': 'fa-gear', 'fa-gears': 'fa-gear', 'fa-wrench': 'fa-screwdriver-wrench', 'fa-hammer': 'fa-screwdriver-wrench', 'fa-ruler': 'fa-pen', 'fa-pencil': 'fa-pen', 'fa-feather': 'fa-pen-nib',
+            'fa-chart-bar': 'fa-chart-line', 'fa-chart-simple': 'fa-chart-line', 'fa-chart-pie': 'fa-chart-line', 'fa-chart-column': 'fa-chart-line', 'fa-table-columns': 'fa-list', 'fa-table': 'fa-list', 'fa-table-list': 'fa-list',
+            'fa-shapes': 'fa-palette', 'fa-cubes': 'fa-puzzle-piece', 'fa-cube': 'fa-puzzle-piece', 'fa-box': 'fa-folder', 'fa-box-archive': 'fa-folder', 'fa-boxes-stacked': 'fa-folder', 'fa-file': 'fa-file-lines',
+            'fa-code-branch': 'fa-code', 'fa-terminal': 'fa-code', 'fa-laptop-code': 'fa-code', 'fa-bug': 'fa-code', 'fa-quote-left': 'fa-comment-dots', 'fa-scale-balanced': 'fa-shield-halved', 'fa-gavel': 'fa-shield-halved',
+            'fa-shoe-prints': 'fa-location-dot', 'fa-route': 'fa-map', 'fa-map-location-dot': 'fa-map', 'fa-earth': 'fa-globe', 'fa-earth-europe': 'fa-globe',
+            'fa-cart-shopping': 'fa-tag', 'fa-store': 'fa-tag', 'fa-bag-shopping': 'fa-tag', 'fa-tags': 'fa-tag', 'fa-gift': 'fa-tag', 'fa-dollar-sign': 'fa-coins', 'fa-credit-card': 'fa-wallet', 'fa-piggy-bank': 'fa-wallet',
+            'fa-trophy': 'fa-crown', 'fa-medal': 'fa-crown', 'fa-ranking-star': 'fa-crown', 'fa-award': 'fa-crown', 'fa-dice': 'fa-gamepad', 'fa-chess': 'fa-gamepad', 'fa-puzzle': 'fa-puzzle-piece',
+            'fa-headphones': 'fa-music', 'fa-podcast': 'fa-microphone', 'fa-radio': 'fa-tower-broadcast', 'fa-broadcast-tower': 'fa-tower-broadcast', 'fa-signal': 'fa-tower-cell', 'fa-rss': 'fa-newspaper',
+            'fa-bookmark': 'fa-star', 'fa-graduation-cap': 'fa-book', 'fa-book-open': 'fa-book', 'fa-question': 'fa-circle-info', 'fa-circle-question': 'fa-circle-info', 'fa-info': 'fa-circle-info',
+            'fa-fire': 'fa-bolt', 'fa-rocket': 'fa-bolt', 'fa-heart-pulse': 'fa-heart', 'fa-mug-hot': 'fa-utensils', 'fa-bowl-food': 'fa-utensils', 'fa-burger': 'fa-utensils', 'fa-sparkles': 'fa-wand-magic-sparkles', 'fa-magic': 'fa-wand-magic-sparkles',
+            'fa-eye': 'fa-display', 'fa-tv-retro': 'fa-tv', 'fa-house-chimney': 'fa-house', 'fa-home': 'fa-house', 'fa-search': 'fa-magnifying-glass', 'fa-lightbulb': 'fa-brain', 'fa-flask': 'fa-microchip', 'fa-atom': 'fa-microchip' };
         const drawnOf = (l) => {
             if (typeof ctx.navIcon !== 'function') return '';
-            for (const name of [l.icon, NEAR[l.icon], pageGlyphOf(l.label), /^\/?$/.test(String(l.href || '').replace(/^https?:\/\/[^/]+/, '')) ? 'fa-house' : '']) {
+            for (const name of [l.icon, NEAR[l.icon], pageGlyphOf(l.label), /^\/?$/.test(String(l.href || '').replace(/^https?:\/\/[^/]+/, '')) ? 'fa-house' : '', 'fa-file-lines']) {
                 if (!name) continue;
                 const d = ctx.navIcon(name);
-                if (d) return d;
+                // A name the bar does not draw comes back as a bare Font Awesome <i> (navbar.js navIcon): not a drawing, so
+                // the next name is tried (4.262.0).
+                if (d && !/^<i class="fa-solid /.test(d)) return d;
             }
             return '';
         };
@@ -2135,8 +2199,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (best >= 0) pages[best].here = true;
         if (pages.length) groups.push({ title: `Pages on ${here()}`, as: 'links', items: pages, section: 'here' });
         // Your recent searches (4.252.0, plan §AB.34): the account's on every site, then this browser's; Clear empties both.
-        const searches = recent.get();
-        if (searches.length) groups.push({ title: 'Recent searches', as: 'chips', clear: true, items: searches.map((x) => ({ title: x, url: `${API}/?q=${encodeURIComponent(x)}`, icon: 'clock', kind: 'recent' })), section: 'recent' });
+        // Recent searches are under the field while it is focused and empty (4.262.0, the owner: "not a section on the site
+        // tab"), never a section here.
         const fgroups = f && f.groups && f.groups.length ? f.groups.slice() : [{ id: '', name: 'OpenVibe' }];
         if (mineSite) fgroups.sort((a, b) => (b.id === mineSite.group) - (a.id === mineSite.group));
         const inGroup = (x, g) => !g.id || x.group === g.id || (!fgroups.some((y) => y.id === x.group) && g === fgroups[fgroups.length - 1]);
@@ -2280,8 +2344,6 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         groups.push({ title: 'Jump back in', items: back, section: 'back' });
         const tools = yourTools().concat(quickTools()).filter((t, i, a) => a.findIndex((x) => x.url === t.url) === i).slice(0, 6);
         groups.push({ title: 'Tools', as: 'chips', more: { label: 'All tools', href: 'https://openvibe.tools/' }, items: tools, section: 'tools' });
-        const r = recent.get();
-        groups.push({ title: 'Recent searches', as: 'chips', clear: true, items: r.map((x) => ({ title: x, url: `${API}/?q=${encodeURIComponent(x)}`, icon: 'clock', kind: 'recent' })), section: 'recent' });
         // Display: theme, text size and motion.
         if (typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
         return groups;
@@ -2761,7 +2823,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         setTimeout(() => { if (phoneSheet() && !opts.q && !opts.search && orbEl && orbEl.isConnected) orbEl.focus({ preventScroll: true }); else input.focus(); }, 0);
         // What makes it the person's own arrives after the first paint: their history, and the tools catalog.
         mine = null;
-        loadHistory().then((h) => { if (h && el.classList.contains('is-open')) { mine = h; paintGhost(); render(input.value); } });
+        loadHistory().then((h) => { if (h && el.classList.contains('is-open')) { mine = h; paintGhost(); render(input.value); if (repaintRecent) repaintRecent(); } });
         if (!catalog) loadCatalog().then((c) => { if (c) { catalog = c; if (el.classList.contains('is-open')) render(input.value); } });
         loadPulse().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
         loadChanges().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });

@@ -1378,13 +1378,21 @@
         }, { rootMargin: '0px 0px 900px 0px' });
         v.io.observe(mark);
     }
+    const _pagesInFlight = new Map();
     async function fetchPage(v, offset) {
         const params = new URLSearchParams({ limit: String(v.pageSize || PAGE_SIZE), offset: String(offset) });
         if (v.unread) params.set('unread_only', '1');
         if (v.tab && v.tab !== 'all') params.set('tab', v.tab);
         if (v.q) params.set('q', v.q);
-        return apiJson(`/api/notifications?${params}`);
+        // 4.262.0: the same page asked for twice at once is one request (as the menu opened, the inbox's own load, the
+        // sign-in event and the menu's refresh each asked for the first page: three times, 11-15). Each caller gets its
+        // own copy of the list.
+        const url = `/api/notifications?${params}`;
+        let shared = _pagesInFlight.get(url);
+        if (!shared) { shared = apiJson(url).finally(() => _pagesInFlight.delete(url)); _pagesInFlight.set(url, shared); }
+        return shared.then((d) => ({ ...d, notifications: (d && d.notifications ? d.notifications.slice() : []) }));
     }
+    
     async function reload(v) {
         const seq = ++v.seq;
         loadTabCounts();
