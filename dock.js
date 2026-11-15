@@ -20,6 +20,7 @@
     const svg = (p) => `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
     const G = {
         clip: '<path d="M19.5 11.3l-7.6 7.6a4.9 4.9 0 0 1-6.9-6.9l7.9-7.9a3.3 3.3 0 0 1 4.6 4.6l-7.9 7.9a1.6 1.6 0 0 1-2.3-2.3l7.3-7.3"/>',
+        personAdd: '<circle cx="10" cy="8" r="3.4"/><path d="M3.8 19.5c.7-3.5 3.1-5.4 6.2-5.4 1.4 0 2.6.4 3.6 1.1"/><path d="M18 13.5v6M15 16.5h6"/>',
         people: '<circle cx="9" cy="8.5" r="3.3"/><path d="M3.2 19.5c.7-3.4 3-5.3 5.8-5.3s5.1 1.9 5.8 5.3"/><circle cx="17.2" cy="9.4" r="2.6"/><path d="M16 14.4c2.4.2 4.2 1.8 4.8 5"/>',
         server: '<rect x="4" y="4" width="7" height="7" rx="2.2"/><rect x="13" y="4" width="7" height="7" rx="2.2"/><rect x="4" y="13" width="7" height="7" rx="2.2"/><rect x="13" y="13" width="7" height="7" rx="2.2"/>',
         globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.6 3.6 5.4 3.6 8.5s-1.2 5.9-3.6 8.5c-2.4-2.6-3.6-5.4-3.6-8.5s1.2-5.9 3.6-8.5z"/>',
@@ -230,6 +231,43 @@
             .ovdk-gl-open .ovdk-i svg, .ovdk-sv-act .ovdk-i svg { width: 18px; height: 18px; }
             .ovdk-sv-more { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
             .ovdk-sv-more .ovdk-sv-act { margin: 8px 0 0; }
+            /* 4.275.0: Friends offer names as you type; Global is the room itself; Servers start and join right here. */
+            .ovdk-addfriend-go { width: 40px; min-height: 40px; padding: 0; border-radius: 50%; }
+            .ovdk-addfriend-go .ovdk-i svg, .ovdk-ask .ovdk-i svg { width: 20px; height: 20px; }
+            .ovdk-ask { gap: 6px; display: inline-flex; align-items: center; }
+            .ovdk-suggest { list-style: none; margin: 0; padding: 4px; display: grid; gap: 2px; border-radius: 14px; background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); box-shadow: 0 10px 30px rgba(0,0,0,.35); animation: ovdk-pop .16s cubic-bezier(.2,.8,.2,1) both; }
+            .ovdk-sug { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 48px; padding: 6px 8px; border-radius: 10px; cursor: pointer; }
+            .ovdk-sug .ovdk-av { width: 34px; height: 34px; font-size: 13px; }
+            .ovdk-sug:hover, .ovdk-sug[aria-selected="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); }
+            @keyframes ovdk-pop { from { opacity: 0; transform: translateY(calc(-4px * var(--ov-move, 1))); } to { opacity: 1; transform: none; } }
+            .ovdk-none-soft { display: grid; justify-items: center; gap: 6px; padding: 28px 24px; }
+            .ovdk-none-soft .ovdk-i svg { width: 28px; height: 28px; opacity: .7; }
+            .ovdk-gl { display: flex; flex-direction: column; min-height: 100%; }
+            .ovdk-gl-top { display: flex; align-items: center; gap: 8px; padding: 8px 10px; color: var(--text-secondary, #a8b3c4); font-size: 13px; font-weight: 650; }
+            .ovdk-gl-top .ovdk-i svg { width: 18px; height: 18px; }
+            .ovdk-gl-title { flex: 1; min-width: 0; }
+            .ovdk-gl-full { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: var(--text-muted, #8b8b96); }
+            .ovdk-gl-full:hover { color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); }
+            .ovdk-gl .ovdk-gl-list { flex: 1; align-content: end; }
+            .ovdk-gl-list > li { animation: ovdk-pop .2s ease both; }
+            .ovdk-gl-quiet { margin: 24px 0; text-align: center; color: var(--text-muted, #8b8b96); font-size: 13.5px; }
+            .ovdk-gl-say, .ovdk-sv-new { position: sticky; bottom: 0; display: flex; align-items: center; gap: 6px; margin: 8px 4px 4px; padding: 4px 4px 4px 14px; border: 1px solid var(--border, rgba(148,163,184,.2)); border-radius: 999px; background: var(--bg-input, var(--bg-primary, #0f1522)); transition: border-color .15s ease; }
+            .ovdk-sv-new { position: static; padding-left: 10px; color: var(--text-muted, #8b8b96); }
+            .ovdk-gl-say:focus-within, .ovdk-sv-new:focus-within { border-color: var(--accent, #3b82f6); }
+            .ovdk-gl-say input, .ovdk-sv-new input { flex: 1; min-width: 0; height: 38px; padding: 0; border: 0; outline: none; background: none; color: var(--text-primary, #ececf1); font: inherit; font-size: 15px; box-shadow: none; }
+            .ovdk-gl-send, .ovdk-sv-make { all: unset; flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; color: #fff; background: var(--accent, #3b82f6); cursor: pointer; }
+            .ovdk-gl-send:disabled, .ovdk-sv-make:disabled { opacity: .55; cursor: default; }
+            .ovdk-gl-send:active, .ovdk-sv-make:active { transform: scale(.94); }
+            .ovdk-gl-send:focus-visible, .ovdk-sv-make:focus-visible { outline: 2px solid var(--accent-light, var(--accent, #3b82f6)); outline-offset: 2px; }
+            .ovdk-gl-send .ovdk-i svg, .ovdk-sv-make .ovdk-i svg { width: 18px; height: 18px; }
+            .ovdk-gl-note { margin: 0 14px 6px; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+            .ovdk-sv-find .ovdk-row-b { color: inherit; text-decoration: none; }
+            .ovdk-sv-filter { box-sizing: border-box; width: calc(100% - 8px); height: 40px; margin: 2px 4px 6px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border, rgba(148,163,184,.2)); background: var(--bg-input, var(--bg-primary, #0f1522)); color: var(--text-primary, #ececf1); font: inherit; font-size: 15px; -webkit-appearance: none; appearance: none; }
+            .ovdk-sv-filter:focus { outline: none; border-color: var(--accent, #3b82f6); }
+            .ovdk-gl-more { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; margin: 6px 4px 0; color: var(--text-muted, #8b8b96); font-size: 13px; font-weight: 650; text-decoration: none; }
+            .ovdk-gl-more:hover { color: var(--text-primary, #ececf1); }
+            .ovdk-gl-more .ovdk-i svg { width: 15px; height: 15px; }
+            html[data-ov-motion="off"] .ovdk-suggest, html[data-ov-motion="off"] .ovdk-gl-list > li { animation: none; }
             html[data-ov-motion="off"] .ovdk-pane, html[data-ov-motion="off"] .ovdk-rows > li, html[data-ov-motion="off"] .ovdk-seg { animation: none; transition: none; }
             .ovdk-chat { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 10px; border: 0; border-radius: 14px;
                 background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
@@ -533,8 +571,9 @@
         if (!chats.list) { panel.innerHTML = '<div class="ovdk-wait"><span></span></div>'; }
         const sharing = chats.draft && canWriteChat() ? load('dock-share.js', () => !!(root.OpenVibeDockShare && root.OpenVibeDockShare.bar)) : null;
         try {
-            const [dm, ai, people, srv] = await Promise.all([chatCall('/api/dm/conversations'), Promise.resolve(null), friendsCall('').catch(() => chatCall('/api/dm/contacts').catch(() => null)), chatCall('/api/chat/servers?limit=12').catch(() => null)]);
+            const [dm, ai, people, srv] = await Promise.all([chatCall('/api/dm/conversations'), Promise.resolve(null), friendsCall('').catch(() => chatCall('/api/dm/contacts').catch(() => null)), chatCall('/api/chat/servers?limit=30').catch(() => null)]);
             chats.servers = srv && Array.isArray(srv.mine) ? srv.mine.slice(0, 12) : [];
+            chats.publicServers = srv && Array.isArray(srv.public) ? srv.public.slice(0, 30) : [];
             chats.people = people && Array.isArray(people.mutual) ? { friends: people.mutual, requests: people.requests || [], asked: people.asked || [], network: true } : people && Array.isArray(people.friends) ? people : null;
             chats.list = dm.conversations || [];
             chats.vibeSummary = ai && ai.count ? { kind: 'vibe', count: ai.count, latest: ai.conversations && ai.conversations[0], last_message_at: ai.conversations && ai.conversations[0] && ai.conversations[0].last_message_at } : null;
@@ -591,7 +630,7 @@
             segBar.querySelectorAll('[data-seg]').forEach((b) => { const on = b.dataset.seg === seg; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
             scroll.textContent = ''; scroll.dataset.seg = seg; scroll.scrollTop = 0;
             scroll.append(seg === 'friends' ? friendsPane(chats.people, () => { chats.list = chats.list || []; paint(); })
-                : seg === 'global' ? globalPane() : seg === 'servers' ? serversPane(chats.servers || []) : messagesPane());
+                : seg === 'global' ? globalPane() : seg === 'servers' ? serversPane(chats.servers || [], chats.publicServers || [], () => paint()) : messagesPane());
             wearNames(scroll);
         };
         const pick = (id) => { seg = id; chats.seg = id; try { localStorage.setItem('ovdk-chat-seg', id); } catch { /* private mode */ } paint(); };
@@ -646,9 +685,52 @@
         if (!people) { const none = h('div', 'ovdk-none'); none.append(h('b', '', 'Your friends show here'), document.createTextNode('Sign in to OpenVibe to see them and add someone.')); box.append(none); return box; }
         const add = h('form', 'ovdk-addfriend');
         const input = h('input'); input.type = 'text'; input.name = 'username'; input.placeholder = 'Add a friend by username'; input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('aria-label', 'Add a friend by username');
-        const go = h('button', 'ovdk-addfriend-go', 'Add'); go.type = 'submit';
+        // 4.275.0 (the owner's phone, 11-15: "auto fill", "icon"): a person-plus button, and names offered as you type.
+        const go = h('button', 'ovdk-addfriend-go'); go.type = 'submit'; go.append(icon(G.personAdd)); go.setAttribute('aria-label', 'Add friend'); go.title = 'Add friend';
         const note = h('p', 'ovdk-addfriend-note'); note.hidden = true; note.setAttribute('role', 'status');
         add.append(input, go);
+        const sug = h('ul', 'ovdk-suggest'); sug.id = `ovdk-sug-${Math.random().toString(36).slice(2, 8)}`; sug.setAttribute('role', 'listbox'); sug.setAttribute('aria-label', 'People'); sug.hidden = true;
+        input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list'); input.setAttribute('aria-controls', sug.id); input.setAttribute('aria-expanded', 'false');
+        const known = new Set([...(people.friends || []), ...(people.asked || [])].map((x) => String(x.username || '').toLowerCase()).filter(Boolean));
+        let sugTimer = 0, sugSeq = 0, active = -1;
+        const closeSug = () => { sug.hidden = true; sug.textContent = ''; active = -1; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); };
+        const pickSug = (u) => { input.value = u; closeSug(); if (typeof add.requestSubmit === 'function') add.requestSubmit(); else add.dispatchEvent(new Event('submit', { cancelable: true })); };
+        const mark = (i) => {
+            const opts = [...sug.children]; if (!opts.length) return;
+            active = (i + opts.length) % opts.length;
+            opts.forEach((o, k) => o.setAttribute('aria-selected', String(k === active)));
+            input.setAttribute('aria-activedescendant', opts[active].id);
+        };
+        input.addEventListener('input', () => {
+            clearTimeout(sugTimer);
+            const q = input.value.trim().replace(/^@/, '');
+            if (q.length < 2) { closeSug(); return; }
+            sugTimer = setTimeout(async () => {
+                const seq = ++sugSeq;
+                let users = [];
+                try { const d = await chatCall(`/api/dm/users/search?q=${encodeURIComponent(q.slice(0, 40))}`); users = d && Array.isArray(d.users) ? d.users : []; } catch { users = []; }
+                if (seq !== sugSeq) return;
+                sug.textContent = ''; active = -1;
+                users.filter((u) => u && u.username && !known.has(String(u.username).toLowerCase())).slice(0, 6).forEach((u, k) => {
+                    const li = h('li', 'ovdk-sug'); li.id = `${sug.id}-${k}`; li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false');
+                    const body = h('span', 'ovdk-row-b'); body.append(h('b', '', String(u.display_name || u.username).slice(0, 60)), h('span', 'ovdk-row-p', `@${u.username}`));
+                    const plus = icon(G.personAdd); plus.classList.add('ovdk-row-go');
+                    li.append(avatar(u, false), body, plus);
+                    li.addEventListener('pointerdown', (e) => e.preventDefault());   // the field keeps the focus
+                    li.addEventListener('click', () => pickSug(String(u.username)));
+                    sug.append(li);
+                });
+                sug.hidden = !sug.children.length; input.setAttribute('aria-expanded', String(!sug.hidden));
+            }, 180);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (sug.hidden) return;
+            if (e.key === 'ArrowDown') { e.preventDefault(); mark(active + 1); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); mark(active - 1); }
+            else if (e.key === 'Escape') { e.preventDefault(); closeSug(); }
+            else if (e.key === 'Enter' && active >= 0) { e.preventDefault(); const o = sug.children[active]; if (o) o.click(); }
+        });
+        input.addEventListener('blur', () => setTimeout(closeSug, 150));
         add.addEventListener('submit', async (e) => {
             e.preventDefault();
             const u = input.value.trim().replace(/^@/, ''); if (!u) return;
@@ -657,12 +739,13 @@
                 let mutual = false;
                 if (people.network) { const out = await friendsCall(`/${encodeURIComponent(u)}`, { method: 'PUT', body: '{}' }); mutual = !!(out && out.friend && out.friend.state === 'friends'); }
                 else { const out = await chatCall('/api/dm/contacts', { method: 'POST', body: JSON.stringify({ username: u }) }); mutual = !!(out && out.status === 'friend'); }
-                note.textContent = mutual ? `You and @${u} are friends.` : `Asked @${u} to be your friend.`; input.value = '';
+                note.textContent = mutual ? `You and @${u} are friends.` : `Asked @${u} to be your friend.`; input.value = ''; closeSug();
+                known.add(u.toLowerCase());
             }
             catch (err) { note.textContent = (err && err.message) || 'That did not send.'; }
             finally { go.disabled = false; }
         });
-        const addBox = h('div', 'ovdk-fr-add'); addBox.append(add, note); box.append(addBox);
+        const addBox = h('div', 'ovdk-fr-add'); addBox.append(add, sug, note); box.append(addBox);
         const section = (title, list, row) => { if (!list.length) return; box.append(h('p', 'ovdk-sec', `${title} · ${list.length}`)); const ul = h('ul', 'ovdk-rows'); list.forEach((p, i) => { const li = row(p); li.style.setProperty('--i', String(Math.min(i, 12))); ul.append(li); }); box.append(ul); };
         const face = (p) => { const f = avatar(p, false); if (p.online) { f.classList.add('is-online'); f.title = p.site ? `Online on ${p.site}` : 'Online'; } return f; };
         const nameOf = (p) => String(p.display_name || p.username || 'Someone').slice(0, 60);
@@ -705,60 +788,204 @@
             li.append(face(p), body); return li;
         });
         if (!all.length && !(people.requests || []).length && !(people.asked || []).length) {
-            const none = h('div', 'ovdk-none'); none.append(h('b', '', 'No friends yet'), document.createTextNode('Add someone with the box above; when they add you back, you are friends on every OpenVibe site.'));
-            box.append(none);
+            // 4.275.0 (the owner, 11-15: "improve"): the people you already talk to, each one tap from a friend.
+            const seen = new Set();
+            const talk = [];
+            for (const c of chats.list || []) {
+                if (c.is_group) continue;
+                for (const x of others(c)) {
+                    const k = String(x.username || '').toLowerCase();
+                    if (!k || seen.has(k) || known.has(k)) continue;
+                    seen.add(k); talk.push(x);
+                }
+            }
+            if (talk.length) {
+                section('People you talk to', talk.slice(0, 8), (p) => {
+                    const li = h('li', 'ovdk-row is-request');
+                    const body = h('span', 'ovdk-row-b'); body.append(setSubject(h('b', '', nameOf(p)), p), h('span', 'ovdk-row-p', `@${p.username}`));
+                    const ask = h('button', 'ovdk-request-ok ovdk-ask'); ask.type = 'button'; ask.append(icon(G.personAdd), h('span', '', 'Add'));
+                    ask.setAttribute('aria-label', `Add ${nameOf(p)} as a friend`);
+                    ask.addEventListener('click', async () => {
+                        ask.disabled = true;
+                        try {
+                            if (people.network) await friendsCall(`/${encodeURIComponent(p.username)}`, { method: 'PUT', body: '{}' });
+                            else await chatCall('/api/dm/contacts', { method: 'POST', body: JSON.stringify({ username: p.username }) });
+                            people.asked = [...(people.asked || []), p]; repaint();
+                        } catch { ask.disabled = false; ask.lastChild.textContent = 'Try again'; }
+                    });
+                    li.append(face(p), body, ask);
+                    return li;
+                });
+            } else {
+                const none = h('div', 'ovdk-none ovdk-none-soft'); none.append(icon(G.people), h('b', '', 'No friends yet'), document.createTextNode('Type a name above: people show as you type. When they add you back, you are friends on every OpenVibe site.'));
+                box.append(none);
+            }
         }
         return box;
     }
-    /** Global: what everyone is saying now, newest last, and the way into the room. */
+    /** Global, built in (4.275.0; the owner's phone, 11-15: "Global chat did not load … improve"): what everyone is saying,
+     *  newest last, new lines every few seconds while it is open, and a box to say something (Chat's /api/chat/send, as the
+     *  person). It no longer sends people to openvibe.chat to read it; a quiet link still opens the full room there. */
     function globalPane() {
         const box = h('div', 'ovdk-pane ovdk-gl');
-        const open = h('a', 'ovdk-gl-open'); open.href = `${CHAT_SITE}/`; open.append(icon(G.globe), h('span', '', 'Open Global chat'), icon(G.open || G.chat));
-        const list = h('ul', 'ovdk-gl-list'); list.setAttribute('aria-label', 'Global chat, latest');
+        const top = h('div', 'ovdk-gl-top');
+        const full = h('a', 'ovdk-gl-full'); full.href = `${CHAT_SITE}/`; full.target = '_blank'; full.rel = 'noopener'; full.append(icon(G.open || G.chat)); full.setAttribute('aria-label', 'Open Global chat on openvibe.chat'); full.title = 'Open on openvibe.chat';
+        top.append(icon(G.globe), h('span', 'ovdk-gl-title', 'Everyone on OpenVibe'), full);
+        const list = h('ul', 'ovdk-gl-list'); list.setAttribute('aria-label', 'Global chat'); list.setAttribute('aria-live', 'polite');
         const wait = h('div', 'ovdk-wait'); wait.append(h('span'));
-        box.append(wait);
-        chatCall('/api/chat/global/history?limit=25').then((d) => {
-            wait.remove();
-            const rows = (d && Array.isArray(d.messages) ? d.messages : []).filter((m) => m && !m.is_deleted && m.message).slice(-25);
-            if (!rows.length) { const none = h('div', 'ovdk-none'); none.append(h('b', '', 'It is quiet in Global'), document.createTextNode('Say the first thing.')); box.prepend(none); return; }
-            rows.sort((a, b2) => String(a.timestamp || '').localeCompare(String(b2.timestamp || '')));
-            for (const m of rows) {
-                const li = h('li', 'ovdk-gl-row');
-                const who = { username: m.username, display_name: m.display_name, avatar_url: m.avatar_url };
-                const head = h('span', 'ovdk-gl-h'); head.append(setSubject(h('b', '', String(m.display_name || m.username || 'Someone').slice(0, 40)), who), h('time', '', when(m.timestamp)));
-                const body = h('span', 'ovdk-gl-b'); body.append(head, h('span', 'ovdk-gl-t', String(m.message).replace(/\s+/g, ' ').slice(0, 400)));
-                li.append(avatar(who, false), body); list.append(li);
-            }
-            box.prepend(list);
-            requestAnimationFrame(() => { const sc = box.closest('.ovdk-scroll'); if (sc) sc.scrollTop = sc.scrollHeight; });
-        }).catch(() => { wait.remove(); const none = h('div', 'ovdk-none'); none.append(h('b', '', 'Global chat did not load'), document.createTextNode('Open it on openvibe.chat.')); box.prepend(none); });
-        box.append(open);
+        const quiet = h('p', 'ovdk-gl-quiet', 'It is quiet in Global. Say the first thing.'); quiet.hidden = true;
+        const say = h('form', 'ovdk-gl-say');
+        const field = h('input'); field.type = 'text'; field.maxLength = 500; field.placeholder = 'Say something to everyone'; field.setAttribute('aria-label', 'Message to Global chat'); field.autocomplete = 'off'; field.enterKeyHint = 'send';
+        const send = h('button', 'ovdk-gl-send'); send.type = 'submit'; send.append(icon(G.send)); send.setAttribute('aria-label', 'Send');
+        const sayNote = h('p', 'ovdk-gl-note'); sayNote.hidden = true; sayNote.setAttribute('role', 'status');
+        say.append(field, send);
+        box.append(top, wait, list, quiet, say, sayNote);
+        let lastId = 0, timer = 0;
+        const sc = () => box.closest('.ovdk-scroll');
+        const nearEnd = () => { const el = sc(); return !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120; };
+        const toEnd = () => requestAnimationFrame(() => { const el = sc(); if (el) el.scrollTop = el.scrollHeight; });
+        function rowOf(m) {
+            const li = h('li', 'ovdk-gl-row');
+            const who = { username: m.username, display_name: m.display_name, avatar_url: m.avatar_url };
+            const head = h('span', 'ovdk-gl-h'); head.append(setSubject(h('b', '', String(m.display_name || m.username || 'Someone').slice(0, 40)), who), h('time', '', when(m.timestamp)));
+            const body = h('span', 'ovdk-gl-b'); body.append(head, h('span', 'ovdk-gl-t', String(m.message).replace(/\s+/g, ' ').slice(0, 500)));
+            li.append(avatar(who, false), body);
+            return li;
+        }
+        function addRows(rows, { scroll = false } = {}) {
+            const keep = nearEnd();
+            const fresh = (rows || []).filter((m) => m && !m.is_deleted && m.message && Number(m.id) > lastId)
+                .sort((a, b2) => Number(a.id) - Number(b2.id) || String(a.timestamp || '').localeCompare(String(b2.timestamp || '')));
+            for (const m of fresh) { list.append(rowOf(m)); lastId = Math.max(lastId, Number(m.id) || 0); }
+            while (list.children.length > 120) list.firstChild.remove();
+            quiet.hidden = list.children.length > 0;
+            if (fresh.length && (scroll || keep)) toEnd();
+        }
+        function poll() {
+            clearTimeout(timer);
+            timer = setTimeout(async () => {
+                if (!box.isConnected) return;   // the pane was left: stop
+                if (document.visibilityState === 'visible' && lastId) {
+                    try { const d = await chatCall(`/api/chat/global/history?after_id=${lastId}&limit=50`); addRows(d && d.messages); } catch { /* the next tick tries again */ }
+                }
+                poll();
+            }, 5000);
+        }
+        function load() {
+            if (!wait.isConnected) box.insertBefore(wait, list);
+            const failed = box.querySelector('.ovdk-gl-fail'); if (failed) failed.remove();
+            chatCall('/api/chat/global/history?limit=30').then((d) => {
+                wait.remove();
+                addRows(d && d.messages, { scroll: true });
+                quiet.hidden = list.children.length > 0;
+                poll();
+            }).catch(() => {
+                wait.remove();
+                const none = h('div', 'ovdk-none ovdk-gl-fail'); none.append(h('b', '', 'Global chat did not load'), document.createTextNode('Check your connection and try again.'));
+                const again = h('button', 'ovdk-none-go', 'Try again'); again.type = 'button'; again.addEventListener('click', load);
+                none.append(again); box.insertBefore(none, list);
+            });
+        }
+        say.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = field.value.trim(); if (!text) return;
+            send.disabled = true; sayNote.hidden = true;
+            try {
+                await chatCall('/api/chat/send', { method: 'POST', body: JSON.stringify({ message: text }) });
+                field.value = '';
+                const d = await chatCall(`/api/chat/global/history?after_id=${lastId}&limit=50`).catch(() => null);
+                addRows(d && d.messages, { scroll: true });
+            } catch (err) {
+                sayNote.hidden = false;
+                sayNote.textContent = err && err.status === 401 ? 'Sign in to say something.' : (err && err.message) || 'That did not send.';
+            } finally { send.disabled = false; field.focus(); }
+        });
+        tokenOf().then((t) => { if (!t) { say.hidden = true; sayNote.hidden = false; sayNote.textContent = 'Sign in to OpenVibe to say something.'; } }).catch(() => {});
+        load();
         return box;
     }
-    /** Servers: yours, unread marked, then start one or find one. */
-    function serversPane(servers) {
+    /** Servers, built in (4.275.0; the owner's phone, 11-15: "built in", "down"): yours (unread marked), a box to start
+     *  one right here, and the public ones below to join with one press. A server opens on openvibe.chat. */
+    function serverTile(sv) {
+        const slug = String(sv.slug || ''), name = String(sv.name || slug).slice(0, 60);
+        let hue = 0; for (let k = 0; k < slug.length; k++) hue = (hue * 31 + slug.charCodeAt(k)) % 360;
+        const pic = typeof sv.picture_url === 'string' && /^https:\/\//.test(sv.picture_url) ? sv.picture_url : '';
+        const tile = h('span', 'ovdk-rail-t is-server'); tile.style.setProperty('--rh', String(hue));
+        if (pic) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.src = pic; tile.append(img); } else tile.append(h('b', '', name.charAt(0).toUpperCase()));
+        return tile;
+    }
+    const okSlug = (slug) => /^[a-z0-9][a-z0-9-]{0,63}$/i.test(String(slug || ''));
+    function serversPane(servers, publicServers = [], repaint = () => {}) {
         const box = h('div', 'ovdk-pane ovdk-sv');
         const ul = h('ul', 'ovdk-rows');
         servers.forEach((sv, i) => {
-            const slug = String(sv.slug || ''); if (!/^[a-z0-9][a-z0-9-]{0,63}$/i.test(slug)) return;
+            const slug = String(sv.slug || ''); if (!okSlug(slug)) return;
             const name = String(sv.name || slug).slice(0, 60);
-            let hue = 0; for (let k = 0; k < slug.length; k++) hue = (hue * 31 + slug.charCodeAt(k)) % 360;
-            const pic = typeof sv.picture_url === 'string' && /^https:\/\//.test(sv.picture_url) ? sv.picture_url : '';
             const li = h('li'); li.style.setProperty('--i', String(Math.min(i, 12)));
             const a = h('a', 'ovdk-row'); a.href = `${CHAT_SITE}/s/${encodeURIComponent(slug)}`;
-            const tile = h('span', 'ovdk-rail-t is-server'); tile.style.setProperty('--rh', String(hue));
-            if (pic) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.src = pic; tile.append(img); } else tile.append(h('b', '', name.charAt(0).toUpperCase()));
             const n = Number(sv.unread) || 0;
-            const body = h('span', 'ovdk-row-b'); body.append(h('b', '', name), h('span', 'ovdk-row-p', n ? `${n > 99 ? '99+' : n} unread` : (sv.member_count ? `${sv.member_count} members` : 'Your server')));
-            a.append(tile, body); if (n) { a.append(h('b', 'ovdk-unread', n > 99 ? '99+' : String(n))); a.setAttribute('aria-label', `${name}, ${n} unread`); }
+            const body = h('span', 'ovdk-row-b'); body.append(h('b', '', name), h('span', 'ovdk-row-p', n ? `${n > 99 ? '99+' : n} unread` : (sv.member_count || sv.members ? `${sv.member_count || sv.members} members` : 'Your server')));
+            a.append(serverTile(sv), body); if (n) { a.append(h('b', 'ovdk-unread', n > 99 ? '99+' : String(n))); a.setAttribute('aria-label', `${name}, ${n} unread`); }
             li.append(a); ul.append(li);
         });
-        if (ul.children.length) { box.append(h('p', 'ovdk-sec', `Your servers · ${ul.children.length}`), ul); }
-        else { const none = h('div', 'ovdk-none'); none.append(h('b', '', 'No servers yet'), document.createTextNode('Start one for your people, or find one to join.')); box.append(none); }
-        const more = h('div', 'ovdk-sv-more');
-        const start = h('a', 'ovdk-sv-act'); start.href = `${CHAT_SITE}/servers#oc-new-server`; start.append(icon(G.plus), h('span', '', 'Start a server'));
-        const find = h('a', 'ovdk-sv-act'); find.href = `${CHAT_SITE}/servers`; find.append(icon(G.search), h('span', '', 'Find servers'));
-        more.append(start, find); box.append(more);
+        if (ul.children.length) box.append(h('p', 'ovdk-sec', `Your servers · ${ul.children.length}`), ul);
+
+        // Start one, right here: a name, and it is made (with #general and a voice Lounge) and listed above.
+        const start = h('form', 'ovdk-sv-new');
+        const name = h('input'); name.type = 'text'; name.maxLength = 60; name.placeholder = ul.children.length ? 'Start another server: name it' : 'Start a server for your people: name it'; name.setAttribute('aria-label', 'Name a new server'); name.autocomplete = 'off';
+        const make = h('button', 'ovdk-sv-make'); make.type = 'submit'; make.append(icon(G.plus)); make.setAttribute('aria-label', 'Start the server');
+        const startNote = h('p', 'ovdk-addfriend-note'); startNote.hidden = true; startNote.setAttribute('role', 'status');
+        start.append(icon(G.server), name, make);
+        start.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const n = name.value.replace(/\s+/g, ' ').trim(); if (!n) return;
+            make.disabled = true; startNote.hidden = false; startNote.textContent = 'Starting it…';
+            try {
+                const out = await chatCall('/api/chat/servers', { method: 'POST', body: JSON.stringify({ name: n }) });
+                const sv = out && out.server;
+                if (sv && okSlug(sv.slug)) { servers.unshift({ ...sv, unread: 0 }); chats.servers = servers; repaint(); return; }
+                startNote.textContent = 'Started.';
+            } catch (err) { startNote.textContent = err && err.status === 401 ? 'Sign in to start a server.' : (err && err.message) || 'That did not work.'; }
+            finally { make.disabled = false; }
+        });
+        box.append(start, startNote);
+
+        // The public ones, below: join with one press (then it is yours above), or open it.
+        const mine = new Set(servers.map((sv) => String(sv.slug || '').toLowerCase()));
+        const open = (publicServers || []).filter((sv) => sv && okSlug(sv.slug) && !mine.has(String(sv.slug).toLowerCase()));
+        if (open.length) {
+            box.append(h('p', 'ovdk-sec', `Find servers · ${open.length}`));
+            const list = h('ul', 'ovdk-rows ovdk-sv-find');
+            let filter = null;
+            if (open.length > 8) {
+                filter = h('input', 'ovdk-sv-filter'); filter.type = 'search'; filter.placeholder = 'Find a server'; filter.setAttribute('aria-label', 'Find a server');
+                box.append(filter);
+            }
+            open.forEach((sv, i) => {
+                const slug = String(sv.slug), nm = String(sv.name || slug).slice(0, 60);
+                const li = h('li', 'ovdk-row is-request'); li.style.setProperty('--i', String(Math.min(i, 12))); li.dataset.find = `${nm} ${sv.description || ''} ${slug}`.toLowerCase();
+                const a = h('a', 'ovdk-row-b'); a.href = `${CHAT_SITE}/s/${encodeURIComponent(slug)}`;
+                const members = Number(sv.members || sv.member_count) || 0;
+                a.append(h('b', '', nm), h('span', 'ovdk-row-p', [sv.official ? 'Official' : '', members ? `${members} ${members === 1 ? 'member' : 'members'}` : '', String(sv.description || '').slice(0, 90)].filter(Boolean).join(' · ')));
+                const join = h('button', 'ovdk-request-ok'); join.type = 'button'; join.textContent = 'Join'; join.setAttribute('aria-label', `Join ${nm}`);
+                join.addEventListener('click', async () => {
+                    join.disabled = true; join.textContent = 'Joining…';
+                    try {
+                        await chatCall(`/api/chat/servers/${encodeURIComponent(slug)}/join`, { method: 'POST', body: '{}' });
+                        servers.push({ ...sv, unread: 0 }); chats.servers = servers; repaint();
+                    } catch (err) { join.disabled = false; join.textContent = err && err.status === 401 ? 'Sign in' : 'Try again'; }
+                });
+                li.append(serverTile(sv), a, join);
+                list.append(li);
+            });
+            box.append(list);
+            if (filter) filter.addEventListener('input', () => {
+                const words = filter.value.toLowerCase().split(/\s+/).filter(Boolean);
+                for (const li of list.children) li.hidden = !words.every((w) => li.dataset.find.includes(w));
+            });
+        }
+        const more = h('a', 'ovdk-gl-more'); more.href = `${CHAT_SITE}/servers`; more.append(h('span', '', 'Every server on openvibe.chat'), icon(G.open || G.chat));
+        box.append(more);
         return box;
     }
     /** "edited", one quiet word after a message's words; when, in its title. */
