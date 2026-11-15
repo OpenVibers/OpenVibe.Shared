@@ -626,7 +626,19 @@
                 actorSlot.append(go);
             }
         }
-        if (typeof o.top === 'function') { try { const t = o.top(topSlot); if (t) { topSlot.hidden = false; state.topMount = t; } } catch { /* the host's */ } }
+        if (typeof o.top === 'function') {
+            try {
+                const t = o.top(topSlot);
+                if (t) {
+                    state.topMount = t;
+                    // Shown only while what was lent shows something (a timer, an agent at work): an empty lent panel kept
+                    // its padding and left a blank band between your agent and the search (11-15, the owner's phone).
+                    const fit = () => { topSlot.hidden = !(topSlot.textContent.trim() || topSlot.querySelector('img,video,canvas,iframe,svg')); };
+                    fit();
+                    if (typeof root.MutationObserver === 'function') new root.MutationObserver(fit).observe(topSlot, { childList: true, subtree: true, characterData: true });
+                }
+            } catch { /* the host's */ }
+        }
 
         // ── the head ──
         function paintHead() {
@@ -1363,9 +1375,16 @@
 .ovse-dhead > b { flex: 1; font-size: 17px; }
 .ovse-new { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px 0 10px; border: 0; border-radius: 999px; background: var(--ovse-acc); color: var(--on-accent, #fff) !important; font-weight: 600; cursor: pointer; transition: transform .15s, filter .15s; }
 .ovse-new:hover { filter: brightness(1.08); } .ovse-new:active { transform: scale(.96); }
-.ovse-find { display: flex; align-items: center; gap: 8px; margin: 4px 12px 8px; padding: 0 12px; height: 40px; border-radius: 12px; background: var(--ovse-card); border: 1px solid var(--ovse-line); color: var(--ovse-mute); }
-.ovse-find input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ovse-fg); font: inherit; outline: none !important; }
-.ovse-find:focus-within { border-color: color-mix(in srgb, var(--ovse-acc) 60%, var(--ovse-line)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovse-acc) 20%, transparent); }
+/* The search: one soft field, no hard edge, one focus ring on the field itself. The input inside is bare: a search
+   input keeps the platform's own rounded field and ring unless told not to (11-15, the owner on a phone: "a double
+   border instead of just being no border on the inner one"), and a host page's input rules never reach it. */
+.ovse-find { display: flex; align-items: center; gap: 10px; margin: 6px 12px 10px; padding: 0 14px; height: 42px; border-radius: 14px; background: color-mix(in srgb, var(--ovse-fg) 6%, transparent); border: 1px solid transparent; color: var(--ovse-mute); cursor: text; transition: background .18s, border-color .18s, box-shadow .18s; }
+.ovse-find:hover { background: color-mix(in srgb, var(--ovse-fg) 9%, transparent); }
+.ovse-find > svg { flex: none; width: 17px; height: 17px; }
+.ovse .ovse-find input, .ovse .ovse-find input:focus, .ovse .ovse-find input:focus-visible { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: var(--ovse-fg); font: inherit; font-size: 15px; caret-color: var(--ovse-acc); -webkit-appearance: none; appearance: none; border-radius: 0; box-shadow: none; margin: 0; }
+.ovse .ovse-find input::placeholder { color: var(--ovse-mute); opacity: 1; }
+.ovse .ovse-find input::-webkit-search-decoration, .ovse .ovse-find input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+.ovse-find:focus-within { background: var(--ovse-card); border-color: color-mix(in srgb, var(--ovse-acc) 55%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovse-acc) 18%, transparent); color: var(--ovse-dim); }
 .ovse-runs { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 8px 16px; }
 .ovse-group { margin: 12px 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ovse-mute); }
 .ovse-row { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 8px 10px; border: 0; border-radius: 14px; background: transparent; text-align: left; cursor: pointer; animation: ovse-in .32s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 22ms); transition: background .15s; }
@@ -1550,7 +1569,8 @@ details.ovse-tool > .ovse-tool-h { cursor: pointer; } details.ovse-tool > .ovse-
 .ovse-ctx:active { transform: scale(.97); }
 .ovse-ctxinfo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ovse-mute); font-size: 12.5px; padding-left: 4px; }
 .ovse-plainbox { display: flex; align-items: flex-end; gap: 8px; padding: 6px 6px 6px 14px; border-radius: 22px; border: 1px solid var(--ovse-line); background: var(--ovse-card); }
-.ovse-plainbox textarea { flex: 1; min-width: 0; resize: none; border: 0; background: transparent; color: inherit; font: inherit; padding: 8px 0; outline: none; max-height: 40vh; }
+.ovse .ovse-plainbox textarea, .ovse .ovse-plainbox textarea:focus, .ovse .ovse-plainbox textarea:focus-visible { flex: 1; min-width: 0; resize: none; border: 0; background: transparent; color: inherit; font: inherit; padding: 8px 0; outline: 0; max-height: 40vh; caret-color: var(--ovse-acc); -webkit-appearance: none; appearance: none; border-radius: 0; box-shadow: none; margin: 0; }
+.ovse-plainbox:focus-within { border-color: color-mix(in srgb, var(--ovse-acc) 55%, var(--ovse-line)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovse-acc) 16%, transparent); }
 .ovse-send { display: inline-grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--ovse-acc); color: var(--on-accent, #fff); cursor: pointer; }
 
 /* sheets, the menu, a flash */

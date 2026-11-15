@@ -293,7 +293,7 @@
 
             .openvibe-nv-tools { padding: 0 12px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--border, rgba(255,255,255,.08)); }
             .openvibe-nv-search { position: relative; }
-            .openvibe-nv-search input { width: 100%; box-sizing: border-box; padding: 9px 30px 9px 34px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.1)); background: var(--bg-input, var(--bg-tertiary, rgba(255,255,255,.04))); color: var(--text-primary, #ececf1); font: inherit; font-size: 13px; outline: none; }
+            .openvibe-nv-search input { width: 100%; box-sizing: border-box; padding: 9px 30px 9px 34px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.1)); background: var(--bg-input, var(--bg-tertiary, rgba(255,255,255,.04))); color: var(--text-primary, #ececf1); font: inherit; font-size: 13px; outline: none; -webkit-appearance: none; appearance: none; }
             .openvibe-nv-search input:focus { border-color: var(--accent, #3b82f6); }
             .openvibe-nv-search > svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; fill: none; stroke: var(--text-muted, #8b8b96); stroke-width: 1.8; stroke-linecap: round; pointer-events: none; }
             .openvibe-nv-search .clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted, #8b8b96); cursor: pointer; font-size: 16px; display: none; }

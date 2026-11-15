@@ -2,7 +2,15 @@
 
 ## 4.268.0 — 2026-11-15
 
-**A host page's rules stay out of the session, and four contrast fixes the browser check found.**
+**One clean search field, a host page's rules stay out of the session, and four contrast fixes the browser check found.**
+- **Search fields (the owner, 11-15, on a phone: "a double border instead of just being no border on the inner one").**
+  A `type="search"` input keeps the platform's own rounded field and focus ring unless told not to, so the session's
+  search showed a bordered box inside its bordered field. The session's search is now one soft filled field with no
+  hard edge and one focus ring on the field; the input inside is bare (no border, radius, ring or search look, at a
+  specificity a host page's input rules do not reach). The session's box, the picker's search, OVForms' select search,
+  the notifications' search and the harness's search lose the platform look the same way.
+- **Session top.** What a host lends above the sessions (the menu's "now": timers, an agent at work) takes no room while
+  it shows nothing: an empty lent panel kept its padding and left a blank band between your agent and the search.
 - **Session (`ov-session.js`).** A host page's rules for bare `section`, `header`, `aside` and `form` no longer move
   the drawer, the thread column, its head or the box: openvibe.design's `.ds section` margin pushed the thread 40 px
   down inside its frame, and any site's bare-element rules would do the same to the menu's Vibe tab. The Chrome test

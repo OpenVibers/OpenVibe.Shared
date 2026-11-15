@@ -40,7 +40,8 @@
 .ovp-done { padding: 0 16px; font-weight: 750; color: #fff; background: var(--accent, #3b82f6); }
 .ovp-x:focus-visible, .ovp-done:focus-visible, .ovp-row:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -2px; }
 .ovp-find { flex: none; margin: 2px 12px 6px; position: relative; }
-.ovp-find input { box-sizing: border-box; width: 100%; height: 42px; padding: 0 14px 0 38px; border: 1px solid var(--border, rgba(148,163,184,.2)); border-radius: 12px; background: var(--bg-primary, rgba(0,0,0,.2)); color: inherit; font: inherit; font-size: 16px; outline: none; }
+.ovp-find input { box-sizing: border-box; width: 100%; height: 42px; padding: 0 14px 0 38px; border: 1px solid var(--border, rgba(148,163,184,.2)); border-radius: 12px; background: var(--bg-primary, rgba(0,0,0,.2)); color: inherit; font: inherit; font-size: 16px; outline: none; -webkit-appearance: none; appearance: none; box-shadow: none; margin: 0; }
+.ovp-find input::-webkit-search-decoration, .ovp-find input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
 .ovp-find input:focus { border-color: var(--accent, #3b82f6); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
 .ovp-find svg { position: absolute; left: 12px; top: 50%; width: 17px; height: 17px; margin-top: -8.5px; color: var(--text-muted, #8b93a4); pointer-events: none; }
 .ovp-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 2px 8px 10px; }
