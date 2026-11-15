@@ -1,5 +1,28 @@
 # Changelog
 
+## 4.263.0 — 2026-11-15
+
+**The menu's Chat tab, in four segments.** The owner, 11-15: "segments Messages · Friends · Global · Servers; Friends
+Discord-style (online first with presence, pending with Accept/Decline, add a friend there and from the top bar); no add
+field over the DMs; no Vibe row". The tab opens on a segmented track. Each segment shows a red count of what waits in
+it, the last one chosen is kept, and the arrow keys move along the track.
+- **Messages:** your conversations only. No friends strip, add field, Vibe row or rail of places. The tab no longer
+  reads Vibe's conversations, and the row that held only the "Open in Chat" icon is gone; the list ends with "All
+  your messages on Chat".
+- **Friends:** Add a friend at the top. Then Pending, the requests waiting for you, with Accept and Ignore. Then
+  Online, with a green ring and where they are ("Online on Live"), then Offline, then Asked, the ones you asked. A
+  press opens your conversation with them. The Network keeps no request inbox to decline, so Ignore hides a request
+  on that device.
+- **Global:** the room's latest 25 lines, newest last, as text, and "Open Global chat".
+- **Servers:** your servers with their unread counts, then "Start a server" and "Find servers".
+Test: `test/dock-chat-segments-chrome.test.js`.
+
+**The top bar is modular.** Any script can offer rows for what is typed, with
+`OpenVibeSearch.provide({ id, rows(q) → [{ title, meta, icon, run }] })`. A script that loads before the menu pushes the
+same object to `window.OVSearchProviders`. The rows lead the list as "Do it". A press runs one, and Enter runs the first
+when the words were an @name. A provider that throws takes nothing else down. The Dock offers Chat's two rows: type
+`@kai` and the menu shows "Message @kai" and "Add @kai as a friend". Test: `test/search-providers-chrome.test.js`.
+
 ## 4.262.0 — 2026-11-15
 
 **Recent searches drop under the field.** The owner, 11-15: recent searches are "not a section on the site tab", they
