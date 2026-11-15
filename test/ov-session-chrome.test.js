@@ -101,6 +101,7 @@ const server = http.createServer(async (req, res) => {
         if (rest === '/messages' && req.method === 'POST') { const body = await read(req); said.messages.push(body); return json(res, 201, { seq: 99, kind: 'message', from: 'person', text: body.text }); }
         if (/^\/approvals\//.test(rest) && req.method === 'POST') { const body = await read(req); said.approvals.push([ref, rest, body.answer]); return json(res, 200, { ok: true }); }
         if (rest === '/stop') return json(res, 200, { ok: true });
+        if (rest === '/replay') { said.replays = (said.replays || []).concat([[ref, req.method]]); return req.method === 'DELETE' ? json(res, 200, { stopped: true }) : json(res, 200, { url: 'https://openvibe.codes/r/AbCdEfGhIjKlMnOpQrStUvWxYz012345', created_at: '2026-11-15T17:00:00.000Z' }); }
     }
     res.writeHead(404); res.end();
 });
@@ -158,6 +159,21 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         await p.evaluate("document.querySelector('.ovse-up').click()");
         await until(p, "document.querySelector('.ovse-title').textContent === 'Add a dark mode switch'");
         assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), 390, 'no sideways scroll');
+        // ── ⋯ → Share a replay (plan §AD.8): a coding run's link anyone can read; then Stop sharing ──
+        await p.evaluate("navigator.clipboard.writeText = (t) => { window.__copied = t; return Promise.resolve(); }");
+        const menuRows = async () => p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b, .ovse-mini-b')].map((b) => b.textContent.trim())");
+        await p.evaluate("document.querySelector('.ovse-more').click()");
+        await until(p, "!!document.querySelector('.ovp.is-in .ovp-row, .ovse-mini-b')");
+        assert.ok((await menuRows()).includes('Share a replay'), 'a coding run can be shared');
+        await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row, .ovse-mini-b')].find((r) => r.textContent.includes('Share a replay')).click()");
+        await until(p, "window.__copied === 'https://openvibe.codes/r/AbCdEfGhIjKlMnOpQrStUvWxYz012345'");
+        await until(p, "!document.querySelector('.ovp')");
+        await p.evaluate("document.querySelector('.ovse-more').click()");
+        await until(p, "!!document.querySelector('.ovp.is-in .ovp-row, .ovse-mini-b')");
+        assert.ok((await menuRows()).includes('Stop sharing the replay'), 'once shared, the menu offers to stop');
+        await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row, .ovse-mini-b')].find((r) => r.textContent.includes('Stop sharing')).click()");
+        await until(p, "!document.querySelector('.ovp')");
+        assert.deepStrictEqual(said.replays, [['codes:tsk_1', 'POST'], ['codes:tsk_1', 'DELETE']]);
 
         // ── the drawer, and a session that asks first ──
         await p.evaluate("document.querySelector('.ovse-menu').click()");
@@ -188,11 +204,14 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         await p.evaluate("document.querySelector('.ovp.is-in .ovp-row[data-id=\"openvibe|anthropic/claude-opus-5-5\"]').click()");
         await until(p, "document.querySelector('.ovse-ctx span').textContent === 'Any agent · Opus 5.5'");
         await until(p, "!document.querySelector('.ovp')");
+        // The price before it runs (plan §AD.6): a typical message on Opus 5.5 at $15 / $75 per million tokens.
+        assert.deepStrictEqual(await p.evaluate("(() => { const c = document.querySelector('.ovse-cost'); return [c.hidden, c.textContent, /2,000 tokens in and 800 out/.test(c.title)]; })()"), [false, '≈ $0.09 a message', true]);
         await typeIn(p, '@claude-code Build me a landing page for my band');
         await p.evaluate("document.querySelector('.ovse-compose form') ? document.querySelector('.ovse-compose form').requestSubmit() : document.querySelector('.ovse-compose textarea').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))");
         await until(p, "[...document.querySelectorAll('.ovse-say')].some((s) => s.textContent === 'On it: a sketch first.')");
         assert.deepStrictEqual([said.starts.length, said.starts[0].text, said.starts[0].agent, said.starts[0].model && said.starts[0].model.id], [1, 'Build me a landing page for my band', 'claude-code', 'anthropic/claude-opus-5-5'], 'the mention picks the agent, the chip the model');
         assert.strictEqual(await p.evaluate("document.querySelector('.ovse-me .ovse-bubble').textContent"), 'Build me a landing page for my band');
+        assert.strictEqual(await p.evaluate("document.querySelector('.ovse-cost').hidden"), true, 'an open session shows what its turns cost instead');
         // It is still working: the next words are queued.
         await typeIn(p, 'Make it purple');
         await p.evaluate("document.querySelector('.ovse-compose form') ? document.querySelector('.ovse-compose form').requestSubmit() : document.querySelector('.ovse-compose textarea').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))");

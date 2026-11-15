@@ -107,6 +107,8 @@
         const d = Math.round(s / 86400); return d === 1 ? 'yesterday' : `${d} d`;
     };
     const clock = (sec) => { const s = Math.max(0, Math.round(sec)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}` : `${m}:${String(r).padStart(2, '0')}`; };
+    // A small amount of money in words: $0.0042, $0.012, $1.20.
+    const costWords = (usd) => (usd >= 1 ? `$${usd.toFixed(2)}` : usd >= 0.01 ? `$${usd.toFixed(3).replace(/0$/, '')}` : `$${Number(usd.toPrecision(2))}`);
     const spent = (cost) => {
         if (!cost || typeof cost !== 'object') return '';
         const usd = Number(cost.usd);
@@ -413,7 +415,9 @@
         const ctxRow = el('div', 'ovse-ctxrow');
         const ctxB = btn('ovse-ctx', 'How it runs: change it', 'spark', ''); ctxB.setAttribute('aria-haspopup', 'dialog');
         const ctxInfo = el('span', 'ovse-ctxinfo');
-        ctxRow.append(ctxB, ctxInfo);
+        // The price before it runs (plan §AD.6): a chosen model's typical message, from its own price.
+        const ctxCost = el('span', 'ovse-cost'); ctxCost.hidden = true;
+        ctxRow.append(ctxB, ctxCost, ctxInfo);
         const composeSlot = el('div', 'ovse-compose');
         foot.append(planBox, slash, ctxRow, composeSlot);
         main.append(head, body, foot);
@@ -672,6 +676,12 @@
             if (r && (isLive(r) || r.status === 'waiting')) rows.push({ id: 'stop', name: 'Stop it', line: 'It stops after the step it is on', icon: 'stop' });
             if (r && httpsUrl(r.url)) { rows.push({ id: 'copy', name: 'Copy the link', line: 'Its own page, for you or anyone you share it with', icon: 'link' }); rows.push({ id: 'page', name: 'Open its own page', line: new URL(httpsUrl(r.url)).hostname, icon: 'open' }); }
             if (r && changed().length) rows.push({ id: 'changes', name: 'What it changed', line: `${changed().length} file(s)`, icon: 'file' });
+            // A coding run's replay (Codes' /r/<token>, plan §AD.8): anyone with the link reads it, no sign-in.
+            if (r && /^codes:/.test(String(state.ref || ''))) {
+                rows.push(state.replay
+                    ? { id: 'unshare', name: 'Stop sharing the replay', line: 'The link stops working; sharing again makes a new one', icon: 'link' }
+                    : { id: 'share', name: 'Share a replay', line: 'A link anyone can read, step by step, without signing in', icon: 'link' });
+            }
             rows.push({ id: 'new', name: 'New session', line: 'Start over with an empty box', icon: 'plus' });
             rows.push({ id: 'sessions', name: 'All your sessions', line: 'Search them, pick one up again', icon: 'chat' });
             const P = await need(o, 'ov-picker.js', 'OpenVibePicker');
@@ -680,6 +690,8 @@
                 else if (id === 'copy') { const url = httpsUrl(r.url); try { navigator.clipboard.writeText(url).then(() => flash('Link copied'), () => flash(url)); } catch { flash(url); } }
                 else if (id === 'page') root.open(httpsUrl(r.url), '_blank', 'noopener');
                 else if (id === 'changes') openChanges();
+                else if (id === 'share') shareReplay();
+                else if (id === 'unshare') stopReplay();
                 else if (id === 'new') blank();
                 else if (id === 'sessions') setDrawer(true);
             };
@@ -999,7 +1011,7 @@
             if (r) {
                 // An open session says how it runs; the chip's choice is for the next new one.
                 const bits = [r.agent && (r.agent.name || r.agent.harness), r.model && (r.model.name || r.model.id), r.where && (r.where.name || ({ openvibe: 'OpenVibe', machine: 'your computer', runner: 'a runner', 'this-computer': 'this computer' })[r.where.kind || r.where]), r.target && r.target.repo ? String(r.target.repo).replace(/^https:\/\/github\.com\//, '') : ''].filter(Boolean);
-                ctxB.hidden = true; ctxInfo.hidden = !bits.length; ctxInfo.textContent = bits.join(' · ');
+                ctxB.hidden = true; ctxCost.hidden = true; ctxInfo.hidden = !bits.length; ctxInfo.textContent = bits.join(' · ');
                 return;
             }
             ctxB.hidden = false; ctxInfo.hidden = true;
@@ -1008,6 +1020,22 @@
             ctxB.querySelector('span').textContent = said.join(' · ');
             ctxB.setAttribute('aria-label', `How it runs: ${said.join(', ')}. Change it`);
             ctxB.classList.toggle('is-on', pick.agent !== 'auto' || !!pick.model || pick.where !== 'auto' || !!pick.works);
+            paintCost();
+        }
+        /**
+         * What a message costs on the chosen model, before it is sent: Exchange's estimate of a typical turn (2,000 tokens
+         * in, 800 out) at the model's own price. Auto says nothing: the router picks within the person's budget. An open
+         * session's turns say what they really cost (spent()).
+         */
+        function paintCost() {
+            const m = !state.run && pick.model;
+            const cost = m && m.price && Number.isFinite(Number(m.price.in)) && Number.isFinite(Number(m.price.out))
+                ? (2000 * Number(m.price.in) + 800 * Number(m.price.out)) / 1e6 : null;
+            if (!m || (!m.free && cost == null)) { ctxCost.hidden = true; return; }
+            ctxCost.hidden = false;
+            ctxCost.textContent = m.free || cost === 0 ? 'Free' : `≈ ${costWords(cost)} a message`;
+            ctxCost.title = m.free || cost === 0 ? `${m.name || m.id} is free to use.`
+                : `${m.name || m.id}: $${m.price.in} per million tokens in, $${m.price.out} out. A typical message is about 2,000 tokens in and 800 out; long work takes more, and your free allowance comes first.`;
         }
         ctxB.append(el('span'));
         async function openCtx(section) {
@@ -1036,14 +1064,16 @@
             } else if (section === 'model') {
                 const d = await loadModels();
                 const sections = [{ title: '', rows: [{ id: 'auto', name: 'Auto', line: 'The best fit for what you ask, within your budget' }] }];
+                const priced = new Map();   // row id → { price, free }, kept with the pick for the price before it runs
                 for (const g of d.groups || []) {
+                    for (const x of (g.rows || []).slice(0, 800)) priced.set(`${x.source || 'openvibe'}|${x.model}`, { price: x.price && Number.isFinite(x.price.in) ? { in: x.price.in, out: x.price.out } : null, free: !!x.free });
                     const rows = (g.rows || []).slice(0, 800).map((x) => ({ id: `${x.source || 'openvibe'}|${x.model}`, name: x.name || x.model, line: [x.maker, x.free ? 'Free' : x.price && Number.isFinite(x.price.in) ? `$${x.price.in} / $${x.price.out} per 1M` : ''].filter(Boolean).join(' · '), badge: x.free ? 'Free' : '' }));
                     if (rows.length) sections.push({ title: g.title || g.id, rows });
                 }
                 const value = pick.model ? `${pick.model.source || 'openvibe'}|${pick.model.id}` : 'auto';
                 P.open({ anchor: ctxB, title: 'Model', search: true, value, sections, onPick: (row) => {
                     if (row.id === 'auto') pick.model = null;
-                    else { const [source, ...rest] = String(row.id).split('|'); pick.model = { id: rest.join('|'), source, name: row.name }; }
+                    else { const [source, ...rest] = String(row.id).split('|'); pick.model = { id: rest.join('|'), source, name: row.name, ...(priced.get(row.id) || {}) }; }
                     savePick();
                 } });
             }
@@ -1220,6 +1250,20 @@
             const next = state.queue.shift();
             say(next.text, next.files).catch((err) => { next.node.classList.add('is-failed'); next.node.querySelector('.ovse-queued').textContent = (err && err.message) || 'That did not send'; state.queue.unshift(next); });
         }
+        async function shareReplay() {
+            if (!state.ref) return;
+            try {
+                const out = await api(`/runs/${encodeURIComponent(state.ref)}/replay`, { method: 'POST', body: '{}' });
+                state.replay = out.url;
+                try { await navigator.clipboard.writeText(out.url); flash('Replay link copied'); } catch { flash(out.url); }
+                emit('session.shared', { ref: state.ref, url: out.url });
+            } catch (err) { flash((err && err.message) || 'The replay link was not made'); }
+        }
+        async function stopReplay() {
+            if (!state.ref) return;
+            try { await api(`/runs/${encodeURIComponent(state.ref)}/replay`, { method: 'DELETE' }); state.replay = null; flash('Not shared any more'); }
+            catch (err) { flash((err && err.message) || 'It is still shared'); }
+        }
         async function stop() {
             if (!state.ref) return;
             try { await api(`/runs/${encodeURIComponent(state.ref)}/stop`, { method: 'POST', body: '{}' }); flash('Stopping'); }
@@ -1231,7 +1275,7 @@
         async function open(ref, known, how = {}) {
             clearStream();
             const gen = ++state.gen;
-            state.ref = ref; state.run = known || null; state.steps = new Map(); state.queue = []; state.open = new Set(); state.pending = false;
+            state.ref = ref; state.run = known || null; state.steps = new Map(); state.queue = []; state.open = new Set(); state.pending = false; state.replay = null;
             // The model this session last asked for: a message carries the chip's model only when it changed (plan §AD.8.3).
             state.modelSent = how.modelSent !== undefined ? how.modelSent : (known && known.model && known.model.id) || null;
             wrap.classList.remove('is-blank');
@@ -1572,6 +1616,7 @@ details.ovse-tool > .ovse-tool-h { cursor: pointer; } details.ovse-tool > .ovse-
 .ovse-ctx .ovse-g { width: 15px; height: 15px; color: var(--ovse-acc2); }
 .ovse-ctx:hover, .ovse-ctx.is-on { color: var(--ovse-fg); border-color: color-mix(in srgb, var(--ovse-acc) 45%, var(--ovse-line)); }
 .ovse-ctx:active { transform: scale(.97); }
+.ovse-cost { flex: none; color: var(--ovse-mute); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ovse-ctxinfo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ovse-mute); font-size: 12.5px; padding-left: 4px; }
 .ovse-plainbox { display: flex; align-items: flex-end; gap: 8px; padding: 6px 6px 6px 14px; border-radius: 22px; border: 1px solid var(--ovse-line); background: var(--ovse-card); }
 .ovse .ovse-plainbox textarea, .ovse .ovse-plainbox textarea:focus, .ovse .ovse-plainbox textarea:focus-visible { flex: 1; min-width: 0; resize: none; border: 0; background: transparent; color: inherit; font: inherit; padding: 8px 0; outline: 0; max-height: 40vh; caret-color: var(--ovse-acc); -webkit-appearance: none; appearance: none; border-radius: 0; box-shadow: none; margin: 0; }
