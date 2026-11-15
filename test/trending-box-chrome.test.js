@@ -3,7 +3,8 @@
 // with a cool animation/effects in the search input itself … across all sites"): an empty search box shows "Try <term>"
 // in the box itself, its placeholder kept as its name; the line moves on every few seconds (never with motion Off); Tab
 // takes the line shown; typing hides it and clearing brings it back; a search sent from the box goes out as a beacon
-// with the query and the site; a box marked off, and a page whose list is empty, keep their own placeholder.
+// with the query and the site; focus opens the list as chips under the box (4.278.0: arrows, Escape, a chip searches);
+// a box marked off, and a page whose list is empty, keep their own placeholder.
 // Skipped without Chrome.
 const assert = require('assert');
 const fs = require('fs');
@@ -73,6 +74,31 @@ const GHOST = `(() => { const g = document.querySelector('#q + .ovt-ghost'); con
         await p.evaluate("(document.getElementById('f').requestSubmit(), true)");
         await new Promise((ok) => setTimeout(ok, 300));
         assert.strictEqual(beacons.length, 1, 'the same query again within ten seconds is not counted twice');
+        // Focus on the empty box: the chips under it; a chip fills the box and searches (a beacon).
+        await p.evaluate("(() => { const q = document.getElementById('q'); q.value = ''; q.dispatchEvent(new Event('input', { bubbles: true })); q.blur(); q.focus(); return true; })()");
+        await new Promise((ok) => setTimeout(ok, 100));
+        let chips = await p.evaluate("(() => { const el = document.querySelector('.ovt-chips'); if (!el) return null; const r = el.getBoundingClientRect(); const q = document.getElementById('q').getBoundingClientRect(); return { head: el.querySelector('.ovt-chips-head').textContent, label: el.getAttribute('aria-label'), chips: [...el.querySelectorAll('.ovt-chip')].map((c) => c.textContent), below: r.top >= q.bottom, inside: r.left >= 0 && r.right <= innerWidth, h: Math.round(el.querySelector('.ovt-chip').getBoundingClientRect().height) }; })()");
+        assert.ok(chips, 'focus opens the chips');
+        assert.deepStrictEqual([chips.head, chips.label, chips.chips, chips.below, chips.inside], ['Trending', 'Trending searches', ['synthesizers', 'go live from a browser', 'drum machines'], true, true], JSON.stringify(chips));
+        assert.ok(chips.h >= 40, `a chip is a target (${chips.h}px)`);
+        // Arrow Down into them, Arrow Up back to the box, Escape closes.
+        await p.evaluate("(() => { document.getElementById('q').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true })); return true; })()");
+        assert.strictEqual(await p.evaluate('document.activeElement.textContent'), 'synthesizers', 'Arrow Down: the first chip');
+        await p.evaluate("(() => { document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })); return true; })()");
+        assert.strictEqual(await p.evaluate('document.activeElement.textContent'), 'go live from a browser', 'Arrow Right: the next');
+        await p.evaluate("(() => { document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); return true; })()");
+        assert.deepStrictEqual(await p.evaluate("[!!document.querySelector('.ovt-chips'), document.activeElement.id]"), [false, 'q'], 'Escape: closed, back in the box');
+        // Typing closes them; clearing opens them again.
+        await p.evaluate("(() => { const q = document.getElementById('q'); q.value = 'x'; q.dispatchEvent(new Event('input', { bubbles: true })); return true; })()");
+        assert.strictEqual(await p.evaluate("!!document.querySelector('.ovt-chips')"), false, 'typing closes the chips');
+        await p.evaluate("(() => { const q = document.getElementById('q'); q.value = ''; q.dispatchEvent(new Event('input', { bubbles: true })); return true; })()");
+        assert.strictEqual(await p.evaluate("!!document.querySelector('.ovt-chips')"), true, 'cleared: the chips again');
+        // A chip searches.
+        const before = beacons.length;
+        await p.evaluate("(document.querySelectorAll('.ovt-chip')[2].click(), true)");
+        for (let i = 0; i < 40 && beacons.length === before; i++) await new Promise((ok) => setTimeout(ok, 50));
+        assert.deepStrictEqual([await p.evaluate("document.getElementById('q').value"), beacons.length - before, beacons[beacons.length - 1].body.q, await p.evaluate("!!document.querySelector('.ovt-chips')")],
+            ['drum machines', 1, 'drum machines', false], 'a chip fills the box, searches and closes');
         // Cleared: the line comes back.
         await p.evaluate("(() => { const q = document.getElementById('q'); q.value = ''; q.dispatchEvent(new Event('input', { bubbles: true })); return true; })()");
         s = await p.evaluate(GHOST);
@@ -103,5 +129,5 @@ const GHOST = `(() => { const g = document.querySelector('#q + .ovt-ghost'); con
         server.close();
         fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-    console.log('trending-box-chrome: the trending line in the box, moving on, Tab takes it, typing hides it, one beacon a search; Off is still; empty draws nothing');
+    console.log('trending-box-chrome: the trending line in the box, moving on, Tab takes it, typing hides it, one beacon a search; chips on focus (arrows, Escape, a chip searches); Off is still; empty draws nothing');
 })().catch((err) => { console.error(err); process.exit(1); });
