@@ -894,9 +894,13 @@
             place({ blank: true });
             box.textContent = ''; box.className = 'ovr is-blank';
             const hello = el('div', 'ovr-blank');
-            const faceSlot = el('span', 'ovr-blank-face'); faceSlot.append(agentFace('xl'));
-            const name = el('b', 'ovr-blank-n', agentName());
-            hello.append(faceSlot, name, el('p', 'ovr-blank-s', 'Ask anything. It answers, searches the web and OpenVibe, makes things, and hands bigger work to the right place: code to Codes, tasks to your agents.'));
+            // 4.257.0: a host may say what a new run here is (ov-harness.js: a coding task on a project): its own title,
+            // line, icon and placeholder in place of the agent's.
+            const own = !!(o.blankTitle || o.blankIcon);
+            const faceSlot = el('span', 'ovr-blank-face');
+            if (o.blankIcon && G[o.blankIcon]) { const t = el('span', 'ovr-blank-icon'); t.append(svg(o.blankIcon)); faceSlot.append(t); } else faceSlot.append(agentFace('xl'));
+            const name = el('b', 'ovr-blank-n', o.blankTitle ? String(o.blankTitle).slice(0, 80) : agentName());
+            hello.append(faceSlot, name, el('p', 'ovr-blank-s', o.blankLine ? String(o.blankLine).slice(0, 300) : 'Ask anything. It answers, searches the web and OpenVibe, makes things, and hands bigger work to the right place: code to Codes, tasks to your agents.'));
             box.append(hello);
             if (Array.isArray(o.starters) && o.starters.length) {
                 const st = el('div', 'ovr-starters'); st.setAttribute('role', 'group'); st.setAttribute('aria-label', 'Things to ask');
@@ -908,8 +912,8 @@
                 });
                 box.append(st);
             }
-            composer(box, { placeholder: `Message ${agentName()}`, onSend: (v) => start(v.text, v.files) });
-            if (o.agent) loadAgent().then(() => { if (state.view !== 'blank' || !faceSlot.isConnected) return; faceSlot.textContent = ''; faceSlot.append(agentFace('xl')); name.textContent = agentName(); });
+            composer(box, { placeholder: o.placeholder || `Message ${agentName()}`, onSend: (v) => start(v.text, v.files) });
+            if (o.agent && !own) loadAgent().then(() => { if (state.view !== 'blank' || !faceSlot.isConnected) return; faceSlot.textContent = ''; faceSlot.append(agentFace('xl')); name.textContent = agentName(); });
         }
         const view = { list, open, start, blank, prefill, destroy() { clearStream(); dropTop(); dropPane(); state.gen++; host.textContent = ''; }, get state() { return { view: state.view, run: state.run, filter: state.filter }; } };
         if (o.open) open(o.open); else if (o.blank) blank(); else list();
@@ -945,6 +949,8 @@
 .ovr-blank-n { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
 .ovr-blank-s { margin: 0; max-width: 46ch; color: var(--text-secondary, #96a7c2); font-size: 14.5px; line-height: 1.5; }
 .ovr-blank-face { display: grid; place-items: center; margin-bottom: 4px; }
+.ovr-blank-icon { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 20px; background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); color: var(--accent-light, #93c5fd); }
+.ovr .ovr-blank-icon svg { width: 30px; height: 30px; }
 .ovr { --ovr-gap: 12px; display: flex; flex-direction: column; min-height: 0; height: 100%; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text-primary, #e6edf7); }
 .ovr svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .ovr-head { padding: 4px 4px 8px; }

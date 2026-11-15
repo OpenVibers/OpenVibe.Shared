@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.257.0 — 2026-11-15
+
+**The coding-harness layout (`ov-harness.js`, `OpenVibeHarness.page`).** The owner, 11-15: the messenger (agents,
+conversations, one box) is Actor's; Codes gets "a coding agent harness layout, look, feel, and organization … the same
+underlying shared modular powerful system". Over the same run engine (`OpenVibeRun.mount`, the Frame's runs), it draws
+code runs the way a harness does (after T3 Code, the Codex app and Cursor): your projects on the left (repositories by
+owner/name whatever form their address takes, new work, OpenVibe) with their threads, status dots, the agent and model;
+the open thread in the middle under a head of repository · branch · agent · model · status and a link to its full
+page; what it changed on the right from 1180 px (the pull request first, then the files and links, and the run's
+status, files, steps, cost). A new task starts on the chosen project (a project's +, or the head's picker, with the
+person's recent repositories) with a coding start in the box. A phone shows Projects · Task · Changes as tabs; opening
+a thread shows Task. Find filters the threads; the list reads again every 8 s while something works, else 30 s.
+Everything a run says is text. Served from `files.js`. Test: `test/ov-harness.test.js`.
+
+**`OpenVibeRun.mount` options for a host's new run:** `blankTitle`, `blankLine`, `blankIcon` (a glyph) and
+`placeholder` take the agent's place in the empty view; nothing changes for a host that does not set them.
+
 ## 4.256.1 — 2026-11-14
 
 **A site's own network list keeps its own heading and lede.** 4.256.0's `network({ items })` fell back to "More on
