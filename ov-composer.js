@@ -1353,6 +1353,8 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 const tick = setInterval(() => {
                     if (!form.isConnected) { clearInterval(tick); return; }
                     if (motion() === 'off' || text.value || document.activeElement === text) return;
+                    // 4.286.0: one turn of words at a time: while the shared suggestion line owns the box, it turns, not these.
+                    if (text.hasAttribute('data-ovt-on')) return;
                     k = (k + 1) % ex.length;
                     text.classList.add('ovc-ph-swap');
                     setTimeout(() => { text.placeholder = String(ex[k]).slice(0, 80); text.classList.remove('ovc-ph-swap'); text.classList.add('ovc-ph-in'); setTimeout(() => text.classList.remove('ovc-ph-in'), 420); }, motion() === 'reduced' ? 120 : 260);

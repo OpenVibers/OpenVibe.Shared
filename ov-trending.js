@@ -92,7 +92,7 @@
             + '.ovt-line{position:absolute;left:0;right:0;top:0;height:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:transform var(--ovt-dur,.55s) cubic-bezier(.2,.8,.2,1),opacity var(--ovt-dur,.55s) ease,filter var(--ovt-dur,.55s) ease}'
             + '.ovt-line.is-out{transform:translateY(calc(-110% * var(--ov-move,1)));opacity:0;filter:blur(2px)}'
             + '.ovt-line.is-in{transform:translateY(calc(110% * var(--ov-move,1)));opacity:0;filter:blur(2px)}'
-            + '.ovt-ghost{opacity:.62}.ovt-pre{opacity:.8}.ovt-term{font-weight:600;background:linear-gradient(90deg,currentColor 0 38%,var(--ovk-accent,var(--accent,#7aa2ff)) 50%,currentColor 62% 100%);background-size:300% 100%;background-position:0 0;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:ovt-shine 1.6s ease-out .15s 1 both}'
+            + '.ovt-ghost{opacity:.62}.ovt-pre{opacity:.8}.ovt-term{font-weight:inherit;background:linear-gradient(90deg,currentColor 0 38%,var(--ovk-accent,var(--accent,#7aa2ff)) 50%,currentColor 62% 100%);background-size:300% 100%;background-position:0 0;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:ovt-shine 1.6s ease-out .15s 1 both}'
             + '.ovt-tab{position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:.72em;padding:1px 6px;border:1px solid currentColor;border-radius:6px;opacity:.55;font-weight:600}'
             + '@keyframes ovt-shine{from{background-position:100% 0}to{background-position:0 0}}'
             + '.ovt-tab{opacity:.8}'
@@ -174,7 +174,8 @@
         g.style.lineHeight = `${one}px`;
         g.style.letterSpacing = cs.letterSpacing;
         g.style.color = cs.color;
-        g.style.textAlign = cs.textAlign === 'center' ? 'center' : 'left';
+        // 4.286.0: always from where typing starts (a centred line floated away from the box's icon: "Plan my week").
+        g.style.textAlign = cs.direction === 'rtl' ? 'right' : 'left';
         g.hidden = was;
         return true;
     }
@@ -185,6 +186,7 @@
         const items = itemsOf(b);
         if (input.value || !items.length || !place(input, b)) {
             b.ghost.hidden = true;
+            input.removeAttribute('data-ovt-on');
             // Only the placeholder this file emptied comes back; one the page set since is the page's, and is kept.
             const now = input.getAttribute('placeholder');
             if (now) b.placeholder = now;
@@ -196,6 +198,7 @@
         if (now && now !== b.placeholder) { b.placeholder = now; if (b.labelled) input.setAttribute('aria-label', now); }
         if (input.getAttribute('placeholder')) input.setAttribute('placeholder', '');
         b.ghost.hidden = false;
+        input.setAttribute('data-ovt-on', '');   // ov-composer's own examples stand down while the line owns the box
         if (!b.line.textContent) fill(b.line, items[b.i % items.length], b);
     }
 
@@ -224,6 +227,7 @@
         boxes.forEach((b, input) => {
             // A focused box holds the line it showed (the owner, 11-16: "if you open the box it should stay on whatever one
             // it was on … put it into the list so you can click it"): its page lists it (current()).
+            if (!input.isConnected) { detach(input); return; }
             if (b.ghost.hidden || input.value || document.activeElement === input) return;
             const items = itemsOf(b);
             if (items.length < 2) return;
@@ -397,7 +401,11 @@
         if (typeof MutationObserver === 'function') {
             b.mo = new MutationObserver(() => {
                 const now = input.getAttribute('placeholder');
-                if (!now || now === b.placeholder) return;
+                if (!now) return;
+                // 4.286.0 (the owner, 11-16, a third time: "still duplicated like labels at times in the search bar"): the
+                // same words put back while the line shows (a composer fitting its placeholder to the box, a page redrawing
+                // its tab) are taken out again, so the box's words and the line are never drawn over each other.
+                if (now === b.placeholder) { if (!b.ghost.hidden) input.setAttribute('placeholder', ''); return; }
                 b.placeholder = now;
                 if (b.labelled) input.setAttribute('aria-label', now);
                 update(input);
@@ -449,6 +457,7 @@
         b.ghost.remove();
         if (panel && panel.input === input) closeChips();
         if (b.placeholder != null) input.setAttribute('placeholder', b.placeholder);
+        input.removeAttribute('data-ovt-on');
         boxes.delete(input);
     }
 
