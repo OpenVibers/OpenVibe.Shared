@@ -5,7 +5,7 @@
 **Docs:** https://openvibe.services · **For AI:** https://openvibe.network/llms.txt
 **Install and test:** `npm ci && npm test`
 
-**Status:** alpha, v4.287.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.288.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -1084,6 +1084,27 @@ One Share sheet on every site (plan track Q): a sheet from the bottom on a phone
 Put `<button data-ov-share-sheet data-title="…">Share</button>` on a page: the navbar loads the sheet on the first
 press. Add `data-kind` and `data-id` where the service mounts `openvibe-sdk/share`'s router. See
 [docs/share.md](docs/share.md).
+
+### The agent button (`ov-agent.js`, 4.288.0)
+
+A button on any page that starts an agent with the page's context, in the menu's Vibe:
+
+```html
+<button data-ov-agent="Set this up for me"
+        data-ov-agent-task="Set up AI on this site with safe defaults"
+        data-ov-agent-context="form"></button>
+```
+
+```js
+const run = await OVAgent.spawn({ task: 'Summarize this page', context: 'page' });
+run.on('ended', (out) => console.log(out.summary));
+```
+
+- `context`: `page` (default), `selection`, `form` or `none`, or `{ text }`. A form's passwords, keys, cards, one-time
+  codes and hidden fields never leave the page; mark anything else private with `data-ov-agent-private`.
+- `agent` (or `harness`), `model`: who works on it, and with what. The person's own choices apply otherwise.
+- `approve: 'first'` fills the box for the person to send.
+- The navbar loads the file once a page has a `[data-ov-agent]` button. `OVAgent.spawn` works before that too.
 
 ## Development
 
