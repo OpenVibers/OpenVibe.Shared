@@ -101,6 +101,8 @@ a.sc-orb-node:hover .sc-orb-face>*:first-child,a.sc-orb-node:focus-visible .sc-o
 .sc-hero-aside{min-width:0}
 .sc-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
 .sc-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;font-weight:700;font-size:15px;text-decoration:none;color:var(--text-primary,#e6edf7);border:1px solid var(--border-light,var(--border,#2c3d5c));background:transparent;transition:border-color .15s,background .15s,transform .15s}
+.sc-btn .sc-bi{display:grid;place-items:center;flex:none;width:20px;height:20px}.sc-btn .sc-bi svg{width:20px;height:20px}
+.sc-ic .sc-ovi--glyph{background:none!important;box-shadow:none!important;border-radius:0!important;--ovi-size:30px!important;width:30px;height:30px}.sc-ic .sc-ovi--glyph svg{width:30px!important;height:30px!important}
 .sc-btn:hover,.sc-btn:focus-visible{border-color:var(--accent,#3b82f6);background:var(--bg-hover,#1c2a44);outline:0}
 .sc-btn.sc-primary{border-color:transparent;color:var(--on-accent,#fff);background:linear-gradient(135deg,var(--accent,#3b82f6),var(--accent-dark,#1d4ed8))}
 .sc-btn.sc-primary:hover{transform:translateY(-1px);filter:brightness(1.06)}
