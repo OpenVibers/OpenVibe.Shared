@@ -72,6 +72,20 @@ openvibe.chat". The name field rises above it. With no server yet, the field lea
 **Tools in the composer** go through the Frame (`openvibe.network/api/frame/tools`, Network #1032). It was "Failed to
 fetch" on sites whose CSP did not allow openvibe.tools.
 
+**A link says what to start with.** The owner, on Compare's and Exchange's "Try it in Chat": "it automatically sets the model
+or sets the mode … based on what the user clicked. It just redirected me to the chat".
+- `ov-session.js` takes `?model=` (or `?models=`), `?agent=`, `?way=` and `?q=` from the address once, then cleans it.
+- A model alone means One model: the person talks to the model they clicked.
+- The words wait in the box, never sent for the person. The host hears `linked`.
+
+**Icons centred, checked** (`scripts/icon-center.js`). The owner: "still offset icons in some places … fix this forever and
+across all sites".
+- It finds every framed box whose only content is one icon, and measures the icon's centre against the box's.
+- It adds where the glyph is drawn in its own viewBox.
+- Run it as `node scripts/icon-center.js <url…>` (Chrome) or `page.evaluate(offsetIcons)`.
+- `icon-center-chrome` keeps the navbar, the open menu and the kit's buttons centred, and proves a planted offset is
+  caught. Twelve live sites measured centred at 390 px on 11-16.
+
 **Folds that move** (`kit.fold` and every `.ovk-fold`). The owner: "improve our drop-down system … animations and effects and
 transitions that look really nice and smooth … unique and stand out".
 - Shut, a fold is quiet. Open, it is lit: an accent edge grows down its side, with a soft wash and a deeper shadow.

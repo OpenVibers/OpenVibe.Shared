@@ -378,6 +378,37 @@
     }
 
     // ── the surface ──
+    /**
+     * What a link asks the session to start with (4.284.0; the owner, 11-16, on Compare's and Exchange's "Try it in Chat":
+     * "it automatically sets the model or sets the mode … based on what the user clicked. It just redirected me to the
+     * chat"): ?model= (or ?models=a,b: the first), ?agent=, ?way=, ?q= (the words, ready to send). A model alone means
+     * One model: you talk to the model you clicked. Taken once: the address is cleaned so a reload does not take it again.
+     */
+    const LINK_KEYS = ['model', 'models', 'agent', 'way', 'q', 'prompt'];
+    const readableModel = (id) => {
+        const tail = String(id).split(/[/:]/).pop() || String(id);
+        return tail.replace(/[-_]+/g, ' ').replace(/\b(gpt|oss|glm|ai|vl|llm)\b/gi, (w) => w.toUpperCase()).replace(/\b([a-z])/g, (m) => m.toUpperCase());
+    };
+    function linkChoice() {
+        let u;
+        try { u = new URL(location.href); } catch { return null; }
+        const p = u.searchParams;
+        if (!LINK_KEYS.some((k) => p.has(k))) return null;
+        const out = {};
+        const model = String(p.get('model') || String(p.get('models') || '').split(',')[0] || '').trim();
+        if (/^[\w.:/@+-]{2,160}$/.test(model)) out.model = { id: model, source: 'openvibe', name: readableModel(model) };
+        const agent = String(p.get('agent') || '').trim().toLowerCase();
+        if (/^[\w-]{2,40}$/.test(agent)) out.agent = agent;
+        const way = String(p.get('way') || '').trim();
+        if (WAYS.some((w) => w.id === way)) out.way = way;
+        else if (out.model) out.way = 'model';
+        const q = String(p.get('q') || p.get('prompt') || '').trim();
+        if (q) out.q = q.slice(0, 4000);
+        LINK_KEYS.forEach((k) => p.delete(k));
+        try { history.replaceState(history.state, '', `${u.pathname}${p.toString() ? `?${p}` : ''}${u.hash}`); } catch { /* a sandbox */ }
+        return out;
+    }
+
     function mount(host, o = {}) {
         styles();
         const base = String(o.base || 'https://openvibe.network/api/frame').replace(/\/+$/, '');
@@ -394,6 +425,15 @@
         // The choice for a new session, shared with the composer's (localStorage 'ov:composer:run').
         let pick = { agent: o.agent || 'auto', where: 'auto', model: null, works: null, way: 'auto' };
         try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); pick = { ...pick, ...(o.agent ? {} : { agent: kept.agent || 'auto' }), where: kept.where || 'auto', model: kept.model || null, works: kept.works || null, way: WAYS.some((w) => w.id === kept.way) ? kept.way : 'auto' }; } catch { /* private mode */ }
+        // A link's choice wins over the kept one, and is kept (what the person clicked is what they chose).
+        const linked = o.fromLink === false ? null : linkChoice();
+        if (linked) {
+            if (linked.model) pick.model = linked.model;
+            if (linked.agent) pick.agent = linked.agent;
+            if (linked.way) pick.way = linked.way;
+            try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); localStorage.setItem('ov:composer:run', JSON.stringify({ ...kept, agent: pick.agent, model: pick.model, way: pick.way })); } catch { /* private mode */ }
+            emit('linked', { model: pick.model && pick.model.id, agent: pick.agent, way: pick.way });
+        }
         const savePick = () => { try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); localStorage.setItem('ov:composer:run', JSON.stringify({ ...kept, agent: pick.agent, where: pick.where, model: pick.model, works: pick.works, way: pick.way })); } catch { /* private mode */ } paintCtx(); };
         // The way the chosen model is used (Actor's engines), as the body Actor reads: null for Auto, or { kind, model? }.
         const wayBody = () => (pick.way && pick.way !== 'auto' ? { kind: pick.way, ...(pick.model && ['agent', 'model', 'decisions'].includes(pick.way) ? { model: pick.model.id } : {}) } : null);
@@ -1193,6 +1233,12 @@
             }
         }
         const boxText = () => composeSlot.querySelector('textarea');
+        // The link's words wait in the box, ready to send (never sent for the person).
+        if (linked && linked.q) {
+            let tries = 0;
+            const fill = () => { const ta = boxText(); if (ta && !ta.value) { ta.value = linked.q; ta.dispatchEvent(new Event('input', { bubbles: true })); return; } if (++tries < 40) setTimeout(fill, 100); };
+            fill();
+        }
         // Slash commands and @-mentions, offered as you type.
         const COMMANDS = [
             ['/new', 'A new session', 'plus'], ['/agent', 'Who works on it', 'robot'], ['/model', 'Which model', 'model'], ['/where', 'Where it runs', 'computer'],
