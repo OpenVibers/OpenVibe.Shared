@@ -32,8 +32,9 @@ const cp = require('child_process');
 
 const LIBS = { 'openvibe-contracts': 'OpenVibe.Contracts', 'openvibe-shared': 'OpenVibe.Shared', 'openvibe-sdk': 'OpenVibe.SDK', 'openvibe-publishing': 'OpenVibe.Publishing' };
 // A pin on codeload (…/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/vX.Y.Z) or on our own forge
-// (…/api/v1/repos/openvibers/openvibe.shared/archive/vX.Y.Z.tar.gz, 4.284.0): the same tag either way.
-const PIN = /OpenVibers\/(OpenVibe\.[A-Za-z]+)\/(?:tar\.gz\/refs\/tags\/|archive\/)v(\d+)\.(\d+)\.(\d+)(?:\.tar\.gz)?$/i;
+// (…/api/v1/repos/openvibers/openvibe.shared/archive/vX.Y.Z.tar.gz, 4.284.0): the same tag either way. 4.288.0: read
+// by openvibe-shared/pins (scripts/pins.js), the one reader.
+const { parsePin } = require('./pins');
 
 const GRACE_DAYS = 14;
 const parse = (t) => { const m = /^v(\d+)\.(\d+)\.(\d+)$/.exec(t); return m ? m.slice(1).map(Number) : null; };
@@ -76,8 +77,9 @@ function pinsIn(file) {
     for (const field of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies']) {
         for (const [name, spec] of Object.entries(pkg[field] || {})) {
             if (!LIBS[name]) continue;
-            const m = PIN.exec(String(spec));
-            if (m && m[1] === LIBS[name]) out.push({ file, field, name, repo: m[1], pin: [Number(m[2]), Number(m[3]), Number(m[4])] });
+            const p = parsePin(spec);
+            // Its tags are looked up under the repository's own name, whatever case the pin spells it in.
+            if (p && p.library === name) out.push({ file, field, name, repo: LIBS[name], pin: p.version.split('.').map(Number) });
         }
     }
     return out;

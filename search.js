@@ -1754,8 +1754,11 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     }
     function askVibe(text, files) { return askAgent(text, files, null); }
     /** Starts a conversation in the menu with `agent` ('actor', 'codes', an agt_… of yours; null: the box's default). */
-    function askAgent(text, files, agent) {
+    function askAgent(text, files, agent, more) {
         const words = String(text || '').trim();
+        // 4.288.0: OVAgent.spawn (ov-agent.js) also says the model and where it was asked, or fills the box for the
+        // person to read and send (approve first).
+        const how = more || {};
         if (!words && !(files && files.length)) return;
         if (!canDoor() || !signedInTop()) { location.href = `https://openvibe.chat/vibe${words ? `?ask=${encodeURIComponent(words)}` : ''}`; return; }
         if (input) { input.value = ''; paintGhost(); syncTools(); }
@@ -1773,7 +1776,12 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
                 put();
                 return;
             }
-            Promise.resolve(runView.start(words, null, agent ? { agent } : undefined)).catch(() => { try { runView.prefill(words); } catch { /* */ } });
+            if (how.prefill) { try { runView.prefill(words); } catch { /* */ } return; }
+            const choice = {};
+            if (agent) choice.agent = agent;
+            if (how.model) choice.model = how.model;
+            if (how.context) choice.context = how.context;
+            Promise.resolve(runView.start(words, null, Object.keys(choice).length ? choice : undefined)).catch(() => { try { runView.prefill(words); } catch { /* */ } });
         };
         go();
     }
@@ -2106,6 +2114,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             actor: true, codes: true, searchOutside: true, actions: { base: net }, starters: VIBE_STARTERS,
             title: 'Vibe', placeholder: 'Ask anything, or describe what to build',
             top: (slot) => lend(slot, { tab: 'agent', part: 'live' }),
+            // 4.288.0: the page hears its sessions (an agent button waits for its answer: ov-agent.js).
+            onEvent: (type, data) => { try { root.dispatchEvent(new CustomEvent('ov:session', { detail: { type, data } })); } catch { /* */ } },
         };
         doorHost.textContent = '';
         const body = document.createElement('div'); body.className = 'ovs-vibe-body';
@@ -3236,6 +3246,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     }
     const api = { open, close, door: (id) => showDoor(id), prefill, suggest, siteOf, registerCard, mode, _state: () => ({ tab, door, from: ctx.from, place: ctxKey() }) };
     api.provide = provide;
+    // 4.288.0: start a session in Vibe from anywhere on the page (the agent button, OVAgent.spawn).
+    //   OpenVibeSearch.ask(words, { agent, model, context: { site, url, title, kind }, files, prefill })
+    api.ask = (text, o) => askAgent(text, o && o.files, o && o.agent, o || {});
     root.OpenVibeSearch = api;
     // Providers that came before the menu (4.263.0); from now on a push is a provide.
     try { const early = root.OVSearchProviders; if (Array.isArray(early)) early.forEach(provide); } catch { /* */ }

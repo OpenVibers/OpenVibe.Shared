@@ -30,6 +30,8 @@ const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
       { id: '${SCOUT}', name: 'Scout', avatar_url: 'https://pictures.test/scout.png', hue: 140, glyph: 'search', state: 'resting', asks: 0 }] });
     if (s.startsWith('https://openvibe.network/api/frame/actor')) return J({ id: 'act_1', name: 'Juniper', enabled: true, status: 'idle', now: {}, asks: [] });
     if (s.startsWith('https://openvibe.network/api/frame/runs') && (!o || !o.method || o.method === 'GET')) return J({ runs: [], next: null });
+    // 4.288.0: the agent button's run starts (its page hears session.started); every other start is refused here.
+    if (s === 'https://openvibe.network/api/frame/runs' && o && /safe defaults/.test(String(o.body || ''))) return J({ id: 'run_1', ref: 'actor:tsk_1', status: 'running', title: 'Set up AI' }, true, 201);
     if (s === 'https://openvibe.network/api/frame/runs') return J({ error: 'stand-in' }, false, 503);
     if (s.startsWith('https://')) return J({}, false, 404);
     return realFetch(u, o);
@@ -104,7 +106,23 @@ const server = http.createServer((req, res) => {
         assert.match(JSON.stringify(asked), /Plan my week for the stream/);
         assert.strictEqual(await q.evaluate(`!!document.querySelector('.ovs.is-results, .ovs-results')`), false, 'no results page');
         assert.strictEqual(await q.evaluate('document.documentElement.scrollWidth'), 390, 'nothing wider than the phone');
-        console.log('menu-box-asks-chrome: a question asks first (your Actor, Codes, your agents with faces), Ask Scout starts Scout, Enter on a request asks your Actor');
+        // 4.288.0: the agent button's way in (OpenVibeSearch.ask): who answers, the model, and where it was asked go to
+        // the Frame's POST /runs; the session's events reach the page as "ov:session".
+        const a = await h.openPage(browser, await browser.newContext(), { width: 390, height: 844 });
+        await open(a);
+        await a.evaluate(`(() => { window.__heard = []; addEventListener('ov:session', (e) => window.__heard.push(e.detail.type));
+            OpenVibeSearch.ask('Set up AI with safe defaults', { agent: 'actor', model: 'openrouter/auto', context: { site: 'openvibe.network', url: 'https://openvibe.network/admin/ai', title: 'AI setup', kind: 'form', extra: 'dropped' } }); return 1; })()`);
+        await until(a, `window.__calls.some((c) => c.u === 'https://openvibe.network/api/frame/runs' && c.m === 'POST')`, 'ask() started a conversation', 10000);
+        const run = (await posted(a))[0];
+        assert.deepStrictEqual([run.agent, run.model && run.model.id, run.context], ['actor', 'openrouter/auto', { site: 'openvibe.network', url: 'https://openvibe.network/admin/ai', title: 'AI setup', kind: 'form' }]);
+        await until(a, `window.__heard.includes('session.started')`, 'the page hears its session start');
+        // approve first: the words wait in the box, nothing starts.
+        const before = (await posted(a)).length;
+        await a.evaluate(`OpenVibeSearch.ask('Explain this page', { prefill: true }), 1`);
+        await until(a, `(() => { const t = document.querySelector('.ovse-compose textarea'); return t && t.value === 'Explain this page'; })()`, 'the words in the box');
+        await wait(300);
+        assert.strictEqual((await posted(a)).length, before, 'approve first starts nothing');
+        console.log('menu-box-asks-chrome: a question asks first (your Actor, Codes, your agents with faces), Ask Scout starts Scout, Enter on a request asks your Actor; ask() names the agent, model and place, and prefill waits');
     } finally {
         await browser.close().catch(() => {});
         server.close();

@@ -27,7 +27,8 @@ const me = { id: 1, username: 'local', display_name: 'Local' };
 const calls = [];
 const sent = [];
 const FIX = {
-    '/api/dm/conversations': { conversations: [{ id: 11, is_group: false, last_message: 'see the shots?', last_sender_id: 2, last_message_at: ago(4), unread_count: 2, participants: [me, { id: 2, username: 'kai', display_name: 'Kai Moreno' }] }] },
+    '/api/dm/conversations': { conversations: [{ id: 11, is_group: false, last_message: 'see the shots?', last_sender_id: 2, last_message_at: ago(4), unread_count: 2, participants: [me, { id: 2, username: 'kai', display_name: 'Kai Moreno' }] },
+        { id: 12, is_group: false, last_message: 'gg', last_sender_id: 5, last_message_at: ago(9), unread_count: 0, participants: [me, { id: 5, username: 'mira', display_name: 'Mira Sol' }] }] },
     '/api/vibe/conversations': { conversations: [{ slug: 'v1', name: 'Plans', last_message_at: ago(1) }], count: 1 },
     '/api/chat/servers': { mine: [{ slug: 'saturday-raiders', name: 'Saturday Raiders', unread: 5 }, { slug: 'bad slug!', name: 'Nope' }],
         public: [{ slug: 'openvibe', name: 'OpenVibe', official: true, members: 120, description: 'Help with any OpenVibe site' }, { slug: 'saturday-raiders', name: 'Saturday Raiders', members: 9 }, { slug: 'pixel-art', name: 'Pixel Art', members: 1 }] },
@@ -72,13 +73,18 @@ async function until(p, expression, ms = 6000) {
         assert.deepStrictEqual(segs, [['messages', 'true', '2'], ['friends', 'false', '2'], ['global', 'false', ''], ['servers', 'false', '5']], 'four segments, Messages first, each with what waits in it');
         // Messages: the conversations only (no friends strip, no add field, no Vibe row, no rail of places).
         const msgs = await until(p, "(() => { const s = document.querySelector('.ovdk-scroll'); const r = [...s.querySelectorAll('.ovdk-chat')]; return r.length ? { rows: r.map((b) => b.getAttribute('aria-label')), add: !!s.querySelector('.ovdk-addfriend'), rail: !!document.querySelector('.ovdk-rail'), vibe: /Vibe/.test(s.textContent) } : null; })()");
-        assert.deepStrictEqual(msgs, { rows: ['Kai Moreno, 2 unread'], add: false, rail: false, vibe: false });
+        assert.deepStrictEqual(msgs, { rows: ['Kai Moreno, 2 unread', 'Mira Sol'], add: false, rail: false, vibe: false });
         assert.ok(!calls.includes('GET /api/vibe/conversations'), 'Vibe\'s conversations are not read for the Chat tab');
         // Friends: add at the top, then Pending, Online, Offline, Asked.
         await p.evaluate("document.querySelector('.ovdk-seg[data-seg=friends]').click()");
         const fr = await until(p, "(() => { const s = document.querySelector('.ovdk-fr'); return s ? { add: !!s.querySelector('.ovdk-addfriend input'), secs: [...s.querySelectorAll('.ovdk-sec')].map((x) => x.textContent), names: [...s.querySelectorAll('.ovdk-row-b b')].map((x) => x.textContent), online: [...s.querySelectorAll('.ovdk-av.is-online')].length } : null; })()");
-        assert.deepStrictEqual(fr.secs, ['Pending · 2', 'Online · 1', 'Offline · 1', 'Asked · 1']);
-        assert.deepStrictEqual(fr.names, ['Lena', 'Bo', 'Kai Moreno', 'Juno', 'Otto'], 'requests, then online first, then the rest, then the ones you asked');
+        // 4.288.0 (the owner, 11-16: "how come the suggested friends goes away when you add someone"): the people you talk
+        // to stay suggested beside your friends; a friend (Kai) is not suggested again.
+        assert.deepStrictEqual(fr.secs, ['Pending · 2', 'Online · 1', 'Offline · 1', 'Asked · 1', 'People you talk to · 1']);
+        assert.deepStrictEqual(fr.names, ['Lena', 'Bo', 'Kai Moreno', 'Juno', 'Otto', 'Mira Sol'], 'requests, then online first, then the rest, then the ones you asked, then the people you talk to');
+        // The add field has the menu box's shape ("extra rounded … doesn't match"), and its button the same height.
+        const shape = await p.evaluate("(() => { const i = document.querySelector('.ovdk-addfriend input'), b = document.querySelector('.ovdk-addfriend-go'); const r = (e) => parseFloat(getComputedStyle(e).borderTopLeftRadius); return { r: r(i), h: i.getBoundingClientRect().height, bh: b.getBoundingClientRect().height, br: r(b) }; })()");
+        assert.ok(shape.r >= 10 && shape.r <= 20 && shape.h === 44 && shape.bh === 44 && shape.br === shape.r, `a rounded field, not a pill (${JSON.stringify(shape)})`);
         assert.ok(fr.add && fr.online === 1, 'add a friend here; the one online wears the green ring');
         assert.strictEqual(await p.evaluate("(() => { const b = document.querySelector('.ovdk-addfriend-go'); return [b.getAttribute('aria-label'), !!b.querySelector('svg'), b.textContent.trim()].join('|'); })()"), 'Add friend|true|', 'Add is an icon');
         await p.evaluate("(() => { const i = document.querySelector('.ovdk-addfriend input'); i.focus(); i.value = 'len'; i.dispatchEvent(new Event('input', { bubbles: true })); })()");
@@ -97,8 +103,8 @@ async function until(p, expression, ms = 6000) {
         await until(p, "!document.querySelector('.ovdk-fr .is-request') || ![...document.querySelectorAll('.ovdk-fr .is-request')].some((r) => /Lena/.test(r.textContent))");
         assert.ok(calls.includes('POST /api/v1/me/friends/usr_9/accept'), 'Accept adds them back on the account');
         await p.evaluate("[...document.querySelectorAll('.ovdk-fr .is-request')].find((r) => /Bo/.test(r.textContent)).querySelector('.ovdk-request-no').click()");
-        await until(p, "!document.querySelector('.ovdk-fr .is-request')");
-        assert.ok(await p.evaluate("[...document.querySelectorAll('.ovdk-fr .ovdk-sec')].map((x) => x.textContent).join('|') === 'Online · 1|Offline · 2|Asked · 1'"), 'Lena is a friend now (offline); Bo is ignored');
+        await until(p, "!document.querySelector('.ovdk-fr .is-request:not(.is-suggest)')");
+        assert.ok(await p.evaluate("[...document.querySelectorAll('.ovdk-fr .ovdk-sec')].map((x) => x.textContent).join('|') === 'Online · 1|Offline · 2|Asked · 1|People you talk to · 1'"), 'Lena is a friend now (offline); Bo is ignored; Mira is still suggested');
         assert.ok(await p.evaluate("JSON.parse(localStorage.getItem('ovdk-fr-ignored')).includes('usr_7')"), 'an ignored request stays ignored here');
         // Global: what people wrote, as text, newest last, and the way into the room.
         await p.evaluate("document.querySelector('.ovdk-seg[data-seg=global]').click()");

@@ -1,5 +1,44 @@
 # Changelog
 
+## 4.288.0 — 2026-11-16
+
+- **Friends keeps suggesting** (the owner, 11-16: "how come the suggested friends goes away when you add someone … the
+  search at the top is extra rounded … doesn't match all the other sites"):
+  - **People you talk to** stays under your friends after you add someone. It used to show only while the list was
+    empty. Anyone already a friend, asked or asking you is left out.
+  - The **Add a friend** field has the menu box's shape (a rounded rectangle, 44 px), not a pill. Its button is the
+    same height and shape.
+  - A friend's message action is a 36 px chip, tinted on hover. It used to be a faint 13 px mark.
+  - Test: `dock-chat-segments-chrome.test.js`.
+- **The agent button** (plan §AD.15; the owner, 11-16: "a button … across all sites … that will start an agent or spawn
+  an agent to do something … extremely configurable"):
+  - In markup: `<button data-ov-agent="Set this up for me" data-ov-agent-task="…" data-ov-agent-context="page |
+    selection | form | none">`. Optional: `data-ov-agent-who`, `data-ov-agent-model`, `data-ov-agent-form` and
+    `data-ov-agent-approve="first"`.
+  - An empty button is drawn with the agent glyph and its label.
+  - The navbar loads `ov-agent.js` once a page has such a button.
+  - In script: `await OVAgent.spawn({ task, context, form, agent, harness, model, approve, onEvent })` returns a handle.
+    `run.on('started' | 'step' | 'ended', fn)`, and `await run.done` gives `{ ref, status, summary, outputs, url }`. The
+    navbar's stub hands on a call made before the file loads.
+  - A press opens the menu's Vibe and starts a session with the task and its context:
+    - the page (its heading, its description and the start of its main text);
+    - the selection;
+    - or the form. Its fields are sent as "Label: value", never a password, a key, a card, a one-time code or a hidden
+      field, and how many were left out is said.
+  - The run is told where it was asked (`agents.run-start@1` `context`: site, url, title, kind).
+  - `approve: 'first'` fills the box for the person to read and send.
+  - Without the menu, Vibe opens on openvibe.chat in a new tab with the words.
+  - `OpenVibeSearch.ask(words, { agent, model, context, files, prefill })` starts a session from anywhere on the page,
+    and the run view's session events reach the page as `ov:session`.
+  - `OpenVibeSession` `start(text, files, { agent, model, context })` takes the model and the place.
+  - Tests: `agent-button-chrome.test.js`, `menu-box-asks-chrome.test.js`.
+- **One pin reader** (pin parsing broke three times on 11-16 when the pin bot moved to our forge):
+  - `scripts/docs-status.js` and `scripts/pin-drift.js` read pins with `openvibe-shared/pins` (4.287.0). A forge pin
+    counts in any case. Before this, the pin bot left STATUS.json behind on forge-pinned repositories (Wiki, Bot).
+  - Shared pins `openvibe-sdk` 0.177.0 (it was 0.166.0; this folds in #584, and #582 is closed). The Locker and arrange
+    cores are generated again from it (`node scripts/build-locker-core.js`, `node scripts/build-arrange-core.js`).
+- Budgets (they grow for a feature): `dock.js` 29600 bytes brotli, `navbar.js` 60.2 KB.
+
 ## 4.287.0 — 2026-11-16
 
 - **Your Actor's pictures in the menu's card** (the owner, 11-16: "an avatar generator for agents … on the image

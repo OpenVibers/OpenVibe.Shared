@@ -665,7 +665,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '79b3b0273a0a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '88a008f5a575', 'dock.js': '2fa4cafded04', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '9e996fb2f869', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '073d6cc55244', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '5d3cb3ad469f', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': 'd05bd5afc225', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': '01382e7b5ee9', 'ov-composer.js': '9e3e3120ae8a', 'items.js': '9f0ba1844c20', 'items.css': 'e917ec14cd4d' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '79b3b0273a0a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': 'db90736b5af9', 'dock.js': 'c286b064ad65', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '9e996fb2f869', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '073d6cc55244', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '5d3cb3ad469f', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': 'd05bd5afc225', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'fec07c961aa3', 'soft.js': '98ab9b8080b1', 'ov-run.js': '01382e7b5ee9', 'ov-composer.js': '9e3e3120ae8a', 'items.js': '9f0ba1844c20', 'items.css': 'e917ec14cd4d' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -939,6 +939,37 @@
         };
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(go, { timeout: 2500 });
         else { const t = setTimeout(go, 1500); if (t && typeof t.unref === 'function') t.unref(); }
+    }
+    // 4.288.0 (plan §AD.15, "an agent button on every site"): <button data-ov-agent="…"> and OVAgent.spawn({ task, … })
+    // start an agent in the menu's Vibe with the page's context (ov-agent.js). The file loads once a page has such a
+    // button, or the first time a script calls OVAgent.spawn (this stub hands the call on).
+    let agentLoading = null; let agentWatch = null;
+    function agentLib() {
+        if (root.OVAgent && !root.OVAgent._stub) return Promise.resolve(root.OVAgent);
+        if (!agentLoading) {
+            agentLoading = new Promise((ok, no) => {
+                try {
+                    const sc = document.createElement('script'); sc.id = 'ov-agent-loader'; sc.src = siblingV('ov-agent.js'); sc.async = true;
+                    sc.onload = () => (root.OVAgent && !root.OVAgent._stub ? ok(root.OVAgent) : no(new Error('the agent button did not load')));
+                    sc.onerror = () => { agentLoading = null; no(new Error('the agent button did not load')); };
+                    document.head.appendChild(sc);
+                } catch (e) { agentLoading = null; no(e); }
+            });
+        }
+        return agentLoading;
+    }
+    function watchAgents() {
+        if (typeof document === 'undefined' || !document.head) return;
+        if (!root.OVAgent) root.OVAgent = { _stub: true, spawn: (o) => agentLib().then((A) => A.spawn(o)), context: () => '' };
+        if (agentWatch || !document.querySelector || typeof MutationObserver !== 'function' || !document.body) return;
+        const need = () => !!document.querySelector('[data-ov-agent]');
+        if (need()) { agentLib().catch(() => {}); agentWatch = true; return; }
+        let soon = 0;
+        agentWatch = new MutationObserver(() => {
+            if (soon) return;
+            soon = setTimeout(() => { soon = 0; if (need() && agentWatch && agentWatch.disconnect) { agentWatch.disconnect(); agentWatch = true; agentLib().catch(() => {}); } }, 300);
+        });
+        agentWatch.observe(document.body, { childList: true, subtree: true });
     }
     function watchForms() {
         if (formWatch || !document.querySelector || typeof MutationObserver !== 'function' || !document.body) return;
@@ -2556,7 +2587,7 @@
         }
         // The network's own icons in place of Font Awesome's (ov-glyphs.js, L32) on a page that uses Font Awesome: now,
         // or the first time the page's own script adds one (L54 K4: a page with no icon at first pays nothing).
-        if (_config.glyphs !== false) watchGlyphs(); watchLabels(); watchScrollers(); if (_config.forms !== false) { watchForms(); watchTrending(); watchRings(); }
+        if (_config.glyphs !== false) watchGlyphs(); watchLabels(); watchScrollers(); if (_config.forms !== false) { watchForms(); watchTrending(); watchRings(); } if (_config.agents !== false) watchAgents();
         if (!root.__ovShareClick) { root.__ovShareClick = true; document.addEventListener('click', shareClick); }
         watchOverlays(); warmLinks();
         nav.innerHTML = `

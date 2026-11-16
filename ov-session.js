@@ -1423,6 +1423,16 @@
             // The way (4.281.0; Actor's engines): Actor's agent, one model, the Decisions API … Only for Actor's runs.
             if (wayBody() && !coding(opts) && !pick.works) { how.engine = wayBody(); state.waySent = pick.way; }
             if (o.context) how.context = o.context;
+            // 4.288.0: an agent button (ov-agent.js) says where it was asked (agents.run-start@1 context) and may name a model.
+            if (choice && choice.context && typeof choice.context === 'object') {
+                const c = {};
+                for (const [k, n] of [['site', 60], ['url', 2000], ['title', 300], ['kind', 60], ['id', 160]]) {
+                    if (typeof choice.context[k] === 'string' && choice.context[k]) c[k] = choice.context[k].slice(0, n);
+                }
+                if (c.url && !/^https?:\/\//.test(c.url)) delete c.url;
+                if (Object.keys(c).length) how.context = c;
+            }
+            if (choice && typeof choice.model === 'string' && choice.model.trim()) how.model = { id: choice.model.trim().slice(0, 160), source: 'openvibe' };
             // The thread opens at once: your words on the right, the agent working on the left.
             const gen = ++state.gen; clearStream();
             state.ref = null; state.run = null; state.steps = new Map(); state.queue = []; state.pending = true; state.open = new Set();

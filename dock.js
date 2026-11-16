@@ -185,7 +185,10 @@
             .ovdk-request-ok:active, .ovdk-addfriend-go:active { transform: scale(.96); }
             .ovdk-request-ok:disabled, .ovdk-addfriend-go:disabled { opacity: .55; cursor: default; }
             .ovdk-addfriend { display: flex; gap: 8px; align-items: center; }
-            .ovdk-addfriend input { flex: 1; min-width: 0; box-sizing: border-box; height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border, rgba(148,163,184,.2)); background: var(--bg-primary, #0b1220); color: var(--text-primary, #ececf1); font: inherit; font-size: 14px; }
+            .ovdk-addfriend .ovdk-addfriend-go { width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: calc(var(--ov-radius-2, 14px) + 2px); }
+            .ovdk-addfriend .ovdk-addfriend-go svg { width: 20px; height: 20px; }
+            /* 4.288.0 (the owner, 11-16: "extra rounded … doesn't match all the other sites"): the menu box's shape, not a pill. */
+            .ovdk-addfriend input { flex: 1; min-width: 0; box-sizing: border-box; height: 44px; padding: 0 14px; border-radius: calc(var(--ov-radius-2, 14px) + 2px); border: 1px solid var(--border, rgba(148,163,184,.2)); background: var(--bg-primary, #0b1220); color: var(--text-primary, #ececf1); font: inherit; font-size: 14px; }
             .ovdk-addfriend input:focus { outline: none; border-color: var(--accent, #3b82f6); }
             .ovdk-addfriend-note { margin: 0 4px; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
             /* 4.263.0, the Chat tab's segments (Messages · Friends · Global · Servers): a quiet track, the chosen one lifted,
@@ -224,7 +227,12 @@
             .ovdk-add-q:active { transform: scale(.95); }
             .ovdk-add-q svg { width: 18px; height: 18px; }
             .ovdk-row-p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+            /* 4.288.0 (the owner, 11-16: "all the UI in this menu could be improved"): a row's action read as a faint 13 px mark;
+               it is a soft 36 px chip now, tinted on hover, so a friend's row says what a press does. */
             .ovdk-row-go { color: var(--text-muted, #8b8b96); } .ovdk-row-go svg { width: 18px; height: 18px; }
+            .ovdk-row .ovdk-row-go { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); transition: background .15s ease, color .15s ease; }
+            .ovdk-row .ovdk-row-go svg { width: 20px; height: 20px; }
+            .ovdk-row:hover .ovdk-row-go, .ovdk-row:focus-visible .ovdk-row-go { color: var(--accent-light, #60a5fa); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
             .ovdk-row-acts { display: flex; gap: 6px; }
             .ovdk-request-no { all: unset; box-sizing: border-box; display: inline-grid; place-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 650; color: var(--text-secondary, #a8b3c4); cursor: pointer; background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); }
             .ovdk-request-no:hover { color: var(--text-primary, #ececf1); }
@@ -835,21 +843,25 @@
             const body = h('span', 'ovdk-row-b'); body.append(named(nameOf(p), p), h('span', 'ovdk-row-p', 'Waiting for them to add you back'));
             li.append(face(p), body); return li;
         });
-        if (!all.length && !(people.requests || []).length && !(people.asked || []).length) {
-            // 4.275.0 (the owner, 11-15: "improve"): the people you already talk to, each one tap from a friend.
-            const seen = new Set();
-            const talk = [];
-            for (const c of chats.list || []) {
-                if (c.is_group) continue;
-                for (const x of others(c)) {
-                    const k = String(x.username || '').toLowerCase();
-                    if (!k || seen.has(k) || known.has(k)) continue;
-                    seen.add(k); talk.push(x);
-                }
+        // 4.275.0 (the owner, 11-15: "improve"): the people you already talk to, each one tap from a friend. 4.288.0 (the
+        // owner, 11-16: "how come the suggested friends goes away when you add someone"): always, not only while the list
+        // is empty; anyone already a friend, asked or asking you is left out.
+        const asking = new Set((people.requests || []).map((x) => String(x.username || '').toLowerCase()));
+        const seen = new Set();
+        const talk = [];
+        for (const c of chats.list || []) {
+            if (c.is_group) continue;
+            for (const x of others(c)) {
+                const k = String(x.username || '').toLowerCase();
+                if (!k || seen.has(k) || known.has(k) || asking.has(k)) continue;
+                seen.add(k); talk.push(x);
             }
+        }
+        const empty = !all.length && !(people.requests || []).length && !(people.asked || []).length;
+        if (talk.length || empty) {
             if (talk.length) {
-                section('People you talk to', talk.slice(0, 8), (p) => {
-                    const li = h('li', 'ovdk-row is-request');
+                section('People you talk to', talk.slice(0, empty ? 8 : 6), (p) => {
+                    const li = h('li', 'ovdk-row is-request is-suggest');
                     const body = h('span', 'ovdk-row-b'); body.append(named(nameOf(p), p), h('span', 'ovdk-row-p', `@${p.username}`));
                     const ask = h('button', 'ovdk-add-q ovdk-ask'); ask.type = 'button'; ask.append(icon(G.personAdd), h('span', '', 'Add')); ask.setAttribute('aria-label', `Add ${nameOf(p)} as a friend`);
                     ask.setAttribute('aria-label', `Add ${nameOf(p)} as a friend`);
@@ -864,7 +876,7 @@
                     li.append(face(p), body, ask);
                     return li;
                 });
-            } else {
+            } else if (empty) {
                 const none = h('div', 'ovdk-none ovdk-none-soft'); none.append(icon(G.people), h('b', '', 'No friends yet'), document.createTextNode('Type a name above: people show as you type. When they add you back, you are friends on every OpenVibe site.'));
                 box.append(none);
             }
