@@ -77,7 +77,8 @@ function pinsIn(file) {
         for (const [name, spec] of Object.entries(pkg[field] || {})) {
             if (!LIBS[name]) continue;
             const m = PIN.exec(String(spec));
-            if (m && m[1] === LIBS[name]) out.push({ file, field, name, repo: m[1], pin: [Number(m[2]), Number(m[3]), Number(m[4])] });
+            // Our forge spells the repository in lower case; its tags are looked up under its own name.
+            if (m && m[1].toLowerCase() === LIBS[name].toLowerCase()) out.push({ file, field, name, repo: LIBS[name], pin: [Number(m[2]), Number(m[3]), Number(m[4])] });
         }
     }
     return out;
