@@ -44,6 +44,21 @@
  */
 (function (root) {
     // The ways Actor can work a message (Actor's engines; openvibe.actor/api/v1/engines): the session's Way choice.
+    // 4.286.0: the shared effort ladder every harness maps to its own flag (Codes' runner: claude --effort, codex
+    // model_reasoning_effort, aider --reasoning-effort …; one with none just runs), and what a coding agent may do.
+    const EFFORTS = [
+        { id: 'auto', name: 'Auto', line: 'The harness decides how long to think' },
+        { id: 'low', name: 'Low', line: 'Quick: little thinking, fast answers' },
+        { id: 'medium', name: 'Medium', line: 'Balanced' },
+        { id: 'high', name: 'High', line: 'Thinks longer before it acts' },
+        { id: 'xhigh', name: 'Extra high', line: 'Much longer thinking, for hard problems' },
+        { id: 'max', name: 'Max', line: 'As long as it takes: the most thinking the model allows' },
+    ];
+    const PERMISSIONS = [
+        { id: 'edit', name: 'Edit files', line: 'Changes files in its workspace; asks before running commands' },
+        { id: 'read', name: 'Look only', line: 'Reads and answers; changes nothing' },
+        { id: 'full', name: 'Full', line: 'Runs commands and changes anything in its workspace' },
+    ];
     const WAYS = [
         { id: 'auto', name: 'Auto', line: 'Actor\'s agent, or what fits the question' },
         { id: 'agent', name: 'Actor\'s agent', line: 'Plans, uses tools, checks its answer' },
@@ -402,6 +417,8 @@
         if (/^[\w-]{2,40}$/.test(agent)) out.agent = agent;
         const way = String(p.get('way') || '').trim();
         if (WAYS.some((w) => w.id === way)) out.way = way;
+        const effort = String(p.get('effort') || '').trim().toLowerCase();
+        if (EFFORTS.some((e) => e.id === effort)) out.effort = effort;
         else if (out.model) out.way = 'model';
         const q = String(p.get('q') || p.get('prompt') || '').trim();
         if (q) out.q = q.slice(0, 4000);
@@ -424,18 +441,19 @@
         const emit = (type, data) => { if (typeof o.onEvent === 'function') { try { o.onEvent(type, data); } catch { /* the host's */ } } };
         const state = { gen: 0, ref: null, run: null, steps: new Map(), nodes: new Map(), stack: [], stop: null, abort: null, tick: null, runs: [], partial: [], q: '', listGen: 0, paint: 0, queue: [], open: new Set(), drawer: false };
         // The choice for a new session, shared with the composer's (localStorage 'ov:composer:run').
-        let pick = { agent: o.agent || 'auto', where: 'auto', model: null, works: null, way: 'auto' };
-        try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); pick = { ...pick, ...(o.agent ? {} : { agent: kept.agent || 'auto' }), where: kept.where || 'auto', model: kept.model || null, works: kept.works || null, way: WAYS.some((w) => w.id === kept.way) ? kept.way : 'auto' }; } catch { /* private mode */ }
+        let pick = { agent: o.agent || 'auto', where: 'auto', model: null, works: null, way: 'auto', effort: 'auto', permission: null };
+        try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); pick = { ...pick, ...(o.agent ? {} : { agent: kept.agent || 'auto' }), where: kept.where || 'auto', model: kept.model || null, works: kept.works || null, way: WAYS.some((w) => w.id === kept.way) ? kept.way : 'auto' , effort: EFFORTS.some((e) => e.id === kept.effort) ? kept.effort : 'auto', permission: PERMISSIONS.some((x) => x.id === kept.permission) ? kept.permission : null }; } catch { /* private mode */ }
         // A link's choice wins over the kept one, and is kept (what the person clicked is what they chose).
         const linked = o.fromLink === false ? null : linkChoice();
         if (linked) {
             if (linked.model) pick.model = linked.model;
             if (linked.agent) pick.agent = linked.agent;
             if (linked.way) pick.way = linked.way;
+            if (linked.effort) pick.effort = linked.effort;
             try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); localStorage.setItem('ov:composer:run', JSON.stringify({ ...kept, agent: pick.agent, model: pick.model, way: pick.way })); } catch { /* private mode */ }
             emit('linked', { model: pick.model && pick.model.id, agent: pick.agent, way: pick.way });
         }
-        const savePick = () => { try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); localStorage.setItem('ov:composer:run', JSON.stringify({ ...kept, agent: pick.agent, where: pick.where, model: pick.model, works: pick.works, way: pick.way })); } catch { /* private mode */ } paintCtx(); };
+        const savePick = () => { try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); localStorage.setItem('ov:composer:run', JSON.stringify({ ...kept, agent: pick.agent, where: pick.where, model: pick.model, works: pick.works, way: pick.way, effort: pick.effort, permission: pick.permission })); } catch { /* private mode */ } paintCtx(); };
         // The way the chosen model is used (Actor's engines), as the body Actor reads: null for Auto, or { kind, model? }.
         const wayBody = () => (pick.way && pick.way !== 'auto' ? { kind: pick.way, ...(pick.model && ['agent', 'model', 'decisions'].includes(pick.way) ? { model: pick.model.id } : {}) } : null);
         let options = null;   // the Frame's /run-options: { agents, places }
@@ -1125,7 +1143,10 @@
             const m = pick.model && pick.model.name ? pick.model.name : 'Auto';
             const works = Array.isArray(o.works) ? o.works.find((x) => String(x.value) === String(pick.works)) : null;
             const way = WAYS.find((x) => x.id === pick.way) || WAYS[0];
-            return { agent: a.name, model: m, where: w.name, works: works ? works.name : '', way: way.id === 'auto' ? '' : way.name };
+            const eff = EFFORTS.find((x) => x.id === pick.effort) || EFFORTS[0];
+            const allowed = PERMISSIONS.find((x) => x.id === pick.permission) || null;
+            return { agent: a.name, model: m, where: w.name, works: works ? works.name : '', way: way.id === 'auto' ? '' : way.name,
+                effort: eff.id === 'auto' ? '' : `${eff.name} effort`, permission: allowed ? allowed.name : '' };
         }
         function paintCtx() {
             const r = state.run;
@@ -1137,10 +1158,10 @@
             }
             ctxB.hidden = false; ctxInfo.hidden = true;
             const p = ctxParts();
-            const said = [p.agent === 'Auto' ? 'Any agent' : p.agent, p.way, p.model === 'Auto' ? '' : p.model, p.where === 'Auto' ? '' : p.where, p.works].filter(Boolean);
+            const said = [p.agent === 'Auto' ? 'Any agent' : p.agent, p.way, p.model === 'Auto' ? '' : p.model, p.effort, p.where === 'Auto' ? '' : p.where, p.works].filter(Boolean);
             ctxB.querySelector('span').textContent = said.join(' · ');
             ctxB.setAttribute('aria-label', `How it runs: ${said.join(', ')}. Change it`);
-            ctxB.classList.toggle('is-on', pick.agent !== 'auto' || !!pick.model || pick.where !== 'auto' || !!pick.works || (pick.way && pick.way !== 'auto'));
+            ctxB.classList.toggle('is-on', pick.agent !== 'auto' || !!pick.model || pick.where !== 'auto' || !!pick.works || (pick.way && pick.way !== 'auto') || (pick.effort && pick.effort !== 'auto') || !!pick.permission);
             paintCost();
         }
         /**
@@ -1173,6 +1194,9 @@
                     { id: 'model', name: 'Model', line: p.model === 'Auto' ? 'Auto: the best fit, within your budget' : p.model, glyph: 'model' },
                     ...(coding(opts) ? [] : [{ id: 'way', name: 'Way', line: p.way || 'Auto: Actor\'s agent, or what fits the question', glyph: 'spark' }]),
                     { id: 'where', name: 'Runs on', line: p.where === 'Auto' ? (coding(opts) ? 'Auto: a shared node or your own computer' : 'Auto: wherever it fits best') : p.where, glyph: 'computer' },
+                    // 4.286.0: how long it thinks, on every harness; what it may do, for coding.
+                    { id: 'effort', name: 'Effort', line: p.effort || 'Auto: the harness decides how long to think', glyph: 'think' },
+                    ...(coding(opts) ? [{ id: 'permission', name: 'Allowed to', line: p.permission || 'Edit files: asks before running commands', glyph: 'key' }] : []),
                 ];
                 if (Array.isArray(o.works) && o.works.length) rows.push({ id: 'works', name: 'Works on', line: p.works || 'Anything: it works out what you mean', glyph: 'repo' });
                 rows.push({ id: 'setup', name: 'Your own setup', line: 'Your computer, coding agents and keys, instead of OpenVibe\'s', glyph: 'key' });
@@ -1190,6 +1214,12 @@
             } else if (section === 'where') {
                 const places = coding(opts) ? (opts.places || []).filter((x) => x.kind !== 'openvibe').map((x) => (x.kind === 'auto' ? { ...x, line: 'A shared node or your own computer' } : x)) : (opts.places || []);
                 P.open({ anchor: ctxB, title: 'Runs on', search: 'auto', value: pick.where, rows: [...places.map((x) => ({ id: placeKey(x), name: x.name, line: x.line || '', disabled: x.available === false })), SETUP_ROW], onPick: (row) => { if (row.id === SETUP_ROW.id) { then(() => openCtx('setup')); return; } pick.where = row.id; savePick(); } });
+            } else if (section === 'effort') {
+                P.open({ anchor: ctxB, title: 'Effort', search: false, value: pick.effort || 'auto', rows: EFFORTS.map((x) => ({ id: x.id, name: x.name, line: x.line })),
+                    onPick: (row) => { pick.effort = row.id; savePick(); paintCtx(); } });
+            } else if (section === 'permission') {
+                P.open({ anchor: ctxB, title: 'Allowed to', search: false, value: pick.permission || 'edit', rows: PERMISSIONS.map((x) => ({ id: x.id, name: x.name, line: x.line })),
+                    onPick: (row) => { pick.permission = row.id; savePick(); paintCtx(); } });
             } else if (section === 'way') {
                 // How Actor works it (4.281.0; Actor's engines, the owner 11-16: "use an agent or harness or model system or a
                 // decisions API or swap between and benchmark"): mid-session a change goes with the next message.
@@ -1347,6 +1377,10 @@
             const opts = options || fallbackOptions;
             if (pick.where && pick.where !== 'auto') { const w = (opts.places || []).find((x) => placeKey(x) === pick.where); if (w) how.where = { kind: w.kind, ...(w.id ? { id: w.id } : {}), name: w.name }; }
             if (pick.works) { how.kind = 'code'; how.target = /^[\w.-]+\/[\w.-]+$/.test(pick.works) ? { repo: pick.works } : pick.works; }
+            // 4.286.0: the effort (every harness) and, for coding, what the agent may do.
+            if (pick.effort && pick.effort !== 'auto') how.effort = pick.effort;
+            if (pick.permission && (coding(opts) || pick.works)) how.permission = pick.permission;
+            state.effortSent = pick.effort || 'auto';
             // The way (4.281.0; Actor's engines): Actor's agent, one model, the Decisions API … Only for Actor's runs.
             if (wayBody() && !coding(opts) && !pick.works) { how.engine = wayBody(); state.waySent = pick.way; }
             if (o.context) how.context = o.context;
@@ -1389,7 +1423,10 @@
             // The way, swapped on the chip mid-session (4.281.0): sent once, and the conversation keeps it after.
             const wayKey = `${pick.way || 'auto'}|${(wayBody() && wayBody().model) || ''}`;
             if (String(state.ref || '').startsWith('actor:') && state.waySent !== undefined && wayKey !== state.waySent) swap.engine = wayBody() || 'auto';
+            // The effort, changed on the chip mid-session (4.286.0): sent once, and the session keeps it after.
+            if (state.effortSent !== undefined && (pick.effort || 'auto') !== state.effortSent) swap.effort = pick.effort || 'auto';
             const step = await api(`/runs/${encodeURIComponent(state.ref)}/messages`, { method: 'POST', body: JSON.stringify({ text, ...(attachments.length ? { attachments } : {}), ...swap }) });
+            if (swap.effort) state.effortSent = swap.effort;
             if (swap.model) state.modelSent = swap.model.id;
             if (String(state.ref || '').startsWith('actor:')) state.waySent = wayKey;
             if (step && Number.isInteger(step.seq)) state.steps.set(step.seq, step);
