@@ -66,7 +66,9 @@
         syncBody();
     }, true);
     document.addEventListener('keydown', (e) => {
-        if (e.key !== 'Escape' || !anyOpen()) return;
+        // 4.282.0: an Escape something inside already used (a sheet over the menu closing itself) is not this one's: the
+        // menu stayed open only when this script had not loaded yet (menu-feed-v2-chrome, flaky on every runner).
+        if (e.key !== 'Escape' || e.defaultPrevented || !anyOpen()) return;
         if (typeof e.preventDefault === 'function') e.preventDefault();
         const trigger = panels.find(p => isOpen(p) && p.trigger)?.trigger;
         closeAll();
