@@ -137,12 +137,29 @@
         const hat = slotOf(slots, 'live.hat');
         const hatDef = hat && defs && defs.get(hat.definition_id);
         const glyph = hatDef && String(hatDef.art.emoji || hatDef.attributes.hat_char || '').slice(0, 8);
-        if (glyph && el.parentNode) {
-            const h = el.ownerDocument.createElement('span');
+        // 4.289.0 (the owner: item icons drawn as emoji look cheap; Inventory carries each item's drawing, art.media_id,
+        // since 11-16): the hat's drawing when it has one, its emoji only when it has not.
+        const hatArt = hatDef && MEDIA_ID.test(String(hatDef.art.media_id || '')) ? String(hatDef.art.media_id) : null;
+        if ((hatArt || glyph) && el.parentNode) {
             const motion = String(hatDef.attributes.animated || '');
-            h.className = `ov-hat${HAT_MOTION.includes(motion) ? ` ov-hat-${motion}` : ''}`;
+            const cls = `ov-hat${HAT_MOTION.includes(motion) ? ` ov-hat-${motion}` : ''}`;
+            let h;
+            if (hatArt) {
+                h = el.ownerDocument.createElement('img');
+                h.className = `${cls} ov-hat-art`;
+                h.src = `${String((root.OpenVibeItemsConfig && root.OpenVibeItemsConfig.media) || 'https://openvibe.media').replace(/\/+$/, '')}/o/${hatArt}`;
+                h.alt = '';
+                h.width = 16; h.height = 16;
+                h.setAttribute('loading', 'lazy');
+                h.setAttribute('decoding', 'async');
+                // A drawing that does not load falls back to the emoji, or leaves the name alone.
+                h.onerror = () => { if (!glyph) { h.remove(); return; } const s = el.ownerDocument.createElement('span'); s.className = cls; s.setAttribute('aria-hidden', 'true'); s.textContent = glyph; h.replaceWith(s); };
+            } else {
+                h = el.ownerDocument.createElement('span');
+                h.className = cls;
+                h.textContent = glyph;
+            }
             h.setAttribute('aria-hidden', 'true');
-            h.textContent = glyph;
             el.parentNode.insertBefore(h, el);
         }
 

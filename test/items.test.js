@@ -56,6 +56,16 @@ const subjectOf = (i) => `usr_01JZ${String(i).padStart(22, '0')}`;
     assert.deepStrictEqual([...document.getElementById('a').classList].sort(), ['name-fx-rainbow', 'ov-fx'], 'Ana wears her rainbow');
     const hat = document.getElementById('a').previousElementSibling;
     assert.ok(hat && hat.className === 'ov-hat ov-hat-pulse' && hat.textContent === '👑' && hat.getAttribute('aria-hidden') === 'true', 'and her crown sits just before her name');
+    // 4.289.0: a hat with a drawing (art.media_id) shows the drawing, not its emoji.
+    DEFS[0].art.media_id = 'med_01M7HRYT3EGGC44SXYJBND319C';
+    {
+        const { document: dd } = parseHTML(`<p><span id="h" data-ov-subject="${A}">Ana</span></p>`);
+        const el = dd.getElementById('h');
+        items.apply(el, { 'live.hat:hat': { definition_id: 'itd_2' } }, new Map(DEFS.map((d) => [d.id, { art: d.art, attributes: d.attributes }])));
+        const img = el.previousElementSibling;
+        assert.ok(img && img.tagName === 'IMG' && img.className === 'ov-hat ov-hat-pulse ov-hat-art' && /\/o\/med_01M7HRYT3EGGC44SXYJBND319C$/.test(img.getAttribute('src')), `the crown is drawn (${img && img.outerHTML})`);
+    }
+    delete DEFS[0].art.media_id;
     const cleo = document.getElementById('p');
     assert.deepStrictEqual([...cleo.classList].sort(), ['ov-px', 'px-sparkle'], 'Cleo wears particles');
     assert.strictEqual(cleo.dataset.ovPxChars, '✦✧⋆');
