@@ -868,7 +868,13 @@
             // What was open stays open.
             thread.querySelectorAll('details[data-key]').forEach((d) => { if (d.open) state.open.add(d.dataset.key); else state.open.delete(d.dataset.key); });
             const frag = document.createDocumentFragment();
-            let acts = null, actFiles = [];
+            let acts = null, actFiles = [], thinks = null;
+            // 4.286.0: thoughts in a row are one compact line of connected dots (one per thought) that opens in place.
+            const closeThinks = () => {
+                if (!thinks) return;
+                frag.append(thinks.steps.length === 1 ? stepNode(thinks.steps[0]) : thinkingNode(thinks.steps));
+                thinks = null;
+            };
             const closeActs = () => {
                 if (!acts) return;
                 // Edits alone are the files card: its rows open each diff.
@@ -879,7 +885,14 @@
             };
             for (const s of ordered()) {
                 const plan = planOf(s);
-                if (plan) { closeActs(); continue; }
+                if (plan) { closeActs(); closeThinks(); continue; }
+                if (s.kind === 'think') {
+                    closeActs();
+                    if (!thinks) thinks = { steps: [] };
+                    thinks.steps.push(s);
+                    continue;
+                }
+                closeThinks();
                 const isTool = s.kind === 'tool' || (s.kind === 'file' && s.from !== 'person');
                 if (isTool) {
                     if (!acts) acts = { node: actsNode(s.seq), steps: [] };
@@ -892,6 +905,7 @@
                 if (n) frag.append(n);
             }
             closeActs();
+            closeThinks();
             const r = state.run;
             if (r && r.status === 'waiting' && r.waiting && ['takeover', 'payment'].includes(r.waiting.for)) frag.append(needCard(r));
             if (r && Array.isArray(r.outputs) && r.outputs.length) frag.append(outputsCard(r.outputs));
@@ -904,6 +918,29 @@
             paintPlan();
             paintHead();
             if (nearEnd) requestAnimationFrame(() => { body.scrollTop = body.scrollHeight; });
+        }
+        /** Several thoughts in a row: "Thought 4 times · 12 s", a dot per thought joined by a line (the live one pulses),
+         *  and opened, each thought beside its dot, the line running through them. */
+        function thinkingNode(steps) {
+            const d = el('details', 'ovse-think ovse-thinks'); d.dataset.key = `thinks:${steps[0].seq}`;
+            const running = steps.some((x) => x.status === 'running');
+            const first = ms(steps[0].started_at), last = ms(steps[steps.length - 1].ended_at) || ms(steps[steps.length - 1].started_at);
+            const took = first && last ? Math.round((last - first) / 1000) : 0;
+            const sm = el('summary');
+            const dots = el('span', 'ovse-dots'); dots.setAttribute('aria-hidden', 'true');
+            steps.slice(0, 12).forEach((x, i) => { const dot = el('i'); if (x.status === 'running') dot.className = 'is-now'; dot.style.setProperty('--i', String(i)); dots.append(dot); });
+            const said = running ? 'Thinking' : `Thought ${steps.length} times${took >= 1 ? ` · ${took < 60 ? `${took} s` : clock(took)}` : ''}`;
+            sm.append(svg('think'), el('span', '', said), dots, svg('fold', 'ovse-fold'));
+            d.append(sm);
+            const list = el('ol', 'ovse-thinks-list');
+            steps.forEach((x) => {
+                const li = el('li', x.status === 'running' ? 'is-now' : '');
+                li.append(words(String(x.text || x.title || '').slice(0, 4000) || 'Thinking'));
+                list.append(li);
+            });
+            d.append(list);
+            if (running) d.classList.add('is-running');
+            return d;
         }
         function actsNode(seq) {
             const d = el('details', 'ovse-acts'); d.dataset.key = `acts:${seq}`;
@@ -1763,6 +1800,20 @@ html[data-ov-motion="off"] .ovse-sb-pane, html[data-ov-motion="off"] .ovse-sb-li
 .ovse-think > summary .ovse-g { width: 16px; height: 16px; }
 .ovse-think.is-running > summary span { background: linear-gradient(90deg, var(--ovse-dim), var(--ovse-fg), var(--ovse-dim)); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: ovse-shim 1.6s linear infinite; }
 .ovse-think > .ovse-words { margin: 4px 10px 8px 34px; padding-left: 12px; border-left: 2px solid var(--ovse-line); color: var(--ovse-dim); font-size: 14px; }
+/* 4.286.0: thoughts in a row as one line of connected dots; opened, a dot per thought on one line. */
+.ovse-dots { display: inline-flex; align-items: center; gap: 0; margin-left: 2px; }
+.ovse-dots i { position: relative; width: 6px; height: 6px; border-radius: 50%; background: color-mix(in srgb, var(--ovse-dim) 70%, transparent); animation: ovse-dot-in .3s cubic-bezier(.2, 1.2, .4, 1) calc(var(--i, 0) * 40ms) both; }
+.ovse-dots i + i { margin-left: 10px; }
+.ovse-dots i + i::before { content: ""; position: absolute; right: 100%; top: 50%; width: 10px; height: 1.5px; margin-top: -.75px; background: color-mix(in srgb, var(--ovse-dim) 45%, transparent); }
+.ovse-dots i.is-now { background: var(--ovse-accent, var(--accent, #60a5fa)); animation: ovse-dot-pulse 1.1s ease-in-out infinite; }
+@keyframes ovse-dot-in { from { transform: scale(0); opacity: 0; } }
+@keyframes ovse-dot-pulse { 50% { transform: scale(1.5); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ovse-accent, var(--accent, #60a5fa)) 22%, transparent); } }
+.ovse-thinks-list { list-style: none; margin: 4px 10px 8px 22px; padding: 0; position: relative; }
+.ovse-thinks-list::before { content: ""; position: absolute; left: 5px; top: 10px; bottom: 10px; width: 1.5px; background: var(--ovse-line); }
+.ovse-thinks-list li { position: relative; padding: 4px 0 8px 22px; color: var(--ovse-dim); font-size: 14px; animation: ovse-in .28s cubic-bezier(.2, .8, .2, 1) both; }
+.ovse-thinks-list li::before { content: ""; position: absolute; left: 1px; top: 10px; width: 9px; height: 9px; border-radius: 50%; background: var(--ovse-bg, var(--bg, #0b0f1a)); border: 2px solid color-mix(in srgb, var(--ovse-dim) 70%, transparent); box-sizing: border-box; }
+.ovse-thinks-list li.is-now::before { border-color: var(--ovse-accent, var(--accent, #60a5fa)); animation: ovse-dot-pulse 1.1s ease-in-out infinite; }
+html[data-ov-motion="off"] .ovse-dots i, html[data-ov-motion="off"] .ovse-thinks-list li, html[data-ov-motion="off"] .ovse-thinks-list li::before { animation: none; }
 .ovse-fold { width: 16px; height: 16px; margin-left: auto; color: var(--ovse-mute); transition: transform .2s; }
 details[open] > summary > .ovse-fold { transform: rotate(180deg); }
 .ovse-acts { border: 1px solid var(--ovse-line); background: var(--ovse-card); }

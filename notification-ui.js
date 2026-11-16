@@ -72,6 +72,7 @@
         bellSolid: '<path d="M5.8 16.2V11a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 19.6h4.2a2.1 2.1 0 0 1-4.2 0Z"/>',
         key: '<circle cx="8.2" cy="14.8" r="4"/><path d="M11.1 12l8.2-8.2M16.4 6.7l2.3 2.3M14.2 8.9l1.8 1.8"/>',
         spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.4 15.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/>',
+        people: '<circle cx="9.2" cy="7.9" r="3"/><path d="M3.6 19.1c0-3.1 2.6-5.1 5.6-5.1s5.6 2.1 5.6 5.1M15.7 5a3 3 0 0 1 0 5.9M17.6 14.3c1.8 0.6 2.8 2.3 2.8 4.8"/>',   // 4.286.0: People (glyphs.js members)
         agent: '<rect x="5" y="8.2" width="14" height="10.8" rx="3.6"/><path d="M12 8.2V5.4M9.4 13.4h.01M14.6 13.4h.01M3 12.6v2.6M21 12.6v2.6"/><circle cx="12" cy="4.4" r="1"/>',
         eye: '<path d="M2.8 12s3.4-6.2 9.2-6.2 9.2 6.2 9.2 6.2-3.4 6.2-9.2 6.2S2.8 12 2.8 12z"/><circle cx="12" cy="12" r="2.8"/>',
         screen: '<rect x="3.5" y="4.5" width="17" height="11.5" rx="2.2"/><path d="M9 20h6M12 16v4"/>',
@@ -85,14 +86,17 @@
     };
     const CATEGORY_TONE = { stream: 'live', social: 'accent', chat: 'accent', game: 'accent', economy: 'gold', achievement: 'gold', moderation: 'warn', system: 'muted', service: 'accent', admin: 'accent' };
     // The bell's tabs. Network defines what each holds (server/notifications/tabs.js, ?tab= and /unread-by-tab).
-    const TABS = [['all', 'All'], ['mentions', 'Mentions'], ['live', 'Live'], ['alerts', 'Deals & alerts'], ['system', 'System'], ['agents', 'Agents']];
+    // 4.286.0 (the owner, 11-16: an agent's notice under both "Deals & alerts" and Agents: "it should just be deals … make
+    // it actually filter this … categorize it in a way that makes cohesive sense"): one home each (Network decides, first
+    // claim wins), People for what people do (mentions, replies, messages, follows, shares), Deals for deals. Ids unchanged.
+    const TABS = [['all', 'All'], ['mentions', 'People'], ['agents', 'Agents'], ['live', 'Live'], ['alerts', 'Deals'], ['system', 'System']];
     // 4.260.0 (the owner, 11-15: "more minimalist … use more icons"): each tab says what it holds with its glyph too.
-    const TAB_GLYPH = { all: 'bell', mentions: 'chat', live: 'live', alerts: 'tag', system: 'pulse', agents: 'agent' };
+    const TAB_GLYPH = { all: 'bell', mentions: 'people', live: 'live', alerts: 'tag', system: 'pulse', agents: 'agent' };
     const TAB_EMPTY = {
         all: ['No notifications yet', 'When something happens across OpenVibe, it lands here.'],
-        mentions: ['No mentions yet', 'When someone mentions you, replies to you or messages you, it shows here.'],
+        mentions: ['Nothing from people yet', 'Mentions, replies, messages, new followers and what people share with you show here.'],
         live: ['Nobody has gone live yet', 'When someone you follow goes live, it shows here.'],
-        alerts: ['No alerts yet', 'Deal, coupon, price and trade watches you set tell you here.'],
+        alerts: ['No deals yet', 'The deal, coupon, price and trade watches you set tell you here.'],
         system: ['Nothing from the system', 'Sign-ins, security notices and announcements show here.'],
         agents: ['No agent work yet', 'When an agent needs your approval or finishes a task, it shows here.'],
     };
