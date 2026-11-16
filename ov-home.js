@@ -466,6 +466,28 @@ html[data-ov-motion=off] .ovh-tabrow .ovh-tab, html[data-ov-motion=off] .ovh-tab
 .ovh-actor.is-invite .ovh-x svg, .ovh-notice .ovh-actor.is-invite .ovh-x svg { width: 20px; height: 20px; }
 .ovh[data-enter="left"] > :not(.ovh-top):not(.ovh-tabrow) { animation-name: ovh-pane-l; }
 @keyframes ovh-pane-r { from { opacity: 0; transform: translateX(18px); } }
+/* History's Edit (4.284.0): a row is picked with a tap, its check pops in; the bar sits at the foot, in reach of a thumb;
+   forgotten rows fold away. Off keeps the states, without the motion. */
+.ovh-hrow.is-pick { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; padding: 8px 10px; border-radius: 14px; }
+.ovh-hrow.is-pick:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovh-hrow.is-pick.is-on { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); }
+.ovh-check { flex: none; order: -1; width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--text-secondary, #a8b3c4) 70%, transparent); display: grid; place-items: center; transition: background-color .15s, box-shadow .15s; }
+.ovh-hrow.is-on .ovh-check { background: var(--accent, #3b82f6); box-shadow: none; animation: ovh-check-pop .3s cubic-bezier(.3, 1.6, .4, 1); }
+.ovh-hrow.is-on .ovh-check::after { content: ''; width: 10px; height: 5px; border: solid #fff; border-width: 0 0 2.5px 2.5px; transform: translateY(-1px) rotate(-45deg); }
+@keyframes ovh-check-pop { from { transform: scale(.5); } }
+.ovh-hrow.is-going { animation: ovh-hrow-go .26s ease-in both; }
+@keyframes ovh-hrow-go { to { opacity: 0; transform: translateX(calc(-24px * var(--ov-move, 1))); max-height: 0; padding-block: 0; } }
+.ovh-hbar { position: sticky; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); z-index: 2; display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 8px 8px 14px; border-radius: 16px;
+  background: color-mix(in srgb, var(--bg-secondary, #141a24) 92%, transparent); box-shadow: 0 10px 28px -12px rgba(0, 0, 0, .7), inset 0 0 0 1px var(--border, rgba(148, 163, 184, .2));
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); animation: ovh-hbar-in .24s cubic-bezier(.2, .8, .2, 1) both; }
+.ovh-hbar[hidden] { display: none; }
+@keyframes ovh-hbar-in { from { opacity: 0; transform: translateY(calc(12px * var(--ov-move, 1))); } }
+.ovh-hbar-n { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; color: var(--text-secondary, #b6b6c0); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovh-hbar-b { flex: none; min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 750; cursor: pointer;
+  color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--text-primary, #ececf1) 8%, transparent); }
+.ovh-hbar-b.is-danger { color: #fff; background: var(--danger, #dc2626); }
+.ovh-hbar-b:disabled { opacity: .45; cursor: default; }
+html[data-ov-motion=off] .ovh-hrow.is-on .ovh-check, html[data-ov-motion=off] .ovh-hrow.is-going, html[data-ov-motion=off] .ovh-hbar { animation: none; }
 @keyframes ovh-pane-l { from { opacity: 0; transform: translateX(-18px); } }
 html[data-ov-motion=reduced] .ovh[data-enter] > :not(.ovh-top):not(.ovh-tabrow) { animation-name: ovh-rise-calm; }
 html[data-ov-motion=off] .ovh[data-enter] > :not(.ovh-top):not(.ovh-tabrow) { animation: none; }
@@ -816,7 +838,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         el.setAttribute('data-sec', 'home');
         // 4.223.0: You is three tabs (Apps first); the one a person chose stays for this tab of the browser.
         let keptTab = null; try { keptTab = sessionStorage.getItem('ovh-you-tab'); } catch { /* */ }
-        const state = { view: 'home', edit: false, folder: null, filter: '', drag: null, suppress: 0, tab: o.startTab || (['apps', 'notifications', 'recent'].includes(keptTab) ? keptTab : 'apps') };
+        const state = { view: 'home', edit: false, folder: null, filter: '', drag: null, suppress: 0, hedit: false, hsel: new Set(), hfilter: '', tab: o.startTab || (['apps', 'notifications', 'recent'].includes(keptTab) ? keptTab : 'apps') };
         let L = layoutOf(o);
         const save = () => { const keep = { home: L.home.slice(0, HOME_MAX), folders: L.folders.map((f) => ({ id: f.id, name: f.name, apps: f.apps.slice(0, 400) })) }; writeLocal(keep); pushRemote(o, keep); L.arranged = true; };
         const icons = () => { if (typeof o.mountIcons === 'function') { try { o.mountIcons(el); } catch { /* optional */ } } };
@@ -928,8 +950,13 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         /** Recent (4.223.0; the owner, 11-12: "jump back in … shows a little more … like in the feed, longer"; "view full
          *  history doesn't even work"): every place you were, newest first, in days, each a card with its whole title. */
         function history() {
-            const items = (o.back || []).filter((x) => x && safe(x.url));
-            if (!items.length) return null;
+            // 4.284.0: the menu's box filters it (the owner, 11-16: the box "should change … if you hit the history tab, you
+            // know it'll switch to a history icon"), and Edit selects places to forget ("so people can delete shit from
+            // their history … multi-select … easy and seamless").
+            const all = (o.back || []).filter((x) => x && safe(x.url));
+            const words = state.hfilter.trim().toLowerCase();
+            const items = words ? all.filter((x) => `${x.title} ${x.site || ''} ${x.url}`.toLowerCase().includes(words)) : all;
+            if (!all.length) return null;
             const wrap = h('div', 'ovh-hist');
             const dayOf = (at) => {
                 const t = Date.parse(at || ''); if (!t) return 'Earlier';
@@ -944,11 +971,20 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             const draw = () => {
                 list.textContent = '';
                 let last = '';
+                if (!items.length) { list.append(h('p', 'ovh-hint', `Nothing in your history matches “${state.hfilter.trim().slice(0, 60)}”.`)); more.hidden = true; return; }
                 items.slice(0, shown).forEach((x, i) => {
                     const d = dayOf(x.at);
                     if (d !== last) { last = d; list.append(h('div', 'ovh-hist-day', d)); }
                     const live = x.tag === 'Live';
-                    const c = h('a', `ovh-hrow${live ? ' is-live' : ''}`); c.href = safe(x.url); c.setAttribute('role', 'listitem'); c.style.setProperty('--i', String(i % 12));
+                    const picking = state.hedit && x.id != null;
+                    const c = h(picking ? 'button' : 'a', `ovh-hrow${live ? ' is-live' : ''}${picking ? ' is-pick' : ''}${picking && state.hsel.has(String(x.id)) ? ' is-on' : ''}`);
+                    if (picking) {
+                        c.type = 'button'; c.setAttribute('role', 'checkbox'); c.setAttribute('aria-checked', String(state.hsel.has(String(x.id))));
+                        c.addEventListener('click', () => { const k = String(x.id); if (state.hsel.has(k)) state.hsel.delete(k); else state.hsel.add(k); draw(); paintBar(); });
+                        c.append(h('span', 'ovh-check'));
+                    } else c.href = safe(x.url);
+                    if (!picking) c.setAttribute('role', 'listitem');
+                    c.style.setProperty('--i', String(i % 12));
                     const ic = h('span', 'ovh-ic'); ic.style.setProperty('--ovh-h', String(hueOf(x.site || 'ov'))); ic.append(siteIcon(x.site || 'ov', 44));
                     const t = h('span', 'ovh-htxt');
                     t.append(h('b', '', x.title));
@@ -965,10 +1001,43 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             };
             more.addEventListener('click', () => { shown += 12; draw(); icons(); });
             autoPress(more);
+            // Editing: a bar at the foot of the list says how many are picked, picks them all, and forgets them.
+            const bar = h('div', 'ovh-hbar'); bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', 'Your history');
+            const count = h('span', 'ovh-hbar-n');
+            const pickAll = h('button', 'ovh-hbar-b', 'Select all'); pickAll.type = 'button';
+            const forget = h('button', 'ovh-hbar-b is-danger', 'Delete'); forget.type = 'button';
+            const paintBar = () => {
+                bar.hidden = !state.hedit;
+                const n = state.hsel.size;
+                count.textContent = n ? `${n} selected` : 'Tap the places to forget';
+                const ids = items.filter((x) => x.id != null).map((x) => String(x.id));
+                pickAll.textContent = ids.length && ids.every((k) => state.hsel.has(k)) ? 'Select none' : 'Select all';
+                forget.disabled = !n;
+            };
+            pickAll.addEventListener('click', () => {
+                const ids = items.filter((x) => x.id != null).map((x) => String(x.id));
+                if (ids.every((k) => state.hsel.has(k))) ids.forEach((k) => state.hsel.delete(k)); else ids.forEach((k) => state.hsel.add(k));
+                draw(); paintBar();
+            });
+            forget.addEventListener('click', async () => {
+                const ids = [...state.hsel];
+                if (!ids.length || typeof o.forget !== 'function') return;
+                forget.disabled = true; count.textContent = 'Forgetting…';
+                list.querySelectorAll('.ovh-hrow.is-on').forEach((r) => r.classList.add('is-going'));
+                let gone = [];
+                try { gone = (await o.forget(ids)) || []; } catch { gone = []; }
+                if (gone.length) { const g = new Set(gone.map(String)); o.back = (o.back || []).filter((x) => !g.has(String(x.id))); }
+                state.hsel.clear();
+                if (gone.length < ids.length) { count.textContent = 'Some did not delete. Try again.'; }
+                setTimeout(() => paint(), gone.length ? 260 : 0);
+            });
+            bar.append(count, pickAll, forget);
             draw();
+            paintBar();
             const head = sec('Where you were', 'history');
             const full = h('a', 'ovh-link', 'Full history'); full.href = 'https://openvibe.my/history'; head.append(full);
-            wrap.append(head, list, more);
+            wrap.append(head, list, more, bar);
+            histDraw = () => { draw(); paintBar(); icons(); };
             return wrap;
         }
 
@@ -1049,7 +1118,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             // facing … the first tab"; then "compact … waste of space"): one row of tabs, and on Apps the All and Edit
             // buttons at its end, so no head of its own. Edit stays pressable while the rest is quiet.
             const tab = known(o) ? state.tab : 'apps';
-            const tools = tab === 'apps' ? homeTools() : null;
+            const tools = tab === 'apps' ? homeTools() : tab === 'recent' && typeof o.forget === 'function' && (o.back || []).some((x) => x && x.id != null) ? historyTools() : null;
             if (known(o)) {
                 const row = h('div', 'ovh-tabrow');
                 row.append(calm(youTabs()));
@@ -1253,6 +1322,19 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             return tools;
         }
         function setEdit(on) { state.edit = on; paint(); const b = el.querySelector('.ovh-edit'); if (b && !on) b.focus(); }
+        /** History's Edit (4.284.0): the same pencil as Home's; while on, the places are picked instead of opened. */
+        function historyTools() {
+            const edit = h('button', state.hedit ? 'ovh-edit is-done' : 'ovh-edit');
+            edit.type = 'button';
+            edit.append(svgIcon(state.hedit ? 'check' : 'pencil'));
+            edit.setAttribute('aria-label', state.hedit ? 'Done editing your history' : 'Edit your history');
+            edit.setAttribute('data-ov-tip', state.hedit ? 'Done' : 'Edit: pick places to forget');
+            edit.setAttribute('aria-pressed', state.hedit ? 'true' : 'false');
+            edit.addEventListener('click', () => { state.hedit = !state.hedit; state.hsel.clear(); paint(); const b = el.querySelector('.ovh-edit'); if (b) b.focus(); });
+            const tools = h('div', 'ovh-headtools'); tools.append(edit);
+            return tools;
+        }
+        let histDraw = null;
 
         function paintFolder() {
             const f = L.folders.find((x) => x.id === state.folder);
@@ -1347,7 +1429,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 
         function paint() {
             // The menu hears which view shows, so its pill can search inside it (All apps) or go back to searching OpenVibe.
-            if (typeof o.onView === 'function') { try { o.onView(state.view, { apps: L.byId.size }); } catch { /* the menu's own */ } }
+            if (typeof o.onView === 'function') { try { o.onView(state.view, { apps: L.byId.size, tab: known(o) ? state.tab : 'apps' }); } catch { /* the menu's own */ } }
             if (state.view === 'folder') return paintFolder(); if (state.view === 'drawer') return paintDrawer(); return paintHome();
         }
         paint();
@@ -1367,6 +1449,9 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             get view() { return state.view; },
             apps: () => L.byId.size,
             filter(q) { state.filter = String(q || ''); if (state.view === 'drawer' && drawerDraw) drawerDraw(); },
+            /** 4.284.0: the menu's box, on History, filters the places you were. */
+            filterRecent(q) { state.hfilter = String(q || '').slice(0, 80); if (histDraw) histDraw(); },
+            get tab() { return state.tab; },
             /** Show 'drawer' (All apps) or 'home' from outside: a menu address (you/apps) opens All apps. */
             show(view) { if (view !== 'drawer' && view !== 'home') return; state.view = view; state.folder = null; state.filter = ''; paint(); },
             /** The menu learned more (history, the catalogue): redraw with it, unless the person is arranging. */

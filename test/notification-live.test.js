@@ -520,7 +520,8 @@ const created = (subject, over = {}) => ({
     // icons … make those fixed on top … auto-load more as you scroll"; 30.52 KB measured).
     // 32.8 KB (4.274.0, 2026-11-15): the earlier ones past the unread (the owner's phone: "not loading"); budgets grow for a feature.
     // Before: 32 KB (4.261.0): Unread a disk, an arrow at each end of the tabs, the count on the line under a notice.
-    assert.ok(size('notification-ui.js') <= 32.8 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 32.8 KB`);
+    // 33.6 KB (4.284.0, 2026-11-16): the search as a field of its own and Unread in words (the owner: "buggy … redesign").
+    assert.ok(size('notification-ui.js') <= 33.6 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 33.6 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

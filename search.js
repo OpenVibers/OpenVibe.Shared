@@ -202,7 +202,7 @@
             const sj = s && s.ok ? await s.json().catch(() => null) : null;
             const data = {
                 searches: ((sj && sj.items) || []).filter((h) => h && h.type === 'search').map((h) => String(h.title || '').replace(/\s+/g, ' ').trim().slice(0, 200)).filter(Boolean).slice(0, 8),
-                items: (j.items || []).filter((h) => h.type !== 'search').map((h) => ({ title: String(h.title || '').slice(0, 160), url: safeUrl(h.url), site: h.service_label || siteOf(h.url), service: h.service, at: utcOf(h.updated_at) })).filter((h) => h.url && h.title),
+                items: (j.items || []).filter((h) => h.type !== 'search').map((h) => ({ id: h.id != null ? String(h.id) : null, title: String(h.title || '').slice(0, 160), url: safeUrl(h.url), site: h.service_label || siteOf(h.url), service: h.service, at: utcOf(h.updated_at) })).filter((h) => h.url && h.title),
                 services: (j.services || []).map((s) => ({ service: String(s.service || ''), count: Number(s.count) || 0 })),
             };
             try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data })); } catch { /* */ }
@@ -448,6 +448,18 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
 .ovs-door-host .ovdk-thread-h b, .ovs-door-host .ovdk-vibe-name b { font-size: 14px; font-weight: 700; color: var(--text-secondary, #b4c0d4); }
 .ovs-door-host .ovdk-vibe-start { padding-top: 2px; }
 
+.ovs-field { position: relative; }
+.ovs-ctx { position: absolute; left: 0; top: 50%; width: 22px; height: 22px; transform: translateY(-50%); pointer-events: none; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-ctx-i { position: absolute; inset: 0; display: grid; place-items: center; transition: transform .38s cubic-bezier(.2, .9, .25, 1.15), opacity .25s ease; }
+.ovs-ctx-i svg { width: 20px; height: 20px; }
+.ovs-ctx-i.is-in { opacity: 0; transform: scale(.35) rotate(calc(-70deg * var(--ov-move, 1))); }
+.ovs-ctx-i.is-out { opacity: 0; transform: scale(.35) rotate(calc(70deg * var(--ov-move, 1))); }
+.ovs-field.has-ctx .ovs-input, .ovs-field.has-ctx .ovs-ghost { padding-left: 30px; }
+html[data-ov-motion=off] .ovs-ctx-i { transition: none; }
+/* In the menu the box is the inbox's search (4.284.0): its own field stays hidden there, Unread sits at the end of the tabs. */
+.ovs .openvibe-notif-dock .openvibe-nv-search { display: none !important; }
+.ovs .openvibe-notif-dock .openvibe-nv-find { order: 1 !important; flex: none !important; }
+.ovs .openvibe-notif-dock .openvibe-nv-tabs, .ovs .openvibe-notif-dock .ovn-tabs-wrap { flex: 1 1 0 !important; min-width: 0; }
 .ovs-act { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
 /* The place's own site, on every tab (4.284.0): a new place's link first wears that tab's glyph, then turns into the arrow,
    and a ring goes round it once, so a person sees the link changed with the tab. Calm moves less; Off shows the arrow. */
@@ -719,6 +731,19 @@ html[data-ov-motion=off] .ovs-recent, html[data-ov-motion=off] .ovs-recent-row {
 @keyframes ovs-drop { from { opacity: 0; transform: translateY(-8px) scale(.96); } }
 html[data-ov-motion=off] .ovs-youpanel { animation: none; }
 @media (max-width: 640px) { .ovs-bar { gap: 8px; padding: 0 4px 0 8px; } .ovs-bar .ovs-input::placeholder { font-size: 15px; } .ovs-tools { gap: 0; } .ovs-tool { width: 36px; height: 36px; } }
+/* One size for every button in the field (4.284.0; the owner, 11-16: "make sure all sizes of things are consistent across
+   everything … dif size"): the mic, the +, a place's ↗ and the Dock's mirrored buttons are 40 px, each glyph 20 px at one
+   stroke whatever drawing it brings (36 px on a phone, where the words beside your picture need the room), and the two
+   groups sit as one row (no wider gap between the mic and the +). */
+.ovs-bar .ovs-tool, .ovs-bar .ovs-act { width: 40px !important; height: 40px !important; flex: none; }
+@media (max-width: 640px) { .ovs-bar .ovs-tool, .ovs-bar .ovs-act { width: 36px !important; height: 36px !important; } }
+/* A phone with the faces of what runs for you beside your picture and a place's link: the words need the room, so the mic
+   steps aside there (it is in the box on every other tab, and the + still asks by voice in Vibe). */
+@media (max-width: 420px) { .ovs-bar:has(.ovs-lead.has-stack):has(.ovs-place) .ovs-mic { display: none !important; } }
+.ovs-bar .ovs-tool svg, .ovs-bar .ovs-act svg, .ovs-bar .ovs-place > span > svg { width: 20px !important; height: 20px !important; stroke-width: 2; }
+.ovs-bar .ovs-place > span > img { width: 20px; height: 20px; }
+.ovs-bar .ovs-tools, .ovs-bar .ovs-acts { gap: 0; }
+.ovs-bar .ovs-tools + .ovs-acts { margin-left: -6px; }
 .ovs-orb { display: none; }
 .ovs-foot kbd svg { width: 12px; height: 12px; vertical-align: -1px; }
 @media (max-width: 640px) {
@@ -976,6 +1001,10 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             active = (active + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
             paintActive();
             return;
+        }
+        // A page's own mode takes its Enter (4.284.0).
+        if (e.key === 'Enter' && !door && tab === 'here' && modes.length && typeof modes[modes.length - 1].onSubmit === 'function') {
+            e.preventDefault(); try { modes[modes.length - 1].onSubmit(input.value); } catch { /* the page's own */ } return;
         }
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -1589,7 +1618,81 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             try { const sc = document.createElement('script'); sc.id = 'ov-trending-loader'; sc.src = ctx.sibling('ov-trending.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
         }
     }
-    const hintsMoved = () => { try { if (root.OVTrending && input) root.OVTrending.update(input); } catch { /* */ } };
+    const hintsMoved = () => { try { if (root.OVTrending && input) root.OVTrending.update(input); } catch { /* */ } try { paintCtx(); } catch { /* */ } };
+
+    // Where the box searches, as a mark at its start (4.284.0; the owner, 11-16: "add an icon to the beginning … it should
+    // change … animate … as you transition between things like alerts to apps … if you hit the history tab … a history
+    // icon. If you hit vibe … chat with Vibe"). Searching OpenVibe is the box's own kind and has no mark (your picture
+    // leads it); every other place has one, and the mark turns as you move.
+    const CTX_SVG = {
+        grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg>',
+        bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15Z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>',
+        clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/><path d="M12 8v4.5l3 1.8"/></svg>',
+        chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 17h-8l-4.5 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 5 5Z"/></svg>',
+        spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 13.9 10.1 20.5 12l-6.6 1.9L12 20.5l-1.9-6.6L3.5 12l6.6-1.9Z"/></svg>',
+        feed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4.5" width="16" height="7" rx="2"/><path d="M4 15.5h16M4 19.5h10"/></svg>',
+    };
+    const modes = [];   // pages' own: { id, icon, placeholder, onInput, onSubmit }
+    function ctxKey() {
+        if (door === 'chats') return 'chat';
+        if (door === 'vibe') return 'spark';
+        if (tab === 'feed') return 'feed';
+        if (tab === 'you') {
+            if (youTab === 'notifications') return 'bell';
+            if (youTab === 'recent') return 'clock';
+            const ha = homeViews.home && homeViews.home.api;
+            if (ha && ha.view === 'drawer') return 'grid';
+            return '';
+        }
+        const m = modes[modes.length - 1];
+        if (tab === 'here' && m && m.icon) return `mode:${m.id}`;
+        return '';
+    }
+    let ctxShown = null;
+    function paintCtx() {
+        const f = el && el.querySelector('.ovs-field');
+        if (!f) return;
+        const k = ctxKey();
+        if (k === ctxShown) return;
+        let c = f.querySelector('.ovs-ctx');
+        if (!c) { c = document.createElement('span'); c.className = 'ovs-ctx'; c.setAttribute('aria-hidden', 'true'); f.insertBefore(c, f.firstChild); }
+        const m = k.startsWith('mode:') ? modes[modes.length - 1] : null;
+        const svg = m ? m.icon : CTX_SVG[k];
+        f.classList.toggle('has-ctx', !!svg);
+        const prev = c.lastElementChild;
+        if (prev) { prev.classList.add('is-out'); setTimeout(() => prev.remove(), 420); }
+        if (svg) {
+            const next = document.createElement('span'); next.className = 'ovs-ctx-i is-in'; next.innerHTML = svg;
+            c.appendChild(next);
+            requestAnimationFrame(() => requestAnimationFrame(() => next.classList.remove('is-in')));
+        }
+        c.dataset.ctx = k;
+        ctxShown = k;
+        try { if (root.OVTrending && input) root.OVTrending.update(input); } catch { /* the line moves with the box */ }
+    }
+    /**
+     * A page's own place for the box (4.284.0, the SDK side of it): while it is pushed, the site's own tab searches the
+     * page's way, with its mark and its words. OpenVibeSearch.mode({ id, icon: '<svg …>', placeholder, onInput(q),
+     * onSubmit(q) }) → release(). The newest wins; release puts the last one back.
+     */
+    function mode(spec) {
+        const m = spec && typeof spec === 'object' ? {
+            id: String(spec.id || `m${modes.length + 1}`).slice(0, 40),
+            icon: typeof spec.icon === 'string' && /^<svg[\s>]/.test(spec.icon.trim()) && !/<script|on\w+=/i.test(spec.icon) ? spec.icon : null,
+            placeholder: spec.placeholder ? String(spec.placeholder).slice(0, 60) : null,
+            onInput: typeof spec.onInput === 'function' ? spec.onInput : null,
+            onSubmit: typeof spec.onSubmit === 'function' ? spec.onSubmit : null,
+        } : null;
+        if (!m) return () => {};
+        modes.push(m);
+        if (input && !door && tab === 'here' && m.placeholder) input.placeholder = m.placeholder;
+        paintCtx();
+        return () => {
+            const i = modes.indexOf(m); if (i >= 0) modes.splice(i, 1);
+            if (input && !door && tab === 'here') input.placeholder = (modes[modes.length - 1] || {}).placeholder || askHint();
+            paintCtx();
+        };
+    }
     function askHint() { let narrow = false; try { narrow = root.matchMedia('(max-width: 640px)').matches; } catch { /* */ } return narrow ? 'Search or ask Vibe' : `Search ${here()}, or ask Vibe`; }
     let actorInfo = null, actorAt = 0, listening = null;
     const signedInTop = () => !!(ctx && ctx.token && ctx.user && !ctx.user.is_anon);
@@ -1942,7 +2045,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // an agent at work) is lent above them by the Dock.
         const opts = {
             base: `${net}/api/frame`, token: () => ctx.token, me, sibling: ctx.sibling,
-            actor: true, actions: { base: net }, starters: VIBE_STARTERS,
+            actor: true, codes: true, searchOutside: true, actions: { base: net }, starters: VIBE_STARTERS,
             title: 'Vibe', placeholder: 'Ask anything, or describe what to build',
             top: (slot) => lend(slot, { tab: 'agent', part: 'live' }),
         };
@@ -1975,7 +2078,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             catch { leaveDoor(); try { ctx.dock(id); } catch { /* the Dock is optional */ } return; }
         }
         watchActs(true);
-        input.placeholder = id === 'chats' ? 'Search your chats' : askHint();
+        // Vibe: the box finds your sessions, and Enter asks Vibe (4.284.0).
+        input.placeholder = id === 'chats' ? 'Search your chats' : 'Find a session, or ask Vibe';
         paintTabs();
     }
     function closeDoorBody() {
@@ -2367,7 +2471,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         const live = pulseData && Array.isArray(pulseData.live) && pulseData.live.some((c) => c && c.url && safeUrl(c.url) && hostOf(c.url) === hostOf(x.url) && String(c.url).replace(/\/$/, '').toLowerCase() === String(x.url).replace(/[?#].*$/, '').replace(/\/$/, '').toLowerCase());
         const svc = x.service === 'media' ? 'media-hub' : x.service;
         const pre = [live ? 'Live now' : '', x.site].filter(Boolean).join(' · ');
-        return { title: title.slice(0, 90), meta: [pre, ago(x.at)].filter(Boolean).join(' · '), metaPre: pre, at: x.at, url: x.url, site: svc && /^[a-z0-9-]{1,30}$/.test(svc) ? svc : null, icon: 'back', kind: 'history', tag: live ? 'Live' : '' };
+        return { id: x.id != null ? x.id : null, title: title.slice(0, 90), meta: [pre, ago(x.at)].filter(Boolean).join(' · '), metaPre: pre, at: x.at, url: x.url, site: svc && /^[a-z0-9-]{1,30}$/.test(svc) ? svc : null, icon: 'back', kind: 'history', tag: live ? 'Live' : '' };
     }
 
     /** You: their workspace, their places, the pages they were on, tools, their searches, and the display controls. */
@@ -2421,10 +2525,33 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     /** What ov-home.js needs: every app (ranked), the person's own places, the tools, what they opened lately. */
     /** 4.229.0: You's home tells the menu which view shows: All apps makes the pill its finder ("Find among 64 apps"),
      *  and leaving it gives the pill back to searching OpenVibe. */
+    async function forgetHistory(ids) {
+        const list = (Array.isArray(ids) ? ids : []).map(String).filter((x) => /^[A-Za-z0-9_-]{1,64}$/.test(x)).slice(0, 200);
+        const gone = [];
+        for (let i = 0; i < list.length; i += 6) {
+            await Promise.all(list.slice(i, i + 6).map(async (id) => {
+                try {
+                    const r = await fetch(historyApi(`/${encodeURIComponent(id)}`), { method: 'DELETE', headers: { Authorization: `Bearer ${ctx.token}` }, credentials: 'omit' });
+                    if (r.ok || r.status === 404) gone.push(id);
+                } catch { /* kept: it says so */ }
+            }));
+        }
+        if (gone.length && mine && Array.isArray(mine.items)) { const g = new Set(gone); mine.items = mine.items.filter((h) => !g.has(String(h.id))); }
+        try { sessionStorage.removeItem(historyKey()); } catch { /* */ }
+        return gone;
+    }
+    // Which of You's tabs shows (4.284.0): the box searches inside it, Alerts and History as Apps already did.
+    let youTab = 'apps';
     function homeView(view, info) {
+        const was = youTab;
+        if (info && info.tab) youTab = info.tab;
         if (!input || tab !== 'you') return;
-        if (view === 'drawer') { input.placeholder = `Find among ${(info && info.apps) || ''} apps`.replace('  ', ' '); input.value = ''; return; }
-        if (/^Find among /.test(input.placeholder)) { input.placeholder = askHint(); input.value = ''; }
+        if (was !== youTab) input.value = '';
+        if (youTab === 'notifications') { input.placeholder = 'Search your alerts'; paintCtx(); return; }
+        if (youTab === 'recent') { input.placeholder = 'Search where you were'; paintCtx(); return; }
+        if (view === 'drawer') { input.placeholder = `Find among ${(info && info.apps) || ''} apps`.replace('  ', ' '); input.value = ''; paintCtx(); return; }
+        if (/^(Find among |Search your alerts|Search where you were)/.test(input.placeholder)) { input.placeholder = askHint(); input.value = ''; }
+        paintCtx();
     }
     function homeOpts() {
         const { all, ranked, f } = basis();
@@ -2445,6 +2572,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         return { onView: homeView, apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, back, usage, groups: f && Array.isArray(f.groups) ? f.groups : [],
             token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, me: ctx.me, sibling: ctx.sibling, meInTop: !!(ctx.user && !ctx.user.is_anon),
             // You's Notifications tab: the whole list with Mark all read, mounted once; the count rides on the tab.
+            // History's Edit (4.284.0): forget the picked places on the account; → the ids it forgot.
+            forget: signedIn() ? forgetHistory : null,
             notifications: (host) => mountNotes(host), unread: () => { try { return root.OpenVibeNotifications ? Number(root.OpenVibeNotifications.unread()) || 0 : 0; } catch { return 0; } },
             startTab: ['notifications', 'recent', 'apps'].includes(ctx.section) ? ctx.section : null, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
             onSearch: (q) => { input.value = q; render(q); input.focus(); },
@@ -2492,9 +2621,26 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         q = String(q || '').trim();
         el.classList.toggle('ovs-typing', !!q);
         if (door === 'chats' && canDoor()) { try { root.OpenVibeDock.filterChats(q); } catch { /* */ } return; }
-        if (door === 'vibe') return;
+        // Vibe (4.284.0): the box searches your sessions in place; Enter still asks Vibe.
+        if (door === 'vibe') { if (runView && typeof runView.search === 'function') { try { runView.search(q); } catch { /* */ } } return; }
+        // A page's own mode (OpenVibeSearch.mode, 4.284.0): its words go to it, in place.
+        const m = modes[modes.length - 1];
+        if (m && !door && tab === 'here' && typeof m.onInput === 'function') { tabsEl.hidden = false; try { m.onInput(q); } catch { /* the page's own */ } return; }
         // All apps open under You: the pill finds an app there, in place (4.229.0; one search, not a second box).
         const homeApi = homeViews.home && homeViews.home.api;
+        // Alerts and History under You (4.284.0; the owner, 11-16: the inbox's own search "should just be integrated
+        // straight to the top"): the box filters them in place, as it finds an app in All apps.
+        if (tab === 'you' && youTab === 'notifications') {
+            tabsEl.hidden = false; input.placeholder = 'Search your alerts';
+            const i = el.querySelector('.openvibe-notif-dock .openvibe-nv-search input');
+            if (i && i.value !== q) { i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); }
+            return;
+        }
+        if (tab === 'you' && youTab === 'recent' && homeApi && typeof homeApi.filterRecent === 'function') {
+            tabsEl.hidden = false; input.placeholder = 'Search where you were';
+            homeApi.filterRecent(q);
+            return;
+        }
         if (tab === 'you' && homeApi && homeApi.view === 'drawer') {
             tabsEl.hidden = false;
             input.placeholder = `Find among ${homeApi.apps()} apps`;
@@ -3016,7 +3162,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         pendingAsk = t; runFilter = 'all';
         return showDoor('vibe');
     }
-    const api = { open, close, door: (id) => showDoor(id), prefill, suggest, siteOf, registerCard, _state: () => ({ tab, door, from: ctx.from }) };
+    const api = { open, close, door: (id) => showDoor(id), prefill, suggest, siteOf, registerCard, mode, _state: () => ({ tab, door, from: ctx.from, place: ctxKey() }) };
     api.provide = provide;
     root.OpenVibeSearch = api;
     // Providers that came before the menu (4.263.0); from now on a push is a provide.

@@ -273,6 +273,41 @@
 .openvibe-notif-dock.is-preview .openvibe-nv-tools, .openvibe-notif-dock.is-preview .openvibe-nv-foot, .openvibe-notif-dock.is-preview .openvibe-nv-head, .openvibe-notif-dock.is-preview .openvibe-nv-more { display: none; }
             .openvibe-notif-dock .openvibe-nv-foot { gap: 12px; }
             .openvibe-notif-dock .openvibe-nv-foot [data-role="status"] { margin-right: auto; }
+            /* 4.284.0 (the owner, 11-16, the menu's Alerts: "this input is really buggy and it doesn't match the style and
+               interconnect with the openvibe.design properly … redesign"). Before, a disk beside the tabs turned into a box
+               laid over them (the tabs' arrow showed through it, a trending line sat in it, the Unread pill shrank to a dot).
+               Now: the search is a field of its own, on a row above the tabs, always there, in the design system's field
+               (one line, one ring on focus, the glyph inside at the start, the ✕ only once something is typed); Unread is
+               the pill beside it that says so; the tabs have their row to themselves. */
+            .openvibe-notif-dock .openvibe-nv-tools { flex-wrap: wrap !important; row-gap: 6px; padding: 8px 12px 0 !important; }
+            .openvibe-notif-dock .openvibe-nv-find { order: -1 !important; flex: 1 0 100% !important; display: flex !important; align-items: center; gap: 8px !important; padding: 0 !important; align-self: stretch !important; }
+            .openvibe-notif-dock .openvibe-nv-tabs, .openvibe-notif-dock .ovn-tabs-wrap { flex: 1 0 100% !important; min-width: 0; }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search, .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search.is-open,
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search:not(.is-open) {
+                position: relative !important; inset: auto !important; flex: 1 1 auto !important; min-width: 0 !important; width: auto !important; height: 44px !important;
+                display: flex !important; align-items: center; border-radius: var(--ov-radius-1, 12px) !important; opacity: 1 !important; cursor: text !important; animation: none !important;
+                background: var(--bg-input, color-mix(in srgb, var(--text-primary, #ececf1) 5%, transparent)) !important;
+                box-shadow: inset 0 0 0 1px var(--border, rgba(148, 163, 184, .22)) !important; transition: box-shadow .15s ease;
+            }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search:focus-within {
+                box-shadow: inset 0 0 0 1px var(--accent, #3b82f6), 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 20%, transparent) !important;
+            }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search > svg { position: absolute; left: 14px !important; top: 50%; width: 18px !important; height: 18px !important; transform: translateY(-50%) !important; opacity: .7; }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search input, .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search:not(.is-open) input {
+                flex: 1 1 auto; width: 100% !important; min-width: 0 !important; height: 100% !important; opacity: 1 !important; cursor: text !important; margin: 0;
+                padding: 0 40px 0 42px !important; border: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important;
+                border-radius: inherit; font: inherit; font-size: 15px; color: var(--text-primary, #ececf1); -webkit-appearance: none; appearance: none;
+            }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search input::placeholder { color: var(--text-muted, #8b97ab); }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search input::-webkit-search-cancel-button, .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search input::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search .clear { display: grid !important; place-items: center; position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+                width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: var(--text-secondary, #b6b6c0); font-size: 20px; cursor: pointer; }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search:has(input:placeholder-shown) .clear { display: none !important; }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-unread { flex: none; height: 44px !important; width: auto !important; padding: 0 14px 0 12px !important; gap: 0 !important;
+                display: inline-flex !important; align-items: center; font-size: 13.5px !important; border-radius: 999px !important;
+                box-shadow: inset 0 0 0 1px var(--border, rgba(148, 163, 184, .22)) !important; }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-unread[aria-pressed="true"] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent) !important; }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-unread .ovn-unread-w { display: inline !important; position: static !important; width: auto !important; height: auto !important; overflow: visible !important; clip-path: none !important; font-size: inherit !important; }
             .ovn-foot-read { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
             .ovn-foot-read:hover { color: var(--text-primary, #ececf1); }
             .ovn-foot-read svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

@@ -422,8 +422,28 @@
         const find = el('label', 'ovse-find'); const findIn = el('input'); findIn.type = 'search'; findIn.placeholder = 'Search sessions'; findIn.setAttribute('aria-label', 'Search sessions'); findIn.setAttribute('data-ov-trending', 'own'); find.append(svg('search'), findIn);
         const runsBox = el('div', 'ovse-runs'); runsBox.setAttribute('role', 'list');
         const actorSlot = el('div', 'ovse-actor'); actorSlot.hidden = true;
+        // Codes beside your Actor (4.284.0; the owner, 11-16: "we need to add codes by default … actor and codes means the
+        // openvibe.codes system … interconnected, same system as the site"): a session that writes and changes code, on a
+        // shared OpenVibe node or your own computer (never OpenVibe's own server).
+        const codesSlot = el('div', 'ovse-actor ovse-codes'); codesSlot.hidden = !o.codes;
+        if (o.codes) {
+            const who = el('button', 'ovse-actor-who is-resting'); who.type = 'button';
+            who.setAttribute('aria-label', 'Codes, your coding agent: start a coding session');
+            const face = el('span', 'ovse-codes-face'); face.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 8 4.5 12l4 4M15.5 8l4 4-4 4M13.2 5.5l-2.4 13"/></svg>';
+            const t = el('span', 'ovse-actor-t');
+            const top = el('span', 'ovse-actor-top'); top.append(el('b', '', 'Codes'), el('i', '', 'your coding agent'));
+            t.append(top, el('small', '', 'On a shared node or your computer · openvibe.codes'));
+            who.append(face, t);
+            who.addEventListener('click', () => { pick.agent = 'codes'; if (pick.where === 'openvibe') pick.where = 'auto'; savePick(); blank(); if (!wide) setDrawer(false); });
+            const away = el('a', 'ovse-ib'); away.href = 'https://openvibe.codes/'; away.target = '_blank'; away.rel = 'noopener';
+            away.setAttribute('aria-label', 'Open OpenVibe.Codes'); away.title = 'Open OpenVibe.Codes'; away.innerHTML = svgMarkup('repo');
+            codesSlot.append(who, away);
+        }
         const topSlot = el('div', 'ovse-top'); topSlot.hidden = true;
-        drawer.append(dHead, actorSlot, topSlot, find, runsBox);
+        // The page's own box searches the sessions (the menu, 4.284.0: "the search can be moved up there and use the icon
+        // system … so we can save the space"): the drawer's field stays out.
+        if (o.searchOutside) find.hidden = true;
+        drawer.append(dHead, actorSlot, codesSlot, topSlot, find, runsBox);
 
         const main = el('section', 'ovse-main');
         const head = el('header', 'ovse-head');
@@ -1478,6 +1498,8 @@
         return {
             open: (ref) => { state.stack = []; return open(ref); }, blank, prefill, refresh: () => { loadRuns(); if (o.actor) { actorAt = 0; loadActor().then(paintActor); } },
             start: (text) => start(String(text || '')), list: () => setDrawer(true),
+            /** 4.284.0: the page's own box searches the sessions (the menu's box on Vibe). */
+            search(q) { const v = String(q || '').slice(0, 120); if (findIn.value !== v) findIn.value = v; clearTimeout(findT); findT = setTimeout(() => { state.q = v.trim(); loadRuns(); }, 250); if (!wide && v) setDrawer(true); },
             drawer: (v) => setDrawer(v === undefined ? true : !!v),
             get state() { return { ref: state.ref, run: state.run, steps: state.steps.size, wide, drawer: wide ? !collapsed : state.drawer }; },
             destroy() { clearStream(); state.gen++; if (ro) ro.disconnect(); if (state.topMount && typeof state.topMount.destroy === 'function') { try { state.topMount.destroy(); } catch { /* */ } } host.textContent = ''; },
@@ -1547,6 +1569,9 @@
 .ovse-row-acts .ovse-b { min-height: 36px; padding: 0 14px; font-size: 13.5px; } .ovse-row-acts .ovse-note { margin: 0; }
 .ovse-actor { display: flex; align-items: center; gap: 6px; margin: 2px 10px 8px; padding: 6px; border-radius: 16px; background: var(--ovse-card); border: 1px solid var(--ovse-line); }
 .ovse-actor-who { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 4px; border: 0; border-radius: 12px; background: transparent; text-align: left; cursor: pointer; }
+.ovse-codes { margin-top: 6px; }
+.ovse-codes-face { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, color-mix(in srgb, var(--accent, #3b82f6) 85%, #22d3ee), color-mix(in srgb, var(--accent, #3b82f6) 70%, #0f172a)); }
+.ovse-codes-face svg { width: 22px; height: 22px; }
 .ovse-actor-who:hover { background: color-mix(in srgb, var(--ovse-fg) 6%, transparent); }
 .ovse-actor-t { flex: 1; min-width: 0; display: grid; }
 .ovse-actor-top { display: flex; align-items: baseline; gap: 6px; } .ovse-actor-top i { font-style: normal; font-size: 11.5px; color: var(--ovse-mute); }

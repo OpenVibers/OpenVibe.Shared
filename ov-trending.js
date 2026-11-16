@@ -177,9 +177,15 @@
         const items = itemsOf(b);
         if (input.value || !items.length || !place(input, b)) {
             b.ghost.hidden = true;
-            if (b.placeholder != null && input.getAttribute('placeholder') !== b.placeholder) input.setAttribute('placeholder', b.placeholder);
+            // Only the placeholder this file emptied comes back; one the page set since is the page's, and is kept.
+            const now = input.getAttribute('placeholder');
+            if (now) b.placeholder = now;
+            else if (b.placeholder != null) input.setAttribute('placeholder', b.placeholder);
             return;
         }
+        // A placeholder the page set since the line last showed is its newest words: keep them as the box's name.
+        const now = input.getAttribute('placeholder');
+        if (now && now !== b.placeholder) { b.placeholder = now; if (b.labelled) input.setAttribute('aria-label', now); }
         if (input.getAttribute('placeholder')) input.setAttribute('placeholder', '');
         b.ghost.hidden = false;
         if (!b.line.textContent) fill(b.line, items[b.i % items.length], b);

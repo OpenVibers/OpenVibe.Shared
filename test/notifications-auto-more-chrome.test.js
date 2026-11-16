@@ -58,14 +58,15 @@ const server = http.createServer((req, res) => {
         assert.equal(top.sticky, 'sticky', 'the tabs and the bar stay at the top');
         assert.equal(top.button, false, 'no Load more button');
         assert.equal(top.side, 'none', 'unread is a dot, not a bar down the side');
-        // Sorted by what is unread (All first), the counts red, and the tabs share their row with search and Unread.
+        // Sorted by what is unread (All first), the counts red; search and Unread on a row of their own above the tabs
+        // (4.284.0, the owner 11-16: the old disk over the tabs was "buggy"; inside the menu its box is the search).
         const tabs = await p.evaluate(`(() => { const b = [...document.querySelectorAll('#host .openvibe-nv-tabs [data-tab]')];
             const n = document.querySelector('#host .openvibe-nv-tabs [data-n="mentions"]'); const f = document.querySelector('#host .openvibe-nv-find').getBoundingClientRect();
             const t = document.querySelector('#host .openvibe-nv-tabs').getBoundingClientRect();
-            return { order: b.map((x) => x.dataset.tab), red: getComputedStyle(n).backgroundColor, oneRow: Math.abs((f.top + f.bottom) / 2 - (t.top + t.bottom) / 2) < 12 }; })()`);
+            return { order: b.map((x) => x.dataset.tab), red: getComputedStyle(n).backgroundColor, above: f.bottom <= t.top + 2 }; })()`);
         assert.deepEqual(tabs.order, ['all', 'system', 'mentions', 'live', 'alerts', 'agents'], 'All, then the most unread (System 40, Mentions 12), then the default order');
         assert.equal(tabs.red, 'rgb(239, 68, 68)', 'an unread count is red');
-        assert.ok(tabs.oneRow, 'search and Unread sit on the tabs\' row');
+        assert.ok(tabs.above, 'search and Unread on their own row, above the tabs');
         // Scroll to the end: the rest load by themselves, a page at a time.
         for (let i = 0; i < 12; i++) {
             await p.evaluate("(() => { const l = document.querySelector('.ovs-list'); l.scrollTop = l.scrollHeight; })()");
