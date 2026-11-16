@@ -1950,7 +1950,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // between like alerts and all that or apps").
         'you:notifications': ['https://openvibe.my/notifications', 'Open all your alerts'],
         'you:recent': ['https://openvibe.my/history', 'Open where you were'],
-        'you:apps': ['https://openvibe.network/apps', 'Open all your apps'],
+        // Apps is You's own first part: it opens You's home, OpenVibe.my (the `you` place).
     };
     const placeKey = () => { if (door) return door; if (tab === 'you' && PLACE[`you:${youTab}`]) return `you:${youTab}`; return tab; };
     const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.8h6.3v6.3M20.2 3.8l-9.4 9.4M18.2 14.2v4.3a1.7 1.7 0 0 1-1.7 1.7H5.5a1.7 1.7 0 0 1-1.7-1.7v-11a1.7 1.7 0 0 1 1.7-1.7h4.3"/></svg>';

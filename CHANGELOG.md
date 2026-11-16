@@ -23,8 +23,12 @@
   - The menu's words fit a phone ("Search alerts", "Search history", "Search chats"), and anything longer ends in "…",
     never cut mid-letter.
   - Test: `trending-overlap-chrome.test.js`.
-- **The menu's open button follows You's parts** (Alerts: your alerts page, History: where you were, Apps: all your
-  apps), and turns from that part's sign. The ring that pulsed around it is a soft tint now.
+- **The menu's open button follows You's parts** (Alerts: your alerts page, History: where you were, Apps: your
+  page on OpenVibe.my), and turns from that part's sign. The ring that pulsed around it is a soft tint now.
+- **Every line of suggestions sits where typing starts, always**: a line measured while its box was still moving (a
+  menu sliding in) is measured again when the movement ends, and at every turn. That stale measurement was the
+  "Plan my week" floating right of its icon.
+- **The rocket's line drawing** is the set's size (it was smaller than its neighbours).
 - **How it runs offers Effort and Allowed to** ("make sure reasoning effort is configurable and everything else, all
   settings for all harnesses exist").
   - Effort is Auto, Low, Medium, High, Extra high or Max, for every harness (each maps it to its own flag). Allowed to

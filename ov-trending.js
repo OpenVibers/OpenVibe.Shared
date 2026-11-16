@@ -234,6 +234,7 @@
             if (b.ghost.hidden || input.value || document.activeElement === input) return;
             const items = itemsOf(b);
             if (items.length < 2) return;
+            place(input, b);   // each turn starts from where the box is now
             b.i = (b.i + 1) % items.length;
             const old = b.line;
             const next = old.cloneNode(false);
@@ -486,6 +487,12 @@
         document.addEventListener('visibilitychange', () => { if (!document.hidden) boxes.forEach((_b, i) => show(i)); });
         root.addEventListener('resize', () => { boxes.forEach((_b, i) => show(i)); placeChips(); }, { passive: true });
         root.addEventListener('scroll', () => { placeChips(); replace(); }, { passive: true, capture: true });
+        // 4.286.0: a line is measured where its box is; a box that moves without resizing (a menu sliding in, a panel
+        // settling, an icon arriving at the box's start) leaves its line behind, floated off its words (the owner, 11-16,
+        // the menu's Vibe beside its Alerts: "still inconsistent"). Every animation or transition that ends re-measures
+        // the lines that show, once a frame.
+        document.addEventListener('animationend', replace, { passive: true, capture: true });
+        document.addEventListener('transitionend', replace, { passive: true, capture: true });
         new MutationObserver(rotate).observe(document.documentElement, { attributes: true, attributeFilter: ['data-ov-motion'] });
     }
 

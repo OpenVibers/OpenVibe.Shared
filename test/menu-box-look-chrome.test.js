@@ -55,17 +55,19 @@ const LOOK = `(() => {
     const rgba = (c, op) => { const m = String(c).match(/[\\d.]+/g) || []; let [r, g, b, a] = m.map(Number);
         if (/^color\\(srgb/.test(c)) { r *= 255; g *= 255; b *= 255; } return [Math.round(r), Math.round(g), Math.round(b), Math.round((a == null ? 1 : a) * op * 100) / 100]; };
     const ghost = [...document.querySelectorAll('.ovt-ghost')].find((x) => !x.hidden && x.offsetParent);
+    const ib = input.getBoundingClientRect(); const ic = getComputedStyle(input);
+    const start = Math.round(ib.left + parseFloat(ic.paddingLeft) + parseFloat(ic.borderLeftWidth));   // where typing starts
     const place = ovs.querySelector('.ovs-place'); const pc = place ? getComputedStyle(place) : null;
     const disc = pc ? (pc.backgroundColor !== 'rgba(0, 0, 0, 0)' && pc.backgroundColor !== 'transparent') || pc.borderTopWidth !== '0px' : false;
     if (ghost) {
         const term = ghost.querySelector('.ovt-term'); const c = getComputedStyle(ghost); const rg = document.createRange(); rg.selectNodeContents(term || ghost);
-        return { kind: 'line', words: ghost.textContent.trim(), x: Math.round(rg.getBoundingClientRect().left), size: c.fontSize, weight: c.fontWeight, color: rgba(c.color, Number(c.opacity)), disc };
+        return { kind: 'line', words: ghost.textContent.trim(), x: Math.round(rg.getBoundingClientRect().left), start, size: c.fontSize, weight: c.fontWeight, color: rgba(c.color, Number(c.opacity)), disc };
     }
     const c = getComputedStyle(input); const p = getComputedStyle(input, '::placeholder');
     const probe = document.createElement('span'); probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font:' + c.font + ';letter-spacing:' + c.letterSpacing; probe.textContent = input.placeholder; document.body.appendChild(probe);
     const wide = probe.getBoundingClientRect().width; probe.remove();
     const r = input.getBoundingClientRect();
-    return { kind: 'words', words: input.placeholder, x: Math.round(r.left + parseFloat(c.paddingLeft)), size: p.fontSize, weight: p.fontWeight, color: rgba(p.color, 1), disc,
+    return { kind: 'words', words: input.placeholder, x: Math.round(r.left + parseFloat(c.paddingLeft) + parseFloat(c.borderLeftWidth)), start, size: p.fontSize, weight: p.fontWeight, color: rgba(p.color, 1), disc,
         fits: wide <= r.width - parseFloat(c.paddingLeft) - parseFloat(c.paddingRight) + 1 };
 })()`;
 
@@ -85,8 +87,12 @@ const LOOK = `(() => {
         await p.evaluate("document.querySelector('.ovs [data-tab=\"vibe\"]').click(), true");
         assert.ok(await until(p, "(() => { const g = [...document.querySelectorAll('.ovt-ghost')].find((x) => !x.hidden && x.offsetParent); return !!(g && g.textContent.trim()); })()"), 'Vibe suggests something to ask');
         await wait(1200);   // the open button's turn settles
+        // The steady state, as a person sees it once the menu has settled: the line sits where typing starts. A line left
+        // behind where its box was measured mid-animation never gets there (4.286.0: ov-trending re-places after one).
+        await until(p, `(() => { const l = ${LOOK}; return l && l.kind === 'line' && Math.abs(l.x - l.start) <= 1; })()`, 4000);
         const vibe = await p.evaluate(LOOK);
         assert.strictEqual(vibe.kind, 'line');
+        assert.ok(Math.abs(vibe.x - vibe.start) <= 1, `"${vibe.words}" starts where typing starts (${vibe.x} vs ${vibe.start})`);
 
         const seen = [];
         for (const tab of ['notifications', 'recent']) {
@@ -98,7 +104,7 @@ const LOOK = `(() => {
         }
         for (const s of seen) {
             assert.strictEqual(s.kind, 'words', `${s.words}: the box's own words`);
-            assert.strictEqual(s.x, vibe.x, `${s.words}: starts where "${vibe.words}" starts`);
+            assert.ok(Math.abs(s.x - s.start) <= 1 && Math.abs(s.start - vibe.start) <= 1, `${s.words}: starts where typing starts, as "${vibe.words}" does (${s.x} vs ${vibe.x})`);
             assert.strictEqual(s.size, vibe.size, `${s.words}: the same size as the line (${vibe.size})`);
             assert.strictEqual(s.weight, vibe.weight, `${s.words}: the same weight`);
             assert.deepStrictEqual(s.color, vibe.color, `${s.words}: the same colour, drawn as strongly`);
