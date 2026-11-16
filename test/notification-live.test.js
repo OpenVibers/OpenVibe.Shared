@@ -524,7 +524,9 @@ const created = (subject, over = {}) => ({
     // Before: 32 KB (4.261.0): Unread a disk, an arrow at each end of the tabs, the count on the line under a notice.
     // 35 KB (4.284.0, 2026-11-16): the search as a field of its own, Unread in words, and Edit (pick, mark read, delete,
     // delete all; the owner: "people want to completely delete their notifications … all three"). Measured 34.71.
-    assert.ok(size('notification-ui.js') <= 35 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 35 KB`);
+    // 35.6 KB (4.289.0, 2026-11-16): repeats fold only when they come close together (the owner: "only consolidate if he
+    // goes live within like the same minute"); measured 35.24; budgets grow for a feature.
+    assert.ok(size('notification-ui.js') <= 35.6 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 35.6 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

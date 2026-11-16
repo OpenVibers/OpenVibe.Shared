@@ -1369,17 +1369,26 @@
 
     function renderItems(v, { append = false, view = null } = {}) {
         const list = v.root.querySelector('[data-role="list"]');
-        // The same notice repeated back to back ("X is live!" six times; three browser checks failing) reads as one
-        // row with a count and the sites it covers.
+        // The same notice repeated back to back reads as one row with a count and the sites it covers, but only when
+        // the repeats come close together (4.289.0; the owner, 11-16: "Maticus went live three times in a row … these
+        // should only consolidate if he goes live within like the same minute … an hour later … different
+        // notifications"). A go-live folds into the one before it within 2 minutes (a stream that restarted), anything
+        // else within 10 (three browser checks failing at once). Network announces a channel at most once an hour, so
+        // separate go-lives are separate rows, and the Live tab's count matches what is listed.
         const groups = [];
+        const atOf = (x) => { const d = parseDate(x && x.created_at); return d ? d.getTime() : NaN; };
+        const foldWithin = (p) => (/^STREAM_LIVE$|_LIVE$/.test(String(p.type || '')) || p.kind === 'live' ? 2 * 60 * 1000 : 10 * 60 * 1000);
         for (const n of v.items) {
             const p = present(n);
             const g = groups[groups.length - 1];
-            if (g && g.p.key === p.key) {
+            const gap = g ? Math.abs(atOf(g.last) - atOf(n)) : NaN;
+            const near = g && (!Number.isFinite(gap) || gap <= foldWithin({ ...p, type: n.type }));   // no date: fold as before
+            if (g && g.p.key === p.key && near) {
+                g.last = n;
                 g.ids.push(String(n.id)); if (!isRead(n)) g.unread = true;
                 g.chips = [...new Set(g.chips.concat(p.chips))].slice(0, 8);
                 if (!g.cmd && p.command) g.cmd = p.command;
-            } else groups.push({ n, p, ids: [String(n.id)], unread: !isRead(n), chips: p.chips.slice(), cmd: p.command });
+            } else groups.push({ n, last: n, p, ids: [String(n.id)], unread: !isRead(n), chips: p.chips.slice(), cmd: p.command });
         }
         let lastDay = append ? v.lastDay : null;
         const html = groups.map(({ n, p, ids, unread, chips, cmd }) => {

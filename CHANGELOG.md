@@ -1,5 +1,45 @@
 # Changelog
 
+## 4.289.0 — 2026-11-16
+
+- **The gear, the star and the heart are drawn exactly** (the owner, 11-16: the settings gear "looks completely scuffed
+  and weird … regenerate icons that look fucked up like this, even if it's slight"):
+  - The gear was a hand-rounded copy: its teeth differed (its 8-fold symmetry measured 0.845) and its hole sat at 12.1.
+    It is now eight even teeth with straight flanks and a hole on the middle.
+  - The kit's star was irregular (5-fold 0.905) and its heart's sides differed (0.986). They are now a regular star and
+    the house heart, mirror-exact, both centred.
+  - Each is computed point by point by openvibe.design's shapes (Design #398, `server/glyphs/shapes.js`), line and
+    solid, and checked by its geometry audit (`scripts/glyph-geometry-audit.js`: every symmetry exact).
+  - The kit, the drop-in (`ov-glyphs.js`), the sprite, the bar's icons and the fonts are rebuilt.
+- **Alerts fold repeats only when they come close together** (the owner, 11-16: the Live tab said 3 and listed one
+  "Maticus is live! ×3", three go-lives hours apart, and Yesterday's ×24 was two weeks of them: "only consolidate if
+  he goes live within like the same minute"):
+  - A go-live folds into the one before it within 2 minutes (a stream that restarted). Any other alert folds within
+    10 minutes.
+  - Network announces a channel at most once an hour, so go-lives are their own rows, and the tab's count matches the
+    list.
+  - Test: `notifications-fold-chrome.test.js`.
+- **Name effects, remade** (plan §AD.15, the owner: "improve the animations and effects of all username effects …
+  remake them all"):
+  - Each of the 13 catalogue effects has one look and one motion:
+    - Golden, Ice and Divine: a highlight sweeps across;
+    - Fire: burns upward;
+    - Galaxy: twinkles;
+    - Toxic: bubbles;
+    - Blood: runs;
+    - Shadow: smokes;
+    - Void: pulls inward;
+    - Rainbow: flows;
+    - Neon: hums.
+  - **Hologram and Glitch no longer flash 7 to 8 times a second**, the range that can trigger photosensitive
+    seizures. Glitch tears for a fifth of a second every few seconds; Hologram shows drifting scanlines.
+  - Only background and shadows move, never the layout.
+  - Every effect has a light-theme variant at about 4.5:1 or more on white.
+  - Vegas and twofat, the one-of-a-kind effects, are unchanged.
+- **A hat shows its drawing** (Inventory's `art.media_id`, the items drawn on 11-16) the size of the text, with the
+  emoji only as a fallback. The owner: item icons drawn as emoji look cheap.
+- Budget (it grows for a feature): `notification-ui.js` 35.6 KB brotli.
+
 ## 4.288.0 — 2026-11-16
 
 - **Friends keeps suggesting** (the owner, 11-16: "how come the suggested friends goes away when you add someone … the

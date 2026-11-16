@@ -13,173 +13,183 @@
  */
 .ov-fx { display: inline-block; }
 
-/* Rainbow — cycling hue */
-.name-fx-rainbow {
-    background: linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #8800ff, #ff0088);
-    background-size: 400% 100%;
+/* Shared by the gradient effects: the paint is clipped to the letters. */
+.name-fx-rainbow, .name-fx-golden, .name-fx-galaxy, .name-fx-hologram, .name-fx-toxic, .name-fx-blood, .name-fx-divine, .name-fx-ice, .name-fx-fire {
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: nameFxRainbow 3s linear infinite;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Rainbow — the spectrum flows along the name, and a soft sheen rides on it. */
+.name-fx-rainbow {
+    background-image: linear-gradient(100deg, transparent 42%, rgba(255, 255, 255, .55) 50%, transparent 58%),
+        linear-gradient(90deg, #ff4d4d, #ff9a3c, #ffe14d, #4dff88, #4db8ff, #9b6bff, #ff5fb4, #ff4d4d);
+    background-size: 300% 100%, 300% 100%;
+    animation: nameFxRainbow 4s linear infinite;
 }
 @keyframes nameFxRainbow {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 400% 50%; }
+    0% { background-position: 150% 50%, 0% 50%; }
+    100% { background-position: -150% 50%, 300% 50%; }
 }
 
-/* Fire — warm pulse with glow. The darkest frame is #ff7a1f, not #ff6600: on a red-tinted chat row (#581e1c) the old one
-   read at 4.42:1, under WCAG AA's 4.5 (axe on openvibe.chat, 11-03); #ff7a1f reads at 4.98 there and 7.2 on the page. */
-.name-fx-fire {
-    color: #ff7a1f !important;
-    text-shadow: 0 0 6px #ff4400, 0 0 12px #ff220088, 0 0 20px #cc110044;
-    animation: nameFxFire 1.5s ease-in-out infinite alternate;
-}
-@keyframes nameFxFire {
-    0% { text-shadow: 0 0 6px #ff4400, 0 0 12px #ff220088; color: #ff7a1f; }
-    100% { text-shadow: 0 0 10px #ff8800, 0 0 20px #ff440088, 0 0 30px #cc220044; color: #ffaa00; }
-}
-
-/* Ice — cool blue shimmer */
-.name-fx-ice {
-    color: #88ddff !important;
-    text-shadow: 0 0 6px #44bbff88, 0 0 12px #2288cc44;
-    animation: nameFxIce 2s ease-in-out infinite alternate;
-}
-@keyframes nameFxIce {
-    0% { text-shadow: 0 0 4px #44bbff88; color: #88ddff; }
-    100% { text-shadow: 0 0 10px #66eeff, 0 0 20px #44bbff88; color: #bbffff; }
-}
-
-/* Golden — shimmering gold */
+/* Golden — polished gold; a highlight sweeps across it now and then, like light on metal. */
 .name-fx-golden {
-    background: linear-gradient(90deg, #ffd700, #ffec80, #ffd700, #ffb800);
-    background-size: 300% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: nameFxGolden 2s ease-in-out infinite;
-    filter: drop-shadow(0 0 4px #ffd70066);
+    background-image: linear-gradient(105deg, transparent 44%, rgba(255, 255, 240, .95) 50%, transparent 56%),
+        linear-gradient(180deg, #fff3b0 0%, #ffd34d 38%, #e8a317 62%, #ffd966 100%);
+    background-size: 350% 100%, 100% 100%;
+    filter: drop-shadow(0 0 5px rgba(255, 196, 0, .35));
+    animation: nameFxGolden 3.2s ease-in-out infinite;
 }
 @keyframes nameFxGolden {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+    0%, 35% { background-position: 160% 0, 0 0; }
+    75%, 100% { background-position: -60% 0, 0 0; }
 }
 
-/* Neon — glowing pulse */
+/* Neon — a lit tube: a steady glow that hums, and a rare double flicker as if the gas caught. */
 .name-fx-neon {
-    color: #00ff88 !important;
-    text-shadow: 0 0 8px #00ff88, 0 0 16px #00ff8888, 0 0 24px #00cc6644;
-    animation: nameFxNeon 1.2s ease-in-out infinite alternate;
+    color: #7dffc4 !important;
+    text-shadow: 0 0 2px #e9fff5, 0 0 6px #00ff88, 0 0 14px #00ff88aa, 0 0 26px #00c46a66;
+    animation: nameFxNeon 4.5s linear infinite;
 }
 @keyframes nameFxNeon {
-    0% { text-shadow: 0 0 4px #00ff88, 0 0 8px #00ff8866; }
-    100% { text-shadow: 0 0 12px #00ff88, 0 0 24px #00ff88aa, 0 0 36px #00cc6666; }
+    0%, 86%, 90%, 94%, 100% { text-shadow: 0 0 2px #e9fff5, 0 0 6px #00ff88, 0 0 14px #00ff88aa, 0 0 26px #00c46a66; opacity: 1; }
+    40% { text-shadow: 0 0 2px #e9fff5, 0 0 8px #00ff88, 0 0 18px #00ff88bb, 0 0 32px #00c46a77; }
+    88%, 92% { text-shadow: 0 0 1px #b8ffdf, 0 0 3px #00ff8866; opacity: .72; }
 }
 
-/* Galaxy — cosmic swirl */
+/* Fire — the letters burn from the bottom up: the flame's colours rise through them, and the heat glow breathes. */
+.name-fx-fire {
+    background-image: linear-gradient(0deg, #ffd23f 0%, #ff8a1f 30%, #ff4d1a 55%, #ffb03a 75%, #ff5a1f 100%);
+    background-size: 100% 220%;
+    filter: drop-shadow(0 0 4px rgba(255, 90, 20, .55)) drop-shadow(0 -1px 6px rgba(255, 160, 40, .25));
+    animation: nameFxFire 1.6s linear infinite;
+}
+@keyframes nameFxFire {
+    0% { background-position: 50% 0%; }
+    100% { background-position: 50% 220%; }
+}
+
+/* Ice — frosted blue; a cold glint slides across, the edge stays crisp. */
+.name-fx-ice {
+    background-image: linear-gradient(110deg, transparent 45%, rgba(255, 255, 255, .95) 50%, transparent 55%),
+        linear-gradient(180deg, #eafcff 0%, #9ee8ff 45%, #5cc8ff 70%, #c8f4ff 100%);
+    background-size: 400% 100%, 100% 100%;
+    filter: drop-shadow(0 0 4px rgba(120, 210, 255, .45));
+    animation: nameFxIce 3.6s ease-in-out infinite;
+}
+@keyframes nameFxIce {
+    0%, 40% { background-position: 170% 0, 0 0; }
+    80%, 100% { background-position: -70% 0, 0 0; }
+}
+
+/* Galaxy — a nebula drifts through the letters, with stars twinkling in it. */
 .name-fx-galaxy {
-    background: linear-gradient(90deg, #8b5cf6, #ec4899, #3b82f6, #8b5cf6);
-    background-size: 400% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: nameFxGalaxy 4s linear infinite;
-    filter: drop-shadow(0 0 6px #8b5cf644);
+    background-image: radial-gradient(circle at 18% 30%, #fff 0 .6px, transparent 1.2px),
+        radial-gradient(circle at 62% 70%, #fff 0 .5px, transparent 1.1px),
+        radial-gradient(circle at 85% 20%, #dbe7ff 0 .5px, transparent 1px),
+        linear-gradient(90deg, #7c4dff, #d946ef, #4f7dff, #22d3ee, #7c4dff);
+    background-size: 14px 12px, 19px 15px, 23px 17px, 400% 100%;
+    filter: drop-shadow(0 0 6px rgba(124, 77, 255, .4));
+    animation: nameFxGalaxy 9s linear infinite, nameFxGalaxyStars 3s ease-in-out infinite alternate;
 }
 @keyframes nameFxGalaxy {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 400% 50%; }
+    0% { background-position: 0 0, 0 0, 0 0, 0% 50%; }
+    100% { background-position: 28px 0, -38px 0, 46px 0, 400% 50%; }
+}
+@keyframes nameFxGalaxyStars {
+    0% { filter: drop-shadow(0 0 5px rgba(124, 77, 255, .35)); }
+    100% { filter: drop-shadow(0 0 8px rgba(217, 70, 239, .45)); }
 }
 
-/* Void — dark matter warp */
-.name-fx-void {
-    color: #9900ff !important;
-    text-shadow: 0 0 8px #6600cc, 0 0 16px #33006688, 0 0 24px #11003344;
-    animation: nameFxVoid 2s ease-in-out infinite;
-}
-@keyframes nameFxVoid {
-    0%, 100% { text-shadow: 0 0 8px #6600cc, 0 0 16px #33006688; transform: scale(1); }
-    50% { text-shadow: 0 0 12px #9900ff, 0 0 24px #6600ccaa, 0 0 36px #33006666; transform: scale(1.03); }
-}
-
-/* Toxic — green pulse */
-.name-fx-toxic {
-    background: linear-gradient(90deg, #00ff44, #88ff00, #ccff00, #00ff88);
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: nameFxToxic 1.8s ease-in-out infinite alternate;
-}
-@keyframes nameFxToxic {
-    0% { background-position: 0% 50%; filter: brightness(1); }
-    100% { background-position: 200% 50%; filter: brightness(1.3); }
-}
-
-/* Blood — crimson drip */
-.name-fx-blood {
-    background: linear-gradient(180deg, #ff0000, #880000, #ff2222);
-    background-size: 100% 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: nameFxBlood 2s ease-in-out infinite;
-}
-@keyframes nameFxBlood {
-    0%, 100% { background-position: 50% 0%; }
-    50% { background-position: 50% 200%; }
-}
-
-/* Shadow — dark mist */
-.name-fx-shadow {
-    color: #aa88cc !important;
-    animation: nameFxShadow 2s ease-in-out infinite;
-}
-@keyframes nameFxShadow {
-    0%, 100% { text-shadow: 0 0 6px rgba(0,0,0,0.8), 0 0 12px rgba(80,0,120,0.6), 2px 2px 4px rgba(0,0,0,0.9); }
-    50% { text-shadow: 0 0 12px rgba(0,0,0,0.9), 0 0 24px rgba(80,0,120,0.8), 4px 4px 8px rgba(0,0,0,1); }
-}
-
-/* Glitch — jittery digital */
+/* Glitch — a clean signal that tears for a fifth of a second every few seconds (red and cyan split, a shear), then
+   settles. Most of the time the name reads plainly. */
 .name-fx-glitch {
-    color: #00ff88 !important;
-    animation: nameFxGlitch 0.15s infinite;
-    text-shadow: 2px 0 #ff0044, -2px 0 #00ccff;
+    color: #48ffb0 !important;
+    text-shadow: 0 0 6px rgba(72, 255, 176, .35);
+    animation: nameFxGlitch 3.4s steps(1, end) infinite;
 }
 @keyframes nameFxGlitch {
-    0% { transform: translate(0); }
-    20% { transform: translate(-1px, 1px); }
-    40% { transform: translate(1px, -1px); }
-    60% { transform: translate(-1px, 0); }
-    80% { transform: translate(1px, 1px); }
-    100% { transform: translate(0); }
+    0%, 88%, 100% { text-shadow: 0 0 6px rgba(72, 255, 176, .35); transform: none; }
+    89% { text-shadow: 2px 0 #ff2e63, -2px 0 #2ee6ff; transform: translateX(1px) skewX(-6deg); }
+    91% { text-shadow: -3px 0 #ff2e63, 3px 0 #2ee6ff; transform: translateX(-1px); }
+    93% { text-shadow: 1px 0 #ff2e63, -1px 0 #2ee6ff; transform: skewX(4deg); }
+    95% { text-shadow: 0 0 6px rgba(72, 255, 176, .35); transform: none; }
 }
 
-/* Hologram — flickering translucent */
+/* Hologram — iridescent and see-through: the colours shift with the angle and fine scanlines drift down the letters. */
 .name-fx-hologram {
-    background: linear-gradient(90deg, #00ffcc, #00ccff, #8888ff, #00ffaa);
-    background-size: 300% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: nameFxHoloFlicker 0.12s infinite, nameFxHoloShift 3s linear infinite;
+    background-image: repeating-linear-gradient(180deg, rgba(255, 255, 255, .0) 0 2px, rgba(255, 255, 255, .28) 2px 3px),
+        linear-gradient(90deg, #5ef2d6, #6bc8ff, #b49cff, #ff9ce6, #5ef2d6);
+    background-size: 100% 6px, 300% 100%;
+    filter: drop-shadow(0 0 5px rgba(94, 242, 214, .4));
+    opacity: .94;
+    animation: nameFxHologram 5s linear infinite;
 }
-@keyframes nameFxHoloFlicker { 0%,45%,55%,100% { opacity: 1; } 50% { opacity: 0.6; } }
-@keyframes nameFxHoloShift { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+@keyframes nameFxHologram {
+    0% { background-position: 0 0, 0% 50%; }
+    100% { background-position: 0 30px, 300% 50%; }
+}
 
-/* Divine — holy radiance */
+/* Toxic — acid green that seethes: bubbles rise through the letters. */
+.name-fx-toxic {
+    background-image: radial-gradient(circle at 30% 80%, rgba(240, 255, 200, .9) 0 1px, transparent 1.6px),
+        radial-gradient(circle at 70% 60%, rgba(240, 255, 200, .7) 0 .8px, transparent 1.4px),
+        linear-gradient(90deg, #39ff14, #b6ff00, #7dff3a, #00ff7f, #39ff14);
+    background-size: 11px 14px, 17px 19px, 300% 100%;
+    filter: drop-shadow(0 0 5px rgba(57, 255, 20, .4));
+    animation: nameFxToxic 3s linear infinite;
+}
+@keyframes nameFxToxic {
+    0% { background-position: 0 0, 0 0, 0% 50%; }
+    100% { background-position: 0 -28px, 0 -38px, 300% 50%; }
+}
+
+/* Blood — deep crimson; a wet sheen runs slowly down the letters. */
+.name-fx-blood {
+    background-image: linear-gradient(180deg, transparent 40%, rgba(255, 140, 140, .55) 48%, transparent 56%),
+        linear-gradient(180deg, #ff3b3b 0%, #c00000 45%, #7a0000 100%);
+    background-size: 100% 300%, 100% 100%;
+    filter: drop-shadow(0 1px 2px rgba(80, 0, 0, .6));
+    animation: nameFxBlood 3.8s ease-in infinite;
+}
+@keyframes nameFxBlood {
+    0% { background-position: 0 100%, 0 0; }
+    100% { background-position: 0 -100%, 0 0; }
+}
+
+/* Divine — white gold with a halo that breathes, and a light that passes over the name. */
 .name-fx-divine {
-    background: linear-gradient(90deg, #ffffff, #ffe066, #ffffff, #ffcc00, #ffffff);
-    background-size: 300% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: nameFxDivine 2s ease-in-out infinite;
-    filter: drop-shadow(0 0 8px #ffe06688);
+    background-image: linear-gradient(100deg, transparent 44%, #ffffff 50%, transparent 56%),
+        linear-gradient(180deg, #fffdf0 0%, #ffe9a8 50%, #ffd36b 100%);
+    background-size: 350% 100%, 100% 100%;
+    filter: drop-shadow(0 0 6px rgba(255, 230, 150, .7)) drop-shadow(0 0 14px rgba(255, 210, 100, .35));
+    animation: nameFxDivine 3.5s ease-in-out infinite;
 }
 @keyframes nameFxDivine {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 300% 50%; }
+    0%, 30% { background-position: 160% 0, 0 0; }
+    70%, 100% { background-position: -60% 0, 0 0; }
+}
+
+/* Shadow — smoke curls off the letters, drifting one way and then the other. */
+.name-fx-shadow {
+    color: #c4b0e8 !important;
+    text-shadow: 2px 1px 5px rgba(20, 0, 40, .95), -2px -1px 9px rgba(90, 30, 140, .7), 0 0 16px rgba(0, 0, 0, .8);
+    animation: nameFxShadow 4s ease-in-out infinite;
+}
+@keyframes nameFxShadow {
+    0%, 100% { text-shadow: 2px 1px 5px rgba(20, 0, 40, .95), -2px -1px 9px rgba(90, 30, 140, .7), 0 0 16px rgba(0, 0, 0, .8); }
+    50% { text-shadow: -3px 2px 6px rgba(20, 0, 40, .95), 4px -2px 12px rgba(90, 30, 140, .75), 0 0 20px rgba(0, 0, 0, .85); }
+}
+
+/* Void — a violet edge around darkness that pulls inward and lets go. */
+.name-fx-void {
+    color: #b46bff !important;
+    text-shadow: 0 0 1px #1a0033, 0 0 8px #7a00ff, 0 0 18px #3d007a, 0 0 2px #000;
+    animation: nameFxVoid 3s ease-in-out infinite;
+}
+@keyframes nameFxVoid {
+    0%, 100% { text-shadow: 0 0 1px #1a0033, 0 0 8px #7a00ff, 0 0 18px #3d007a, 0 0 2px #000; color: #b46bff; }
+    50% { text-shadow: 0 0 1px #000, 0 0 4px #4b00a0, 0 0 26px #5b00b8, 0 0 40px #24004d; color: #9a3dff; }
 }
 
 /* Josh Vegas: one of a kind (2026-10-22). The name in casino gold under marquee lights, between two slot reels that
@@ -315,6 +325,8 @@ html[data-ov-motion=off] .name-fx-twofat{filter: drop-shadow(0 0 3px rgba(255, 4
 
 /* Hats (live.hat.glyph@1): the emoji just before the name, Live's float/pulse/warp motions. */
 .ov-hat { display: inline-block; margin-right: 2px; font-size: 0.9em; line-height: 1; vertical-align: -0.05em; }
+/* A hat's drawing (4.289.0: Inventory's art.media_id), the size of the text it sits before. */
+.ov-hat.ov-hat-art { width: 1.15em; height: 1.15em; margin-right: 3px; vertical-align: -0.22em; object-fit: contain; font-size: inherit; }
 .ov-hat-float { animation: ovHatFloat 2s ease-in-out infinite; }
 .ov-hat-pulse { animation: ovHatPulse 1.5s ease-in-out infinite; }
 .ov-hat-warp { animation: ovHatWarp 2s ease-in-out infinite; }
@@ -322,43 +334,88 @@ html[data-ov-motion=off] .name-fx-twofat{filter: drop-shadow(0 0 3px rgba(255, 4
 @keyframes ovHatPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 @keyframes ovHatWarp { 0%, 100% { transform: scale(1) rotate(0deg); filter: hue-rotate(0deg); } 50% { transform: scale(1.1) rotate(5deg); filter: hue-rotate(180deg); } }
 
-/* Light themes (theme-loader sets html[data-theme-mode=light]): every effect above was drawn for a dark page, bright
- * colour plus glow; on white some were unreadable (Neon and Glitch's #00ff88 at 1.3:1, Ice at 1.6:1, Divine's white).
- * The same effect, same hue and motion, at a depth that reads on a light page (about 4.6:1 or more, 2026-11-01). Void
- * (#9900ff) already reads on white and keeps its colour. */
-html[data-theme-mode="light"] .name-fx-rainbow { background-image: linear-gradient(90deg, #dc2626, #c2410c, #a16207, #15803d, #1d4ed8, #7c3aed, #be185d); }
-html[data-theme-mode="light"] .name-fx-fire { color: #c2410c !important; text-shadow: 0 0 6px #fb923c55; animation-name: nameFxFireLight; }
-@keyframes nameFxFireLight {
-    0% { text-shadow: 0 0 5px #fb923c55; color: #c2410c; }
-    100% { text-shadow: 0 0 9px #f9731666, 0 0 16px #fdba7444; color: #b45309; }
+/* Light themes (theme-loader sets html[data-theme-mode=light]): the same effect, the same motion, at a depth that reads
+ * on a light page (about 4.5:1 or more on white). A glow becomes a soft shadow of the same hue; a sheen stays a sheen. */
+html[data-theme-mode="light"] .name-fx-rainbow {
+    background-image: linear-gradient(100deg, transparent 45%, rgba(255, 255, 255, .35) 50%, transparent 55%),
+        linear-gradient(90deg, #dc2626, #c2410c, #a16207, #15803d, #1d4ed8, #7c3aed, #be185d, #dc2626);
 }
-html[data-theme-mode="light"] .name-fx-ice { color: #0369a1 !important; text-shadow: 0 0 6px #38bdf855; animation-name: nameFxIceLight; }
-@keyframes nameFxIceLight {
-    0% { text-shadow: 0 0 4px #38bdf855; color: #0369a1; }
-    100% { text-shadow: 0 0 9px #7dd3fc88, 0 0 16px #38bdf844; color: #0e7490; }
+html[data-theme-mode="light"] .name-fx-golden {
+    background-image: linear-gradient(105deg, transparent 46%, rgba(253, 230, 138, .7) 50%, transparent 54%),
+        linear-gradient(180deg, #b7791f 0%, #975a16 45%, #7c4a03 70%, #a16207 100%);
+    filter: drop-shadow(0 1px 1px rgba(124, 74, 3, .25));
 }
-html[data-theme-mode="light"] .name-fx-golden { background-image: linear-gradient(90deg, #a16207, #b45309, #a16207, #92400e); }
 html[data-theme-mode="light"] .name-fx-neon { color: #047857 !important; text-shadow: 0 0 5px #34d39966; animation-name: nameFxNeonLight; }
 @keyframes nameFxNeonLight {
-    0% { text-shadow: 0 0 3px #34d39955; }
-    100% { text-shadow: 0 0 8px #34d39988, 0 0 14px #6ee7b744; }
+    0%, 86%, 90%, 94%, 100% { text-shadow: 0 0 4px #34d39977, 0 0 10px #6ee7b744; opacity: 1; }
+    40% { text-shadow: 0 0 6px #34d39999, 0 0 14px #6ee7b755; }
+    88%, 92% { text-shadow: 0 0 1px #34d39944; opacity: .75; }
 }
-html[data-theme-mode="light"] .name-fx-glitch { color: #047857 !important; }
-html[data-theme-mode="light"] .name-fx-galaxy { background-image: linear-gradient(90deg, #6d28d9, #be185d, #1d4ed8, #6d28d9); }
-html[data-theme-mode="light"] .name-fx-toxic { background-image: linear-gradient(90deg, #15803d, #4d7c0f, #3f6212, #047857); }
-html[data-theme-mode="light"] .name-fx-blood { background-image: linear-gradient(180deg, #dc2626, #7f1d1d, #b91c1c); }
-html[data-theme-mode="light"] .name-fx-shadow { color: #6b4f8a !important; animation-name: nameFxShadowLight; }
+html[data-theme-mode="light"] .name-fx-fire {
+    background-image: linear-gradient(0deg, #d97706 0%, #c2410c 30%, #b91c1c 55%, #ea580c 75%, #c2410c 100%);
+    filter: drop-shadow(0 0 3px rgba(234, 88, 12, .3));
+    animation-name: nameFxFireLight;
+}
+@keyframes nameFxFireLight {
+    0% { background-position: 50% 0%; }
+    100% { background-position: 50% 220%; }
+}
+html[data-theme-mode="light"] .name-fx-ice {
+    background-image: linear-gradient(110deg, transparent 46%, rgba(186, 230, 253, .55) 50%, transparent 54%),
+        linear-gradient(180deg, #0284c7 0%, #0369a1 50%, #075985 100%);
+    filter: drop-shadow(0 0 3px rgba(56, 189, 248, .35));
+    animation-name: nameFxIceLight;
+}
+@keyframes nameFxIceLight {
+    0%, 40% { background-position: 170% 0, 0 0; }
+    80%, 100% { background-position: -70% 0, 0 0; }
+}
+html[data-theme-mode="light"] .name-fx-galaxy {
+    background-image: radial-gradient(circle at 18% 30%, rgba(255, 255, 255, .7) 0 .5px, transparent 1px),
+        radial-gradient(circle at 62% 70%, rgba(255, 255, 255, .6) 0 .4px, transparent .9px),
+        radial-gradient(circle at 85% 20%, rgba(238, 242, 255, .6) 0 .4px, transparent .8px),
+        linear-gradient(90deg, #6d28d9, #a21caf, #1d4ed8, #0e7490, #6d28d9);
+}
+html[data-theme-mode="light"] .name-fx-glitch { color: #047857 !important; text-shadow: none; animation-name: nameFxGlitchLight; }
+@keyframes nameFxGlitchLight {
+    0%, 88%, 100% { text-shadow: none; transform: none; }
+    89% { text-shadow: 2px 0 #e11d48, -2px 0 #0891b2; transform: translateX(1px) skewX(-6deg); }
+    91% { text-shadow: -3px 0 #e11d48, 3px 0 #0891b2; transform: translateX(-1px); }
+    93% { text-shadow: 1px 0 #e11d48, -1px 0 #0891b2; transform: skewX(4deg); }
+    95% { text-shadow: none; transform: none; }
+}
+html[data-theme-mode="light"] .name-fx-hologram {
+    background-image: repeating-linear-gradient(180deg, rgba(255, 255, 255, .0) 0 2px, rgba(255, 255, 255, .16) 2px 3px),
+        linear-gradient(90deg, #0f766e, #0369a1, #4f46e5, #a21caf, #0f766e);
+    filter: drop-shadow(0 0 2px rgba(15, 118, 110, .25));
+    opacity: 1;
+}
+html[data-theme-mode="light"] .name-fx-toxic {
+    background-image: radial-gradient(circle at 30% 80%, rgba(255, 255, 255, .7) 0 1px, transparent 1.6px),
+        radial-gradient(circle at 70% 60%, rgba(255, 255, 255, .55) 0 .8px, transparent 1.4px),
+        linear-gradient(90deg, #15803d, #4d7c0f, #3f6212, #047857, #15803d);
+    filter: drop-shadow(0 0 2px rgba(77, 124, 15, .3));
+}
+html[data-theme-mode="light"] .name-fx-blood {
+    background-image: linear-gradient(180deg, transparent 40%, rgba(255, 200, 200, .5) 48%, transparent 56%),
+        linear-gradient(180deg, #dc2626 0%, #991b1b 50%, #7f1d1d 100%);
+    filter: drop-shadow(0 1px 1px rgba(127, 29, 29, .3));
+}
+html[data-theme-mode="light"] .name-fx-divine {
+    background-image: linear-gradient(100deg, transparent 46%, rgba(253, 224, 71, .7) 50%, transparent 54%),
+        linear-gradient(180deg, #b45309 0%, #a16207 50%, #92400e 100%);
+    filter: drop-shadow(0 0 4px rgba(251, 191, 36, .45)) drop-shadow(0 0 10px rgba(253, 230, 138, .5));
+}
+html[data-theme-mode="light"] .name-fx-shadow { color: #5b3f7d !important; animation-name: nameFxShadowLight; }
 @keyframes nameFxShadowLight {
-    0%, 100% { text-shadow: 0 0 5px rgba(80, 0, 120, 0.3), 1px 1px 3px rgba(30, 10, 50, 0.3); }
-    50% { text-shadow: 0 0 10px rgba(80, 0, 120, 0.4), 2px 2px 5px rgba(30, 10, 50, 0.35); }
+    0%, 100% { text-shadow: 2px 1px 4px rgba(60, 20, 90, .35), -2px -1px 7px rgba(90, 30, 140, .25); }
+    50% { text-shadow: -3px 2px 5px rgba(60, 20, 90, .4), 4px -2px 9px rgba(90, 30, 140, .3); }
 }
-html[data-theme-mode="light"] .name-fx-void { text-shadow: 0 0 6px #a855f755; animation-name: nameFxVoidLight; }
+html[data-theme-mode="light"] .name-fx-void { color: #6b21a8 !important; animation-name: nameFxVoidLight; }
 @keyframes nameFxVoidLight {
-    0%, 100% { text-shadow: 0 0 5px #a855f755, 0 0 10px #c084fc33; transform: scale(1); }
-    50% { text-shadow: 0 0 9px #a855f777, 0 0 16px #c084fc44; transform: scale(1.03); }
+    0%, 100% { text-shadow: 0 0 6px #a855f766, 0 0 12px #c084fc44; color: #6b21a8; }
+    50% { text-shadow: 0 0 3px #7e22ce55, 0 0 18px #a855f766; color: #581c87; }
 }
-html[data-theme-mode="light"] .name-fx-hologram { background-image: linear-gradient(90deg, #0f766e, #0369a1, #4f46e5, #047857); }
-html[data-theme-mode="light"] .name-fx-divine { background-image: linear-gradient(90deg, #b45309, #a16207, #92400e, #a16207, #b45309); }
 html[data-theme-mode="light"] .name-fx-vegas { background-image: linear-gradient(90deg, #b45309 0%, #a16207 22%, #c2410c 40%, #be185d 52%, #a16207 66%, #b45309 82%, #a16207 100%); }
 html[data-theme-mode="light"] .name-fx-twofat { background-image: linear-gradient(90deg, #c026d3 0%, #7e22ce 25%, #0e7490 50%, #7e22ce 75%, #c026d3 100%); }
 
