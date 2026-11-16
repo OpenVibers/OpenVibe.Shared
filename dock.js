@@ -198,6 +198,7 @@
             .ovdk-seg[aria-selected="true"] .ovdk-i { color: var(--accent-light, var(--accent, #60a5fa)); }
             .ovdk-seg:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -2px; }
             .ovdk-seg:active { transform: scale(.96); }
+            .ovdk-seg-n.is-quiet { background: color-mix(in srgb, var(--accent, #3b82f6) 30%, var(--bg-elevated, #1f2937)); color: color-mix(in srgb, var(--accent, #3b82f6) 30%, #fff); }
             .ovdk-seg-n { position: absolute; top: 4px; left: calc(50% + 6px); min-width: 17px; height: 17px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--danger, #ef4444); color: #fff; font-size: 10.5px; font-weight: 800; line-height: 17px; text-align: center; }
             .ovdk-pane { display: grid; align-content: start; gap: 2px; padding: 4px 6px 10px; animation: ovdk-pane-in .22s cubic-bezier(.2,.8,.2,1) both; }
             @keyframes ovdk-pane-in { from { opacity: 0; transform: translateY(calc(6px * var(--ov-move, 1))); } }
@@ -499,6 +500,13 @@
     // The person's conversations and DMs, from OpenVibe.Chat's own API with their Network token (Chat checks they are
     // in each one). Everything people wrote is set as text, never markup; only https pictures are shown. A thread polls
     // for new messages every 5 s while it is open in the Dock, and is marked read as it is shown.
+    /** The last Global post you have seen (this device): read with a number, written with one. */
+    function globalSeen(id) {
+        try {
+            if (id != null) { const was = Number(localStorage.getItem('ovdk-global-seen')) || 0; if (Number(id) > was) localStorage.setItem('ovdk-global-seen', String(id)); return Number(id); }
+            return Number(localStorage.getItem('ovdk-global-seen')) || 0;
+        } catch { return 0; }
+    }
     const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, edits: null, unread: 0, unreadT: 0, busy: false, draft: null, vibeSummary: null, filter: '' };
     const chatBase = () => String(o.chatBase || 'https://openvibe.chat').replace(/\/+$/, '');
     const me = () => String(o.me || '');
@@ -591,7 +599,10 @@
         if (!chats.list) { panel.innerHTML = '<div class="ovdk-wait"><span></span></div>'; }
         const sharing = chats.draft && canWriteChat() ? load('dock-share.js', () => !!(root.OpenVibeDockShare && root.OpenVibeDockShare.bar)) : null;
         try {
-            const [dm, ai, people, srv] = await Promise.all([chatCall('/api/dm/conversations'), Promise.resolve(null), friendsCall('').catch(() => chatCall('/api/dm/contacts').catch(() => null)), chatCall('/api/chat/servers?limit=30').catch(() => null)]);
+            const seen = globalSeen();
+            const [dm, ai, people, srv, glob] = await Promise.all([chatCall('/api/dm/conversations'), Promise.resolve(null), friendsCall('').catch(() => chatCall('/api/dm/contacts').catch(() => null)), chatCall('/api/chat/servers?limit=30').catch(() => null),
+                seen ? chatCall(`/api/chat/global/history?after_id=${seen}&limit=50`).catch(() => null) : Promise.resolve(null)]);
+            chats.globalNew = glob && Array.isArray(glob.messages) ? glob.messages.filter((m) => m && !m.is_deleted && m.message && Number(m.id) > seen).length : 0;
             chats.servers = srv && Array.isArray(srv.mine) ? srv.mine.slice(0, 12) : [];
             chats.publicServers = srv && Array.isArray(srv.public) ? srv.public.slice(0, 30) : [];
             chats.people = people && Array.isArray(people.mutual) ? { friends: people.mutual, requests: people.requests || [], asked: people.asked || [], network: true } : people && Array.isArray(people.friends) ? people : null;
@@ -611,7 +622,8 @@
         const waiting = {
             messages: chats.list.reduce((n, c) => n + (Number(c.unread_count) || 0), 0),
             friends: chats.people ? (chats.people.requests || []).filter((p) => !ignoredRequests().has(personKey(p))).length : 0,
-            servers: (chats.servers || []).reduce((n, sv) => n + (Number(sv.unread) || 0), 0),
+            servers: (chats.servers || []).reduce((n, sv) => n + (sv.muted ? 0 : Number(sv.unread) || 0), 0),
+            global: chats.globalNew || 0,
         };
         const segBar = h('div', 'ovdk-segs'); segBar.setAttribute('role', 'tablist'); segBar.setAttribute('aria-label', 'Chat');
         const scroll = h('div', 'ovdk-scroll');
@@ -658,7 +670,9 @@
             const b = h('button', 'ovdk-seg'); b.type = 'button'; b.dataset.seg = id; b.setAttribute('role', 'tab');
             b.append(icon(glyph), h('span', 'ovdk-seg-l', label));
             const n = waiting[id] || 0;
-            if (n) { b.append(h('b', 'ovdk-seg-n', n > 99 ? '99+' : String(n))); b.setAttribute('aria-label', `${label}, ${n} waiting`); }
+            // Red asks for you (a message to you, a friend request, a server you have not muted); Global's new posts are a
+            // quiet blue, like the feed's: there to see, never urgent (the owner, 11-16).
+            if (n) { b.append(h('b', `ovdk-seg-n${id === 'global' ? ' is-quiet' : ''}`, n > 99 ? '99+' : n >= 50 && id === 'global' ? '50+' : String(n))); b.setAttribute('aria-label', `${label}, ${n} ${id === 'global' ? 'new' : 'waiting'}`); }
             b.addEventListener('click', () => pick(id));
             segBar.append(b);
         }
@@ -886,6 +900,7 @@
                 const C = root.OVChatCards; const card = C && C.of(m);
                 if (!(card && C.fold(list.lastElementChild, card))) list.append(card ? C.render(card) : rowOf(m));
                 lastId = Math.max(lastId, Number(m.id) || 0);
+                globalSeen(lastId);
             }
             while (list.children.length > 120) list.firstChild.remove();
             quiet.hidden = list.children.length > 0;

@@ -62,6 +62,12 @@ HTML or AI vibe coded … shared".
 - Links are only OpenVibe addresses.
 - The menu's Global draws them first.
 
+**Chat's segments say what waits** (the owner, 11-16: "badges on the chat tab … new messages … friend requests … new global
+chats … a blue one … less priority … servers … the mute feature").
+- Red asks for you: messages to you, friend requests (which lead the Friends tab), and servers.
+- A server Chat marks `muted` never asks.
+- Global's new posts since you last looked are a quiet blue count (50+ at most), like the feed's.
+
 **Chat's Servers.** New server is a button in the corner of a foot pinned to the bottom, beside "Every server on
 openvibe.chat". The name field rises above it. With no server yet, the field leads.
 
