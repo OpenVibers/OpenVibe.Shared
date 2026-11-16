@@ -12,6 +12,7 @@
     "./offer-card": "./offer-card.js",
     "./ov-arrange": "./ov-arrange.js",
     "./ov-arrange-core": "./ov-arrange-core.js",
+    "./pins": "./scripts/pins.js",
     "./quest": "./quest.js",
     "./quest-guide": "./guide.js",
     "./account-switcher": "./account-switcher.js",
