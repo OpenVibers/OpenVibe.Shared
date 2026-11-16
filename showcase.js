@@ -57,13 +57,13 @@ function icon(name, size = 22) {
 }
 // A button's icon (4.284.0; the owner, 11-16 on Quest: "tiny icons … they need to be way more bigger and edge to edge … icons
 // need to be way more consistent"): the plain glyph at 20 px, never a ring set's mark shrunk to 18 px (its glyph drew at 9).
-const BTN_ALIAS = { quest: 'trophy', rundown: 'page', agenda: 'calendar' };
+// 4.286.0: every product has its glyph (glyphs.forApp: ov:space is the cubes, ov:ai the spark), so no button draws a
+// product's ringed mark shrunk to a badge (the owner, 11-16, openvibe.space: "that stupid looking border").
 function btnIcon(name) {
     const n = String(name || '');
     if (!n.startsWith('ov:')) return icon(n, 20);
     glyphSet = glyphSet || require('./glyphs');
-    const key = n.slice(3);
-    const g = glyphSet.NAMES.includes(key) ? key : (BTN_ALIAS[key] && glyphSet.NAMES.includes(BTN_ALIAS[key]) ? BTN_ALIAS[key] : null);
+    const g = glyphSet.forApp(n);
     if (g) return `<span class="sc-bi" aria-hidden="true">${glyphSet.svg(g, { size: 20 })}</span>`;
     return icon(n, 22);
 }
@@ -77,7 +77,7 @@ const headIcon = (name) => {
     if (!name) return '';
     headGlyphs = headGlyphs || require('./glyphs');
     const n = String(name).replace(/^ov:/, '');
-    const key = headGlyphs.NAMES.includes(n) ? n : (headGlyphs.fromFa ? headGlyphs.fromFa(n) : null);
+    const key = headGlyphs.forApp(n) || (headGlyphs.fromFa ? headGlyphs.fromFa(n) : null);
     return key && headGlyphs.path(key) ? `<span class="sc-h-ic" aria-hidden="true">${headGlyphs.svg(key, { size: 18 })}</span>` : '';
 };
 const head = (title, lede, hid, ic) => `${title ? `<h2${hid ? ` id="${hid}"` : ''}>${headIcon(ic)}<span>${esc(title)}</span></h2>` : ''}${lede ? `<p class="sc-lede">${esc(lede)}</p>` : ''}`;

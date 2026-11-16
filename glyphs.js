@@ -141,7 +141,8 @@
         briefcase: '<rect x="3.5" y="7.2" width="17" height="12.3" rx="1.9"/><path d="M9.2 7.2V5.7A1.4 1.4 0 0 1 10.6 4.3h2.8A1.4 1.4 0 0 1 14.8 5.7V7.2M3.5 12.3h7.1M13.4 12.3H20.5M10.6 11.4h2.8v2.4h-2.8Z"/>',
         timeline: '<path d="M3.5 12h0.9M8.2 12h1.9M13.9 12h1.9M19.6 12h0.9"/><circle cx="6.3" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="17.7" cy="12" r="1.9"/><path d="M6.3 10.1V5.9M12 13.9v4.3M17.7 10.1V5.9"/>',
         seedling: '<path d="M12 20.8v-9.8M12 11C12 6.7 9.3 4 4.4 4c0 4.3 2.7 7 7.6 7ZM12 13.7c0-4.3 2.7-7 7.6-7c0 4.3-2.7 7-7.6 7Z"/>',
-        rocket: '<path d="M11.8 15.7L8.4 12.3C9.9 6.9 13.8 3.9 20.2 3.9C20.2 10.3 17.3 14.2 11.8 15.7ZM8.4 12.3L4.9 11.8L7.4 8.3h3.9M11.8 15.7l0.5 3.4l3.4-2.5v-3.9M6.4 17.7c-1.5 0-3 1.5-3 3c1.5 0 3-1.5 3-3Z"/><circle cx="15.3" cy="8.8" r="1.5"/>',
+        // 4.286.0: redrawn (the owner, 11-16: "the rocket icon sucks"): one silhouette, body and fins, a porthole and a flame
+        rocket: '<path d="M18.79 5.21C19.35 9.03 17.30 12.49 14.76 14.19C15.46 16.03 14.97 17.80 13.20 19.42L11.15 16.38L7.62 12.85L4.58 10.80C6.20 9.03 7.97 8.54 9.81 9.24C11.51 6.70 14.97 4.65 18.79 5.21Z"/><path d="M6.56 15.46C5.78 16.53 5.42 17.59 5.28 18.72C6.41 18.58 7.47 18.22 8.54 17.44"/><circle cx="14.55" cy="9.45" r="1.9"/>',
         'list-ordered': '<path d="M9.7 6.8h10.8M9.7 12.8h10.8M9.7 18.8h10.8M3.8 5.4L4.7 5v4.4M3.8 9.3h2M3.8 13.7a1 1 0 0 1 2 0.3c0 1.1-2 1.7-2 2.7h2.2"/>',
         lifebuoy: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.8"/><path d="M6 6l3.4 3.4M14.6 14.7l3.4 3.4M18 6l-3.4 3.4M9.4 14.7l-3.4 3.4"/>',
         infinity: '<path d="M12 12c-1.8-2.4-3.3-3.6-4.9-3.6a3.6 3.6 0 0 0 0 7.2c1.6 0 3.1-1.2 4.9-3.6Zm0 0c1.8 2.4 3.3 3.6 4.9 3.6a3.6 3.6 0 0 0 0-7.2c-1.6 0-3.1 1.2-4.9 3.6Z"/>',
@@ -253,7 +254,7 @@
         car: '<path fill-rule="evenodd" d="M5.6 5.2h12.7l2.7 5.5H3ZM2.6 12.2h18.7v4.5H2.6ZM5.9 14.4a1.1 1.1 0 1 0 2.3 0a1.1 1.1 0 1 0-2.3 0ZM15.8 14.4a1.1 1.1 0 1 0 2.3 0a1.1 1.1 0 1 0-2.3 0ZM5 17.5h2.7v1.8H5ZM16.3 17.5h2.7v1.8h-2.7Z"/>',
         door: '<path fill-rule="evenodd" d="M14.3 4.5L6.2 3v17.1l8.2-1.5ZM10.2 11.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0Z"/><path class="ln" d="M15.5 5.3h1.4a0.9 0.9 0 0 1 0.9 0.9v13.3M15.5 19.5H20M4 19.5h2.1"/>',
         ranking: '<path d="M3.5 13.7h4.9V9.9h7.1v5.7h4.9v5.4H3.5ZM12 2.2l1 2l2.2 0.3l-1.6 1.6l0.4 2.2L12 7.5l-2 1l0.4-2.2l-1.6-1.6l2.2-0.3Z"/>',
-        rocket: '<path fill-rule="evenodd" d="M11.9 16.6L7.4 12.2C9.1 6.1 13.6 2.9 21.1 2.9c0 7.5-3.2 12-9.2 13.7ZM13.6 8.7a1.7 1.7 0 1 0 3.5 0a1.7 1.7 0 1 0-3.5 0Z"/><path d="M3.7 12.2L6.8 7.5h3.5L6.6 12.6ZM11.4 17.4L11.9 20.3l4.6-3.3v-3.5ZM6.3 17.7c-2 0-3.9 2-3.9 3.9c2 0 3.9-2 3.9-3.9Z"/>',
+        rocket: '<path fill-rule="evenodd" d="M19.73 4.27C20.37 8.62 18.04 12.56 15.14 14.49C15.94 16.59 15.38 18.61 13.37 20.45L11.03 16.99L7.01 12.97L3.55 10.63C5.39 8.62 7.41 8.06 9.51 8.86C11.44 5.96 15.38 3.63 19.73 4.27ZM12.91 9.10a1.99 1.99 0 1 0 3.98 0a1.99 1.99 0 1 0 -3.98 0Z"/><path d="M5.80 15.94C4.92 17.16 4.51 18.37 4.35 19.65C5.63 19.49 6.84 19.08 8.06 18.20Z"/>',
         'camera-flip': '<path fill-rule="evenodd" d="M2.5 7.8a1.9 1.9 0 0 1 1.9-1.9h2.6L8.8 3.3h6.3l1.8 2.6h2.6A1.9 1.9 0 0 1 21.5 7.8v10.7a1.9 1.9 0 0 1-1.9 1.9H4.4A1.9 1.9 0 0 1 2.5 18.5ZM7.7 11.7A4.5 4.5 0 0 1 16.3 11.7L13.9 12.6A2 2 0 0 0 10.1 12.6ZM16.3 14.8A4.5 4.5 0 0 1 7.7 14.8L10.1 14A2 2 0 0 0 13.9 14Z"/>',
         // 4.182.0, sixth batch: things with one outline (an aeroplane, a burst, a fish, a shoe, a sword, a mask, a
         // piggy bank), a couch, a coin over a box, two folders on a tree, a chequered flag, and two people.
@@ -660,5 +661,30 @@
         return out;
     }
 
-    return { NAMES, META, FA, SOLID, DRAWN: Object.freeze(Object.keys(DRAWN)), path, solid, inner, svg, fromFa, markup, fromFaClasses, FA_HOW };
+    // 4.286.0: the glyph that stands for each product (the owner, 11-16, openvibe.space's buttons: "the icons still suck,
+    // or are way too tiny, or have that stupid looking border instead of a customized look"). A button, a heading or a
+    // chip that names a product (ov:space) draws this glyph plainly at its size; the ringed product mark is for the
+    // product's own tile, never shrunk into a button. Every product of ov-icons' set has one (test/app-glyphs.test.js).
+    const APP_GLYPH = Object.freeze({
+        network: 'globe', tools: 'toolbox', media: 'image', games: 'joystick', community: 'group', codes: 'code', bot: 'robot',
+        blog: 'pencil', wiki: 'book-open', reviews: 'star', tips: 'coin', vip: 'crown', trade: 'swap', host: 'server',
+        deals: 'tag', coupons: 'ticket', stream: 'live', youtube: 'play', audio: 'headphones', pdf: 'file', docs: 'book',
+        json: 'file-code', dns: 'nodes', ip: 'pin', ssl: 'lock', ping: 'zap', whois: 'id', work: 'briefcase', rent: 'key',
+        quest: 'trophy', inventory: 'box', services: 'layers', space: 'cubes', watch: 'eye', actor: 'wand', expert: 'user-check',
+        markets: 'chart', finance: 'wallet', events: 'calendar', ai: 'spark', run: 'terminal', billing: 'card', feeds: 'rss',
+        cam: 'camera', casino: 'dice', surf: 'wave', fun: 'smile', meme: 'laugh', tours: 'map', vision: 'eye', shoes: 'shoe',
+        today: 'sun', report: 'trend-up', design: 'palette', domains: 'globe', exchange: 'chip', bench: 'gauge', pics: 'image',
+        homes: 'home', website: 'window', zone: 'target', fund: 'piggy', paste: 'clipboard', account: 'user-circle',
+        git: 'branch', barcode: 'columns', party: 'burst', studio: 'clapper', theme: 'contrast', error: 'alert-circle',
+        clip: 'scissors', rundown: 'news', agenda: 'calendar', ov: 'spark', logo: 'spark',
+    });
+    /** The glyph for a product key ('space', or 'ov:space'), or for a glyph name itself; null when neither. */
+    const forApp = (key) => {
+        const k = String(key || '').replace(/^ov:/, '').toLowerCase();
+        if (NAMES.includes(k) && path(k)) return k;
+        const g = APP_GLYPH[k];
+        return g && path(g) ? g : null;
+    };
+
+    return { NAMES, META, FA, SOLID, DRAWN: Object.freeze(Object.keys(DRAWN)), path, solid, inner, svg, fromFa, markup, fromFaClasses, FA_HOW, APP_GLYPH, forApp };
 });
