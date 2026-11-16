@@ -1564,7 +1564,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     /** The box's suggestions: ov-trending's line with this menu's own list (loaded once, beside this file). */
     function hintBox() {
         if (!input) return;
-        const go = () => { try { root.OVTrending.attach(input, { items: boxHints, prefix: 'Try ' }); } catch { /* */ } };
+        const go = () => { try { root.OVTrending.attach(input, { items: boxHints, prefix: '' }); } catch { /* */ } };
         if (root.OVTrending) return go();
         if (!ctx || typeof ctx.sibling !== 'function') return;
         document.addEventListener('ov-trending-ready', go, { once: true });

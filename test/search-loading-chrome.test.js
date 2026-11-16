@@ -100,6 +100,9 @@ const server = http.createServer((req, res) => {
         assert.deepStrictEqual([v.groups[0], v.links], ['Pages on Chat', ['Home', 'Rooms', 'Servers']], 'nothing typed: this site\'s own pages first, Home leading them (no link names the home)');
         assert.ok(v.sites.includes('Live') && v.sites.includes('Tools'), 'then every site, even before the Frame answers');
         assert.strictEqual(v.placeholder, 'Search Chat, or ask Vibe', 'the site by its short name (4.48.0)');
+        // The suggestion alone, no word before it (4.283.0; the owner, 11-16: "remove the text try").
+        const ghostLine = await p.evaluate(`(() => { const l = document.querySelector('.ovs-input + .ovt-ghost .ovt-line:last-child'); return l ? l.textContent : ''; })()`);
+        assert.ok(!/^(Try|Find|Open|Ask|Again:) /.test(ghostLine), `no prefix word (${JSON.stringify(ghostLine)})`);
         // The box completes from this site's pages (and the person's searches, history and sites); Tab takes it.
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'Roo'; i.dispatchEvent(new Event('input')); return 1; })()`);
         await eventually(async () => assert.strictEqual(await p.evaluate('document.querySelector(".ovs-ghost").textContent'), 'Rooms', 'the completion shows behind the text'));
