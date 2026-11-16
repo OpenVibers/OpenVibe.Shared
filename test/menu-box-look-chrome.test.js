@@ -93,13 +93,20 @@ const LOOK = `(() => {
         await until(p, `(() => { const l = ${LOOK}; return l && l.kind === 'line' && Math.abs(l.x - l.start) <= 1; })()`, 4000);
         const vibe = await p.evaluate(LOOK);
         assert.strictEqual(vibe.kind, 'line');
+        // The line is as wide as the box's typing room (Chrome 157 counts an input's padding out of clientWidth: it was 30 px
+        // narrower there).
+        const room = await p.evaluate(`(() => { const ovs = document.querySelector('.ovs.is-open'); const i = ovs.querySelector('.ovs-input'); const g = i.nextElementSibling; const c = getComputedStyle(i);
+            return [Math.round(g.getBoundingClientRect().width), Math.round(i.getBoundingClientRect().width - parseFloat(c.paddingLeft) - parseFloat(c.paddingRight) - parseFloat(c.borderLeftWidth) - parseFloat(c.borderRightWidth))]; })()`);
+        assert.ok(Math.abs(room[0] - room[1]) <= 1, `the line is as wide as the typing room (${room[0]} vs ${room[1]})`);
         if (Math.abs(vibe.x - vibe.start) > 1) {
             // Where the 30 px comes from, when it does (CI's Chrome only so far): every box between the field and the words.
             const geo = await p.evaluate(`(() => { const ovs = document.querySelector('.ovs.is-open'); const i = ovs.querySelector('.ovs-input'); const g = i.nextElementSibling;
                 const R = (e) => { if (!e) return null; const b = e.getBoundingClientRect(); const c = getComputedStyle(e); return { cls: String(e.className).slice(0, 40), x: Math.round(b.left), w: Math.round(b.width),
                     pos: c.position, disp: c.display, pl: c.paddingLeft, ml: c.marginLeft, ti: c.textIndent, left: c.left, tr: c.transform === 'none' ? '' : c.transform, ta: c.textAlign, jc: c.justifyContent }; };
                 const line = g && g.querySelector('.ovt-line'); const pre = line && line.querySelector('.ovt-pre'); const term = line && line.querySelector('.ovt-term');
-                return { field: R(i.parentElement), input: R(i), ghost: R(g), ghostStyleLeft: g && g.style.left, offsetParent: g && g.offsetParent && String(g.offsetParent.className).slice(0, 40),
+                const C = (e) => (e ? String(e.className || e.tagName).slice(0, 40) : null);
+                return { offsets: { inputOffsetLeft: i.offsetLeft, inputOffsetParent: C(i.offsetParent), inputClientLeft: i.clientLeft, ghostOffsetLeft: g && g.offsetLeft, ghostOffsetParent: g && C(g.offsetParent), fieldOffsetLeft: i.parentElement.offsetLeft, fieldClientLeft: i.parentElement.clientLeft, fieldScrollLeft: i.parentElement.scrollLeft, inputScrollLeft: i.scrollLeft, chain: (() => { const out = []; for (let n = i; n && out.length < 6; n = n.offsetParent) out.push([C(n), n.offsetLeft, n.clientLeft, n.scrollLeft]); return out; })() },
+                    field: R(i.parentElement), input: R(i), ghost: R(g), ghostStyleLeft: g && g.style.left, offsetParent: g && g.offsetParent && String(g.offsetParent.className).slice(0, 40),
                     lines: g ? g.querySelectorAll('.ovt-line').length : 0, line: R(line), pre: R(pre), preText: pre && JSON.stringify(pre.textContent), term: R(term), styleEl: !!document.getElementById('ovt-style') || !!document.querySelector('style[data-ovt]'), ua: navigator.userAgent }; })()`);
             assert.fail(`"${vibe.words}" starts where typing starts (${vibe.x} vs ${vibe.start}): ${JSON.stringify(geo)}`);
         }

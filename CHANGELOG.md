@@ -26,6 +26,11 @@
 - **The menu's open button follows You's parts** (Alerts: your alerts page, History: where you were, Apps: your
   page on OpenVibe.my), and turns from that part's sign. The ring that pulsed around it is a soft tint now.
 - **Every line of suggestions sits where typing starts, always**:
+  - **Chrome 157 changed how it measures an `<input>`:** `clientLeft` now counts the padding (30 instead of 0 for the
+    menu's box) and `clientWidth` leaves it out. The line was placed a padding to the right of the words, and drawn a
+    padding narrower: the "Plan my week" floating right of its icon (30 px) on CI and on the owner's phone. The box is
+    now measured from its layout box (`offsetWidth`, `offsetLeft`) and its computed border and padding, never
+    `client*`. Textareas and other elements are unchanged in 157.
   - The line is placed from layout (`offsetLeft`/`offsetTop`), which no transform changes. Before, it was measured
     from the screen while the menu was still opening with its scale animation. A measurement taken then put the line
     up to the box's padding to the right once the menu settled: the "Plan my week" floating right of its icon (30 px

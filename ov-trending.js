@@ -156,15 +156,19 @@
         const cs = getComputedStyle(input);
         const pl = parseFloat(cs.paddingLeft) || 0, pr = parseFloat(cs.paddingRight) || 0;
         const pt = parseFloat(cs.paddingTop) || 0, pb = parseFloat(cs.paddingBottom) || 0;
-        const w = input.clientWidth - pl - pr, h = input.clientHeight - pt - pb;
+        // The box's own size from its layout box less its border and padding (Chrome 157 counts an input's padding out of
+        // clientWidth and into clientLeft, so client* is never read for the box).
+        const bl = parseFloat(cs.borderLeftWidth) || 0, br = parseFloat(cs.borderRightWidth) || 0;
+        const bt = parseFloat(cs.borderTopWidth) || 0, bb = parseFloat(cs.borderBottomWidth) || 0;
+        const w = input.offsetWidth - bl - br - pl - pr, h = input.offsetHeight - bt - bb - pt - pb;
         if (w < 64 || h < 12) return false;   // a folded or tiny box keeps its own placeholder
         const was = g.hidden;
         g.hidden = false;
-        const at = spot(input, g.offsetParent, pl, pt);
+        const at = spot(input, g.offsetParent, pl + bl, pt + bt);
         g.style.left = `${at.x}px`;
         g.style.top = `${at.y}px`;
         // What it was placed for: follow() places the line again when the box has moved or changed since.
-        b.at = { x: at.x, y: at.y, w: input.clientWidth, h: input.clientHeight };
+        b.at = { x: at.x, y: at.y, w: input.offsetWidth, h: input.offsetHeight };
         g.style.width = `${w}px`;
         const one = input.tagName === 'TEXTAREA' ? Math.min(h, parseFloat(cs.lineHeight) || (parseFloat(cs.fontSize) || 16) * 1.4) : h;
         g.style.height = `${one}px`;
@@ -187,9 +191,11 @@
      * transformed, and the menu opens with a transform animation; a line placed and "corrected" from them mid-animation
      * sat 30 px right of its words once the menu settled (CI's Chrome, the owner's phone: "still inconsistent").
      * A box outside `cb`'s chain (a fixed box, a portal) falls back to the boxes' rectangles.
+     * `inL`/`inT`: from the box's border edge to where typing starts (its border and padding, from its computed style:
+     * Chrome 157 reports an input's clientLeft as its padding, so clientLeft is never used for the box itself).
      */
-    function spot(input, cb, pl, pt) {
-        let x = input.clientLeft + pl, y = input.clientTop + pt, n = input;
+    function spot(input, cb, inL, inT) {
+        let x = inL, y = inT, n = input;
         while (n && n !== cb) {
             x += n.offsetLeft; y += n.offsetTop;
             const p = n.offsetParent;
@@ -210,7 +216,7 @@
         if (cb && !(cb === document.body && getComputedStyle(cb).position === 'static')) {
             const c = cb.getBoundingClientRect(); ox = c.left + cb.clientLeft - cb.scrollLeft; oy = c.top + cb.clientTop - cb.scrollTop;
         }
-        return { x: r.left - ox + input.clientLeft + pl, y: r.top - oy + input.clientTop + pt };
+        return { x: r.left - ox + inL, y: r.top - oy + inT };
     }
 
     function show(input) {
@@ -524,9 +530,9 @@
             any = true;
             // Where the line belongs now, from layout (no transform, so a menu still opening counts as settled).
             const cs = getComputedStyle(input);
-            const at = spot(input, b.ghost.offsetParent, parseFloat(cs.paddingLeft) || 0, parseFloat(cs.paddingTop) || 0);
+            const at = spot(input, b.ghost.offsetParent, (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.borderLeftWidth) || 0), (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.borderTopWidth) || 0));
             const a = b.at;
-            if (!a || Math.abs(a.x - at.x) > 0.5 || Math.abs(a.y - at.y) > 0.5 || a.w !== input.clientWidth || a.h !== input.clientHeight) show(input);
+            if (!a || Math.abs(a.x - at.x) > 0.5 || Math.abs(a.y - at.y) > 0.5 || a.w !== input.offsetWidth || a.h !== input.offsetHeight) show(input);
         });
         if (!any) { clearInterval(following); following = 0; }
     }
