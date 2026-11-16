@@ -91,6 +91,7 @@ const LOOK = `(() => {
         // The steady state, as a person sees it once the menu has settled: the line sits where typing starts. A line left
         // behind where its box was measured mid-animation never gets there (4.286.0: ov-trending re-places after one).
         await until(p, `(() => { const l = ${LOOK}; return l && l.kind === 'line' && Math.abs(l.x - l.start) <= 1; })()`, 4000);
+        await until(p, "!document.querySelector('.ovs.is-open .ovs-place.is-turn')", 4000);
         const vibe = await p.evaluate(LOOK);
         assert.strictEqual(vibe.kind, 'line');
         // The line is as wide as the box's typing room (Chrome 157 counts an input's padding out of clientWidth: it was 30 px
@@ -117,6 +118,9 @@ const LOOK = `(() => {
             await until(p, `!!document.querySelector('.ovh-tab[data-tab="${tab}"]')`);
             await p.evaluate(`document.querySelector('.ovh-tab[data-tab="${tab}"]').click(), true`);
             await wait(1200);
+            // The open button turns with the place, tinted for a moment (0.9 s): measured once that is over (a slow
+            // runner, GitHub's macOS, measured mid-turn and saw the tint as a disc).
+            await until(p, "!document.querySelector('.ovs.is-open .ovs-place.is-turn')", 4000);
             seen.push(await p.evaluate(LOOK));
         }
         for (const s of seen) {
