@@ -1,5 +1,57 @@
 # Changelog
 
+## 4.283.0 — 2026-11-16
+
+**Links are OpenVibe's own, on every site.** The owner: "a completely custom link style with animations and effects …
+rather than these default ass looking ones".
+- Links in running text use the person's theme, not the browser's blue and visited purple:
+  - the theme's light accent;
+  - a fine line under them at rest;
+  - a two-tone line (the accent, and a second tone turned from it) that sweeps in on hover or focus, with a soft glow;
+  - a wash of the accent on a press, and an accent ring on keyboard focus.
+- **Scope:** running text only (`p`, `dd`, `blockquote`, `figcaption`, `label`, `small`, `.ov-prose`).
+  - A link with a class is a component and keeps its own look.
+  - Bars, menus and the footer are left alone.
+- **Precedence:** the colours and lines are at zero specificity, so a site's own link colour or button-like link wins.
+- **Motion:** Off stops the sweep. Forced colours get a plain underline.
+- **Where:** the navbar's page-wide styles, so every site gets them with this pin. Test: `links-chrome`.
+
+**Search boxes know where they are.** The owner: "it's not content aware … try GraveGateKeeper, that's a person … dumb
+to have it here in the vibe … it's also spacing wrong, offset to the top".
+- **Site searches only:** what people search across OpenVibe now goes only in a site's own search (a GET form that goes
+  somewhere, or `role="search"`).
+  - A box that filters the person's own things (sessions, inbox, chats) no longer gets it.
+  - The navbar loads `ov-trending.js` only for those boxes.
+- **A box's own list:** `OVTrending.attach(input, { items, prefix })` (with `data-ov-trending="own"` until then).
+  - Those boxes get no chips, no deep dive and no beacon unless they ask.
+  - The menu's box suggests by where you are: your recent searches, the sites to open, and what to ask Vibe.
+    - Over the feed it shows what people search; in Vibe it shows what to ask.
+  - The sessions drawer's search suggests your own sessions.
+- **No "Try":** the line is the suggestion alone. The owner: "remove the text try … just use the extra space to have
+  whatever the recommendation is".
+- **Holds on focus:** a focused box holds the suggestion it showed, and `OVTrending.current(input)` names it. The owner:
+  "it should stay on whatever one it was on … put it into the list so you can click it".
+  - The menu lists it first, under "Suggested", above Recent searches. A press fills the box.
+  - The menu never suggests the site you are on.
+- **No overlap:** a placeholder its page changes later is taken up at once. The menu's tabs had drawn "Search your
+  chats" under "Try …".
+- **Placement:** the line sits on the box's text line, measured on screen.
+  - A tall box, uneven padding and a scrolled row all come out right.
+  - A folded box keeps its placeholder.
+- Test: `trending-context-chrome`.
+
+**Use your own setup, from any agent.** The owner: "a place where it brings you to set up your different harnesses and
+API keys … even if you choose Actor … the shared node, their own computer".
+- The Agent and Runs on lists, in every session and composer, end with "Use your own…".
+- The session's "How it runs" has "Your own setup". It lists the places that already do each part:
+  - your computer and your computers and shared nodes (OpenVibe Link);
+  - coding agents installed and signed in where they run (Codes);
+  - Actor's model and where it runs (Actor);
+  - your keys and sign-ins, sealed in Locker.
+- The Frame's options may send their own list (`setup: [{ id, name, line, url }]`, https only).
+- Test: `your-setup`.
+- `navbar.js` budget: 59.6 KB brotli (measured 59.3) for the links and the narrower trending loader.
+
 ## 4.282.0 — 2026-11-16
 
 **Escape closes only what it is meant to.**

@@ -808,7 +808,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         el.setAttribute('role', 'dialog');
         el.setAttribute('aria-modal', 'true');
         el.setAttribute('aria-label', 'Search and every OpenVibe site');
-        el.innerHTML = `<div class="ovs-panel"><div class="ovs-bar"><button type="button" class="ovs-lead" tabindex="-1" aria-hidden="true">${ICON.search}</button><div class="ovs-field"><span class="ovs-ghost" aria-hidden="true"></span><input class="ovs-input" type="search" role="combobox" aria-autocomplete="both" aria-expanded="true" aria-controls="ovs-list" autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="100"></div><div class="ovs-tools"><button type="button" class="ovs-tool ovs-mic" aria-label="Speak your search" data-ov-tip="Speak" hidden>${ICON.mic}</button><button type="button" class="ovs-tool ovs-attach" aria-label="Ask Vibe about a picture or a file" data-ov-tip="Attach" hidden>${ICON.plus}</button><button type="button" class="ovs-tool ovs-send" aria-label="Ask Vibe" data-ov-tip="Ask Vibe" hidden>${ICON.send}</button><input class="ovs-file" type="file" multiple hidden accept="image/*,video/*,audio/*,.pdf,.txt,.md,.csv,.json,.zip"></div><div class="ovs-acts"></div><button type="button" class="ovs-x" aria-label="Close the menu" title="Close (Esc)">${ICON.close}<span>Close</span></button></div>`
+        el.innerHTML = `<div class="ovs-panel"><div class="ovs-bar"><button type="button" class="ovs-lead" tabindex="-1" aria-hidden="true">${ICON.search}</button><div class="ovs-field"><span class="ovs-ghost" aria-hidden="true"></span><input class="ovs-input" type="search" data-ov-trending="own" role="combobox" aria-autocomplete="both" aria-expanded="true" aria-controls="ovs-list" autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="100"></div><div class="ovs-tools"><button type="button" class="ovs-tool ovs-mic" aria-label="Speak your search" data-ov-tip="Speak" hidden>${ICON.mic}</button><button type="button" class="ovs-tool ovs-attach" aria-label="Ask Vibe about a picture or a file" data-ov-tip="Attach" hidden>${ICON.plus}</button><button type="button" class="ovs-tool ovs-send" aria-label="Ask Vibe" data-ov-tip="Ask Vibe" hidden>${ICON.send}</button><input class="ovs-file" type="file" multiple hidden accept="image/*,video/*,audio/*,.pdf,.txt,.md,.csv,.json,.zip"></div><div class="ovs-acts"></div><button type="button" class="ovs-x" aria-label="Close the menu" title="Close (Esc)">${ICON.close}<span>Close</span></button></div>`
             + '<div class="ovs-youpanel" role="region" aria-label="You and your Actor" hidden></div><div class="ovs-tabs ovs-starttabs" hidden></div>'
             + `<div class="ovs-tabs ovs-rtabs" role="tablist" aria-label="Results from" hidden>${RTABS.map(([id, label]) => `<button type="button" class="ovs-tab" role="tab" data-rtab="${id}" aria-selected="false">${label}</button>`).join('')}</div>`
             + '<ul class="ovs-list" id="ovs-list" role="listbox"></ul><div class="ovs-foot" aria-hidden="true"><span><kbd>' + ICON.up + '</kbd><kbd>' + ICON.down + '</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Tab</kbd> complete</span><span><kbd>Esc</kbd> close</span></div></div>';
@@ -857,10 +857,25 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         el.querySelector('.ovs-bar').append(recentEl);
         const paintRecent = () => {
             const list = recent.get();
-            const show = document.activeElement === input && !input.value && list.length > 0;
+            // The suggestion the box showed when it was opened, first and pressable (the owner, 11-16: "whatever one it was
+            // on when you clicked it, it should put into the list so you can click it and actually choose it").
+            let sug = null;
+            try { sug = root.OVTrending && root.OVTrending.current ? root.OVTrending.current(input) : null; } catch { sug = null; }
+            if (sug && list.some((q) => q.toLowerCase() === String(sug.query).toLowerCase())) sug = null;
+            const show = document.activeElement === input && !input.value && (list.length > 0 || !!sug);
             recentEl.hidden = !show;
             if (!show) return;
             recentEl.textContent = '';
+            if (sug) {
+                const sh = document.createElement('div'); sh.className = 'ovs-recent-h';
+                const st = document.createElement('span'); st.textContent = 'Suggested'; sh.append(st); recentEl.append(sh);
+                const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-recent-row ovs-recent-sug'; b.setAttribute('role', 'option');
+                b.innerHTML = ICON.spark; const w = document.createElement('span'); w.textContent = sug.query; b.append(w);
+                b.addEventListener('pointerdown', (e) => e.preventDefault());
+                b.addEventListener('click', () => { input.value = sug.query; recentEl.hidden = true; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus(); });
+                recentEl.append(b);
+            }
+            if (!list.length) return;
             const head = document.createElement('div'); head.className = 'ovs-recent-h';
             const t = document.createElement('span'); t.textContent = 'Recent searches';
             const clear = document.createElement('button'); clear.type = 'button'; clear.className = 'ovs-recent-clear'; clear.setAttribute('data-ovs-clear', ''); clear.textContent = 'Clear';
@@ -1528,6 +1543,36 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     // run in place, a file goes into Vibe's box. Results still come as you type.
     const ACTOR = 'https://openvibe.actor';
     // The pill's words: the site's name where there is room; on a phone, with the tools beside them, the short form.
+    // What the menu's box suggests while it is empty, by where you are (the owner, 11-16: "not content aware … try
+    // GraveGateKeeper, that's a person … the top one should be search actors and your vibe … all the different stuff that
+    // we have"). Never what strangers searched, except over the feed, which is everyone's. Tab takes the words shown.
+    const VIBE_ASKS = ['Plan my week', 'Deep dive the best budget GPU right now', 'Build me a landing page', 'Make a tool that checks a domain', 'What happened on OpenVibe today?', 'Compare two models for coding'];
+    function boxHints() {
+        if (door === 'chats') return [];
+        if (door === 'vibe') return VIBE_ASKS.map((q) => ({ pre: '', query: q }));
+        if (tab === 'feed') return root.OVTrending && root.OVTrending.trending ? root.OVTrending.trending() : [];
+        if (tab === 'you') return [];
+        const again = recent.get().slice(0, 3).map((q) => ({ pre: '', query: q }));
+        let places = [];
+        // Never the site you are on (on Live, "Live" suggests nothing).
+        try { const on = String(here() || '').toLowerCase(); places = sites().filter((s) => s && s.name && String(s.name).toLowerCase() !== on && !(s.host && s.host === location.hostname)).slice(0, 8).map((s) => ({ pre: '', query: s.name })); } catch { /* */ }
+        const asks = VIBE_ASKS.slice(0, 4).map((q) => ({ pre: '', query: q }));
+        const out = [];
+        for (let i = 0; i < 8; i++) [again[i], places[i], asks[i]].forEach((x) => { if (x) out.push(x); });
+        return out;
+    }
+    /** The box's suggestions: ov-trending's line with this menu's own list (loaded once, beside this file). */
+    function hintBox() {
+        if (!input) return;
+        const go = () => { try { root.OVTrending.attach(input, { items: boxHints, prefix: '' }); } catch { /* */ } };
+        if (root.OVTrending) return go();
+        if (!ctx || typeof ctx.sibling !== 'function') return;
+        document.addEventListener('ov-trending-ready', go, { once: true });
+        if (!document.getElementById('ov-trending-loader')) {
+            try { const sc = document.createElement('script'); sc.id = 'ov-trending-loader'; sc.src = ctx.sibling('ov-trending.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
+        }
+    }
+    const hintsMoved = () => { try { if (root.OVTrending && input) root.OVTrending.update(input); } catch { /* */ } };
     function askHint() { let narrow = false; try { narrow = root.matchMedia('(max-width: 640px)').matches; } catch { /* */ } return narrow ? 'Search or ask Vibe' : `Search ${here()}, or ask Vibe`; }
     let actorInfo = null, actorAt = 0, listening = null;
     const signedInTop = () => !!(ctx && ctx.token && ctx.user && !ctx.user.is_anon);
@@ -1895,9 +1940,11 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (listEl) listEl.hidden = false;
         if (el) el.classList.remove('ovs-in-door', 'ovs-in-vibe');
         if (input) input.placeholder = askHint();
+        hintsMoved();
     }
 
     function paintTabs() {
+        hintsMoved();
         tabsEl.hidden = false;
         tabsEl.setAttribute('role', 'tablist');
         tabsEl.setAttribute('aria-label', 'Menu');
@@ -2763,6 +2810,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         input.placeholder = askHint();
         input.value = opts.q || '';
         try { syncTools(); } catch { /* */ }
+        hintBox();
         paintGhost();
         render(input.value);
         if (flyFrom && !input.value) requestAnimationFrame(flyIn);

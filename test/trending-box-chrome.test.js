@@ -57,10 +57,10 @@ const GHOST = `(() => { const g = document.querySelector('#q + .ovt-ghost'); con
         await p.goto(`${base}/`, { maxMs: 5000 });
         await new Promise((ok) => setTimeout(ok, 600));
         let s = await p.evaluate(GHOST);
-        assert.deepStrictEqual([s.shown, s.text, s.placeholder, s.label, s.offGhost], [true, 'Try synthesizers', '', 'What are you looking for?', false], `the first trending search in the box (${JSON.stringify(s)})`);
+        assert.deepStrictEqual([s.shown, s.text, s.placeholder, s.label, s.offGhost], [true, 'synthesizers', '', 'What are you looking for?', false], `the first trending search in the box (${JSON.stringify(s)})`);
         await new Promise((ok) => setTimeout(ok, 3600));
         s = await p.evaluate(GHOST);
-        assert.strictEqual(s.text, 'Try go live from a browser', 'it moves on to the next');
+        assert.strictEqual(s.text, 'go live from a browser', 'it moves on to the next');
 
         // Tab takes the line shown.
         await p.evaluate("(() => { const q = document.getElementById('q'); q.focus(); q.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })); return true; })()");
@@ -122,7 +122,7 @@ const GHOST = `(() => { const g = document.querySelector('#q + .ovt-ghost'); con
         await still.goto(`${base}/off`, { maxMs: 5000 });
         await new Promise((ok) => setTimeout(ok, 4000));
         s = await still.evaluate(GHOST);
-        assert.deepStrictEqual([s.shown, s.text], [true, 'Try synthesizers'], 'motion Off: the first trending search, never moving');
+        assert.deepStrictEqual([s.shown, s.text], [true, 'synthesizers'], 'motion Off: the first trending search, never moving');
         await still.close();
 
         // Nothing trending: the box keeps its own placeholder.

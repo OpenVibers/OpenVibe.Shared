@@ -18,6 +18,10 @@
     let _lead = null;
     const _actions = new Map();
 
+    // Running-text links (4.283.0): where they are, and where they are left alone (bars, menus, the footer).
+    const LINK_IN = ':where(p, dd, blockquote, figcaption, label, small, .ov-prose, .prose, .markdown-body)';
+    const LINK_OUT = ':not(:where(nav, menu, [role="navigation"], [role="menu"], [role="tablist"], .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer, .ovf) *)';
+    const LZ = `${LINK_IN} :where(a[href]:not([class]))${LINK_OUT}`, LB = `${LINK_IN} a[href]:not([class])${LINK_OUT}`;
     function injectStyles() {
         if (document.getElementById('openvibe-navbar-styles')) return;
         const s = document.createElement('style');
@@ -577,6 +581,31 @@
                 outline: 2px solid var(--accent-light, var(--accent, #3b82f6)); outline-offset: 2px;
             }
             html[data-ov-motion=off] :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer) :where(a, button, [role="button"]):not(:disabled):active{scale: none;opacity: .82}
+
+            /* Running-text links, OpenVibe's own (4.283.0, the owner 11-16): the theme's accent and a turned second tone; a
+               resting line, a two-tone sweep and glow on hover or focus, a wash on press. LZ is zero specificity (a site's own
+               look wins); LB only drops the browser underline. Components (a class), bars, menus and the footer keep theirs. */
+            ${LZ} {
+                --ovl-a: var(--accent-light, var(--accent, #60a5fa));
+                --ovl-b: var(--accent, #3b82f6);
+                color: var(--ovl-a);
+                background-image: linear-gradient(90deg, var(--ovl-a), var(--ovl-b), var(--ovl-a)),
+                    linear-gradient(color-mix(in srgb, var(--ovl-a) 55%, transparent) 0 0),
+                    linear-gradient(color-mix(in srgb, var(--ovl-a) 16%, transparent) 0 0);
+                background-size: 0% 2px, 100% 1px, 100% 0%;
+                background-position: 0 100%, 0 100%, 0 100%;
+                background-repeat: no-repeat;
+                border-radius: 3px;
+                -webkit-tap-highlight-color: transparent;
+                transition: background-size .42s cubic-bezier(.22, 1, .36, 1), color .2s ease, text-shadow .3s ease;
+            }
+            @supports (color: oklch(from red l c h)) { ${LZ} { --ovl-b: oklch(from var(--ovl-a) l c calc(h + 60)); } }
+            ${LB} { text-decoration: none; }
+            @media (hover: hover) { ${LZ}:hover { background-size: 100% 2px, 100% 1px, 100% 0%; color: color-mix(in oklab, var(--ovl-a) 80%, var(--text-primary, #fff)); text-shadow: 0 0 .9em color-mix(in srgb, var(--ovl-a) 45%, transparent); } }
+            ${LZ}:focus-visible { background-size: 100% 2px, 100% 1px, 100% 0%; outline: 2px solid var(--ovl-a); outline-offset: 3px; }
+            ${LZ}:active { background-size: 100% 2px, 100% 1px, 100% 100%; transition-duration: .12s; }
+            html[data-ov-motion=off] ${LZ} { transition: none; }
+            @media (forced-colors: active) { ${LB} { text-decoration: underline; background-image: none; } }
         `;
         document.head.appendChild(s);
     }
@@ -636,7 +665,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '67f7fe2d86b3', 'dock.js': '41aeb777b7f5', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '22cd763909cc', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '073d6cc55244', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'c58f990574e6', 'nav-slots.js': 'c4890d9e86ea', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': 'e96fcecd95cc', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'e9515fa14ab5', 'ov-composer.js': '542acc36f1db', 'items.js': '9f0ba1844c20', 'items.css': 'e917ec14cd4d' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '263bb79768c4', 'dock.js': '92c83f1b2e6b', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '22cd763909cc', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '073d6cc55244', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'c58f990574e6', 'nav-slots.js': 'c4890d9e86ea', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': '4fb3edbf4706', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'e9515fa14ab5', 'ov-composer.js': 'f732a9bf10bf', 'items.js': '9f0ba1844c20', 'items.css': 'e917ec14cd4d' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -878,13 +907,21 @@
         ringWatch.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'open', 'class'] });
         document.addEventListener('focusin', (e) => { const t = e.target; if (t && t.matches && t.matches(RING_FIELD)) markRing(t); }, true);
     }
-    // 4.277.0 (§AD.13 (1)): every search box shows what is trending (ov-trending.js), loaded once a page has one. A site
-    // turns it off with <html data-ov-trending="off">; a box with data-ov-trending="off".
+    // 4.277.0 (§AD.13 (1)): a site's own search shows what is trending (ov-trending.js), loaded once a page has one. A site
+    // turns it off with <html data-ov-trending="off">; a box with data-ov-trending="off". 4.283.0: only a site's own search
+    // (a GET form that goes somewhere, or role="search") or a box that asks: a filter of the person's own things never.
     let trendWatch = null;
-    const TREND_BOX = 'input[type="search"]:not([data-ov-trending="off"]), input[data-ov-trending]:not([data-ov-trending="off"])';
+    const TREND_ASK = 'input[data-ov-trending]:not([data-ov-trending="off"]):not([data-ov-trending="own"])';
+    const TREND_FORM = 'form[action]:not([method="post" i]) input[type="search"], form[action]:not([method="post" i]) input[name="q"], [role="search"] input[type="search"], [role="search"] input[name="q"]';
+    const hasTrendBox = () => !!document.querySelector(TREND_ASK) || [...document.querySelectorAll(TREND_FORM)].some((i) => {
+        if (i.getAttribute('data-ov-trending') === 'off' || i.type === 'hidden' || i.closest('[data-ov-trending="off"]')) return false;
+        if (i.closest('[role="search"]')) return true;
+        const a = ((i.form && i.form.getAttribute('action')) || '').trim();
+        return !!a && !/^(#|javascript:)/i.test(a);
+    });
     function loadTrending() {
         if (root.OVTrending || document.getElementById('ov-trending-loader')) return true;
-        if (document.documentElement.getAttribute('data-ov-trending') === 'off' || !document.querySelector(TREND_BOX)) return false;
+        if (document.documentElement.getAttribute('data-ov-trending') === 'off' || !hasTrendBox()) return false;
         try { const sc = document.createElement('script'); sc.id = 'ov-trending-loader'; sc.src = siblingV('ov-trending.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
         return true;
     }

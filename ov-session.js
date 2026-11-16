@@ -82,6 +82,7 @@
         repo: '<path d="M6 3.5h11.5v14H7.2a2 2 0 0 0 0 4h10.3M6 3.5a2 2 0 0 0-2 2v14"/>',
         model: '<path d="M12 3.2l7.6 4.4v8.8L12 20.8l-7.6-4.4V7.6Z"/><path d="M12 12l7.6-4.4M12 12v8.8M12 12L4.4 7.6"/>',
         computer: '<rect x="3.2" y="4.6" width="17.6" height="11.6" rx="2"/><path d="M8.6 20h6.8M12 16.2V20"/>',
+        key: '<circle cx="8" cy="15" r="4.2"/><path d="M11 12l8.5-8.5M16.5 6.5l2.5 2.5M14.2 8.8l2 2"/>',
         plan: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="M3.8 6.5l1.3 1.3 2.2-2.4M3.8 12l1.3 1.3 2.2-2.4"/><circle cx="5.2" cy="17.5" r="1.4"/>',
         fold: '<path d="M6 9l6 6 6-6"/>',
         copy: '<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/>',
@@ -103,6 +104,22 @@
         return s;
     };
     /** A glyph as markup for OpenVibePicker's rows (the constants above only). */
+    // Your own setup (the owner, 11-16: "a place where it brings you to set up your different harnesses and API keys …
+    // even if you choose Actor … your computer with your own harness and API keys set up in Locker … the shared node,
+    // their own computer"): the places that already do each part, in one list, from every session on every site. The
+    // Frame's options may send their own list (setup: [{ id, name, line, url }]); https links only.
+    const SETUP = [
+        { id: 'computer', name: 'Your computer', line: 'Add it with OpenVibe Link: agents, coding agents and models run there, on your keys', url: 'https://openvibe.link/add-computer' },
+        { id: 'machines', name: 'Your computers and shared nodes', line: 'Where your sessions can run, and who else may use them', url: 'https://openvibe.link/machines' },
+        { id: 'harnesses', name: 'Coding agents', line: 'Claude Code, Codex, OpenCode and the rest: installed and signed in where they run', url: 'https://openvibe.codes/setup' },
+        { id: 'actor', name: 'Actor on your setup', line: 'Its model and where it runs: OpenVibe\'s keys, your own key, or your computer', url: 'https://openvibe.actor/chat/model' },
+        { id: 'keys', name: 'Your keys and sign-ins', line: 'Kept sealed in Locker; an agent asks you before it uses one', url: 'https://openvibe.locker/passwords' },
+    ];
+    const setupOf = (opts) => {
+        const own = opts && Array.isArray(opts.setup) ? opts.setup.filter((x) => x && x.id && x.name && /^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(String(x.url || ''))) : [];
+        return own.length ? own.slice(0, 12) : SETUP;
+    };
+    const SETUP_ROW = { id: '__setup', name: 'Use your own…', line: 'Your computer, coding agents and keys, instead of OpenVibe\'s' };
     const svgMarkup = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${G[name] || G.spark}</svg>`;
     const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = String(text); return n; };
     const btn = (cls, label, glyph, words) => { const b = el('button', cls); b.type = 'button'; if (label) { b.setAttribute('aria-label', label); b.title = label; } if (glyph) b.append(svg(glyph)); if (words) b.append(el('span', '', words)); return b; };
@@ -402,7 +419,7 @@
         const dNew = btn('ovse-new', 'New session', 'plus', 'New');
         const dClose = btn('ovse-ib ovse-dclose', 'Close', 'x');
         dHead.append(el('b', '', 'Sessions'), dNew, dClose);
-        const find = el('label', 'ovse-find'); const findIn = el('input'); findIn.type = 'search'; findIn.placeholder = 'Search sessions'; findIn.setAttribute('aria-label', 'Search sessions'); find.append(svg('search'), findIn);
+        const find = el('label', 'ovse-find'); const findIn = el('input'); findIn.type = 'search'; findIn.placeholder = 'Search sessions'; findIn.setAttribute('aria-label', 'Search sessions'); findIn.setAttribute('data-ov-trending', 'own'); find.append(svg('search'), findIn);
         const runsBox = el('div', 'ovse-runs'); runsBox.setAttribute('role', 'list');
         const actorSlot = el('div', 'ovse-actor'); actorSlot.hidden = true;
         const topSlot = el('div', 'ovse-top'); topSlot.hidden = true;
@@ -481,6 +498,9 @@
             f.append(svg(G[a.glyph] ? a.glyph : KIND_GLYPH[run && run.kind] || 'spark'));
             return f;
         }
+        // The search suggests the person's own sessions, never what other people searched (the owner, 11-16: "this should
+        // be your session search"); with fewer than two it keeps its placeholder.
+        need(o, 'ov-trending.js', 'OVTrending').then((T) => { if (T) T.attach(findIn, { items: () => state.hints || [], prefix: '' }); });
         const titleOf = (r) => String((r && (r.title || (r.preview && r.preview.text) || r.preview)) || '').replace(/\s+/g, ' ').trim().slice(0, 120) || 'A session';
         async function loadRuns() {
             const gen = ++state.listGen;
@@ -491,6 +511,11 @@
                 if (gen !== state.listGen) return;
                 state.runs = Array.isArray(d.runs) ? d.runs : []; state.partial = Array.isArray(d.partial) ? d.partial : [];
                 paintRuns();
+                if (!state.q) {
+                    state.hints = [...new Set(state.runs.map(titleOf).filter((t) => t && t !== 'A session'))].slice(0, 12);
+                    if (state.hints.length < 2) state.hints = [];
+                    if (root.OVTrending) root.OVTrending.update(findIn);
+                }
                 if (o.actions && !state.q) {
                     const more = await actionRows(state.runs);
                     if (gen !== state.listGen || !more.length) return;
@@ -1067,14 +1092,21 @@
                     { id: 'where', name: 'Runs on', line: p.where === 'Auto' ? (coding(opts) ? 'Auto: a shared node or your own computer' : 'Auto: wherever it fits best') : p.where, glyph: 'computer' },
                 ];
                 if (Array.isArray(o.works) && o.works.length) rows.push({ id: 'works', name: 'Works on', line: p.works || 'Anything: it works out what you mean', glyph: 'repo' });
+                rows.push({ id: 'setup', name: 'Your own setup', line: 'Your computer, coding agents and keys, instead of OpenVibe\'s', glyph: 'key' });
                 P.open({ anchor: ctxB, title: 'How it runs', rows: rows.map((x) => ({ id: x.id, name: x.name, line: x.line, svg: svgMarkup(x.glyph) })), search: false, onPick: (row) => then(() => openCtx(row.id)) });
                 return;
             }
+            if (section === 'setup') {
+                P.open({ anchor: ctxB, title: 'Your own setup', search: false, rows: setupOf(opts).map((x) => ({ id: x.id, name: x.name, line: x.line || '', svg: svgMarkup(x.id === 'keys' ? 'key' : x.id === 'harnesses' ? 'repo' : x.id === 'actor' ? 'robot' : 'computer') })),
+                    onPick: (row) => { const x = setupOf(opts).find((y) => y.id === row.id); if (x) { try { window.open(x.url, '_blank', 'noopener'); } catch { /* a blocked window */ } } } });
+                return;
+            }
             if (section === 'agent') {
-                P.open({ anchor: ctxB, title: 'Agent', search: 'auto', value: pick.agent, rows: (opts.agents || []).map((a) => ({ id: a.id, name: a.name, line: a.line || '', disabled: a.available === false })), onPick: (row) => { pick.agent = row.id; if (pick.where === 'openvibe' && coding(opts)) pick.where = 'auto'; savePick(); } });
+                P.open({ anchor: ctxB, title: 'Agent', search: 'auto', value: pick.agent, rows: [...(opts.agents || []).map((a) => ({ id: a.id, name: a.name, line: a.line || '', disabled: a.available === false })), SETUP_ROW], onPick: (row) => {
+                    if (row.id === SETUP_ROW.id) { then(() => openCtx('setup')); return; } pick.agent = row.id; if (pick.where === 'openvibe' && coding(opts)) pick.where = 'auto'; savePick(); } });
             } else if (section === 'where') {
                 const places = coding(opts) ? (opts.places || []).filter((x) => x.kind !== 'openvibe').map((x) => (x.kind === 'auto' ? { ...x, line: 'A shared node or your own computer' } : x)) : (opts.places || []);
-                P.open({ anchor: ctxB, title: 'Runs on', search: 'auto', value: pick.where, rows: places.map((x) => ({ id: placeKey(x), name: x.name, line: x.line || '', disabled: x.available === false })), onPick: (row) => { pick.where = row.id; savePick(); } });
+                P.open({ anchor: ctxB, title: 'Runs on', search: 'auto', value: pick.where, rows: [...places.map((x) => ({ id: placeKey(x), name: x.name, line: x.line || '', disabled: x.available === false })), SETUP_ROW], onPick: (row) => { if (row.id === SETUP_ROW.id) { then(() => openCtx('setup')); return; } pick.where = row.id; savePick(); } });
             } else if (section === 'way') {
                 // How Actor works it (4.281.0; Actor's engines, the owner 11-16: "use an agent or harness or model system or a
                 // decisions API or swap between and benchmark"): mid-session a change goes with the next message.
