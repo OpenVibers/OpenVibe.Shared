@@ -9,6 +9,9 @@
     (`/actor/pictures`, `/actor/pictures/generate`, `/actor/face`; Network #1042, Actor #554). Without the relay the
     section stays away.
   - A rename keeps the picture. Pressing a shape or a colour and saving puts the drawn face on instead.
+  - **New agent, in the menu** ("add new actors in the UI"): the strip's New opens a sheet asking what it should do,
+    with a name taken from those words that you can change. Create makes it (`/actor/agents`, Network #1043).
+    Without the relay, New still goes to openvibe.actor/new.
   - Test: `run-actor-pictures-chrome.test.js`.
 - **The top box talks** (the owner, 11-16: "from the top box, start a conversation with Vibe, Actor or any agent"):
   - A question in the menu's box gets an **Ask** group: your Actor by its name, Codes, and up to two agents you made,

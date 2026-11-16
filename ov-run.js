@@ -534,7 +534,9 @@
                 if (seen.size >= 8) break;
             }
             const plus = el('a', 'ovr-person is-new'); plus.href = 'https://openvibe.actor/new'; plus.target = '_blank'; plus.rel = 'noopener';
-            plus.setAttribute('role', 'listitem'); plus.setAttribute('aria-label', 'Make a new agent on OpenVibe.Actor');
+            plus.setAttribute('role', 'listitem'); plus.setAttribute('aria-label', 'Make a new agent');
+            // 4.287.0: made here, in a sheet (the link stays for a page without the Frame's relay).
+            plus.addEventListener('click', (e) => { if (!agent || !agent.id) return; e.preventDefault(); newAgent(); });
             const pf = el('span', 'ovr-face is-l ovr-face-new'); pf.append(svg('plus')); plus.append(pf, el('span', 'ovr-person-n', 'New'));
             strip.append(plus);
         }
@@ -626,6 +628,58 @@
             sheet.append(close, top, ...(pics ? [pics] : []), face, acts, note, links);
             box.append(sheet);
             nameIn.addEventListener('focus', () => nameIn.select(), { once: true });
+        }
+        /** A name from what an agent should do: its first few words, capitalised ("find cheap flights …" → "Find cheap flights"). */
+        function nameFrom(words) {
+            const t = String(words || '').replace(/[^\p{L}\p{N}\s'-]+/gu, ' ').replace(/\s+/g, ' ').trim().split(' ')
+                .filter((w) => !/^(a|an|the|me|my|for|to|and|of|please|that|which|who|i|you)$/i.test(w)).slice(0, 3).join(' ');
+            return t ? (t.charAt(0).toUpperCase() + t.slice(1)).slice(0, 40) : '';
+        }
+        /** A new agent (4.287.0; the owner, 11-16: "add new actors in the UI"): what it does, a name from those words. */
+        function newAgent() {
+            const old = box.querySelector('.ovr-sheet'); if (old) old.remove();
+            const sheet = el('div', 'ovr-sheet ovr-new'); sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', 'A new agent');
+            const close = el('button', 'ovr-ib ovr-sheet-x'); close.type = 'button'; close.setAttribute('aria-label', 'Close'); close.append(svg('x'));
+            close.addEventListener('click', () => sheet.remove());
+            const face = el('div', 'ovr-sheet-face'); const f = el('span', 'ovr-face is-xl ovr-face-new'); f.append(svg('plus')); face.append(f);
+            const form = el('form', 'ovr-sheet-sec ovr-new-form');
+            const what = el('textarea', 'ovr-draw-in ovr-new-what'); what.rows = 3; what.maxLength = 2000;
+            what.placeholder = 'Find cheap flights to Lisbon every Friday and tell me the best three'; what.setAttribute('aria-label', 'What should it do?');
+            const name = el('input', 'ovr-draw-in ovr-new-name'); name.type = 'text'; name.maxLength = 80; name.placeholder = 'Its name'; name.setAttribute('aria-label', 'Its name');
+            let named = false;
+            what.addEventListener('input', () => { if (!named) name.value = nameFrom(what.value); });
+            name.addEventListener('input', () => { named = !!name.value.trim(); });
+            const go = el('button', 'ovr-sheet-btn ovr-draw-go'); go.type = 'submit'; go.append(svg('plus'), el('span', '', 'Create'));
+            const more = el('a', 'ovr-sheet-link'); more.href = 'https://openvibe.actor/new'; more.target = '_blank'; more.rel = 'noopener';
+            more.append(svg('gear'), el('span', '', 'More choices on OpenVibe.Actor'), svg('open'));
+            form.append(el('b', 'ovr-sheet-h', 'What should it do?'), what, el('b', 'ovr-sheet-h', 'Its name'), name, go);
+            const note = el('p', 'ovr-sheet-note'); note.setAttribute('role', 'status');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const instructions = what.value.trim(), nm = (name.value.trim() || nameFrom(instructions)).slice(0, 80);
+                if (!instructions) { note.textContent = 'Say what it should do.'; what.focus(); return; }
+                if (!nm) { note.textContent = 'Give it a name.'; name.focus(); return; }
+                go.disabled = true; note.textContent = 'Making it…';
+                try {
+                    const r = await fetch(`${base}/actor/agents`, { method: 'POST', credentials: 'omit', headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers() }, body: JSON.stringify({ name: nm, instructions }) });
+                    const j = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(j.detail || j.error || (r.status === 404 ? 'Make it on OpenVibe.Actor for now.' : 'It was not made.'));
+                    sheet.remove();
+                    const strip = box.querySelector('.ovr-people'); if (strip) paintPeople(strip);
+                    flashMade(nm);
+                } catch (err) { note.textContent = (err && err.message) || 'It was not made.'; go.disabled = false; }
+            });
+            sheet.append(close, face, form, note, more);
+            box.append(sheet);
+            what.focus();
+        }
+        /** A short word that the agent was made (in the list's note, gone after a moment). */
+        function flashMade(nm) {
+            const foot = box.querySelector('.ovr-list-note');
+            if (!foot) return;
+            const p0 = el('p', 'ovr-note', `${nm} is ready: tell it what to do, or it waits for you.`);
+            foot.prepend(p0);
+            setTimeout(() => p0.remove(), 6000);
         }
         /**
          * Your Actor's pictures (4.287.0; the owner, 11-16: "an avatar generator for agents … on the image models
@@ -1309,6 +1363,8 @@ html[data-ov-motion="off"] .ovr-coder-cursor, html[data-ov-motion="off"] .ovr-co
 .ovr-pic[aria-checked="true"] { box-shadow: 0 0 0 2px var(--bg-card, #131c2e), 0 0 0 4px var(--accent, #3b82f6); }
 .ovr-pic:focus-visible, .ovr-draw-style:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
 .ovr-draw { display: grid; gap: 8px; width: 100%; }
+.ovr-new-form { justify-items: stretch; }
+.ovr-new-what { resize: vertical; min-height: 88px; line-height: 1.4; }
 .ovr-draw-in { box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 12px; font: inherit; font-size: 15px; color: var(--text-primary, #e6edf7);
   background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); border: 1px solid color-mix(in srgb, var(--text-primary, #e6edf7) 12%, transparent); }
 .ovr-draw-in:focus { outline: none; border-color: var(--accent, #3b82f6); }

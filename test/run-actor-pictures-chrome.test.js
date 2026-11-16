@@ -6,7 +6,8 @@
 //     /actor/pictures/generate as it is), and they come first;
 //   • a tap wears one (POST /actor/face): the card's face and the strip's face show it;
 //   • a rename keeps the picture (no drawn face is sent); pressing a shape and saving puts the drawn face on instead;
-//   • nothing is wider than the phone.
+//   • nothing is wider than the phone;
+//   • "New" makes an agent here: what it should do, a name from those words (yours to change), Create.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -18,7 +19,7 @@ const root = path.join(__dirname, '..');
 
 const PIC = (id) => `https://pictures.test/faces/${id}`;
 const state = { actor: { id: 'act_1', name: 'Juniper', enabled: true, status: 'idle', now: {}, asks: [], avatar: null, avatar_url: null },
-    faces: [{ id: 'fac_old0000000a', url: PIC('fac_old0000000a') }], asked: [], wore: [], patched: [] };
+    faces: [{ id: 'fac_old0000000a', url: PIC('fac_old0000000a') }], asked: [], wore: [], patched: [], made: [] };
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     let body = '';
@@ -52,6 +53,7 @@ const server = http.createServer((req, res) => {
             state.actor = { ...state.actor, avatar: { face: b.face, url: `/faces/${b.face}` }, avatar_url: PIC(b.face) };
             return json(200, { agent: 'agt_1', face: `face:${b.face}`, face_url: `/faces/${b.face}` });
         }
+        if (u.pathname === '/api/frame/actor/agents' && req.method === 'POST') { state.made.push(b); return json(201, { id: 'agt_01ABCDEFGHJKMNPQRSTVWXYZ00', ...b }); }
         if (u.pathname === '/api/frame/runs') return json(200, { runs: [], next: null });
         json(404, { error: 'No such thing' });
     });
@@ -104,7 +106,19 @@ const server = http.createServer((req, res) => {
         await p.evaluate("document.querySelector('.ovr-sheet-btn.is-save').click(), 1");
         await until(p, '!document.querySelector(\'.ovr-sheet\')', 'the card closes on save');
         assert.equal(state.patched.at(-1).avatar.blob.shape, 'leaf', 'the drawn face goes up');
-        console.log('run-actor-pictures-chrome: pictures listed, three drawn in a style, one worn on the card and the strip, a rename keeps it, a shape replaces it');
+        // New: an agent made here. The name follows what it does until you write one.
+        await p.evaluate("document.querySelector('.ovr-people .ovr-person.is-new').click(), 1");
+        await until(p, "!!document.querySelector('.ovr-sheet.ovr-new')", 'the new agent sheet');
+        await p.evaluate("(() => { const t = document.querySelector('.ovr-new-what'); t.value = 'find me cheap flights to Lisbon every Friday'; t.dispatchEvent(new Event('input')); return 1; })()");
+        assert.equal(await p.evaluate("document.querySelector('.ovr-new-name').value"), 'Find cheap flights', 'a name from the words');
+        await p.evaluate("(() => { const n = document.querySelector('.ovr-new-name'); n.value = 'Lisbon scout'; n.dispatchEvent(new Event('input')); const t = document.querySelector('.ovr-new-what'); t.value += ' at night'; t.dispatchEvent(new Event('input')); return 1; })()");
+        assert.equal(await p.evaluate("document.querySelector('.ovr-new-name').value"), 'Lisbon scout', 'a name you wrote stays');
+        assert.equal(await p.evaluate('document.documentElement.scrollWidth'), 390, 'the sheet fits the phone');
+        await p.evaluate("document.querySelector('.ovr-new .ovr-draw-go').click(), 1");
+        await until(p, "!document.querySelector('.ovr-sheet.ovr-new')", 'the sheet closes once it is made');
+        assert.deepEqual(state.made, [{ name: 'Lisbon scout', instructions: 'find me cheap flights to Lisbon every Friday at night' }]);
+        assert.match(await p.evaluate("(document.querySelector('.ovr-list-note') || {}).textContent || ''"), /Lisbon scout is ready/);
+        console.log('run-actor-pictures-chrome: pictures listed, three drawn in a style, one worn on the card and the strip, a rename keeps it, a shape replaces it; New makes an agent here');
     } finally {
         await browser.close().catch(() => {});
         server.close();
