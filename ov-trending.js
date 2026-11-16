@@ -179,6 +179,13 @@
         g.style.color = cs.color;
         // 4.286.0: always from where typing starts (a centred line floated away from the box's icon: "Plan my week").
         g.style.textAlign = cs.direction === 'rtl' ? 'right' : 'left';
+        // Then measured where it really landed and moved by the difference: an ancestor that holds absolute children
+        // without being their offsetParent (a transform, contain) puts the line somewhere else than the sums say. On
+        // CI's Chrome the menu's line sat 30 px right of its words that way (the owner's "still inconsistent").
+        const got = g.getBoundingClientRect();
+        const wantX = r.left + input.clientLeft + pl, wantY = r.top + input.clientTop + pt;
+        if (Math.abs(got.left - wantX) > 0.5) g.style.left = `${parseFloat(g.style.left) + wantX - got.left}px`;
+        if (Math.abs(got.top - wantY) > 0.5) g.style.top = `${parseFloat(g.style.top) + wantY - got.top}px`;
         g.hidden = was;
         return true;
     }
