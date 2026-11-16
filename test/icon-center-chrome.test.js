@@ -23,6 +23,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
 <button class="box" id="good" aria-label="Good"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg></button>
 <button class="box" id="bad" aria-label="Bad"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg></button>
 <p>${kit.iconButton ? kit.iconButton({ icon: 'copy', label: 'Copy' }) : ''} ${kit.button({ href: '#', label: 'Get a key', icon: 'key' })}</p>
+<p id="tiles">${[32, 40, 48].map((t) => kit.tile('server', { size: t })).join(' ')} <span class="ovk-heading-icon">${kit.icon('server')}</span></p>
 </main>
 <script src="/navbar.js"></script>
 <script>
@@ -53,6 +54,11 @@ const server = http.createServer((req, res) => {
         assert.ok(!found.some((f) => /#good/.test(f.box)), 'a centred icon passes');
         const others = found.filter((f) => !/#bad/.test(f.box));
         assert.deepStrictEqual(others, [], `the navbar and the kit's buttons are centred (${JSON.stringify(others)})`);
+        // Tiles fit their icon (4.285.0; the owner, 11-16: "the background border … customized so it fits the icon
+        // better"): the drawn glyph fills 40 % of its tile or more, centred, and the tile has no outer border.
+        const tiles = await p.evaluate(`[...document.querySelectorAll('#tiles .ovk-tile, #tiles .ovk-heading-icon')].map((t) => { const s = t.querySelector('svg'); const r = s.getBoundingClientRect(), b = t.getBoundingClientRect(); const g = s.getBBox(); const k = r.width / s.viewBox.baseVal.width;
+            return { fill: Math.round(Math.max(g.width, g.height) * k / b.width * 100), dx: Math.round(((r.left + r.width / 2) - (b.left + b.width / 2)) * 10) / 10, border: getComputedStyle(t).borderTopWidth }; })`);
+        assert.ok(tiles.length === 4 && tiles.every((t) => t.fill >= 40 && Math.abs(t.dx) <= 1.5 && t.border === '0px'), `every tile fits its icon (${JSON.stringify(tiles)})`);
         // The menu, open.
         await p.evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { key: "/", bubbles: true })), 1');
         await h.eventually(async () => assert.ok(await p.evaluate("!!document.querySelector('.ovs-tab')")));

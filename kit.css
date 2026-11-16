@@ -235,6 +235,23 @@ html[data-ov-motion=off] .ovk-btn--primary, html[data-ov-motion=off] .ovk-btn--p
 .ovk-head-tools form { margin: 0; }
 .ovk-heading-icon { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border-radius: var(--ovk-radius-sm); color: var(--ovk-accent); background: color-mix(in srgb, var(--ovk-accent) 12%, transparent); }
 .ovk-heading-icon > .ovk-i { width: 22px; height: 22px; }
+/* Icon tiles that fit their icon (4.285.0; the owner, 11-16: "the background border … customized so it fits the icon
+   better"; openvibe.design icons-fill-their-place): the glyph is 60 % of the tile and the corners 30 %; the tile is a
+   soft gradient of the icon's own colour with a hairline and a highlight inside it, never an outer border. The kit's own
+   title tile and kit.tile() share it. */
+.ovk-tile, .ovk-heading-icon { --ovk-t: 40px; --ovk-tone: var(--ovk-accent); display: inline-grid; place-items: center; flex: none; box-sizing: border-box; width: var(--ovk-t); height: var(--ovk-t); border: 0; border-radius: calc(var(--ovk-t) * .3); color: var(--ovk-tone);
+    background: radial-gradient(130% 130% at 28% 18%, color-mix(in srgb, var(--ovk-tone) 30%, transparent), color-mix(in srgb, var(--ovk-tone) 10%, transparent) 72%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovk-tone) 22%, transparent), inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent); }
+.ovk-tile > .ovk-i, .ovk-heading-icon > .ovk-i { display: block; width: calc(var(--ovk-t) * .6); height: calc(var(--ovk-t) * .6); vertical-align: 0; }
+.ovk-tile--ok { --ovk-tone: var(--ovk-ok); }
+.ovk-tile--warn { --ovk-tone: var(--ovk-warn); }
+.ovk-tile--bad { --ovk-tone: var(--ovk-bad); }
+.ovk-tile--muted { --ovk-tone: var(--ovk-muted); }
+:root[data-theme="light"] .ovk-tile, :root[data-theme="light"] .ovk-heading-icon { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovk-tone) 28%, transparent), inset 0 -1px 0 color-mix(in srgb, #000 6%, transparent); }
+/* Optical centres: a glyph whose weight sits to one side is nudged so it reads centred. */
+.ovk-tile[data-glyph="play"] > .ovk-i, .ovk-tile[data-glyph="send"] > .ovk-i { transform: translateX(calc(var(--ovk-t) * .03)); }
+.ovk-tile[data-glyph="arrow-right"] > .ovk-i, .ovk-tile[data-glyph="open"] > .ovk-i { transform: translateX(calc(var(--ovk-t) * .015)); }
+.ovk-tile[data-glyph="chip"] > .ovk-i, .ovk-tile[data-glyph="dot"] > .ovk-i { transform: scale(1.12); }
 .ovk-heading-icon.ovk-i { box-sizing: border-box; width: 40px; height: 40px; padding: 9px; vertical-align: middle; }
 .ovk-titled.ovk-titled { display: flex; align-items: center; gap: 10px; white-space: normal; overflow-wrap: anywhere; }
 .ovk-tabs { position: relative; display: flex; gap: 4px; margin: -6px -16px 0; padding: 6px 16px 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
@@ -629,7 +646,7 @@ html[data-ov-motion=off] .ovk-switch, html[data-ov-motion=off] .ovk-switch::afte
    title's line (1.15 × its size, in rem and vw so it means the same on every child). */
 .ovk-page-head-row { --ovk-page-line: calc(1.15 * clamp(1.45rem, 2.4vw + .7rem, 2.2rem)); display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
 .ovk-page-head-row > .ovk-heading-icon, .ovk-page-head-row > .ovk-page-actions { margin-top: calc(var(--ovk-page-line) / 2 - 22px); }
-.ovk-page-head-row > .ovk-heading-icon { flex-basis: 44px; width: 44px; height: 44px; border-radius: 13px;
+.ovk-page-head-row > .ovk-heading-icon { --ovk-t: 44px; flex-basis: 44px; width: 44px; height: 44px; border-radius: 13px;
     background: linear-gradient(150deg, color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent), color-mix(in srgb, var(--accent, #3b82f6) 9%, transparent));
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); }
 .ovk-page-head-row > .ovk-heading-icon > .ovk-i { width: 24px; height: 24px; }

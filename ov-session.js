@@ -58,6 +58,7 @@
     // ── glyphs (the registry's drawings; 24-unit strokes) ──
     const G = {
         list: '<path d="M4 6.5h16M4 12h16M4 17.5h10"/>',
+        sidebar: '<rect x="3" y="5.5" width="18" height="13" rx="1.6"/><rect class="ovse-sb-pane" x="4.7" y="7.2" width="4" height="9.6" rx=".7" fill="currentColor" stroke="none"/><path class="ovse-sb-line" d="M9.5 5.5v13"/>',
         back: '<path d="M20.8 12H4M10.3 5.7l-6.3 6.3l6.3 6.3"/>',
         more: '<circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/>',
         plus: '<path d="M12 5v14M5 12h14"/>',
@@ -455,6 +456,7 @@
         const wrap = el('div', 'ovse');
         const scrim = el('div', 'ovse-scrim');
         const drawer = el('aside', 'ovse-drawer'); drawer.setAttribute('aria-label', 'Your sessions');
+        drawer.id = `ovse-drawer-${Math.random().toString(36).slice(2, 9)}`;
         const dHead = el('div', 'ovse-dhead');
         const dNew = btn('ovse-new', 'New session', 'plus', 'New');
         const dClose = btn('ovse-ib ovse-dclose', 'Close', 'x');
@@ -487,7 +489,7 @@
 
         const main = el('section', 'ovse-main');
         const head = el('header', 'ovse-head');
-        const menuB = btn('ovse-ib ovse-menu', 'Your sessions', 'list');
+        const menuB = btn('ovse-ib ovse-menu', 'Your sessions', 'sidebar'); menuB.setAttribute('aria-controls', drawer.id);
         const backB = btn('ovse-ib ovse-up', 'Back to the session it helps', 'back'); backB.hidden = true;
         const faceSlot = el('span', 'ovse-face-slot');
         const who = el('div', 'ovse-who'); const titleN = el('b', 'ovse-title'); const statN = el('small', 'ovse-stat'); who.append(titleN, statN);
@@ -513,6 +515,7 @@
         host.textContent = ''; host.append(wrap);
 
         // A computer: the sessions are a column (≥ 900 px of room); a phone: a drawer over the session.
+        let lead = null;   // the navbar's slot when the surface sits on a page under the bar (takeLead, below)
         let wide = false;
         let collapsed = false; try { collapsed = localStorage.getItem('ov:session:drawer') === 'closed'; } catch { /* */ }
         const fit = () => {
@@ -520,7 +523,23 @@
             wide = w >= 900;
             wrap.classList.toggle('is-wide', wide);
             wrap.classList.toggle('is-drawer', wide ? !collapsed : state.drawer);
+            const open = wide ? !collapsed : !!state.drawer;
+            menuB.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (lead) lead.set({ expanded: open });
         };
+        // 4.285.0: where the surface sits decides where its sessions button goes (the owner, 11-16: "move to top left …
+        // it does have to be intelligent and aware, so that in this UI [the menu's Vibe] it still has a way to do the
+        // button nicely, versus when you're on the site itself"). On a site's page, under the navbar, the button is the
+        // navbar's own top-left slot and the row under the bar goes while nothing is open. In the menu, a sheet or a
+        // dialog the bar is covered, so the surface keeps its own button. o.navLead: true or false decides it instead.
+        const covered = () => !!host.closest('.ovs-panel, .ovs-vibe-body, .openvibe-navbar, dialog, [role="dialog"], [popover], .ovk-sheet, .ovse-sheet');
+        function takeLead(n) {
+            if (lead || o.navLead === false || !host.isConnected || (o.navLead !== true && covered())) return;
+            const N = root.OpenVibeNavbar;
+            if (!N || typeof N.lead !== 'function' || !N.getElement || !N.getElement()) { if (n < 40) setTimeout(() => takeLead(n + 1), 125); return; }
+            lead = N.lead({ icon: 'sidebar', label: 'Your sessions', controls: drawer.id, expanded: wide ? !collapsed : !!state.drawer, onClick: () => toggleDrawer() });
+            wrap.classList.add('has-nav-lead');
+        }
         const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(fit) : null;
         if (ro) ro.observe(wrap); else root.addEventListener('resize', fit);
         fit();
@@ -529,9 +548,11 @@
             else state.drawer = !!open;
             fit();
             if (open) { loadRuns(); if (!wide) setTimeout(() => { try { findIn.focus({ preventScroll: true }); } catch { /* */ } }, 180); }
-            else if (!wide) { try { menuB.focus({ preventScroll: true }); } catch { /* */ } }
+            else if (!wide) { try { (lead && document.getElementById('ovnav-lead') || menuB).focus({ preventScroll: true }); } catch { /* */ } }
         }
-        menuB.addEventListener('click', () => setDrawer(wide ? collapsed : !state.drawer));
+        const toggleDrawer = () => setDrawer(wide ? collapsed : !state.drawer);
+        menuB.addEventListener('click', toggleDrawer);
+        setTimeout(() => takeLead(0), 0);
         dClose.addEventListener('click', () => setDrawer(false));
         scrim.addEventListener('click', () => setDrawer(false));
         dNew.addEventListener('click', () => { blank(); if (!wide) setDrawer(false); });
@@ -1550,7 +1571,7 @@
             search(q) { const v = String(q || '').slice(0, 120); if (findIn.value !== v) findIn.value = v; clearTimeout(findT); findT = setTimeout(() => { state.q = v.trim(); loadRuns(); }, 250); if (!wide && v) setDrawer(true); },
             drawer: (v) => setDrawer(v === undefined ? true : !!v),
             get state() { return { ref: state.ref, run: state.run, steps: state.steps.size, wide, drawer: wide ? !collapsed : state.drawer }; },
-            destroy() { clearStream(); state.gen++; if (ro) ro.disconnect(); if (state.topMount && typeof state.topMount.destroy === 'function') { try { state.topMount.destroy(); } catch { /* */ } } host.textContent = ''; },
+            destroy() { clearStream(); state.gen++; if (ro) ro.disconnect(); if (lead) { try { lead.remove(); } catch { /* */ } lead = null; } if (state.topMount && typeof state.topMount.destroy === 'function') { try { state.topMount.destroy(); } catch { /* */ } } host.textContent = ''; },
         };
     }
 
@@ -1641,6 +1662,14 @@
 
 /* the session */
 .ovse-main { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-width: 0; min-height: 0; grid-row: 1; }
+.ovse.has-nav-lead .ovse-menu { display: none; }
+.ovse.has-nav-lead.is-blank .ovse-head { display: none; }
+.ovse-sb-pane { transform-box: fill-box; transform-origin: 0 50%; transform: scaleX(0); opacity: 0; transition: transform .34s cubic-bezier(.2, .9, .3, 1), opacity .22s ease; }
+.ovse-sb-line { transform-box: fill-box; transform: translateX(calc(-1.5px * var(--ov-move, 1))); transition: transform .34s cubic-bezier(.2, .9, .3, 1); }
+.ovse-menu[aria-expanded="true"] { color: var(--ovse-accent, var(--accent, #60a5fa)); }
+.ovse-menu[aria-expanded="true"] .ovse-sb-pane { transform: scaleX(1); opacity: .42; }
+.ovse-menu[aria-expanded="true"] .ovse-sb-line { transform: none; }
+html[data-ov-motion="off"] .ovse-sb-pane, html[data-ov-motion="off"] .ovse-sb-line { transition: none; }
 .ovse-head { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 8px 8px 6px; padding-top: max(8px, env(safe-area-inset-top, 0px)); border-bottom: 1px solid var(--ovse-line); }
 .ovse-who { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .ovse-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15.5px; }

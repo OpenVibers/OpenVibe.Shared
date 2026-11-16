@@ -424,16 +424,17 @@
 .ovf-fold-n{display:none}
 .ovf-col a{color:var(--text-secondary,#b6bdd2);font-size:.86rem;text-decoration:none;line-height:1.4;width:fit-content;transition:color .15s,transform .15s}
 .ovf-col a:hover{color:var(--accent,#60a5fa);transform:translateX(2px)}
-@media (pointer:coarse){.ovf-col a{display:inline-flex;align-items:center;min-height:44px}.ovf-col .ovf-social a{width:44px;height:44px}.ovf-legal-inline a,.ovf-compact-links a{position:relative}.ovf-legal-inline a::after,.ovf-compact-links a::after{content:'';position:absolute;left:-5px;right:-5px;top:-15px;bottom:-15px}}
-.ovf-more{font-weight:600;opacity:.85}.ovf-ic{flex:none;vertical-align:-.14em}.ovf-more .ovf-ic{font-size:.85em;margin-left:3px;transition:transform .15s}.ovf-more:hover .ovf-ic{transform:translateX(3px)}.ovf-social .ovf-ic{font-size:17px}.ovf-account-links .ovf-ic{font-size:1.05em;opacity:.85}
+@media (pointer:coarse){.ovf-col a{display:inline-flex;align-items:center;min-height:44px}.ovf-col .ovf-social a{--t:44px}.ovf-legal-inline a,.ovf-compact-links a{position:relative}.ovf-legal-inline a::after,.ovf-compact-links a::after{content:'';position:absolute;left:-5px;right:-5px;top:-15px;bottom:-15px}}
+.ovf-more{font-weight:600;opacity:.85}.ovf-ic{flex:none;vertical-align:-.14em}.ovf-more .ovf-ic{width:1.1em;height:1.1em;font-size:1em;margin-left:4px;transition:transform .15s}.ovf-more:hover .ovf-ic{transform:translateX(3px)}.ovf-social .ovf-ic{font-size:17px}.ovf-account-links .ovf-ic{font-size:1.05em;opacity:.85}
 .ovf-brand{position:relative;display:inline-flex;align-items:center;gap:9px;color:var(--text-primary,#f1f4fb);font-family:'OV Brand',Nunito,Inter,-apple-system,BlinkMacSystemFont,sans-serif;font-size:1.12rem;font-weight:800;letter-spacing:-.1px;text-decoration:none}
 .ovf-brand--sm{font-size:.9rem}
 .ovf-brand::after{content:'';position:absolute;inset:-6px 0}
 .ovf-tagline{margin:0;font-size:.82rem;line-height:1.55;color:var(--text-muted,#8b93ad);max-width:46ch}
 .ovf-social{display:flex;gap:8px;margin-top:4px}
-.ovf-social a{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--text-secondary,#b6bdd2);
-  background:var(--bg-tertiary,#1a1b28);border:1px solid var(--border,rgba(255,255,255,.08));font-size:.95rem;transition:color .15s,border-color .15s,transform .15s}
-.ovf-social a:hover{color:var(--accent,#60a5fa);border-color:var(--accent,#60a5fa);transform:translateY(-2px)}
+.ovf-social a{--t:40px;width:var(--t);height:var(--t);border-radius:calc(var(--t) * .3);display:grid;place-items:center;color:var(--text-secondary,#b6bdd2);
+  background:radial-gradient(130% 130% at 28% 18%,color-mix(in srgb,var(--text-secondary,#b6bdd2) 16%,transparent),color-mix(in srgb,var(--text-secondary,#b6bdd2) 6%,transparent) 72%);border:0;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--text-secondary,#b6bdd2) 16%,transparent),inset 0 1px 0 color-mix(in srgb,#fff 10%,transparent);transition:color .15s,box-shadow .15s,transform .15s}
+.ovf-social a svg,.ovf-social a .ovf-ic,.ovf-social a i{display:block;width:calc(var(--t) * .58);height:calc(var(--t) * .58);font-size:calc(var(--t) * .58)}
+.ovf-social a:hover{color:var(--accent,#60a5fa);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent,#60a5fa) 55%,transparent),inset 0 1px 0 color-mix(in srgb,#fff 12%,transparent);transform:translateY(-2px)}
 .ovf-account{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 18px;
   margin-top:clamp(18px,2.5vw,26px);padding:10px 14px;border-radius:14px;
   background:color-mix(in srgb, var(--accent,#60a5fa) 8%, var(--bg-tertiary,#1a1b28));
