@@ -441,11 +441,28 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
    greeting's; no band, no border. */
 .ovs-door-host .ovdk-thread-h { min-height: 40px; padding: 2px 12px 2px 6px; gap: 4px; border-bottom: 0; }
 .ovs-door-host .ovdk-thread-h > .ovdk-ib, .ovs-door-host .ovdk-vibe-h .ovdk-vibe-mark, .ovs-door-host .ovdk-vibe-name small { display: none; }
-.ovs-door-host .ovdk-thread-h .ovdk-back, .ovs-door-host .ovdk-vibe-h .ovdk-vibe-back { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
+.ovs-door-host .ovdk-thread-h .ovdk-back:not(.is-pill), .ovs-door-host .ovdk-vibe-h .ovdk-vibe-back { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
+/* The thread's back is a pill with its word (4.260.0): it keeps its width, so "Chats" never runs over the name (4.284.0, the owner 11-16). */
+.ovs-door-host .ovdk-thread-h .ovdk-back.is-pill { flex: none; width: auto; height: 36px; min-height: 36px; padding: 0 12px 0 4px; }
+.ovs-door-host .ovdk-thread-h > b { flex: 1 1 auto; min-width: 0; }
 .ovs-door-host .ovdk-thread-h b, .ovs-door-host .ovdk-vibe-name b { font-size: 14px; font-weight: 700; color: var(--text-secondary, #b4c0d4); }
 .ovs-door-host .ovdk-vibe-start { padding-top: 2px; }
 
 .ovs-act { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
+/* The place's own site, on every tab (4.284.0): a new place's link first wears that tab's glyph, then turns into the arrow,
+   and a ring goes round it once, so a person sees the link changed with the tab. Calm moves less; Off shows the arrow. */
+.ovs-place { position: relative; overflow: hidden; text-decoration: none; }
+.ovs-place > span { position: absolute; inset: 0; display: grid; place-items: center; }
+.ovs-place > span > svg, .ovs-place > span > img { width: 19px; height: 19px; border-radius: 50%; object-fit: cover; }
+.ovs-place .ovs-place-from { opacity: 0; }
+.ovs-place.is-turn { animation: ovs-place-ring 1.5s ease-out both; }
+.ovs-place.is-turn .ovs-place-from { animation: ovs-place-out .55s cubic-bezier(.4, 0, .2, 1) .45s both; }
+.ovs-place.is-turn .ovs-place-to { animation: ovs-place-in .5s cubic-bezier(.2, .8, .2, 1) .8s both; }
+@keyframes ovs-place-out { 0% { opacity: 1; transform: none; } 100% { opacity: 0; transform: scale(.35) rotate(-40deg) translateY(calc(5px * var(--ov-move, 1))); } }
+@keyframes ovs-place-in { 0% { opacity: 0; transform: scale(.35) rotate(40deg) translate(calc(-5px * var(--ov-move, 1)), calc(5px * var(--ov-move, 1))); } 100% { opacity: 1; transform: none; } }
+@keyframes ovs-place-ring { 0%, 40% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); } 100% { box-shadow: 0 0 0 12px transparent; } }
+html[data-ov-motion=off] .ovs-place.is-turn, html[data-ov-motion=off] .ovs-place.is-turn > span { animation: none; }
+html[data-ov-motion=off] .ovs-place .ovs-place-from { display: none; }
 .ovs-act svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
 .ovs-act:hover, .ovs-act:focus-visible { background: var(--hover-bg, rgba(127,127,127,.14)); color: var(--text-primary, #ececf1); }
 .ovs-act.is-new { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
@@ -1809,20 +1826,54 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     // they cost no row (asks 335, 336: "an icon plus button that looks nice and integrated", "open in Chat … a button
     // icon"). The Dock's panel draws them in its slim row; inside the menu that row is hidden and mirrored here, and
     // each mirror presses the panel's own button (an address opens from the person's own tap).
+    // The place's own site, on every tab (the owner, 11-16: "when you're on chat it doesn't have a link to chat … the feed
+    // should bring you to the feed … one for the You as well … whatever makes the most sense"): Vibe → Actor, Chat → Chat,
+    // Feed → the one feed's own page (Community's /pulse, the same feed), You → your page on OpenVibe.my. The site's own
+    // tab has none: you are there.
+    const PLACE = {
+        vibe: ['https://openvibe.actor/chat', 'Open OpenVibe.Actor'],
+        chats: ['https://openvibe.chat/', 'Open OpenVibe.Chat'],
+        feed: ['https://openvibe.community/pulse', 'Open the feed on its own page'],
+        you: ['https://openvibe.my/', 'Open your page on OpenVibe.my'],
+    };
+    const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.8h6.3v6.3M20.2 3.8l-9.4 9.4M18.2 14.2v4.3a1.7 1.7 0 0 1-1.7 1.7H5.5a1.7 1.7 0 0 1-1.7-1.7v-11a1.7 1.7 0 0 1 1.7-1.7h4.3"/></svg>';
+    let placeShown = '';
+    function placeLink() {
+        const key = door || tab;
+        const p = PLACE[key];
+        if (!p || !actsEl) return;
+        const a = document.createElement('a'); a.className = 'ovs-act ovs-place'; a.target = '_blank'; a.rel = 'noopener';
+        a.href = p[0]; a.setAttribute('aria-label', p[1]); a.title = p[1];
+        const to = document.createElement('span'); to.className = 'ovs-place-to'; to.innerHTML = ARROW;
+        a.appendChild(to);
+        // A new place: its tab's own glyph first, then the arrow (the old link is gone; this one is new).
+        if (placeShown !== key) {
+            const glyph = tabsEl && tabsEl.querySelector(`.ovs-tab[data-tab="${key}"] .ovs-tab-ic`);
+            if (glyph) {
+                const from = document.createElement('span'); from.className = 'ovs-place-from'; from.setAttribute('aria-hidden', 'true');
+                from.innerHTML = glyph.innerHTML;
+                from.querySelectorAll('.ovs-tab-on, b, i').forEach((x) => x.remove());
+                a.insertBefore(from, to);
+                a.classList.add('is-turn');
+                a.addEventListener('animationend', (e) => { if (e.target === a) { a.classList.remove('is-turn'); from.remove(); } });
+            }
+            placeShown = key;
+        }
+        actsEl.appendChild(a);
+    }
+
     function mirrorActs() {
         actsTick = 0;
         if (!actsEl) return;
+        // The link already showing for this place stays as it is (a list redrawn under it must not restart its turn).
+        const kept = actsEl.querySelector('.ovs-place');
         actsEl.textContent = '';
-        if (!door || !doorHost) return;
+        const keep = () => { if (kept && placeShown === (door || tab) && kept.getAttribute('href') === (PLACE[door || tab] || [])[0]) actsEl.appendChild(kept); else placeLink(); };
+        if (!door || !doorHost) { keep(); return; }
         // A list's actions and an open conversation's (+ for a new chat, ↗ to open it in Chat): one head, the menu's (4.220.0).
         if (door === 'vibe') {
-            // 4.260.0 (the owner, 11-15: an open icon "to Actor … see all the features and how to use it"): the field's ↗
-            // opens Actor's own site, as Chat's opens openvibe.chat.
-            const a = document.createElement('a'); a.className = 'ovs-act'; a.target = '_blank'; a.rel = 'noopener';
-            a.href = 'https://openvibe.actor/chat';
-            const label = 'Open OpenVibe.Actor'; a.setAttribute('aria-label', label); a.title = label;
-            a.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.8h6.3v6.3M20.2 3.8l-9.4 9.4M18.2 14.2v4.2a2.1 2.1 0 0 1-2.1 2.1H5.6a2.1 2.1 0 0 1-2.1-2.1V7.9a2.1 2.1 0 0 1 2.1-2.1h4.2"/></svg>';
-            actsEl.appendChild(a);
+            // 4.260.0 (the owner, 11-15: an open icon "to Actor … see all the features and how to use it"): Actor's own site.
+            keep();
             return;
         }
         doorHost.querySelectorAll('.ovdk-bar > .ovdk-ib, .ovdk-thread-h > .ovdk-ib').forEach((orig) => {
@@ -1833,6 +1884,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             b.addEventListener('click', (e) => { e.stopPropagation(); orig.click(); });
             actsEl.appendChild(b);
         });
+        // An open conversation's own ↗ (to it in Chat) is mirrored above: the place's link would say the same twice.
+        if (!doorHost.querySelector('.ovdk-thread-h > a.ovdk-ib[href*="openvibe.chat"]')) keep();
     }
     function watchActs(on) {
         if (actsObs) { actsObs.disconnect(); actsObs = null; }
@@ -1945,6 +1998,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
 
     function paintTabs() {
         hintsMoved();
+        // The place's link follows the tab (4.284.0): after this paint, so a new place's link can wear its tab's glyph.
+        try { requestAnimationFrame(() => { try { mirrorActs(); } catch { /* */ } }); } catch { /* */ }
         tabsEl.hidden = false;
         tabsEl.setAttribute('role', 'tablist');
         tabsEl.setAttribute('aria-label', 'Menu');
