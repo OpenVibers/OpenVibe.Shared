@@ -99,6 +99,16 @@ const GHOST = `(() => { const g = document.querySelector('#q + .ovt-ghost'); con
         for (let i = 0; i < 40 && beacons.length === before; i++) await new Promise((ok) => setTimeout(ok, 50));
         assert.deepStrictEqual([await p.evaluate("document.getElementById('q').value"), beacons.length - before, beacons[beacons.length - 1].body.q, await p.evaluate("!!document.querySelector('.ovt-chips')")],
             ['drum machines', 1, 'drum machines', false], 'a chip fills the box, searches and closes');
+        // Typing a question: Deep dive this, to Exchange's general deep dive of it (4.279.0); Arrow Down reaches it.
+        await p.evaluate("(() => { const q = document.getElementById('q'); q.focus(); q.value = 'are heat pumps worth it'; q.dispatchEvent(new Event('input', { bubbles: true })); return true; })()");
+        const dive = await p.evaluate("(() => { const a = document.querySelector('.ovt-chips .ovt-dive'); return a ? { href: a.getAttribute('href'), text: a.querySelector('span').textContent } : null; })()");
+        assert.deepStrictEqual(dive, { href: 'https://openvibe.exchange/deep-dive?q=are%20heat%20pumps%20worth%20it', text: 'Deep dive \u201care heat pumps worth it\u201d' }, JSON.stringify(dive));
+        await p.evaluate("(() => { document.getElementById('q').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true })); return true; })()");
+        assert.match(await p.evaluate('document.activeElement.className'), /ovt-dive/, 'Arrow Down: the deep dive link');
+        await p.evaluate("(() => { document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); return true; })()");
+        assert.deepStrictEqual(await p.evaluate("[!!document.querySelector('.ovt-dive'), document.activeElement.id]"), [false, 'q'], 'Escape: closed, back in the box');
+        await p.evaluate("(() => { const q = document.getElementById('q'); q.value = 'ab'; q.dispatchEvent(new Event('input', { bubbles: true })); return true; })()");
+        assert.strictEqual(await p.evaluate("!!document.querySelector('.ovt-dive')"), false, 'two letters are not a question yet');
         // Cleared: the line comes back.
         await p.evaluate("(() => { const q = document.getElementById('q'); q.value = ''; q.dispatchEvent(new Event('input', { bubbles: true })); return true; })()");
         s = await p.evaluate(GHOST);
