@@ -1,7 +1,7 @@
 'use strict';
 // The menu's Alerts round trip (plan §AB.32; the owner, 11-14: Alerts tab → another tab → back to Alerts and the list
 // cannot scroll). In a real headless Chrome at 390 × 844, signed in, with 40 notifications, by finger (touch events): the
-// list scrolls on the first visit, after Apps, History and Feed and back, and on the list's own Deals & alerts tab after
+// list scrolls on the first visit, after Apps, History and Feed and back, and on the list's own Deals tab after
 // Mentions or All and back. (It did not reproduce on 4.248.0 either; this keeps every round trip honest.) Skipped
 // without Chrome.
 const assert = require('assert');
@@ -106,17 +106,17 @@ const server = http.createServer((req, res) => {
             await p.evaluate("document.querySelector('.ovh-tab[data-tab=\"notifications\"]').click(), true");
         }
         await scrolls(p, 'after Feed and back');
-        // The list's own tabs (the owner's "Alerts tab" is Deals & alerts): Alerts, another tab, Alerts again.
+        // The list's own tabs (the owner's "Alerts tab" is Deals): Alerts, another tab, Alerts again.
         const inner = (id) => p.evaluate(`document.querySelector('.ovs.is-open .openvibe-nv-tabs [data-tab="${id}"]').click(), true`);
         assert.ok(await until(p, "!!document.querySelector('.ovs.is-open .openvibe-nv-tabs [data-tab=\"alerts\"]')"), 'the list has its tabs');
         await inner('alerts'); await wait(500);
-        await scrolls(p, 'on Deals & alerts');
+        await scrolls(p, 'on Deals');
         await inner('mentions'); await wait(500);
         await inner('alerts'); await wait(500);
-        await scrolls(p, 'Deals & alerts after Mentions and back');
+        await scrolls(p, 'Deals after People and back');
         await inner('all'); await wait(500);
         await inner('alerts'); await wait(500);
-        await scrolls(p, 'Deals & alerts after All and back');
+        await scrolls(p, 'Deals after All and back');
         console.log('menu-alerts-scroll-chrome: ok');
     } finally { await browser.close(); server.close(); }
 })().catch((e) => { console.error(e); process.exit(1); });
