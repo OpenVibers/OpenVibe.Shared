@@ -1713,7 +1713,10 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         let panel = form.querySelector('.ovc-tools');
         if (panel) { panel.hidden = !panel.hidden; if (!panel.hidden) { const f = panel.querySelector('input,textarea'); if (f) f.focus(); } return; }
         styles();
-        const base = String(form.getAttribute('data-ovc-tools') || root.OV_TOOLS_URL || 'https://openvibe.tools').replace(/\/+$/, '');
+        // 4.284.0 (11-16, "Failed to fetch" on openvibe.live): through the Frame by default, which every site's CSP
+        // allows (openvibe.network/api/frame/tools/… → the Tools gateway); a page that names Tools itself asks it direct.
+        const own = form.getAttribute('data-ovc-tools') || root.OV_TOOLS_URL;
+        const base = own ? `${String(own).replace(/\/+$/, '')}/api/v1` : FRAME;
         panel = el('div', 'ovc-repo ovc-tools'); panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Run an OpenVibe tool');
         const head = el('div', 'ovc-tools-head');
         const back = el('button', 'ovc-tools-back'); back.type = 'button'; back.setAttribute('aria-label', 'Back to the tools'); back.innerHTML = svg('M15 5l-7 7 7 7'); back.hidden = true;
@@ -1753,7 +1756,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             const popular = async () => {
                 try {
                     const hit = TOOLS_CACHE.get('');
-                    const tools = hit && Date.now() - hit.at < 600000 ? hit.items : ((await get('/api/v1/tools/popular')).tools || []);
+                    const tools = hit && Date.now() - hit.at < 600000 ? hit.items : ((await get('/tools/popular')).tools || []);
                     TOOLS_CACHE.set('', { at: Date.now(), items: tools });
                     if (!field.value.trim()) { draw(tools); say2(tools.length ? 'Most used this week. What you wrote goes into the tool; its answer comes back here.' : ''); }
                 } catch { say2('What you wrote goes into the tool; its answer comes back here.'); }
@@ -1767,7 +1770,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 if (hit && Date.now() - hit.at < 600000) { draw(hit.items); return; }
                 if (!list.children.length) say2('Searching…');
                 try {
-                    const j = await get(`/api/v1/tools?api=true&q=${encodeURIComponent(q)}`);
+                    const j = await get(`/tools?api=true&q=${encodeURIComponent(q)}`);
                     if (my !== gen) return;
                     const items = (j.tools || []).filter((t) => t.status !== 'unavailable' && !t.files && t.auth && t.auth.anonymous);
                     TOOLS_CACHE.set(key, { at: Date.now(), items });
@@ -1795,7 +1798,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             back.hidden = false; title.textContent = String(t.name || t.id);
             body.textContent = ''; say2('Loading…');
             let d, schema;
-            try { [d, schema] = await Promise.all([get(`/api/v1/tools/${encodeURIComponent(t.id)}`), get(`/api/v1/tools/${encodeURIComponent(t.id)}/schema`)]); }
+            try { [d, schema] = await Promise.all([get(`/tools/${encodeURIComponent(t.id)}`), get(`/tools/${encodeURIComponent(t.id)}/schema`)]); }
             catch (err) { say2((err && err.message) || 'That tool did not load'); return; }
             if (!d.api || d.files || !(d.auth && d.auth.anonymous)) { say2(d.files ? 'This tool takes a file: open it on its page.' : 'This tool needs a sign-in: open it on its page.'); body.appendChild(pageLink(d)); return; }
             const input = (schema && schema.$defs && schema.$defs.input) || { properties: {} };
@@ -1850,7 +1853,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 if (missing.length) { say2(`Fill in ${missing.map((k) => (props[k] && props[k].title) || human(k)).join(', ')}.`); return; }
                 go.disabled = true; go.textContent = 'Running…'; say2('');
                 try {
-                    const r = await fetch(`${base}/api/v1/tools/${encodeURIComponent(d.id)}/run`, { method: 'POST', credentials: 'omit', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ input: value, wait_ms: 20000 }) });
+                    const r = await fetch(`${base}/tools/${encodeURIComponent(d.id)}/run`, { method: 'POST', credentials: 'omit', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ input: value, wait_ms: 20000 }) });
                     const j = await r.json().catch(() => null);
                     go.disabled = false; go.textContent = 'Run';
                     if (j && j.state === 'succeeded') { answer(d, toolAnswer(j.result)); return; }
