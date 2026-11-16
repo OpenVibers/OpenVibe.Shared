@@ -7,7 +7,8 @@
 // - a page that sets new words (a menu changing tabs): the line reads its list again and the words stay out;
 // - a box redrawn under its line (the old one removed): the old line goes with it;
 // - the box says the line owns it (data-ovt-on), so ov-composer's own examples stand down;
-// - the line starts where typing starts, never centred, in the box's typing font (bolder than a placeholder).
+// - the line starts where typing starts, never centred, in the box's typing font (bolder than a placeholder), and
+//   follows the box when the box moves without resizing.
 const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
@@ -60,6 +61,17 @@ const STATE = `(() => { const i = document.getElementById('q'); const gs = [...d
         const look = await p.evaluate(`(() => { const g = [...document.querySelectorAll('.ovt-ghost')].find((x) => !x.hidden); const c = getComputedStyle(g);
             const i = getComputedStyle(document.getElementById('q')); return { size: c.fontSize, box: i.fontSize, weight: c.fontWeight, opacity: c.opacity }; })()`);
         assert.deepStrictEqual(look, { size: '16px', box: '16px', weight: '400', opacity: '0.62' }, 'the typing font, at 62%');
+
+        // The box moves 30 px inside its container without resizing (what CI's Chrome and the owner's phone did to the
+        // menu: something beside it arrived after the line was placed): the line follows within a moment.
+        const startOf = `(() => { const i = document.getElementById('q'); const c = getComputedStyle(i); return Math.round(i.getBoundingClientRect().left + parseFloat(c.paddingLeft) + parseFloat(c.borderLeftWidth)); })()`;
+        const lineAt = `(() => { const g = [...document.querySelectorAll('.ovt-ghost')].find((x) => !x.hidden); const t = g && g.querySelector('.ovt-term'); if (!t) return null; const r = document.createRange(); r.selectNodeContents(t); return Math.round(r.getBoundingClientRect().left); })()`;
+        await p.evaluate("(() => { const w = document.getElementById('wrap'); w.style.display = 'flex'; const i = document.getElementById('q'); i.style.width = '300px'; i.style.flex = 'none'; const s = document.createElement('span'); s.id = 'pusher'; s.style.cssText = 'display:block;flex:none;width:0;height:1px'; i.before(s); return 1; })()");
+        await pause(900);   // the page settles with the empty neighbour; then it grows, as a picture does when it loads
+        await p.evaluate("document.getElementById('pusher').style.width = '30px', 1");
+        await until(p, `Math.abs(${lineAt} - ${startOf}) <= 1`, 1500);
+        assert.ok(Math.abs((await p.evaluate(lineAt)) - (await p.evaluate(startOf))) <= 1, 'the line follows its box when the box moves');
+        await p.evaluate("(() => { document.getElementById('pusher').remove(); const i = document.getElementById('q'); i.style.width = ''; i.style.flex = ''; document.getElementById('wrap').style.display = ''; return 1; })()");
 
         // A composer fitting its words to the box puts the same words back: out again before the next frame.
         const after = await p.evaluate(`new Promise((ok) => { const i = document.getElementById('q'); i.setAttribute('placeholder', 'Search the feed');

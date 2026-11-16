@@ -165,6 +165,8 @@
         if (!cb || (cb === document.body && getComputedStyle(cb).position === 'static')) { ox = -root.scrollX; oy = -root.scrollY; }
         else { const c = cb.getBoundingClientRect(); ox = c.left + cb.clientLeft - cb.scrollLeft; oy = c.top + cb.clientTop - cb.scrollTop; }
         const r = input.getBoundingClientRect();
+        // Where the box was when its line was placed: follow() places the line again when the box has moved since.
+        b.at = { x: r.left, y: r.top, w: r.width, h: r.height, pl };
         g.style.left = `${r.left - ox + input.clientLeft + pl}px`;
         g.style.top = `${r.top - oy + input.clientTop + pt}px`;
         g.style.width = `${w}px`;
@@ -208,6 +210,7 @@
         if (now && now !== b.placeholder) { b.placeholder = now; if (b.labelled) input.setAttribute('aria-label', now); }
         if (input.getAttribute('placeholder')) input.setAttribute('placeholder', '');
         b.ghost.hidden = false;
+        followSoon();
         input.setAttribute('data-ovt-on', '');   // ov-composer's own examples stand down while the line owns the box
         if (!b.line.textContent) fill(b.line, items[b.i % items.length], b);
     }
@@ -486,6 +489,33 @@
     function scan() { document.querySelectorAll(CANDIDATES).forEach((i) => { if (!boxes.has(i) && siteSearch(i)) attach(i); }); }
     let placing = 0;
     const replace = () => { if (placing) return; placing = requestAnimationFrame(() => { placing = 0; boxes.forEach((b, i) => { if (!b.ghost.hidden) show(i); }); }); };
+    /**
+     * A box that moves without resizing or animating (a picture loading beside it, a neighbour appearing, fonts arriving)
+     * takes its line along (4.286.0: on CI's Chrome and the owner's phone the menu's line sat 30 px right of its words, the
+     * width of what moved after it was placed). A few times a second, while a line shows, each box is measured; one that
+     * moved has its line placed again. Nothing runs while no line shows or the page is hidden.
+     */
+    var following = 0;   // var: show() may run before this line does
+    function follow() {
+        if (document.hidden) return;
+        let any = false;
+        boxes.forEach((b, input) => {
+            if (b.ghost.hidden || !input.isConnected) return;
+            any = true;
+            // Where the line is against where it belongs: its container can move under it while the box stays put (on CI
+            // the field moved 30 px right as the box inside it moved 30 px left), so the line itself is measured.
+            const r = input.getBoundingClientRect();
+            const cs = getComputedStyle(input);
+            const wantX = r.left + input.clientLeft + (parseFloat(cs.paddingLeft) || 0);
+            const wantY = r.top + input.clientTop + (parseFloat(cs.paddingTop) || 0);
+            const g = b.ghost.getBoundingClientRect();
+            const a = b.at;
+            if (!a || Math.abs(g.left - wantX) > 0.5 || Math.abs(g.top - wantY) > 0.5 || Math.abs(a.w - r.width) > 0.5 || Math.abs(a.h - r.height) > 0.5) show(input);
+        });
+        if (!any) { clearInterval(following); following = 0; }
+    }
+    function followSoon() { if (!following) following = setInterval(follow, 250); }
+
     function start() {
         scan();
         let soon = 0;
