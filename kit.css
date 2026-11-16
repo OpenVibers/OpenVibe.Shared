@@ -139,6 +139,11 @@ html[data-ov-motion=off] .ovk-btn--primary, html[data-ov-motion=off] .ovk-btn--p
         background-color var(--ov-dur-1, .12s), border-color var(--ov-dur-1, .12s), color var(--ov-dur-1, .12s), filter var(--ov-dur-1, .12s); }
 .ovk-btn:hover:not([disabled]):not([aria-disabled="true"]) { transform: translateY(calc(-1px * var(--ov-move, 1))); box-shadow: 0 8px 18px -12px rgba(0, 0, 0, .6); }
 .ovk-btn:active:not([disabled]), .ovk-icon-btn:active:not([disabled]) { transform: scale(calc(1 - .03 * var(--ov-move, 1))); box-shadow: none; transition-duration: .06s; }
+/* One size an icon a place (4.284.0; the owner, 11-16: "tiny icons … way more bigger and edge to edge … consistent";
+   openvibe.design rule icons-fill-their-place): 20 px in a button, 18 in a small one, 22 in a 40 px icon button. */
+.ovk-btn .ovk-i { width: 20px; height: 20px; vertical-align: middle; }
+.ovk-btn--small .ovk-i { width: 18px; height: 18px; }
+.ovk-icon-btn .ovk-i { width: 22px; height: 22px; }
 .ovk-btn .ovk-i, .ovk-icon-btn .ovk-i { transition: transform var(--ov-dur-2, .2s) var(--ov-ease-spring, var(--ov-ease-out, ease)); }
 /* The icon moves the way the button does (data-nudge): forward slides on, add turns, open lifts, down drops, refresh turns. */
 .ovk-btn[data-nudge="forward"]:hover .ovk-i:last-child, .ovk-icon-btn[data-nudge="forward"]:hover .ovk-i { transform: translateX(calc(3px * var(--ov-move, 1))); }

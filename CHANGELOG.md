@@ -57,8 +57,13 @@ openvibe.chat". The name field rises above it. With no server yet, the field lea
 **Tools in the composer** go through the Frame (`openvibe.network/api/frame/tools`, Network #1032). It was "Failed to
 fetch" on sites whose CSP did not allow openvibe.tools.
 
-**Icons in buttons.** A plain 20 px glyph, never a ring mark at 18 px (whose glyph drew at 9). A glyph inside a row's
-tile has no ring of its own. The owner: "tiny icons … way more bigger and edge to edge … consistent".
+**Icons in buttons.** One size for each place:
+- 20 px in a button (the showcase's and the kit's);
+- 18 px in a small button;
+- 22 px in a 40 px icon button.
+
+A button carries the plain glyph, never a ring mark at 18 px (whose glyph drew at 9). A glyph inside a row's tile has no
+ring of its own. The owner: "tiny icons … way more bigger and edge to edge … consistent".
 
 ## 4.283.0 — 2026-11-16
 
