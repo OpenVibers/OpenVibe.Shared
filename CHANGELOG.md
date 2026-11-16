@@ -2,6 +2,22 @@
 
 ## 4.285.0 — 2026-11-16
 
+- **The sessions button goes where it belongs** (the owner, 11-16, a screenshot of openvibe.codes: "move to top left";
+  then, of the menu's Vibe: "it does have to be intelligent and aware … in this UI it still has a way to do the button
+  nicely, versus when you're on the site itself").
+  - On a site's page, under the navbar, `ov-session.js` hands its sessions button to the navbar's top-left slot
+    (`OpenVibeNavbar.lead`), and the row under the bar goes while nothing is open.
+  - In the menu, a sheet or a dialog the bar is covered, so the surface keeps its own button. `navLead: true | false`
+    decides it instead.
+  - Both draw the sidebar glyph, whose pane fills in when the sessions are open.
+  - Test: `test/session-nav-lead-chrome.test.js` (the page, the menu, a computer).
+- **Navbar slots update in place and move** (the owner: "improve the system so it has better animations and effects …
+  more modular and powerful").
+  - A site's lead and action buttons are no longer drawn again on every change. A change updates the button where it
+    stands, so its transitions run and focus stays on it.
+  - The sidebar icon animates its open state, a badge pops when its count changes, and a press settles.
+  - Calm shortens the distances; Off stops them.
+
 **Icon tiles that fit their icon.** The owner: "the background border … needs to be customized so it fits the icon
 better", and "tiny icons … this can't happen anymore on any site".
 - **`kit.tile(name, { size, tone, hue })` and the kit's title tile:**
