@@ -41,7 +41,7 @@ const STATE = (id) => `(() => { const i = document.getElementById(${JSON.stringi
     const line = g && !g.hidden ? g.querySelector('.ovt-line:last-child') : null;
     const b = i.getBoundingClientRect(), cs = getComputedStyle(i);
     return { ghost: !!g && !g.hidden, text: line ? line.textContent : '', placeholder: i.getAttribute('placeholder'),
-        h: g ? Math.round(parseFloat(g.style.height)) : 0, top: g && !g.hidden ? Math.round(g.getBoundingClientRect().top - (b.top + i.clientTop + parseFloat(cs.paddingTop))) : null }; })()`;
+        h: g ? Math.round(parseFloat(g.style.height)) : 0, top: g && !g.hidden ? Math.round(g.getBoundingClientRect().top - (b.top + parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop))) : null }; })()`;
 
 (async () => {
     await new Promise((ok) => server.listen(0, '127.0.0.1', ok));

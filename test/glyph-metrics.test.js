@@ -36,8 +36,12 @@ const DATA = glyphs.NAMES.map((name) => ({ name, line: glyphs.path(name), solid:
                 img.onload = () => { const c = document.createElement('canvas'); c.width = c.height = 240; const x = c.getContext('2d'); x.drawImage(img, 0, 0); const p = x.getImageData(0, 0, 240, 240).data; let ink = 0, x0 = 240, y0 = 240, x1 = -1, y1 = -1; for (let k = 0; k < p.length; k += 4) if (p[k + 3]) { ink++; const i = k / 4, px = i % 240, py = Math.floor(i / 240); x0 = Math.min(x0, px); y0 = Math.min(y0, py); x1 = Math.max(x1, px); y1 = Math.max(y1, py); } resolve({ ink, box: ink ? [x0 / 10, y0 / 10, (x1 - x0 + 1) / 10, (y1 - y0 + 1) / 10] : [0, 0, 0, 0] }); };
                 img.onerror = () => resolve({ ink: 0, box: [0, 0, 0, 0] });
             });
-            const lineRaster = await raster(line, ' fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"');
-            const solidRaster = solid ? await raster('<style>.ln{fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}</style>' + solid, ' fill="#000" stroke="none"') : { ink: 0 };
+            // A blank raster of a glyph that has ink is a decode lost under hundreds of parallel images (macOS CI, 4.286):
+            // drawn again, up to twice, before it counts.
+            const once = raster;
+            const again = async (inside, style) => { let r = await once(inside, style); for (let k = 0; k < 2 && !r.ink; k++) r = await once(inside, style); return r; };
+            const lineRaster = await again(line, ' fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"');
+            const solidRaster = solid ? await again('<style>.ln{fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}</style>' + solid, ' fill="#000" stroke="none"') : { ink: 0 };
             return { name, box: lineRaster.box, solidBox: solidRaster.box, lineInk: lineRaster.ink };
         })); })()`, 60000);
         const measured = results;

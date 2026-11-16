@@ -104,6 +104,7 @@
     let view = 'suggest', rtabsEl = null, rq = '', rtab = 'all', rflight = null, moved = false;
     // A place of the Dock shown inside the menu (a phone, 312 step 2): which one, its mount, and AI's part.
     let door = null, doorEl = null, doorHost = null, doorMount = null, runView = null, runFilter = 'all';
+    let youTab = 'apps';   // which of You's parts shows (homeView); the place link follows it (placeKey)
     let actsEl = null, actsObs = null, actsTick = 0;
 
     const safeUrl = (u) => { try { const x = new URL(u, location.href); return x.protocol === 'https:' || x.origin === location.origin ? x.href : null; } catch { return null; } };
@@ -269,7 +270,11 @@
 .ovs-bar > svg { width: 18px; height: 18px; flex: none; color: var(--text-muted, #93a0b4); }
 .ovs-field { position: relative; flex: 1; min-width: 0; display: flex; }
 .ovs-input, .ovs-ghost { height: 48px; font: inherit; font-size: 17px; letter-spacing: normal; }
-.ovs-input { position: relative; z-index: 1; flex: 1; min-width: 0; border: 0; outline: 0; padding: 0; background: transparent; color: inherit; }
+.ovs-input { position: relative; z-index: 1; flex: 1; min-width: 0; border: 0; outline: 0; padding: 0; background: transparent; color: inherit; text-overflow: ellipsis; }   /* 4.286.0: words too long for a phone end in …, never cut mid-letter */
+/* 4.286.0 (the owner, 11-16, the box's Vibe and Alerts side by side: "still inconsistent", then "I liked the bolder font
+   … thicker"): the box's own words look exactly like its suggestion line (ov-trending's: the typing font, the text's
+   colour at 62%), never a browser's thin grey placeholder beside a bolder line. */
+.ovs-input::placeholder { font: inherit; letter-spacing: inherit; color: color-mix(in srgb, currentColor 62%, transparent); opacity: 1; }
 .ovs-input::-webkit-search-cancel-button { -webkit-appearance: none; }
 .ovs-ghost { position: absolute; inset: 0; display: flex; align-items: center; white-space: pre; overflow: hidden; pointer-events: none; color: var(--text-muted, #93a0b4); opacity: .75; }
 .ovs-ghost b { color: transparent; font-weight: inherit; }
@@ -467,12 +472,15 @@ html[data-ov-motion=off] .ovs-ctx-i { transition: none; }
 .ovs-place > span { position: absolute; inset: 0; display: grid; place-items: center; }
 .ovs-place > span > svg, .ovs-place > span > img { width: 19px; height: 19px; border-radius: 50%; object-fit: cover; }
 .ovs-place .ovs-place-from { opacity: 0; }
-.ovs-place.is-turn { animation: ovs-place-ring 1.5s ease-out both; }
+.ovs-place.is-turn { animation: ovs-place-tint .9s ease-out both; }   /* 4.286.0: no ring (the owner, 11-16: "no dumb border") */
 .ovs-place.is-turn .ovs-place-from { animation: ovs-place-out .55s cubic-bezier(.4, 0, .2, 1) .45s both; }
 .ovs-place.is-turn .ovs-place-to { animation: ovs-place-in .5s cubic-bezier(.2, .8, .2, 1) .8s both; }
 @keyframes ovs-place-out { 0% { opacity: 1; transform: none; } 100% { opacity: 0; transform: scale(.35) rotate(-40deg) translateY(calc(5px * var(--ov-move, 1))); } }
 @keyframes ovs-place-in { 0% { opacity: 0; transform: scale(.35) rotate(40deg) translate(calc(-5px * var(--ov-move, 1)), calc(5px * var(--ov-move, 1))); } 100% { opacity: 1; transform: none; } }
-@keyframes ovs-place-ring { 0%, 40% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); } 100% { box-shadow: 0 0 0 12px transparent; } }
+@keyframes ovs-place-tint { 0%, 35% { background-color: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); } 100% { background-color: transparent; } }
+.ovs-place.is-turn .ovs-place-to svg { animation: ovs-place-nudge .5s cubic-bezier(.3, 1.4, .5, 1) 1.3s both; }
+@keyframes ovs-place-nudge { 0%, 100% { transform: none; } 45% { transform: translate(calc(2px * var(--ov-move, 1)), calc(-2px * var(--ov-move, 1))); } }
+html[data-ov-motion=off] .ovs-place.is-turn .ovs-place-to svg { animation: none; }
 html[data-ov-motion=off] .ovs-place.is-turn, html[data-ov-motion=off] .ovs-place.is-turn > span { animation: none; }
 html[data-ov-motion=off] .ovs-place .ovs-place-from { display: none; }
 .ovs-act svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
@@ -730,7 +738,7 @@ html[data-ov-motion=off] .ovs-recent, html[data-ov-motion=off] .ovs-recent-row {
 .ovs-youpanel[hidden] { display: none; }
 @keyframes ovs-drop { from { opacity: 0; transform: translateY(-8px) scale(.96); } }
 html[data-ov-motion=off] .ovs-youpanel { animation: none; }
-@media (max-width: 640px) { .ovs-bar { gap: 8px; padding: 0 4px 0 8px; } .ovs-bar .ovs-input::placeholder { font-size: 15px; } .ovs-tools { gap: 0; } .ovs-tool { width: 36px; height: 36px; } }
+@media (max-width: 640px) { .ovs-bar { gap: 8px; padding: 0 4px 0 8px; } .ovs-tools { gap: 0; } .ovs-tool { width: 36px; height: 36px; } }
 /* One size for every button in the field (4.284.0; the owner, 11-16: "make sure all sizes of things are consistent across
    everything … dif size"): the mic, the +, a place's link and the Dock's mirrored buttons are 40 px, each glyph 20 px at one
    stroke whatever drawing it brings (36 px on a phone, where the words beside your picture need the room), and the two
@@ -1938,11 +1946,17 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         chats: ['https://openvibe.chat/', 'Open OpenVibe.Chat'],
         feed: ['https://openvibe.community/pulse', 'Open the feed on its own page'],
         you: ['https://openvibe.my/', 'Open your page on OpenVibe.my'],
+        // 4.286.0: You's own parts each open their full page (the owner, 11-16: "it doesn't actually change when you switch
+        // between like alerts and all that or apps").
+        'you:notifications': ['https://openvibe.my/notifications', 'Open all your alerts'],
+        'you:recent': ['https://openvibe.my/history', 'Open where you were'],
+        // Apps is You's own first part: it opens You's home, OpenVibe.my (the `you` place).
     };
+    const placeKey = () => { if (door) return door; if (tab === 'you' && PLACE[`you:${youTab}`]) return `you:${youTab}`; return tab; };
     const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.8h6.3v6.3M20.2 3.8l-9.4 9.4M18.2 14.2v4.3a1.7 1.7 0 0 1-1.7 1.7H5.5a1.7 1.7 0 0 1-1.7-1.7v-11a1.7 1.7 0 0 1 1.7-1.7h4.3"/></svg>';
     let placeShown = '';
     function placeLink() {
-        const key = door || tab;
+        const key = placeKey();
         const p = PLACE[key];
         if (!p || !actsEl) return;
         const a = document.createElement('a'); a.className = 'ovs-act ovs-place'; a.target = '_blank'; a.rel = 'noopener';
@@ -1951,7 +1965,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         a.appendChild(to);
         // A new place: its tab's own glyph first, then the arrow (the old link is gone; this one is new).
         if (placeShown !== key) {
-            const glyph = tabsEl && tabsEl.querySelector(`.ovs-tab[data-tab="${key}"] .ovs-tab-ic`);
+            // A part of You turns from the box's own sign for it (the bell, the clock, the grid); a tab from its tab's glyph.
+            const partSvg = key.startsWith('you:') ? CTX_SVG[ctxKey()] : null;
+            const glyph = partSvg ? { innerHTML: partSvg } : tabsEl && tabsEl.querySelector(`.ovs-tab[data-tab="${key}"] .ovs-tab-ic`);
             if (glyph) {
                 const from = document.createElement('span'); from.className = 'ovs-place-from'; from.setAttribute('aria-hidden', 'true');
                 from.innerHTML = glyph.innerHTML;
@@ -1971,7 +1987,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // The link already showing for this place stays as it is (a list redrawn under it must not restart its turn).
         const kept = actsEl.querySelector('.ovs-place');
         actsEl.textContent = '';
-        const keep = () => { if (kept && placeShown === (door || tab) && kept.getAttribute('href') === (PLACE[door || tab] || [])[0]) actsEl.appendChild(kept); else placeLink(); };
+        const keep = () => { if (kept && placeShown === placeKey() && kept.getAttribute('href') === (PLACE[placeKey()] || [])[0]) actsEl.appendChild(kept); else placeLink(); };
         if (!door || !doorHost) { keep(); return; }
         // A list's actions and an open conversation's (+ for a new chat, ↗ to open it in Chat): one head, the menu's (4.220.0).
         if (door === 'vibe') {
@@ -2080,7 +2096,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         }
         watchActs(true);
         // Vibe: the box finds your sessions, and Enter asks Vibe (4.284.0).
-        input.placeholder = id === 'chats' ? 'Search your chats' : 'Find a session, or ask Vibe';
+        input.placeholder = id === 'chats' ? 'Search chats' : 'Find a session, or ask Vibe';
         paintTabs();
     }
     function closeDoorBody() {
@@ -2541,17 +2557,18 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         try { sessionStorage.removeItem(historyKey()); } catch { /* */ }
         return gone;
     }
-    // Which of You's tabs shows (4.284.0): the box searches inside it, Alerts and History as Apps already did.
-    let youTab = 'apps';
+    // Which of You's tabs shows (4.284.0): the box searches inside it, Alerts and History as Apps already did. (Declared
+    // with the menu's other state, above: the place link reads it.)
     function homeView(view, info) {
         const was = youTab;
         if (info && info.tab) youTab = info.tab;
         if (!input || tab !== 'you') return;
         if (was !== youTab) input.value = '';
-        if (youTab === 'notifications') { input.placeholder = 'Search your alerts'; paintCtx(); return; }
-        if (youTab === 'recent') { input.placeholder = 'Search where you were'; paintCtx(); return; }
+        if (was !== youTab) { try { requestAnimationFrame(() => { try { mirrorActs(); } catch { /* */ } }); } catch { /* */ } }
+        if (youTab === 'notifications') { input.placeholder = 'Search alerts'; paintCtx(); return; }
+        if (youTab === 'recent') { input.placeholder = 'Search history'; paintCtx(); return; }
         if (view === 'drawer') { input.placeholder = `Find among ${(info && info.apps) || ''} apps`.replace('  ', ' '); input.value = ''; paintCtx(); return; }
-        if (/^(Find among |Search your alerts|Search where you were)/.test(input.placeholder)) { input.placeholder = askHint(); input.value = ''; }
+        if (/^(Find among |Search alerts|Search history|Search your alerts|Search where you were)/.test(input.placeholder)) { input.placeholder = askHint(); input.value = ''; }
         paintCtx();
     }
     function homeOpts() {
@@ -2641,13 +2658,13 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // Alerts and History under You (4.284.0; the owner, 11-16: the inbox's own search "should just be integrated
         // straight to the top"): the box filters them in place, as it finds an app in All apps.
         if (tab === 'you' && shownTab === 'you' && youTab === 'notifications') {
-            tabsEl.hidden = false; input.placeholder = 'Search your alerts';
+            tabsEl.hidden = false; input.placeholder = 'Search alerts';
             const i = el.querySelector('.openvibe-notif-dock .openvibe-nv-search input');
             if (i && i.value !== q) { i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); }
             return;
         }
         if (tab === 'you' && shownTab === 'you' && youTab === 'recent' && homeApi && typeof homeApi.filterRecent === 'function') {
-            tabsEl.hidden = false; input.placeholder = 'Search where you were';
+            tabsEl.hidden = false; input.placeholder = 'Search history';
             homeApi.filterRecent(q);
             return;
         }

@@ -393,11 +393,13 @@ const created = (subject, over = {}) => ({
         assert.strictEqual(ids[0], 'all', 'All first');
         assert.deepStrictEqual([...ids].sort(), ['agents', 'alerts', 'all', 'live', 'mentions', 'system'], 'six tabs');
         // The fixture's counts: alerts 120, mentions 3, system 1, live 0, agents 0.
-        assert.deepStrictEqual(ids.slice(1), ['alerts', 'mentions', 'system', 'live', 'agents'], 'then the most unread, then the default order');
+        // 4.286.0: the default order is People, Agents, Live, Deals, System (Network's one-tab precedence), so the two
+        // empty tabs keep it: Agents, then Live.
+        assert.deepStrictEqual(ids.slice(1), ['alerts', 'mentions', 'system', 'agents', 'live'], 'then the most unread, then the default order');
         assert.strictEqual(lists().pop().get('tab'), null, 'All asks for no tab');
         const n = (id) => panel.querySelector(`[data-n="${id}"]`).textContent;
         assert.deepStrictEqual(['all', 'mentions', 'live', 'alerts', 'system'].map(n), ['', '3', '', '99+', '1'], 'counts on the tabs, none on All (the head has it), 99+ at most');
-        assert.strictEqual(panel.querySelector('[data-tab="mentions"]').getAttribute('aria-label'), 'Mentions, 3 unread');
+        assert.strictEqual(panel.querySelector('[data-tab="mentions"]').getAttribute('aria-label'), 'People, 3 unread');
         const rows = [...panel.querySelectorAll('.openvibe-notif-item .ovn-row')];
         assert.strictEqual(rows.length, 2);
         assert.strictEqual(rows[0].classList.contains('has-thumb'), false, 'a thumbnail that is the avatar is not shown twice');

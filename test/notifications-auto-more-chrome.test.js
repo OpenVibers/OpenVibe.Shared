@@ -64,7 +64,7 @@ const server = http.createServer((req, res) => {
             const n = document.querySelector('#host .openvibe-nv-tabs [data-n="mentions"]'); const f = document.querySelector('#host .openvibe-nv-find').getBoundingClientRect();
             const t = document.querySelector('#host .openvibe-nv-tabs').getBoundingClientRect();
             return { order: b.map((x) => x.dataset.tab), red: getComputedStyle(n).backgroundColor, above: f.bottom <= t.top + 2 }; })()`);
-        assert.deepEqual(tabs.order, ['all', 'system', 'mentions', 'live', 'alerts', 'agents'], 'All, then the most unread (System 40, Mentions 12), then the default order');
+        assert.deepEqual(tabs.order, ['all', 'system', 'mentions', 'agents', 'live', 'alerts'], 'All, then the most unread (System 40, People 12), then the default order (4.286.0: People, Agents, Live, Deals, System)');
         assert.equal(tabs.red, 'rgb(239, 68, 68)', 'an unread count is red');
         assert.ok(tabs.above, 'search and Unread on their own row, above the tabs');
         // Scroll to the end: the rest load by themselves, a page at a time.

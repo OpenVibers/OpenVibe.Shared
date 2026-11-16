@@ -207,11 +207,19 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         // The one chip: How it runs → Model → Opus 5.5.
         await p.evaluate("document.querySelector('.ovse-ctx').click()");
         await until(p, "!!document.querySelector('.ovp.is-in .ovp-row')");
-        assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent)"), ['Harness', 'Model', 'Way', 'Runs on', 'Works on', 'Your own setup'], 'the Way (4.281.0: how Actor works it) beside the model; Your own setup last (4.283.0)');
+        assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent)"), ['Harness', 'Model', 'Way', 'Runs on', 'Effort', 'Works on', 'Your own setup'], 'the Way (4.281.0: how Actor works it) beside the model; Your own setup last (4.283.0)');
         await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row')].find((r) => r.textContent.startsWith('Model')).click()");
         await until(p, "!!document.querySelector('.ovp.is-in .ovp-row[data-id=\"openvibe|anthropic/claude-opus-5-5\"]')");
         await p.evaluate("document.querySelector('.ovp.is-in .ovp-row[data-id=\"openvibe|anthropic/claude-opus-5-5\"]').click()");
         await until(p, "document.querySelector('.ovse-ctx span').textContent === 'Any agent · Opus 5.5'");
+        await until(p, "!document.querySelector('.ovp')");
+        // 4.286.0 (the owner, 11-16: "make sure reasoning effort is configurable"): How it runs → Effort → High.
+        await p.evaluate("document.querySelector('.ovse-ctx').click()");
+        await until(p, "[...document.querySelectorAll('.ovp.is-in .ovp-row')].some((r) => r.textContent.startsWith('Effort'))");
+        await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row')].find((r) => r.textContent.startsWith('Effort')).click()");
+        await until(p, "!!document.querySelector('.ovp.is-in .ovp-row[data-id=\"high\"]')");
+        await p.evaluate("document.querySelector('.ovp.is-in .ovp-row[data-id=\"high\"]').click()");
+        await until(p, "document.querySelector('.ovse-ctx span').textContent === 'Any agent · Opus 5.5 · High effort'");
         await until(p, "!document.querySelector('.ovp')");
         // The price before it runs (plan §AD.6): a typical message on Opus 5.5 at $15 / $75 per million tokens.
         assert.deepStrictEqual(await p.evaluate("(() => { const c = document.querySelector('.ovse-cost'); return [c.hidden, c.textContent, /2,000 tokens in and 800 out/.test(c.title)]; })()"), [false, '≈ $0.09 a message', true]);
@@ -219,6 +227,7 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         await p.evaluate("document.querySelector('.ovse-compose form') ? document.querySelector('.ovse-compose form').requestSubmit() : document.querySelector('.ovse-compose textarea').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))");
         await until(p, "[...document.querySelectorAll('.ovse-say')].some((s) => s.textContent === 'On it: a sketch first.')");
         assert.deepStrictEqual([said.starts.length, said.starts[0].text, said.starts[0].agent, said.starts[0].model && said.starts[0].model.id], [1, 'Build me a landing page for my band', 'claude-code', 'anthropic/claude-opus-5-5'], 'the mention picks the agent, the chip the model');
+        assert.strictEqual(said.starts[0].effort, 'high', 'the effort goes with the new session');
         assert.strictEqual(await p.evaluate("document.querySelector('.ovse-me .ovse-bubble').textContent"), 'Build me a landing page for my band');
         assert.strictEqual(await p.evaluate("document.querySelector('.ovse-cost').hidden"), true, 'an open session shows what its turns cost instead');
         // It is still working: the next words are queued.

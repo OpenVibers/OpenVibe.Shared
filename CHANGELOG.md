@@ -1,5 +1,59 @@
 # Changelog
 
+## 4.286.0 — 2026-11-16
+
+- **Every product has its glyph** (the owner, openvibe.space's buttons: "the icons still suck, or are way too tiny, or
+  have that stupid looking border instead of a customized look").
+  - `glyphs.forApp()` maps all 103 product marks to a glyph (space: cubes, ai: spark, codes: code …).
+  - A hero button or a section heading that names a product draws it plainly at its size, never the ringed mark shrunk
+    into a badge.
+  - Test: `app-glyphs.test.js`.
+- **The rocket, redrawn** ("the rocket icon sucks"): one silhouette (body and fins), a porthole and a flame. The solid
+  version fills the stroked one's footprint. The bundle, sprite and fonts are rebuilt.
+- **The search box's words and its suggestion line are never drawn together** (a third report: "still duplicated like
+  labels at times").
+  - The same words put back while the line shows are taken out again.
+  - A line whose box was redrawn goes with it.
+  - The box says the line owns it, so ov-composer's own examples stand down.
+  - The line always starts where typing starts.
+  - In the menu, the box's own words now look exactly like the suggestion line: the bolder typing font at 62%, where
+    they used to be a browser's thin grey placeholder (the owner, a fourth time, the menu's Vibe beside its Alerts:
+    "still inconsistent", then "I liked the bolder font … thicker and … had a cool animation"). "Plan my week" with its
+    shimmer and "Search alerts" are the same box now. Test: `menu-box-look-chrome.test.js`.
+  - The menu's words fit a phone ("Search alerts", "Search history", "Search chats"), and anything longer ends in "…",
+    never cut mid-letter.
+  - Test: `trending-overlap-chrome.test.js`.
+- **The menu's open button follows You's parts** (Alerts: your alerts page, History: where you were, Apps: your
+  page on OpenVibe.my), and turns from that part's sign. The ring that pulsed around it is a soft tint now.
+- **Every line of suggestions sits where typing starts, always**:
+  - **Chrome 157 changed how it measures an `<input>`:** `clientLeft` now counts the padding (30 instead of 0 for the
+    menu's box) and `clientWidth` leaves it out. The line was placed a padding to the right of the words, and drawn a
+    padding narrower: the "Plan my week" floating right of its icon (30 px) on CI and on the owner's phone. The box is
+    now measured from its layout box (`offsetWidth`, `offsetLeft`) and its computed border and padding, never
+    `client*`. Textareas and other elements are unchanged in 157.
+  - The line is placed from layout (`offsetLeft`/`offsetTop`), which no transform changes. Before, it was measured
+    from the screen while the menu was still opening with its scale animation. A measurement taken then put the line
+    up to the box's padding to the right once the menu settled: the "Plan my week" floating right of its icon (30 px
+    on a phone).
+  - A box that moves without resizing (a neighbour arriving) takes its line along. The line is also placed again
+    when animations end, and at every turn.
+- **The rocket's line drawing** is the set's size (it was smaller than its neighbours).
+- **How it runs offers Effort and Allowed to** ("make sure reasoning effort is configurable and everything else, all
+  settings for all harnesses exist").
+  - Effort is Auto, Low, Medium, High, Extra high or Max, for every harness (each maps it to its own flag). Allowed to
+    is Look only, Edit files or Full, for coding.
+  - Both are kept, go with a new session, and are accepted in links (`?effort=high`). An effort changed mid-session
+    goes with the next words.
+  - Network forwards them (OpenVibe.Network#1036).
+- **Thinking reads well** ("ugly with the thinking … better animated and connected like the dots and … compacted").
+  - Thoughts in a row are one line, "Thought 4 times · 9 s", with a dot per thought joined by a line; the live one
+    pulses. Opened, each thought sits beside its dot on one line.
+  - Actor stops sending its bookkeeping as thoughts (OpenVibe.Actor#553).
+- **Alerts' tabs: All · People · Agents · Live · Deals · System** ("why is it showing up in two tabs … it should just be
+  deals").
+  - Network puts every notification under exactly one tab (OpenVibe.Network#1037).
+  - Mentions became People (follows too), and Deals & alerts became Deals. The ids are unchanged.
+
 ## 4.285.0 — 2026-11-16
 
 - **The sessions button goes where it belongs** (the owner, 11-16, a screenshot of openvibe.codes: "move to top left";
