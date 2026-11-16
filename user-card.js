@@ -87,7 +87,8 @@
             }
             .openvibe-usercard-actions button:hover { background: var(--bg-hover, #2f2f3d); }
             .openvibe-usercard-actions button.danger { color: var(--live-red-text, var(--live-red, #e74c3c)); }
-            .openvibe-usercard-actions button .icon { font-size: 14px; width: 20px; text-align: center; }
+            .openvibe-usercard-actions button .icon { font-size: 14px; width: 20px; text-align: center; display: inline-grid; place-items: center; }
+            .openvibe-usercard-actions button .icon svg, .openvibe-usercard-actions button .icon i { width: 17px; height: 17px; }
 
             /* Name effects (CSS classes applied to usernames) */
             .openvibe-name-fx-rainbow { background: linear-gradient(90deg, #ff0000, #ff7700, #ffff00, #00ff00, #0000ff, #8b00ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; background-size: 200%; animation: openvibe-rainbow 3s linear infinite; }
@@ -141,23 +142,34 @@
         const isSelf = _config.currentUserId && String(_config.currentUserId) === String(user.id);
         const isMod = ['admin', 'global_mod'].includes(_config.currentRole);
 
+        // A site's action names its glyph ('chat'); an emoji it still sends is drawn as the glyph that stands for it.
+        const EMOJI_GLYPH = { '💬': 'chat', '＋': 'plus', '➕': 'plus', '+': 'plus', '👤': 'user', '⚙️': 'gear', '🔇': 'mute', '🔊': 'volume',
+            '🚫': 'slash', '⚠️': 'alert', '🔄': 'swap', '🔔': 'bell', '⭐': 'star', '🔒': 'lock', '📞': 'phone', '🎤': 'mic', '🚩': 'flag', '🤝': 'handshake' };
+        const siteIcon = (icon) => {
+            const t = String(icon).trim();
+            const name = /^[a-z][a-z0-9-]{1,40}$/.test(t) ? t : EMOJI_GLYPH[t] || EMOJI_GLYPH[t.replace(/\uFE0F/g, '')] || null;
+            return name ? `<i data-ov-icon="${name}" aria-hidden="true"></i>` : escapeHtml(t);
+        };
         let actions = '';
+        // 4.287.0 (the owner, 11-16: buttons drawn with emoji look cheap): the card's actions draw OpenVibe's glyphs
+        // (ov-glyphs.js fills <i data-ov-icon>, loaded by the bar the first time one shows).
+        const g = (name) => `<span class="icon"><i data-ov-icon="${name}" aria-hidden="true"></i></span>`;
         if (!isSelf) {
-            actions += `<button data-act="profile"><span class="icon">👤</span> View Profile</button>`;
-            actions += `<button data-act="message"><span class="icon">💬</span> Send Message</button>`;
-            actions += `<button data-act="follow"><span class="icon">➕</span> Follow</button>`;
+            actions += `<button data-act="profile">${g('user')} View Profile</button>`;
+            actions += `<button data-act="message">${g('chat')} Send Message</button>`;
+            actions += `<button data-act="follow">${g('plus')} Follow</button>`;
             if (isMod) {
                 actions += `<div class="openvibe-usercard-divider"></div>`;
-                actions += `<button data-act="warn"><span class="icon">⚠️</span> Warn User</button>`;
-                actions += `<button data-act="mute"><span class="icon">🔇</span> Mute</button>`;
-                actions += `<button data-act="ban" class="danger"><span class="icon">🚫</span> Ban User</button>`;
+                actions += `<button data-act="warn">${g('alert')} Warn User</button>`;
+                actions += `<button data-act="mute">${g('mute')} Mute</button>`;
+                actions += `<button data-act="ban" class="danger">${g('slash')} Ban User</button>`;
             }
         } else {
-            actions += `<button data-act="profile"><span class="icon">⚙️</span> Edit Profile</button>`;
-            actions += `<button data-act="accounts"><span class="icon">🔄</span> Switch Account</button>`;
+            actions += `<button data-act="profile">${g('user-pen')} Edit Profile</button>`;
+            actions += `<button data-act="accounts">${g('swap')} Switch Account</button>`;
         }
         for (const item of _menuItems.values()) {
-            actions += `<button data-act="site" data-site-id="${escapeHtml(item.id)}"><span class="icon">${item.icon ? escapeHtml(item.icon) : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="14" height="14"><path d="M14 3.8h6.3v6.3M20.2 3.8l-9.4 9.4M18.2 14.2v4.2a2.1 2.1 0 0 1-2.1 2.1H5.6a2.1 2.1 0 0 1-2.1-2.1V7.9a2.1 2.1 0 0 1 2.1-2.1h4.2"/></svg>'}</span> ${escapeHtml(item.label)}</button>`;
+            actions += `<button data-act="site" data-site-id="${escapeHtml(item.id)}"><span class="icon">${item.icon ? siteIcon(item.icon) : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="14" height="14"><path d="M14 3.8h6.3v6.3M20.2 3.8l-9.4 9.4M18.2 14.2v4.2a2.1 2.1 0 0 1-2.1 2.1H5.6a2.1 2.1 0 0 1-2.1-2.1V7.9a2.1 2.1 0 0 1 2.1-2.1h4.2"/></svg>'}</span> ${escapeHtml(item.label)}</button>`;
         }
 
         const card = document.createElement('div');
