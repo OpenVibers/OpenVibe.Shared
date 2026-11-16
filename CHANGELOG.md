@@ -1,5 +1,25 @@
 # Changelog
 
+## 4.287.0 — 2026-11-16
+
+- **Your Actor's pictures in the menu's card** (the owner, 11-16: "an avatar generator for agents … on the image
+  models configured in the admin's guided setup and usable through the exchange"):
+  - The card lists your pictures; a tap wears one, and the card's face and the strip's face show it.
+  - A few words and a style draw three more. Actor asks OpenVibe.AI as you, on your allowance, through the Frame
+    (`/actor/pictures`, `/actor/pictures/generate`, `/actor/face`; Network #1042, Actor #554). Without the relay the
+    section stays away.
+  - A rename keeps the picture. Pressing a shape or a colour and saving puts the drawn face on instead.
+  - Test: `run-actor-pictures-chrome.test.js`.
+- **A card's hidden parts stay hidden:** the sheet buttons' `display` outranked `hidden`, so Save showed with nothing
+  to save.
+- **The user card's buttons draw glyphs** (the owner, 11-16: emoji are fine in chat; item and button icons become art).
+  - `glyphs.EMOJI` and `glyphs.fromEmoji()` map the common emoji to their glyphs.
+  - A site's action registered with an emoji icon (Chat's 💬 Message, ＋ Add friend …) is drawn as its glyph.
+  - Test: `user-card-glyphs.test.js`.
+- **`openvibe-shared/pins`:** one reader of a library pin in both forms, codeload and the forge
+  (`git.openvibe.codes/…/archive/vX.Y.Z.tar.gz`). It has `parsePin`, `pinsOf`, `pinOf`, `pinUrl` and `PIN`.
+  Pin parsers had broken three times on the forge form. Test: `pins.test.js`.
+
 ## 4.286.0 — 2026-11-16
 
 - **Every product has its glyph** (the owner, openvibe.space's buttons: "the icons still suck, or are way too tiny, or
