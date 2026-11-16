@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.280.0 — 2026-11-16
+
+**Tools, in every composer** (the owner, 11-15: the tools "interconnected with all relevant open vibe sites", one
+"universal shared modular system").
+- The + of every box has a Tools row, and "/tool" opens it from the keyboard. It runs any OpenVibe tool and adds the answer
+  to the box: word count, DNS, QR, JSON, hashes, and the rest of the 180 tools.
+- The panel shows the most used tools first, and a search finds the rest. Tools that take a file or need a sign-in are left
+  out, so each one opens its own page instead.
+- A tool opens its input with what you wrote already in its first text field. A choice is chips and a yes/no is a switch.
+- Run asks openvibe.tools without a cookie. The answer shows as plain lines ("Words: 4"), or as JSON when it is
+  nested. "Put it in" adds it to the box, and "Change the input" goes back.
+- `data-ovc-tools` on a form, or `window.OV_TOOLS_URL`, points elsewhere.
+
 ## 4.279.0 — 2026-11-15
 
 **Deep dive this, from every search box** (the owner, 11-15: Exchange's deep dive, "add it to all of em using an

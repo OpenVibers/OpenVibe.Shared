@@ -407,6 +407,30 @@ html[data-ov-motion=off] .ovc-v2 .ovc-bar { animation: none; }
 .ovc-repo-note { margin: 2px 4px; font-size: 12.5px; color: var(--text-muted, #93a0b4); }
 .ovc-repo-note[hidden] { display: none; }
 html[data-ov-motion=off] .ovc-repo { animation: none; }
+.ovc-tools:not([hidden]) { grid-template-rows: auto minmax(0, 1fr) auto; }
+.ovc-tools-head { display: flex; align-items: center; gap: 6px; min-height: 32px; }
+.ovc-tools-title { font-size: 14px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ovc-tools-back { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 9px; background: none; color: inherit; cursor: pointer; }
+.ovc-tools-back[hidden] { display: none; }
+.ovc-tools-back:hover, .ovc-tools-back:focus-visible { background: color-mix(in srgb, currentColor 10%, transparent); outline: 0; }
+.ovc-tools-back svg { width: 18px; height: 18px; }
+.ovc-tools-body { display: grid; gap: 8px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.ovc-tools-form { display: grid; gap: 10px; }
+.ovc-tools-field { display: grid; gap: 4px; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+.ovc-tools-in { font-size: 14px; color: var(--text-primary, #e6edf7); }
+textarea.ovc-tools-in { min-height: 64px; padding: 8px 12px; resize: vertical; }
+.ovc-tools-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ovc-tools-chip { min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--ovt-line, rgba(148, 163, 184, .22)); background: none; color: inherit; font: inherit; font-size: 13px; cursor: pointer; }
+.ovc-tools-chip[aria-pressed=true] { border-color: var(--ovt-accent, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 18%, transparent); color: var(--text-primary, #e6edf7); }
+.ovc-tools-switch { position: relative; width: 44px; height: 26px; padding: 0; border-radius: 999px; border: 0; background: color-mix(in srgb, currentColor 22%, transparent); cursor: pointer; transition: background .15s; }
+.ovc-tools-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .18s cubic-bezier(.2, .9, .3, 1); }
+.ovc-tools-switch[aria-checked=true] { background: var(--ovt-accent, var(--accent, #3b82f6)); }
+.ovc-tools-switch[aria-checked=true]::after { transform: translateX(18px); }
+.ovc-tools-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 2px 0 0; }
+.ovc-tools-go { min-height: 40px; padding: 0 16px; border-radius: 12px; font-weight: 650; }
+.ovc-tools-page, .ovc-tools-again { font-size: 13px; color: var(--ovt-accent, var(--accent, #3b82f6)); background: none; border: 0; padding: 8px 4px; cursor: pointer; font-family: inherit; }
+.ovc-tools-out { margin: 0; max-height: 220px; overflow: auto; padding: 10px 12px; border-radius: 12px; background: var(--bg-primary, rgba(0, 0, 0, .2)); font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; word-break: break-word; }
+html[data-ov-motion=off] .ovc-tools-switch, html[data-ov-motion=off] .ovc-tools-switch::after { transition: none; }
 .ovc-emoji button { width: 38px; height: 38px; border: 0; border-radius: 10px; background: none; font-size: 22px; line-height: 1; cursor: pointer; }
 .ovc-emoji button:hover, .ovc-emoji button:focus-visible { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); }
 @media (max-width: 480px) { .ovc-v2.ovt-composer { padding: 12px 12px 8px; } .ovc-emoji { grid-template-columns: repeat(7, 38px); } .ovc-v2 .ovt-send { padding: 0 16px; } }
@@ -636,7 +660,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     // 4.242.0: the + as its own mark (plan §Z.1.6): two arms, four petals that peek and burst, all drawn on the 24 grid.
     const PLUS_MARK = '<svg class="ovc-plus" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g class="ovc-plus-p"><circle cx="6.2" cy="6.2" r="1.35"/><circle cx="17.8" cy="6.2" r="1.35"/><circle cx="6.2" cy="17.8" r="1.35"/><circle cx="17.8" cy="17.8" r="1.35"/></g><g class="ovc-plus-x"><path class="ovc-plus-h" d="M5.5 12h13"/><path class="ovc-plus-v" d="M12 5.5v13"/></g></svg>';
     const gsvg = (inner) => `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
-    const PLUS_DEFAULT = { tiles: ['camera', 'photo', 'file'], rows: ['paste', 'screenshot', 'camapp', 'share', 'timer', 'github'], only: false };
+    const PLUS_DEFAULT = { tiles: ['camera', 'photo', 'file'], rows: ['paste', 'screenshot', 'camapp', 'share', 'timer', 'github', 'tools'], only: false };
     const CONFIG = { plus: null };
     function configure(o = {}) {
         if (o && o.plus && typeof o.plus === 'object') CONFIG.plus = cleanPlus(o.plus);
@@ -662,6 +686,8 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         mic: 'M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21',
         plus: 'M12 5v14M5 12h14',
         timer: 'M12 4.5a8.2 8.2 0 1 1 0 16.4 8.2 8.2 0 0 1 0-16.4zM12 8.6v4.2l2.7 1.7M9.6 2.6h4.8',
+        // A wrench over a spark: a tool that does the work (4.280.0).
+        tools: 'M14.6 6.1a4.2 4.2 0 0 0-5.5 5.5l-5.2 5.2a1.6 1.6 0 0 0 2.3 2.3l5.2-5.2a4.2 4.2 0 0 0 5.5-5.5l-2.6 2.6-2.3-.6-.6-2.3zM18.5 14.5v3M17 16h3',
         // A repository: a branch from one commit to two (the registry's git-branch; no company's mark).
         repo: 'M6.5 4.5v15M17.5 10a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM6.5 21.8a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM17.5 10c0 4.5-4 6.2-11 6.6',
         star: 'M12 4.2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z',
@@ -1067,7 +1093,8 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         function commands() {
             const own = (prefs.snippets || []).map((s) => ({ name: s.trigger, hint: s.label || s.text.slice(0, 60), insert: s.text, mine: true }));
             const fromMods = mine().flatMap((m) => m.commands || []);
-            return [...siteCommands(), ...fromMods, ...own, { name: 'settings', hint: 'Your composer: what sends, voice, your own commands', run: () => openSettings() }];
+            return [...siteCommands(), ...fromMods, ...own, { name: 'tool', hint: 'Run any OpenVibe tool on what you wrote', run: (c) => openToolRun(c, c.text, form) },
+                { name: 'settings', hint: 'Your composer: what sends, voice, your own commands', run: () => openSettings() }];
         }
         function caretWord() {
             const upto = text.value.slice(0, text.selectionStart);
@@ -1512,6 +1539,9 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         // 4.225.0: a repository from GitHub, found through OpenVibe Exchange's code search (the Frame's
         // /api/frame/code/search): its address goes into the box, where every site draws it as a card.
         github: { label: 'GitHub', sub: 'A repository, as a card', path: IC.repo, extra: true, run: (ctx, button, form) => openRepoSearch(ctx, button, form) },
+        // 4.280.0: any OpenVibe tool (word count, DNS, QR, JSON, hashes… 180 of them) run on what you wrote, its answer
+        // into the box: one tool system on every site (the owner, 11-15: "interconnected with all relevant open vibe sites").
+        tools: { label: 'Tools', sub: 'Run any OpenVibe tool on what you wrote', path: IC.tools, extra: true, run: (ctx, button, form) => openToolRun(ctx, button, form) },
         voice: { label: 'Speak', builtin: true },   // enhance() draws the microphone where the browser can listen
         camera: { label: 'Camera', sub: 'A photo or a clip, here', glyph: 'camera', path: IC.camera, run: (ctx, button) => openCamera(ctx, button), when: (e) => e.files && e.camera },
     };
@@ -1660,6 +1690,203 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         document.addEventListener('pointerdown', (e) => { if (!panel.hidden && !panel.contains(e.target) && !button.contains(e.target)) panel.hidden = true; });
         form.appendChild(panel);
         field.focus();
+    }
+    // ── Tools (4.280.0): find any OpenVibe tool, fill its input (what you wrote goes into its first text field), run it
+    // on openvibe.tools and put its answer into the box. Tools that run for anyone, with no file: no sign-in, no cookie
+    // (credentials omitted); the registry and the run API answer every site's page. data-ovc-tools (or OV_TOOLS_URL)
+    // points elsewhere.
+    const TOOLS_CACHE = new Map();
+    const human = (k) => String(k).replace(/([a-z])([A-Z])/g, (m, a, b) => `${a} ${b.toLowerCase()}`).replace(/[_-]+/g, ' ').replace(/^./, (c) => c.toUpperCase());
+    function toolAnswer(r) {
+        if (!r) return '';
+        if (r.text != null) return String(r.text);
+        const d = r.data !== undefined ? r.data : r;
+        if (d && typeof d === 'object' && !Array.isArray(d)) {
+            const keys = Object.keys(d);
+            const flat = keys.length <= 14 && keys.every((k) => d[k] == null || typeof d[k] !== 'object' || (Array.isArray(d[k]) && d[k].length <= 20 && d[k].every((x) => x == null || typeof x !== 'object')));
+            if (flat) return keys.filter((k) => d[k] != null && d[k] !== '').map((k) => `${human(k)}: ${Array.isArray(d[k]) ? d[k].join(', ') : d[k]}`).join('\n');
+        }
+        if (typeof d === 'string') return d;
+        return '```json\n' + JSON.stringify(d, null, 2).slice(0, 6000) + '\n```';
+    }
+    function openToolRun(ctx, button, form) {
+        let panel = form.querySelector('.ovc-tools');
+        if (panel) { panel.hidden = !panel.hidden; if (!panel.hidden) { const f = panel.querySelector('input,textarea'); if (f) f.focus(); } return; }
+        styles();
+        const base = String(form.getAttribute('data-ovc-tools') || root.OV_TOOLS_URL || 'https://openvibe.tools').replace(/\/+$/, '');
+        panel = el('div', 'ovc-repo ovc-tools'); panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Run an OpenVibe tool');
+        const head = el('div', 'ovc-tools-head');
+        const back = el('button', 'ovc-tools-back'); back.type = 'button'; back.setAttribute('aria-label', 'Back to the tools'); back.innerHTML = svg('M15 5l-7 7 7 7'); back.hidden = true;
+        const title = el('b', 'ovc-tools-title'); title.textContent = 'Tools';
+        head.append(back, title);
+        const body = el('div', 'ovc-tools-body');
+        const note = el('p', 'ovc-repo-note');
+        panel.append(head, body, note);
+        const say2 = (t) => { note.hidden = !t; note.textContent = t || ''; };
+        const close = () => { panel.hidden = true; if (button && button.focus) button.focus(); };
+        let gen = 0, timer = 0;
+        const get = async (path) => {
+            const r = await fetch(base + path, { credentials: 'omit', headers: { accept: 'application/json' } });
+            const j = await r.json().catch(() => null);
+            if (!r.ok) throw new Error((j && (j.detail || j.title)) || 'OpenVibe Tools did not answer');
+            return j;
+        };
+        const row = (t, onPick) => {
+            const b = el('button', 'ovc-repo-row'); b.type = 'button'; b.setAttribute('role', 'option');
+            const av = el('span', 'ovc-repo-av'); av.innerHTML = svg(IC.tools); av.setAttribute('aria-hidden', 'true');
+            const t1 = el('span', 'ovc-repo-t');
+            const name = el('b'); name.textContent = String(t.name || t.id);
+            const sub2 = el('small'); sub2.textContent = String(t.summary || t.description || '');
+            t1.append(name, sub2);
+            b.append(av, t1);
+            b.addEventListener('click', () => onPick(t));
+            return b;
+        };
+        // 1. Find a tool.
+        function finder() {
+            back.hidden = true; title.textContent = 'Tools';
+            body.textContent = '';
+            const field = el('input', 'ovc-repo-q'); field.type = 'search'; field.placeholder = 'Find a tool: word count, dns, qr code, json…'; field.setAttribute('aria-label', 'Find a tool'); field.autocomplete = 'off';
+            const list = el('div', 'ovc-repo-list'); list.setAttribute('role', 'listbox'); list.setAttribute('aria-label', 'Tools');
+            body.append(field, list);
+            const draw = (tools) => { list.textContent = ''; tools.slice(0, 12).forEach((t) => list.appendChild(row(t, form2))); say2(tools.length ? '' : 'No tool fits that. Try other words.'); };
+            const popular = async () => {
+                try {
+                    const hit = TOOLS_CACHE.get('');
+                    const tools = hit && Date.now() - hit.at < 600000 ? hit.items : ((await get('/api/v1/tools/popular')).tools || []);
+                    TOOLS_CACHE.set('', { at: Date.now(), items: tools });
+                    if (!field.value.trim()) { draw(tools); say2(tools.length ? 'Most used this week. What you wrote goes into the tool; its answer comes back here.' : ''); }
+                } catch { say2('What you wrote goes into the tool; its answer comes back here.'); }
+            };
+            const search = async () => {
+                const q = field.value.trim().replace(/\s+/g, ' ');
+                const my = ++gen;
+                if (q.length < 2) { popular(); return; }
+                const key = q.toLowerCase();
+                const hit = TOOLS_CACHE.get(key);
+                if (hit && Date.now() - hit.at < 600000) { draw(hit.items); return; }
+                if (!list.children.length) say2('Searching…');
+                try {
+                    const j = await get(`/api/v1/tools?api=true&q=${encodeURIComponent(q)}`);
+                    if (my !== gen) return;
+                    const items = (j.tools || []).filter((t) => t.status !== 'unavailable' && !t.files && t.auth && t.auth.anonymous);
+                    TOOLS_CACHE.set(key, { at: Date.now(), items });
+                    if (TOOLS_CACHE.size > 60) TOOLS_CACHE.delete(TOOLS_CACHE.keys().next().value);
+                    draw(items);
+                } catch (err) { if (my === gen) { list.textContent = ''; say2((err && err.message) || 'OpenVibe Tools did not answer'); } }
+            };
+            field.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(search, 300); });
+            field.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') { e.preventDefault(); close(); }
+                else if (e.key === 'Enter') { e.preventDefault(); const first = list.querySelector('.ovc-repo-row'); if (first) first.click(); }
+                else if (e.key === 'ArrowDown') { const first = list.querySelector('.ovc-repo-row'); if (first) { e.preventDefault(); first.focus(); } }
+            });
+            list.addEventListener('keydown', (e) => {
+                const rows = [...list.querySelectorAll('.ovc-repo-row')]; const k = rows.indexOf(document.activeElement);
+                if (e.key === 'ArrowDown' && k < rows.length - 1) { e.preventDefault(); rows[k + 1].focus(); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); (k > 0 ? rows[k - 1] : field).focus(); }
+                else if (e.key === 'Escape') { e.preventDefault(); close(); }
+            });
+            popular();
+            field.focus();
+        }
+        // 2. Its input, with what you wrote in its first text field.
+        async function form2(t) {
+            back.hidden = false; title.textContent = String(t.name || t.id);
+            body.textContent = ''; say2('Loading…');
+            let d, schema;
+            try { [d, schema] = await Promise.all([get(`/api/v1/tools/${encodeURIComponent(t.id)}`), get(`/api/v1/tools/${encodeURIComponent(t.id)}/schema`)]); }
+            catch (err) { say2((err && err.message) || 'That tool did not load'); return; }
+            if (!d.api || d.files || !(d.auth && d.auth.anonymous)) { say2(d.files ? 'This tool takes a file: open it on its page.' : 'This tool needs a sign-in: open it on its page.'); body.appendChild(pageLink(d)); return; }
+            const input = (schema && schema.$defs && schema.$defs.input) || { properties: {} };
+            const props = input.properties || {};
+            const req = new Set(Array.isArray(input.required) ? input.required : []);
+            const keys = Object.keys(props).sort((a, b) => Number(req.has(b)) - Number(req.has(a))).slice(0, 6);
+            const typed = String(ctx.value || '').trim();
+            let filled = false;
+            const reads = [];
+            const f = el('form', 'ovc-tools-form'); f.noValidate = true;
+            keys.forEach((k) => {
+                const p = props[k] || {};
+                const lab = el('label', 'ovc-tools-field');
+                const cap = el('span'); cap.textContent = (p.title || human(k)) + (req.has(k) ? '' : ' (optional)');
+                lab.appendChild(cap);
+                if (Array.isArray(p.enum) && p.enum.length && p.enum.length <= 8) {
+                    const chips = el('span', 'ovc-tools-chips'); let v = p.default !== undefined ? p.default : req.has(k) ? p.enum[0] : undefined;
+                    p.enum.forEach((x) => { const c = el('button', 'ovc-tools-chip'); c.type = 'button'; c.textContent = String(x); c.setAttribute('aria-pressed', String(x === v)); c.addEventListener('click', () => { v = v === x && !req.has(k) ? undefined : x; chips.querySelectorAll('button').forEach((b, i) => b.setAttribute('aria-pressed', String(p.enum[i] === v))); }); chips.appendChild(c); });
+                    lab.appendChild(chips); reads.push(() => [k, v]); f.appendChild(lab); return;
+                }
+                if (p.type === 'boolean') {
+                    const sw = el('button', 'ovc-tools-switch'); sw.type = 'button'; sw.setAttribute('role', 'switch'); let on = p.default === true; sw.setAttribute('aria-checked', String(on));
+                    sw.addEventListener('click', () => { on = !on; sw.setAttribute('aria-checked', String(on)); });
+                    lab.appendChild(sw); reads.push(() => [k, on]); f.appendChild(lab); return;
+                }
+                const long = p.type === 'string' && !(p.maxLength && p.maxLength <= 300) && !p.format;
+                const c = long ? el('textarea', 'ovc-repo-q ovc-tools-in') : el('input', 'ovc-repo-q ovc-tools-in');
+                if (long) c.rows = 3;
+                if (p.type === 'number' || p.type === 'integer') { c.type = 'number'; c.inputMode = 'decimal'; if (p.minimum !== undefined) c.min = p.minimum; if (p.maximum !== undefined) c.max = p.maximum; }
+                if (p.default !== undefined && typeof p.default !== 'object') c.placeholder = String(p.default);
+                else if (p.description) c.placeholder = String(p.description).slice(0, 80);
+                if (!filled && p.type === 'string' && typed) { c.value = typed.slice(0, Number(p.maxLength) || 20000); filled = true; }
+                lab.appendChild(c);
+                reads.push(() => {
+                    const raw = c.value.trim();
+                    if (!raw) return [k, undefined];
+                    if (p.type === 'number' || p.type === 'integer') return [k, Number(raw)];
+                    if (p.type === 'array') return [k, raw.split(/[\s,]+/).filter(Boolean)];
+                    return [k, c.value];
+                });
+                f.appendChild(lab);
+            });
+            const bar = el('p', 'ovc-tools-bar');
+            const go = el('button', 'ovt-btn ovc-tools-go'); go.type = 'submit'; go.textContent = 'Run';
+            bar.append(go, pageLink(d));
+            f.appendChild(bar);
+            f.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const value = {};
+                for (const r of reads) { const [k, v] = r(); if (v !== undefined && v !== '') value[k] = v; }
+                const missing = [...req].filter((k) => keys.includes(k) && value[k] === undefined);
+                if (missing.length) { say2(`Fill in ${missing.map((k) => (props[k] && props[k].title) || human(k)).join(', ')}.`); return; }
+                go.disabled = true; go.textContent = 'Running…'; say2('');
+                try {
+                    const r = await fetch(`${base}/api/v1/tools/${encodeURIComponent(d.id)}/run`, { method: 'POST', credentials: 'omit', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ input: value, wait_ms: 20000 }) });
+                    const j = await r.json().catch(() => null);
+                    go.disabled = false; go.textContent = 'Run';
+                    if (j && j.state === 'succeeded') { answer(d, toolAnswer(j.result)); return; }
+                    if (j && (j.state === 'queued' || j.state === 'running')) { say2('Still working: its page shows the answer when it is done.'); return; }
+                    const er = (j && (j.error || j)) || {};
+                    say2(String(er.detail || er.title || `It did not run (${r.status})`).slice(0, 300));
+                } catch { go.disabled = false; go.textContent = 'Run'; say2('OpenVibe Tools did not answer. Try again.'); }
+            });
+            body.appendChild(f);
+            say2(filled ? 'What you wrote is in. Run it, then put the answer in your message.' : '');
+            const first = f.querySelector('input,textarea,button'); if (first) first.focus();
+        }
+        function pageLink(d) {
+            const a = el('a', 'ovc-tools-page'); a.textContent = 'Its page'; a.target = '_blank'; a.rel = 'noopener';
+            a.href = Array.isArray(d.hosts) && d.hosts[0] ? `https://${d.hosts[0]}/` : `${base}/`;
+            return a;
+        }
+        // 3. Its answer, into the box.
+        function answer(d, text) {
+            body.textContent = '';
+            const out = el('pre', 'ovc-tools-out'); out.tabIndex = 0; out.textContent = text.length > 4000 ? `${text.slice(0, 4000)}…` : text || '(no answer)';
+            const bar = el('p', 'ovc-tools-bar');
+            const put = el('button', 'ovt-btn ovc-tools-go'); put.type = 'button'; put.textContent = 'Put it in';
+            put.addEventListener('click', () => { const v = String(ctx.value || ''); ctx.insert(`${v && !/\s$/.test(v) ? '\n' : ''}${text}`); panel.hidden = true; });
+            const again = el('button', 'ovc-tools-again'); again.type = 'button'; again.textContent = 'Change the input';
+            again.addEventListener('click', () => form2(d));
+            bar.append(put, again);
+            body.append(out, bar);
+            say2(`${d.name}, on OpenVibe Tools.`);
+            put.focus();
+        }
+        back.addEventListener('click', finder);
+        panel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } });
+        document.addEventListener('pointerdown', (e) => { if (!panel.hidden && !panel.contains(e.target) && !(button && button.contains && button.contains(e.target))) panel.hidden = true; });
+        form.appendChild(panel);
+        finder();
     }
     function tool(id, spec) {
         if (!/^[\w-]{1,30}$/.test(id || '') || !spec) return;
