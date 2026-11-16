@@ -54,7 +54,8 @@ const LOOK = `(() => {
     const ovs = document.querySelector('.ovs.is-open'); const input = ovs && ovs.querySelector('.ovs-input'); if (!input) return null;
     const rgba = (c, op) => { const m = String(c).match(/[\\d.]+/g) || []; let [r, g, b, a] = m.map(Number);
         if (/^color\\(srgb/.test(c)) { r *= 255; g *= 255; b *= 255; } return [Math.round(r), Math.round(g), Math.round(b), Math.round((a == null ? 1 : a) * op * 100) / 100]; };
-    const ghost = [...document.querySelectorAll('.ovt-ghost')].find((x) => !x.hidden && x.offsetParent);
+    // This box's own line (ov-trending puts it right after its box), never another box's on the page (the bar's search).
+    const ghost = [...ovs.querySelectorAll('.ovt-ghost')].find((x) => !x.hidden && x.offsetParent && x.previousElementSibling === input);
     const ib = input.getBoundingClientRect(); const ic = getComputedStyle(input);
     const start = Math.round(ib.left + parseFloat(ic.paddingLeft) + parseFloat(ic.borderLeftWidth));   // where typing starts
     const place = ovs.querySelector('.ovs-place'); const pc = place ? getComputedStyle(place) : null;
@@ -85,7 +86,7 @@ const LOOK = `(() => {
         await p.evaluate("(document.getElementById('openvibe-burger') || document.getElementById('openvibe-search-btn')).click(), true");
         assert.ok(await until(p, "!!document.querySelector('.ovs.is-open [data-tab=\"vibe\"]')"), 'the menu opened, with the Vibe door');
         await p.evaluate("document.querySelector('.ovs [data-tab=\"vibe\"]').click(), true");
-        assert.ok(await until(p, "(() => { const g = [...document.querySelectorAll('.ovt-ghost')].find((x) => !x.hidden && x.offsetParent); return !!(g && g.textContent.trim()); })()"), 'Vibe suggests something to ask');
+        assert.ok(await until(p, "(() => { const ovs = document.querySelector('.ovs.is-open'); const i = ovs && ovs.querySelector('.ovs-input'); const g = i && i.nextElementSibling; return !!(g && g.classList.contains('ovt-ghost') && !g.hidden && g.textContent.trim()); })()"), 'Vibe suggests something to ask');
         await wait(1200);   // the open button's turn settles
         // The steady state, as a person sees it once the menu has settled: the line sits where typing starts. A line left
         // behind where its box was measured mid-animation never gets there (4.286.0: ov-trending re-places after one).
