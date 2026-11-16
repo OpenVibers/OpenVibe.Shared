@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.282.0 — 2026-11-16
+
+**Escape closes only what it is meant to.**
+- When a sheet over the menu closed itself on Escape (a post's comments), the menu under it sometimes closed too.
+  - `panels.js` closed every panel on Escape even when something inside had already used it (`defaultPrevented`).
+  - It happened only once that script had loaded, so it came and went.
+  - Now an Escape that was already used leaves the panels as they are.
+- Tests: `menu-feed-v2-chrome` failed 3 runs in 8 here (and on Shared #573 and #575 in CI). It now passes 8 of 8.
+  - Its clips check no longer races the next page, which a short list rightly asks for at once.
+
 ## 4.281.0 — 2026-11-16
 
 **The Way, in every session** (the owner, 11-16: "Actor should allow a mix or modular system where you can use an agent

@@ -146,7 +146,10 @@ const server = http.createServer((req, res) => {
         assert.ok(await until(p, `!!document.querySelector('.ovfd-caught')`), 'the end says so');
         await p.evaluate(`[...document.querySelectorAll('.ovfd-chip')].find((b) => b.textContent === 'Clips').click(), true`);
         assert.ok(await until(p, `(window.__feedCalls || []).some((u) => u.includes('kind=clip'))`), 'the chip asks for its kind');
-        assert.ok(await until(p, `[...document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a')].every((a) => a.className === 'ovfd-card ovfd-k-clip') && document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length === 12`), 'only clips, from the first page');
+        // Only clips, from their first page on. The list may already be asking for the next one (the end is near on a
+        // short list: correct, and it raced an exact count of 12 on every runner).
+        assert.ok(await until(p, `[...document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a')].every((a) => a.className === 'ovfd-card ovfd-k-clip') && document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length >= 12`), 'only clips, from the first page');
+        assert.ok(await p.evaluate(`!/[?&]cursor=/.test((window.__feedCalls || []).find((u) => u.includes('kind=clip')) || '')`), 'the first clip page asks from the top');
         await p.evaluate(`[...document.querySelectorAll('.ovfd-chip')].find((b) => b.textContent === 'Events').click(), true`);
         assert.ok(await until(p, `document.querySelectorAll('.ovfd-act').length === 5`), 'every activity kind is one row');
         const acts = await p.evaluate(`({ titles: [...document.querySelectorAll('.ovfd-act-txt > b')].map((b) => b.textContent), days: [...document.querySelectorAll('.ovfd-day')].map((d) => d.textContent),
