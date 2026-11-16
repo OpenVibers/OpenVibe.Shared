@@ -34,8 +34,8 @@ const LIBS = { 'openvibe-contracts': 'OpenVibe.Contracts', 'openvibe-shared': 'O
 // A pin on codeload (…/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/vX.Y.Z) or on our own forge
 // (…/api/v1/repos/openvibers/openvibe.shared/archive/vX.Y.Z.tar.gz, 4.284.0): the same tag either way. 4.288.0: read
 // by openvibe-shared/pins (scripts/pins.js), the one reader.
-// It stays one standalone file: every repository's CI runs it as `curl …/scripts/pin-drift.js | node -`, where a
-// require('./pins') cannot resolve (4.288.0 did, and every CI failed: 2026-11-16). So the reader is inline here, the same
+// It stays one standalone file: every repository's CI runs it as `curl …/scripts/pin-drift.js | node -`, where
+// requiring pins.js beside it cannot resolve (4.288.0 did, and every CI failed: 2026-11-16). So the reader is inline here, the same
 // as openvibe-shared/pins' parsePin (test/pin-drift.test.js checks the two agree).
 const PIN_LIBRARIES = { 'openvibe-contracts': 'OpenVibe.Contracts', 'openvibe-shared': 'OpenVibe.Shared', 'openvibe-sdk': 'OpenVibe.SDK', 'openvibe-publishing': 'OpenVibe.Publishing' };
 const PIN_RE = /^https:\/\/(?:codeload\.github\.com\/OpenVibers\/(OpenVibe\.[A-Za-z]+)\/tar\.gz\/refs\/tags\/v(\d+\.\d+\.\d+)|git\.openvibe\.codes\/api\/v1\/repos\/openvibers\/(openvibe\.[A-Za-z]+)\/archive\/v(\d+\.\d+\.\d+)\.tar\.gz)$/i;
