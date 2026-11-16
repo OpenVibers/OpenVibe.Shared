@@ -97,11 +97,12 @@ const server = http.createServer((req, res) => {
         await page.evaluate(`(() => { const i = document.querySelector('#c1 input[type=file]'); i.setAttribute('accept', i.dataset.acc); })()`);
         await clear();
 
-        // "/": the site's commands, then settings; the arrows and Enter pick one, and Enter does not send.
+        // "/": the site's commands, /tool (4.280.0: any OpenVibe tool), then settings; the arrows and Enter pick one, and
+        // Enter does not send.
         await type('/');
         assert.ok(await until(`!document.querySelector('#c1 .ovc-pop').hidden`), '/ opens the list');
         const rows = await page.evaluate(`[...document.querySelectorAll('#c1 .ovc-pop-i b')].map((b) => b.textContent)`);
-        assert.deepEqual(rows, ['/fix', '/plan', '/settings']);
+        assert.deepEqual(rows, ['/fix', '/plan', '/tool', '/settings']);
         await key('ArrowDown');
         await key('Enter');
         assert.equal(await val(), 'Plan it first. ', 'the second command went in where / was');
