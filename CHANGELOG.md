@@ -23,6 +23,17 @@
   - The empty box says "Search or ask Actor" (your Actor's name), and on a phone only a short name.
   - `OpenVibeSession.mount(…).start(text, files, { agent })` takes who answers.
   - Test: `menu-box-asks-chrome.test.js`.
+- **A site's search suggests from where it is** (the owner, 11-16: "more curated based on the content on the page …
+  smart based on where it is and what it's being used for"):
+  - The empty box mixes three sources:
+    - **Yours:** your recent searches on this site, kept on this device, recorded when you search there.
+    - **On this page:** the page's own titles: headings and card titles in its main content, never its nav, header
+      or a hidden part; `data-ov-title` wins.
+    - **Trending:** the site's trending.
+  - The chips label each group. The line in the box never names where a word came from.
+  - A box can say what it is for: `data-ov-trending="people|streams|tools|docs"` picks the people on the page, its
+    streams, its tools, or its headings.
+  - Test: `trending-content-chrome.test.js`. `trending-box` now expects the search just made to lead.
 - **A card's hidden parts stay hidden:** the sheet buttons' `display` outranked `hidden`, so Save showed with nothing
   to save.
 - **The user card's buttons draw glyphs** (the owner, 11-16: emoji are fine in chat; item and button icons become art).

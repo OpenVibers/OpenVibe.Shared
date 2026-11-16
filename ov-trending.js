@@ -9,6 +9,10 @@
  *   <input data-ov-trending …>                   any other box that wants the same
  *   data-ov-trending="off"                       leaves a box alone (a box that is not a search, a password, a code)
  *   data-ov-trending="own"                       waits for its page to attach it with its own list (below)
+ *   data-ov-trending="people|streams|tools|docs" what the box is for: the page's own items of that kind are suggested
+ *                                                (people: profile links; streams, tools: [data-ov-stream], [data-ov-tool];
+ *                                                docs: the main headings). Without it, the main content's headings and
+ *                                                card titles ([data-ov-title] wins).
  *   data-ov-trending-site="openvibe.exchange"    the site whose trending lead (default: the page's host)
  *   data-ov-trending-items='["GPT-5 nano","DeepSeek"]'   on the box or its form: the page's OWN list, with no script
  *                                                (4.284.0): what this page is about rotates, never the network's
@@ -139,9 +143,59 @@
         return loading;
     }
 
-    /** A box's list, as [{ query, pre }]: its own (its page's), or what people search on OpenVibe. */
+    // ── What a site's box suggests while empty (4.287.0) ──
+    // Your recent searches on this site: kept on this device only, recorded when you search from a box here.
+    const RECENT_KEY = `ov_trending_recent:${host}`;
+    function recentGet() {
+        try { const v = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); return Array.isArray(v) ? v.filter((x) => typeof x === 'string' && x.trim()).slice(0, 8) : []; }
+        catch { return []; }
+    }
+    function recentAdd(q) {
+        const t = String(q || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+        if (t.length < 2) return;
+        try { localStorage.setItem(RECENT_KEY, JSON.stringify([t, ...recentGet().filter((x) => x.toLowerCase() !== t.toLowerCase())].slice(0, 8))); } catch { /* storage off */ }
+    }
+    // The page's own items: what the box is for picks them; otherwise its main content's titles.
+    const PURPOSE = {
+        people: 'a[href^="/@"], a[href*="/u/"], [data-ov-person]',
+        streams: '[data-ov-stream], [data-ov-title][data-kind="stream"]',
+        tools: '[data-ov-tool], [data-ov-title][data-kind="tool"]',
+        docs: 'main h1, main h2, main h3, article h1, article h2',
+    };
+    const PAGE_TITLES = '[data-ov-title], main h2, main h3, article h2, article h3, [role="main"] h2, [role="main"] h3';
+    const NOT_CONTENT = 'nav, header, footer, aside, dialog, [role="navigation"], [role="dialog"], [aria-hidden="true"], .ovs, .ovt-chips, .ovt-ghost, [hidden]';
+    const CHROME_WORDS = /^(sign in|log in|sign up|menu|more|loading|search|settings|share|close|back)\b/i;
+    function pageItems(input) {
+        const purpose = String(input && input.getAttribute('data-ov-trending') || '');
+        const sel = PURPOSE[purpose] || PAGE_TITLES;
+        const seen = new Set(), out = [];
+        let nodes = [];
+        try { nodes = Array.prototype.slice.call(document.querySelectorAll(sel), 0, 200); } catch { nodes = []; }
+        for (const e of nodes) {
+            if (out.length >= 4) break;
+            if (e.closest(NOT_CONTENT) || (input && (e === input || e.contains(input)))) continue;
+            if (!e.getClientRects().length) continue;   // not shown
+            const t = String(e.getAttribute('data-ov-title') || e.textContent || '').replace(/\s+/g, ' ').trim().replace(/^@/, '');
+            const k = t.toLowerCase();
+            if (t.length < 2 || t.length > 48 || CHROME_WORDS.test(t) || seen.has(k)) continue;
+            seen.add(k); out.push(t);
+        }
+        return out;
+    }
+    /** A site box's mix: two of your recent searches here, two of the page's own items, then the site's trending. */
+    function mixed(b) {
+        const seen = new Set();
+        const take = (arr, from, n) => arr.filter((x) => { const k = String(x.query || '').toLowerCase(); if (!k || seen.has(k)) return false; seen.add(k); return true; })
+            .slice(0, n).map((x) => ({ ...x, from }));
+        const yours = take(recentGet().map((q) => ({ query: q })), 'recent', 2);
+        const page = take(pageItems(b.input).map((q) => ({ query: q })), 'page', 2);
+        const tr = take(list || [], 'trending', 8);
+        return [...yours, ...page, ...tr].slice(0, 8);
+    }
+
+    /** A box's list, as [{ query, pre, from }]: its own (its page's), or for a site's search, the mix above. */
     function itemsOf(b) {
-        if (!b.own) return list || [];
+        if (!b.own) return mixed(b);
         let v = b.own.items;
         try { if (typeof v === 'function') v = v(); } catch { v = null; }
         return (Array.isArray(v) ? v : []).map((x) => (typeof x === 'string' ? { query: x } : x && { query: String(x.query || ''), pre: x.pre }))
@@ -349,8 +403,22 @@
         head.className = 'ovt-chips-head';
         head.setAttribute('aria-hidden', 'true');
         head.textContent = b && b.own ? (b.own.head || 'Try') : tryOnly ? 'Try' : 'Trending';
-        el.append(head);
+        // 4.287.0: a site's box shows where each came from: Yours (your searches here), On this page, Trending.
+        const FROM = { recent: 'Yours', page: 'On this page', trending: tryOnly ? 'Try' : 'Trending' };
+        const sources = new Set(items.slice(0, 6).map((x) => x.from).filter(Boolean));
+        const labelled = !(b && b.own) && (sources.size > 1 || (sources.size === 1 && !sources.has('trending')));
+        if (labelled) el.setAttribute('aria-label', 'Suggestions');
+        else el.append(head);
+        let last = null;
         items.slice(0, 6).forEach((x, n) => {
+            if (labelled && x.from !== last) {
+                last = x.from;
+                const h = document.createElement('span');
+                h.className = 'ovt-chips-head';
+                h.setAttribute('aria-hidden', 'true');
+                h.textContent = FROM[x.from] || 'Try';
+                el.append(h);
+            }
             const c = document.createElement('button');
             c.type = 'button';
             c.className = 'ovt-chip';
@@ -435,7 +503,7 @@
         const named = input.getAttribute('aria-label') || input.getAttribute('aria-labelledby') || (input.id && document.querySelector(`label[for="${CSS.escape(input.id)}"]`)) || input.closest('label');
         if (!named && placeholder) input.setAttribute('aria-label', placeholder);
         // No "Try" (the owner, 11-16: "remove the text try … just use the extra space to have whatever the recommendation is").
-        const b = { ghost, line, placeholder, prefix: own && own.prefix != null ? String(own.prefix) : '', ro: null, mo: null, own, i: 0, labelled: !named && !!placeholder, sent: new Map() };
+        const b = { input, ghost, line, placeholder, prefix: own && own.prefix != null ? String(own.prefix) : '', ro: null, mo: null, own, i: 0, labelled: !named && !!placeholder, sent: new Map() };
         if (typeof ResizeObserver === 'function') { b.ro = new ResizeObserver(() => show(input)); b.ro.observe(input); }
         // Its page changes the placeholder later (the menu does, tab by tab): take the new one up and read the list again,
         // so the page's words and the line are never drawn over each other.
@@ -454,6 +522,11 @@
             b.mo.observe(input, { attributes: true, attributeFilter: ['placeholder'] });
         }
         boxes.set(input, b);
+        // Your searches here are remembered on this device (4.287.0): the empty box suggests them first next time.
+        if (!own) {
+            input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && input.value.trim()) recentAdd(input.value); });
+            if (input.form) input.form.addEventListener('submit', () => recentAdd(input.value));
+        }
         input.addEventListener('input', () => { show(input); if (input.value) { if (panel && panel.kind === 'chips') closeChips(); if (!taking) openDive(input); } else openChips(input); });
         input.addEventListener('focus', () => { show(input); hint(input, true); if (input.value) openDive(input); else openChips(input); });
         input.addEventListener('blur', () => {
