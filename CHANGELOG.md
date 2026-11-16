@@ -1,5 +1,52 @@
 # Changelog
 
+## 4.284.0 — 2026-11-16
+
+**The menu's box knows where it is.** The owner: "add an icon to the beginning … it should change … animate … alerts to
+apps … history … vibe" and "the search … should just be integrated straight to the top".
+- **A mark at the start of the box** turns as you move (Apps grid, Alerts bell, History clock, Chat, Vibe spark, Feed).
+  Searching OpenVibe has none: your picture leads it.
+- **The box searches inside each place:**
+  - Alerts: the inbox's own search field is gone from the menu.
+  - History: the places you were.
+  - All apps.
+  - Vibe: your sessions; Enter still asks Vibe.
+- **`OpenVibeSearch.mode({ id, icon, placeholder, onInput, onSubmit })`** gives a page's own tab its own way to search.
+- **Place links:** every tab has its place's own site (Chat → openvibe.chat, Feed → the feed's page, You →
+  OpenVibe.my), with an icon that turns from the tab's glyph into the arrow.
+- **One size for everything in the box:** 40 px (36 on a phone), each glyph 20 px. On a crowded phone the mic steps
+  aside.
+- **Placeholders:** a placeholder the page changes is kept, even while a suggestion shows.
+
+**Edit on all three of You's tabs, with multi-select.** The owner: "people want to completely delete their
+notifications … the edit mode … all three" and "add [Edit] to the history".
+- **History:** pick places, then Select all and Delete (`DELETE /api/history/:id`). The rows fold away.
+- **Alerts:** pick notices, then Mark read (one batch) or Delete (each dismissed). Delete all needs a second press.
+
+**Sessions.**
+- **Codes beside Actor:** a coding session on a shared node or your computer.
+- **"Harness", not "Agent"** (the owner: "which harness is powering your agent"): the How it runs row, its sheet and
+  the composer chip.
+
+**Tabs that glide.** `ov-tabs.js` (`OVTabs.ink(list, { kind, key })`):
+- a sliding ink in the theme's tokens, for any tab row;
+- it glides from where it was when a panel draws its bar again;
+- Calm shortens it, Off stops it;
+- it is on Chat's Messages, Friends, Global and Servers.
+
+**Chat's Servers.** New server is a button in the corner of a foot pinned to the bottom, beside "Every server on
+openvibe.chat". The name field rises above it. With no server yet, the field leads.
+
+**Alerts outside the menu.** The search is a field of its own above the tabs, and Unread is a pill that says so.
+
+**The thread's back.** "‹ Chats" keeps its width beside the name.
+
+**Tools in the composer** go through the Frame (`openvibe.network/api/frame/tools`, Network #1032). It was "Failed to
+fetch" on sites whose CSP did not allow openvibe.tools.
+
+**Icons in buttons.** A plain 20 px glyph, never a ring mark at 18 px (whose glyph drew at 9). A glyph inside a row's
+tile has no ring of its own. The owner: "tiny icons … way more bigger and edge to edge … consistent".
+
 ## 4.283.0 — 2026-11-16
 
 **Links are OpenVibe's own, on every site.** The owner: "a completely custom link style with animations and effects …
