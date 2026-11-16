@@ -73,7 +73,9 @@ const LOOK = `(() => Object.fromEntries(['prose', 'comp', 'navl', 'site', 'cta',
         await wait(600);
         s = await p.evaluate(LOOK);
         const visible = await p.evaluate("document.getElementById('prose').matches(':focus-visible')");
-        if (visible) assert.deepStrictEqual([s.prose.size, s.prose.outline], ['100% 2px, 100% 1px, 100% 0%', 'solid'], `focus sweeps the line in and rings it (${JSON.stringify(s.prose)})`);
+        // The sweep eases in over .42 s: on a slow runner it may still be a hair short of 100% here (macOS CI: 99.99%).
+        const swept = parseFloat(String(s.prose.size).split(' ')[0]);
+        if (visible) assert.ok(swept >= 99 && / 100% 1px, 100% 0%$/.test(s.prose.size) && s.prose.outline === 'solid', `focus sweeps the line in and rings it (${JSON.stringify(s.prose)})`);
         // Motion Off: no sweep motion.
         await p.goto(`${base}/off`, { maxMs: 6000 });
         for (let i = 0; i < 60 && !(await p.evaluate("!!document.getElementById('openvibe-navbar-styles')")); i++) await wait(50);
