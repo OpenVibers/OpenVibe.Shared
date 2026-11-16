@@ -33,7 +33,8 @@ const LIBS = [
     { pkg: 'openvibe-shared', repo: 'OpenVibe.Shared', field: 'shared' },
     { pkg: 'openvibe-publishing', repo: 'OpenVibe.Publishing', field: null },
 ];
-const PIN = /OpenVibers\/(OpenVibe\.[A-Za-z]+)\/(?:tar\.gz\/refs\/tags\/|archive\/)v(\d+\.\d+\.\d+)(?:\.tar\.gz)?$/i;   // codeload or our forge (4.284.0)
+// 4.288.0: pins are read by openvibe-shared/pins (scripts/pins.js), the one reader: codeload or our forge, any case.
+const { parsePin } = require('./pins');
 const VERSION = /(\d+\.\d+\.\d+)/;
 
 const byPackage = new Map(LIBS.map((l) => [l.pkg, l]));
@@ -46,9 +47,8 @@ function pinsIn(pkg) {
         for (const [name, spec] of Object.entries((pkg && pkg[field]) || {})) {
             const lib = byPackage.get(name);
             if (!lib) continue;
-            const m = PIN.exec(String(spec));
-            // Our forge spells the repository in lower case (git.openvibe.codes/.../openvibers/openvibe.sdk/archive/...).
-            if (m && m[1].toLowerCase() === lib.repo.toLowerCase()) out[name] = m[2];
+            const p = parsePin(spec);
+            if (p && p.library === name) out[name] = p.version;
         }
     }
     return out;
