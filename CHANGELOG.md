@@ -68,6 +68,13 @@ chats … a blue one … less priority … servers … the mute feature").
 - A server Chat marks `muted` never asks.
 - Global's new posts since you last looked are a quiet blue count (50+ at most), like the feed's.
 
+**Friends, polished** (the owner's /ov-gui-polish, 11-16: "these go way off … improve").
+- A person's hat and badge sit on their name's line. They are put before the name, and the row stacked them as a line of
+  their own above it.
+- Someone without a picture wears their initial on a colour of their own.
+- Add is a quiet pill, so seven of them no longer shout.
+- The empty list of names under the field takes no room: it drew a dark bar.
+
 **Chat's Servers.** New server is a button in the corner of a foot pinned to the bottom, beside "Every server on
 openvibe.chat". The name field rises above it. With no server yet, the field leads.
 

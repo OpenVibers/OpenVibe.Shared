@@ -214,6 +214,15 @@
             .ovdk-row .ovdk-av.is-online { box-shadow: 0 0 0 2px var(--bg-elevated, #1d1f27), 0 0 0 4px #22c55e; }
             .ovdk-row-b { display: grid; min-width: 0; gap: 1px; }
             .ovdk-row-b b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14.5px; }
+            .ovdk-suggest[hidden] { display: none; }
+            .ovdk-row-n { display: flex; align-items: center; gap: 4px; min-width: 0; line-height: 1.25; }
+            .ovdk-row-n > b { min-width: 0; }
+            .ovdk-row-n > .ov-hat, .ovdk-row-n > img { flex: none; margin: 0; }
+            .ovdk-av.is-initial { background: linear-gradient(140deg, hsl(var(--ovdk-hue, 220) 55% 42%), hsl(calc(var(--ovdk-hue, 220) + 40) 60% 30%)); color: #fff; font-weight: 800; }
+            .ovdk-add-q { min-height: 36px; padding: 0 14px 0 11px; border: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); color: color-mix(in srgb, var(--accent, #3b82f6) 35%, var(--text-primary, #ececf1)); font: inherit; font-size: 13.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: background .2s, transform .15s; }
+            .ovdk-add-q:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); }
+            .ovdk-add-q:active { transform: scale(.95); }
+            .ovdk-add-q svg { width: 18px; height: 18px; }
             .ovdk-row-p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
             .ovdk-row-go { color: var(--text-muted, #8b8b96); } .ovdk-row-go svg { width: 18px; height: 18px; }
             .ovdk-row-acts { display: flex; gap: 6px; }
@@ -525,6 +534,8 @@
         return null;
     };
     // The attribute a name wears, when the data carries a subject. Never invented.
+    /** A person's name for a list row: one line, so a hat or a badge (items.js puts them before the name) sits beside it. */
+    const named = (text, data) => { const line = h('span', 'ovdk-row-n'); line.append(setSubject(h('b', '', String(text || '')), data)); return line; };
     const setSubject = (node, data) => { const s = subjectOf(data); if (s && node && node.setAttribute) node.setAttribute('data-ov-subject', s); return node; };
     // Every name under the scope wears its effect, hat and badge (items.js; items.css). Never throws: a name stays plain.
     const wearNames = (scope) => { try { const OV = root.OV || (root.window && root.window.OV); if (OV && typeof OV.names === 'function') OV.names(scope); } catch { /* names stay plain */ } };
@@ -563,8 +574,9 @@
         const url = p && /^https:\/\//.test(String(p.avatar_url || '')) ? p.avatar_url : '';
         const first = () => String((p && (p.display_name || p.username)) || '?').trim().charAt(0).toUpperCase() || '?';
         // A picture that does not load (a moved or deleted file) shows the initial, never an empty circle.
-        if (url && !group) { const img = h('img'); img.src = url; img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer'; img.onerror = () => { img.remove(); a.textContent = first(); }; a.append(img); }
+        if (url && !group) { const img = h('img'); img.src = url; img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer'; img.onerror = () => { img.remove(); a.textContent = first(); a.classList.add('is-initial'); }; a.append(img); }
         else a.textContent = group ? '#' : first();
+        if (!url || group) { let hue = 0; for (const c of String((p && (p.username || p.display_name)) || '')) hue = (hue * 31 + c.charCodeAt(0)) % 360; a.classList.add('is-initial'); a.style.setProperty('--ovdk-hue', String(hue)); }
         return a;
     }
     function groupAvatar(c) {
@@ -749,7 +761,7 @@
                 sug.textContent = ''; active = -1;
                 users.filter((u) => u && u.username && !known.has(String(u.username).toLowerCase())).slice(0, 6).forEach((u, k) => {
                     const li = h('li', 'ovdk-sug'); li.id = `${sug.id}-${k}`; li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false');
-                    const body = h('span', 'ovdk-row-b'); body.append(setSubject(h('b', '', String(u.display_name || u.username).slice(0, 60)), u), h('span', 'ovdk-row-p', `@${u.username}`));
+                    const body = h('span', 'ovdk-row-b'); body.append(named(String(u.display_name || u.username).slice(0, 60), u), h('span', 'ovdk-row-p', `@${u.username}`));
                     const plus = icon(G.personAdd); plus.classList.add('ovdk-row-go');
                     li.append(avatar(u, false), body, plus);
                     li.addEventListener('pointerdown', (e) => e.preventDefault());   // the field keeps the focus
@@ -788,7 +800,7 @@
         const ign = ignoredRequests();
         section('Pending', (people.requests || []).filter((p) => !ign.has(personKey(p))), (p) => {
             const li = h('li', 'ovdk-row is-request');
-            const body = h('span', 'ovdk-row-b'); body.append(setSubject(h('b', '', nameOf(p)), p), h('span', 'ovdk-row-p', 'Wants to be your friend'));
+            const body = h('span', 'ovdk-row-b'); body.append(named(nameOf(p), p), h('span', 'ovdk-row-p', 'Wants to be your friend'));
             const acts = h('span', 'ovdk-row-acts');
             const ok = h('button', 'ovdk-request-ok', 'Accept'); ok.type = 'button';
             const no = h('button', 'ovdk-request-no', 'Ignore'); no.type = 'button';
@@ -809,7 +821,7 @@
         });
         const friend = (p) => {
             const li = h('li'), b = h('button', 'ovdk-row'); b.type = 'button';
-            const body = h('span', 'ovdk-row-b'); body.append(setSubject(h('b', '', nameOf(p)), p), h('span', 'ovdk-row-p', p.online ? (p.site ? `Online on ${p.site}` : 'Online') : `@${p.username || ''}`));
+            const body = h('span', 'ovdk-row-b'); body.append(named(nameOf(p), p), h('span', 'ovdk-row-p', p.online ? (p.site ? `Online on ${p.site}` : 'Online') : `@${p.username || ''}`));
             const go = icon(G.chat); go.classList.add('ovdk-row-go');
             b.append(face(p), body, go); b.setAttribute('aria-label', `Message ${nameOf(p)}${p.online ? ', online' : ''}`);
             b.addEventListener('click', () => talkTo(p, people));
@@ -820,7 +832,7 @@
         section('Offline', all.filter((p) => !p.online), friend);
         section('Asked', people.asked || [], (p) => {
             const li = h('li', 'ovdk-row is-asked');
-            const body = h('span', 'ovdk-row-b'); body.append(setSubject(h('b', '', nameOf(p)), p), h('span', 'ovdk-row-p', 'Waiting for them to add you back'));
+            const body = h('span', 'ovdk-row-b'); body.append(named(nameOf(p), p), h('span', 'ovdk-row-p', 'Waiting for them to add you back'));
             li.append(face(p), body); return li;
         });
         if (!all.length && !(people.requests || []).length && !(people.asked || []).length) {
@@ -838,8 +850,8 @@
             if (talk.length) {
                 section('People you talk to', talk.slice(0, 8), (p) => {
                     const li = h('li', 'ovdk-row is-request');
-                    const body = h('span', 'ovdk-row-b'); body.append(setSubject(h('b', '', nameOf(p)), p), h('span', 'ovdk-row-p', `@${p.username}`));
-                    const ask = h('button', 'ovdk-request-ok ovdk-ask'); ask.type = 'button'; ask.append(icon(G.personAdd), h('span', '', 'Add'));
+                    const body = h('span', 'ovdk-row-b'); body.append(named(nameOf(p), p), h('span', 'ovdk-row-p', `@${p.username}`));
+                    const ask = h('button', 'ovdk-add-q ovdk-ask'); ask.type = 'button'; ask.append(icon(G.personAdd), h('span', '', 'Add')); ask.setAttribute('aria-label', `Add ${nameOf(p)} as a friend`);
                     ask.setAttribute('aria-label', `Add ${nameOf(p)} as a friend`);
                     ask.addEventListener('click', async () => {
                         ask.disabled = true;
