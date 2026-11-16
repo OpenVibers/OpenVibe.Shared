@@ -49,8 +49,10 @@ const STATE = `(() => { const one = (id) => { const i = document.getElementById(
 // The line's glyphs against the box's text line: a Range over the line's text, centre to centre.
 const CENTRE = (id) => `(() => { const i = document.getElementById(${JSON.stringify(id)}); const g = i.nextElementSibling; const line = g.querySelector('.ovt-line:last-child');
     const r = document.createRange(); r.selectNodeContents(line); const t = r.getBoundingClientRect(); const b = i.getBoundingClientRect(); const cs = getComputedStyle(i);
-    const top = b.top + i.clientTop + parseFloat(cs.paddingTop), bottom = b.top + i.clientTop + i.clientHeight - parseFloat(cs.paddingBottom);
-    return { dy: Math.round(((t.top + t.bottom) / 2 - (top + bottom) / 2) * 10) / 10, dx: Math.round((t.left - (b.left + i.clientLeft + parseFloat(cs.paddingLeft))) * 10) / 10 }; })()`;
+    // From the computed border and padding, never client* (Chrome 157 counts an input's padding into clientLeft).
+    const bt = parseFloat(cs.borderTopWidth), bb = parseFloat(cs.borderBottomWidth), bl = parseFloat(cs.borderLeftWidth);
+    const top = b.top + bt + parseFloat(cs.paddingTop), bottom = b.bottom - bb - parseFloat(cs.paddingBottom);
+    return { dy: Math.round(((t.top + t.bottom) / 2 - (top + bottom) / 2) * 10) / 10, dx: Math.round((t.left - (b.left + bl + parseFloat(cs.paddingLeft))) * 10) / 10 }; })()`;
 
 (async () => {
     await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
