@@ -402,7 +402,7 @@
         const dNew = btn('ovse-new', 'New session', 'plus', 'New');
         const dClose = btn('ovse-ib ovse-dclose', 'Close', 'x');
         dHead.append(el('b', '', 'Sessions'), dNew, dClose);
-        const find = el('label', 'ovse-find'); const findIn = el('input'); findIn.type = 'search'; findIn.placeholder = 'Search sessions'; findIn.setAttribute('aria-label', 'Search sessions'); find.append(svg('search'), findIn);
+        const find = el('label', 'ovse-find'); const findIn = el('input'); findIn.type = 'search'; findIn.placeholder = 'Search sessions'; findIn.setAttribute('aria-label', 'Search sessions'); findIn.setAttribute('data-ov-trending', 'own'); find.append(svg('search'), findIn);
         const runsBox = el('div', 'ovse-runs'); runsBox.setAttribute('role', 'list');
         const actorSlot = el('div', 'ovse-actor'); actorSlot.hidden = true;
         const topSlot = el('div', 'ovse-top'); topSlot.hidden = true;
@@ -481,6 +481,9 @@
             f.append(svg(G[a.glyph] ? a.glyph : KIND_GLYPH[run && run.kind] || 'spark'));
             return f;
         }
+        // The search suggests the person's own sessions, never what other people searched (the owner, 11-16: "this should
+        // be your session search"); with fewer than two it keeps its placeholder.
+        need(o, 'ov-trending.js', 'OVTrending').then((T) => { if (T) T.attach(findIn, { items: () => state.hints || [], prefix: 'Find ' }); });
         const titleOf = (r) => String((r && (r.title || (r.preview && r.preview.text) || r.preview)) || '').replace(/\s+/g, ' ').trim().slice(0, 120) || 'A session';
         async function loadRuns() {
             const gen = ++state.listGen;
@@ -491,6 +494,11 @@
                 if (gen !== state.listGen) return;
                 state.runs = Array.isArray(d.runs) ? d.runs : []; state.partial = Array.isArray(d.partial) ? d.partial : [];
                 paintRuns();
+                if (!state.q) {
+                    state.hints = [...new Set(state.runs.map(titleOf).filter((t) => t && t !== 'A session'))].slice(0, 12);
+                    if (state.hints.length < 2) state.hints = [];
+                    if (root.OVTrending) root.OVTrending.update(findIn);
+                }
                 if (o.actions && !state.q) {
                     const more = await actionRows(state.runs);
                     if (gen !== state.listGen || !more.length) return;

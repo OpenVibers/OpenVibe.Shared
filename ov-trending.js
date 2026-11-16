@@ -3,11 +3,24 @@
  * (1); the owner, 11-15: "it scrolls thru what's trending with a cool animation/effects in the search input itself …
  * across all sites").
  *
- *   <input type="search" …>   or   <input data-ov-trending …>       the navbar loads this file when a page has one, and
- *                                                                    it attaches to every box, now and added later
+ *   a site's own search: <form action="/search"><input type="search" name="q"> (or inside role="search")
+ *                                                the navbar loads this file when a page has one, and it attaches to every
+ *                                                such box, now and added later, with what people search on OpenVibe
+ *   <input data-ov-trending …>                   any other box that wants the same
  *   data-ov-trending="off"                       leaves a box alone (a box that is not a search, a password, a code)
+ *   data-ov-trending="own"                       waits for its page to attach it with its own list (below)
  *   data-ov-trending-site="openvibe.exchange"    the site whose trending lead (default: the page's host)
- *   OVTrending.attach(input) / .detach(input) / .refresh()          for a page that draws its box later
+ *   OVTrending.attach(input, { items, prefix, chips, dive, count, head })   a box with its OWN list: items is an array
+ *                                                or a function returning one, of strings or { query, pre }; it rotates
+ *                                                those, not the network's. chips, dive and count are off unless asked
+ *   OVTrending.update(input)                     the box's context changed: its list is read again
+ *   OVTrending.detach(input) / .refresh()
+ *
+ * Content first (the owner, 11-16: "it's not content aware … try GraveGateKeeper, that's a person … dumb to have it here
+ * in the vibe"): what people search across OpenVibe belongs only in a site's own search. A box that filters something of
+ * the person's (their sessions, their inbox, their chats) never shows it: it stays plain, or its page gives it its own
+ * list (the menu: what you can ask and open; the sessions drawer: your sessions). A placeholder its page changes later
+ * is taken up at once, so two lines are never drawn on top of each other, and the line sits on the box's own text line.
  *
  * While a box is empty, its placeholder gives way to the trending searches, one at a time in the box itself: the line
  * slides up and out, the next slides up and in, every few seconds (Calm: slower and shorter; Off and reduced motion: the
@@ -34,12 +47,24 @@
     if (typeof document === 'undefined' || root.OVTrending) return;
     const API = root.OV_TRENDING_API || 'https://openvibe.network/api/frame';
     const DIVE = root.OV_DEEP_DIVE_URL || 'https://openvibe.exchange/deep-dive';
-    const BOX = 'input[type="search"]:not([data-ov-trending="off"]), input[data-ov-trending]:not([data-ov-trending="off"])';
+    const CANDIDATES = 'input[type="search"], input[name="q"], input[name="query"], input[name="search"], input[data-ov-trending]';
+    /** A site's own search (a GET form that goes somewhere, or role="search"), or a box that asked: never a filter. */
+    function siteSearch(i) {
+        const own = i.getAttribute('data-ov-trending');
+        if (own != null) return own !== 'off' && own !== 'own';
+        if (i.type === 'hidden' || i.type === 'password' || i.readOnly || i.disabled) return false;
+        if (i.type !== 'search' && !/^(q|query|search)$/.test(i.name || '')) return false;
+        if (i.closest('[data-ov-trending="off"]')) return false;
+        if (i.closest('[role="search"]')) return true;
+        const f = i.form;
+        if (!f) return false;
+        const a = (f.getAttribute('action') || '').trim();
+        return !!a && !/^(#|javascript:)/i.test(a) && String(f.method || 'get').toLowerCase() === 'get';
+    }
     const KEEP_MS = 5 * 60_000;
     const host = (location.hostname || '').replace(/^www\./, '');
-    const boxes = new Map();   // input → { ghost, line, next, ro, placeholder, labelled }
+    const boxes = new Map();   // input → { ghost, line, ro, mo, placeholder, labelled, own, i }
     let list = null;           // [{ query }]
-    let index = 0;
     let timer = 0;
     let loading = null;
     let panel = null;          // the open chips: { el, input, kind }
@@ -56,7 +81,7 @@
         st.id = 'ov-trending-css';
         st.textContent = '.ovt-ghost{position:absolute;z-index:1;pointer-events:none;overflow:hidden;display:flex;align-items:center;white-space:nowrap;box-sizing:border-box;contain:layout paint}'
             + '.ovt-ghost[hidden]{display:none}'
-            + '.ovt-line{position:absolute;left:0;right:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:transform var(--ovt-dur,.55s) cubic-bezier(.2,.8,.2,1),opacity var(--ovt-dur,.55s) ease,filter var(--ovt-dur,.55s) ease}'
+            + '.ovt-line{position:absolute;left:0;right:0;top:0;height:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:transform var(--ovt-dur,.55s) cubic-bezier(.2,.8,.2,1),opacity var(--ovt-dur,.55s) ease,filter var(--ovt-dur,.55s) ease}'
             + '.ovt-line.is-out{transform:translateY(calc(-110% * var(--ov-move,1)));opacity:0;filter:blur(2px)}'
             + '.ovt-line.is-in{transform:translateY(calc(110% * var(--ov-move,1)));opacity:0;filter:blur(2px)}'
             + '.ovt-ghost{opacity:.62}.ovt-pre{opacity:.8}.ovt-term{font-weight:600;background:linear-gradient(90deg,currentColor 0 38%,var(--ovk-accent,var(--accent,#7aa2ff)) 50%,currentColor 62% 100%);background-size:300% 100%;background-position:0 0;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:ovt-shine 1.6s ease-out .15s 1 both}'
@@ -106,58 +131,89 @@
         return loading;
     }
 
-    /** Where the ghost sits: over the box's text area, in the box's own offset parent. */
+    /** A box's list, as [{ query, pre }]: its own (its page's), or what people search on OpenVibe. */
+    function itemsOf(b) {
+        if (!b.own) return list || [];
+        let v = b.own.items;
+        try { if (typeof v === 'function') v = v(); } catch { v = null; }
+        return (Array.isArray(v) ? v : []).map((x) => (typeof x === 'string' ? { query: x } : x && { query: String(x.query || ''), pre: x.pre }))
+            .filter((x) => x && x.query).map((x) => ({ query: x.query.slice(0, 80), pre: x.pre == null ? null : String(x.pre).slice(0, 24) })).slice(0, 24);
+    }
+
+    /** Where the ghost sits: exactly over the box's text, measured on screen (a scrolled row, a table cell or a box in a
+     *  sheet all come out right), its line as tall as the box's text line so the words sit where typing would. */
     function place(input, b) {
-        if (!input.isConnected || !input.offsetParent) { b.ghost.hidden = true; return false; }
-        const cs = getComputedStyle(input);
-        const pl = parseFloat(cs.paddingLeft) || 0;
-        const pr = parseFloat(cs.paddingRight) || 0;
         const g = b.ghost;
-        g.style.left = `${input.offsetLeft + input.clientLeft + pl}px`;
-        g.style.top = `${input.offsetTop + input.clientTop}px`;
-        g.style.width = `${Math.max(0, input.clientWidth - pl - pr)}px`;
-        g.style.height = `${input.clientHeight}px`;
+        if (!input.isConnected || !input.offsetParent) { g.hidden = true; return false; }
+        const cs = getComputedStyle(input);
+        const pl = parseFloat(cs.paddingLeft) || 0, pr = parseFloat(cs.paddingRight) || 0;
+        const pt = parseFloat(cs.paddingTop) || 0, pb = parseFloat(cs.paddingBottom) || 0;
+        const w = input.clientWidth - pl - pr, h = input.clientHeight - pt - pb;
+        if (w < 64 || h < 12) return false;   // a folded or tiny box keeps its own placeholder
+        const was = g.hidden;
+        g.hidden = false;
+        const cb = g.offsetParent;
+        let ox, oy;
+        if (!cb || (cb === document.body && getComputedStyle(cb).position === 'static')) { ox = -root.scrollX; oy = -root.scrollY; }
+        else { const c = cb.getBoundingClientRect(); ox = c.left + cb.clientLeft - cb.scrollLeft; oy = c.top + cb.clientTop - cb.scrollTop; }
+        const r = input.getBoundingClientRect();
+        g.style.left = `${r.left - ox + input.clientLeft + pl}px`;
+        g.style.top = `${r.top - oy + input.clientTop + pt}px`;
+        g.style.width = `${w}px`;
+        g.style.height = `${h}px`;
         g.style.font = cs.font;
+        g.style.lineHeight = `${h}px`;
         g.style.letterSpacing = cs.letterSpacing;
         g.style.color = cs.color;
         g.style.textAlign = cs.textAlign === 'center' ? 'center' : 'left';
-        return input.clientWidth > 40;
+        g.hidden = was;
+        return true;
     }
 
     function show(input) {
         const b = boxes.get(input);
         if (!b) return;
-        const empty = !input.value && list && list.length;
-        if (!empty || !place(input, b)) {
+        const items = itemsOf(b);
+        if (input.value || !items.length || !place(input, b)) {
             b.ghost.hidden = true;
-            if (b.placeholder != null) input.setAttribute('placeholder', b.placeholder);
+            if (b.placeholder != null && input.getAttribute('placeholder') !== b.placeholder) input.setAttribute('placeholder', b.placeholder);
             return;
         }
-        input.setAttribute('placeholder', '');
+        if (input.getAttribute('placeholder')) input.setAttribute('placeholder', '');
         b.ghost.hidden = false;
-        if (!b.line.textContent) fill(b.line, list[index % list.length].query, b);
+        if (!b.line.textContent) fill(b.line, items[b.i % items.length], b);
     }
 
-    function fill(line, term, b) {
+    function fill(line, item, b) {
         line.textContent = '';
         const pre = document.createElement('span');
         pre.className = 'ovt-pre';
-        pre.textContent = b.prefix;
+        pre.textContent = item.pre != null ? item.pre : b.prefix;
         const t = document.createElement('span');
         t.className = 'ovt-term';
-        t.textContent = term;
+        t.textContent = item.query;
         line.append(pre, t);
     }
 
+    /** The box's context changed (its page says so, or its placeholder did): its list is read again from the start. */
+    function update(input) {
+        const b = boxes.get(input);
+        if (!b) return;
+        b.i = 0;
+        b.line.textContent = '';
+        show(input);
+    }
+
     function tick() {
-        if (!list || list.length < 2 || motion() === 'off' || document.hidden) return;
-        index = (index + 1) % list.length;
-        const term = list[index].query;
+        if (motion() === 'off' || document.hidden) return;
         boxes.forEach((b, input) => {
             if (b.ghost.hidden || input.value) return;
+            const items = itemsOf(b);
+            if (items.length < 2) return;
+            b.i = (b.i + 1) % items.length;
             const old = b.line;
             const next = old.cloneNode(false);
-            fill(next, term, b);
+            fill(next, items[b.i], b);
             next.classList.add('is-in');
             b.ghost.append(next);
             // One frame later both move: the old line up and out, the new one up and in.
@@ -174,6 +230,7 @@
 
     // ── Deep dive this: a typed question, researched in full on OpenVibe Exchange ──
     const diveAllowed = (input) => input.getAttribute('data-ov-deep-dive') !== 'off' && root.OV_DEEP_DIVE !== false
+        && !((boxes.get(input) || {}).own && !boxes.get(input).own.dive)
         && !(host === 'openvibe.exchange' && /^\/(search|deep-dive)(\/|$)/.test(location.pathname));
     const diveHref = (q) => `${DIVE}?q=${encodeURIComponent(String(q).trim().slice(0, 500))}`;
     function openDive(input) {
@@ -212,24 +269,26 @@
     }
 
     // ── The chips: the list under a focused, empty box ──
-    const chipsAllowed = (input) => !input.hasAttribute('list') && !input.getAttribute('aria-autocomplete')
+    const chipsAllowed = (input) => !((boxes.get(input) || {}).own && !boxes.get(input).own.chips) && !input.hasAttribute('list') && !input.getAttribute('aria-autocomplete')
         && input.getAttribute('role') !== 'combobox' && input.getAttribute('data-ov-trending-chips') !== 'off';
     function openChips(input) {
-        if (!list || !list.length || input.value || document.activeElement !== input || !chipsAllowed(input)) { closeChips(); return; }
+        const b = boxes.get(input);
+        const items = b ? itemsOf(b) : [];
+        if (!items.length || input.value || document.activeElement !== input || !chipsAllowed(input)) { closeChips(); return; }
         if (panel && panel.input === input && panel.kind !== 'dive') { placeChips(); return; }
         closeChips();
         css();
         const el = document.createElement('div');
         el.className = 'ovt-chips';
         el.setAttribute('role', 'group');
-        const tryOnly = list.every((x) => x.suggested);
-        el.setAttribute('aria-label', tryOnly ? 'Searches to try' : 'Trending searches');
+        const tryOnly = !!(b && b.own) || items.every((x) => x.suggested);
+        el.setAttribute('aria-label', b && b.own ? (b.own.head || 'Try') : tryOnly ? 'Searches to try' : 'Trending searches');
         const head = document.createElement('span');
         head.className = 'ovt-chips-head';
         head.setAttribute('aria-hidden', 'true');
-        head.textContent = tryOnly ? 'Try' : 'Trending';
+        head.textContent = b && b.own ? (b.own.head || 'Try') : tryOnly ? 'Try' : 'Trending';
         el.append(head);
-        list.slice(0, 6).forEach((x, n) => {
+        items.slice(0, 6).forEach((x, n) => {
             const c = document.createElement('button');
             c.type = 'button';
             c.className = 'ovt-chip';
@@ -281,8 +340,15 @@
         else if (e.key === 'Escape') { e.preventDefault(); input.focus(); closeChips(); } // focus first: a removed chip would drop it
     }
 
-    function attach(input) {
-        if (!input || boxes.has(input) || input.getAttribute('data-ov-trending') === 'off' || input.type === 'password') return;
+    const ownOf = (o) => (o && (o.items != null) ? { items: o.items, prefix: o.prefix, chips: !!o.chips, dive: !!o.dive, count: !!o.count, head: o.head ? String(o.head) : '' } : null);
+    function attach(input, opts) {
+        if (!input || input.getAttribute('data-ov-trending') === 'off' || input.type === 'password') return;
+        const own = ownOf(opts);
+        if (boxes.has(input)) {
+            if (own) { const b = boxes.get(input); b.own = own; if (own.prefix != null) b.prefix = String(own.prefix); update(input); }
+            return;
+        }
+        if (!own && input.getAttribute('data-ov-trending') === 'own') return;   // its page attaches it with its own list
         css();
         const ghost = document.createElement('span');
         ghost.className = 'ovt-ghost';
@@ -296,8 +362,20 @@
         // A box named only by its placeholder keeps that name while the line shows.
         const named = input.getAttribute('aria-label') || input.getAttribute('aria-labelledby') || (input.id && document.querySelector(`label[for="${CSS.escape(input.id)}"]`)) || input.closest('label');
         if (!named && placeholder) input.setAttribute('aria-label', placeholder);
-        const b = { ghost, line, placeholder, prefix: 'Try ', ro: null, sent: new Map() };
+        const b = { ghost, line, placeholder, prefix: own && own.prefix != null ? String(own.prefix) : 'Try ', ro: null, mo: null, own, i: 0, labelled: !named && !!placeholder, sent: new Map() };
         if (typeof ResizeObserver === 'function') { b.ro = new ResizeObserver(() => show(input)); b.ro.observe(input); }
+        // Its page changes the placeholder later (the menu does, tab by tab): take the new one up and read the list again,
+        // so the page's words and the line are never drawn over each other.
+        if (typeof MutationObserver === 'function') {
+            b.mo = new MutationObserver(() => {
+                const now = input.getAttribute('placeholder');
+                if (!now || now === b.placeholder) return;
+                b.placeholder = now;
+                if (b.labelled) input.setAttribute('aria-label', now);
+                update(input);
+            });
+            b.mo.observe(input, { attributes: true, attributeFilter: ['placeholder'] });
+        }
         boxes.set(input, b);
         input.addEventListener('input', () => { show(input); if (input.value) { if (panel && panel.kind === 'chips') closeChips(); if (!taking) openDive(input); } else openChips(input); });
         input.addEventListener('focus', () => { show(input); hint(input, true); if (input.value) openDive(input); else openChips(input); });
@@ -311,16 +389,17 @@
                 if (first) { e.preventDefault(); first.focus(); }
             } else if (e.key === 'Escape' && panel && panel.input === input) {
                 closeChips();
-            } else if (e.key === 'Tab' && !e.shiftKey && !input.value && !b.ghost.hidden && list && list.length) {
+            } else if (e.key === 'Tab' && !e.shiftKey && !input.value && !b.ghost.hidden && itemsOf(b).length) {
                 e.preventDefault();
-                input.value = list[index % list.length].query;
+                const items = itemsOf(b);
+                input.value = items[b.i % items.length].query;
                 input.dispatchEvent(new Event('input', { bubbles: true }));
-            } else if (e.key === 'Enter' && !input.form && input.value.trim()) {
+            } else if (e.key === 'Enter' && !input.form && input.value.trim() && (!b.own || b.own.count)) {
                 count(input);
             }
         });
-        if (input.form) input.form.addEventListener('submit', () => count(input), true);
-        load().then(() => { show(input); rotate(); if (document.activeElement === input) openChips(input); });
+        if (input.form) input.form.addEventListener('submit', () => { if (!b.own || b.own.count) count(input); }, true);
+        (b.own ? Promise.resolve() : load()).then(() => { show(input); rotate(); if (document.activeElement === input) openChips(input); });
     }
     function hint(input, on) {
         const b = boxes.get(input);
@@ -338,6 +417,7 @@
         const b = boxes.get(input);
         if (!b) return;
         if (b.ro) b.ro.disconnect();
+        if (b.mo) b.mo.disconnect();
         b.ghost.remove();
         if (panel && panel.input === input) closeChips();
         if (b.placeholder != null) input.setAttribute('placeholder', b.placeholder);
@@ -355,7 +435,9 @@
         try { navigator.sendBeacon(`${API}/searched`, new Blob([JSON.stringify({ q, site: host })], { type: 'text/plain' })); } catch { /* */ }
     }
 
-    function scan() { document.querySelectorAll(BOX).forEach(attach); }
+    function scan() { document.querySelectorAll(CANDIDATES).forEach((i) => { if (!boxes.has(i) && siteSearch(i)) attach(i); }); }
+    let placing = 0;
+    const replace = () => { if (placing) return; placing = requestAnimationFrame(() => { placing = 0; boxes.forEach((b, i) => { if (!b.ghost.hidden) show(i); }); }); };
     function start() {
         scan();
         let soon = 0;
@@ -363,10 +445,16 @@
             .observe(document.body, { childList: true, subtree: true });
         document.addEventListener('visibilitychange', () => { if (!document.hidden) boxes.forEach((_b, i) => show(i)); });
         root.addEventListener('resize', () => { boxes.forEach((_b, i) => show(i)); placeChips(); }, { passive: true });
-        root.addEventListener('scroll', placeChips, { passive: true, capture: true });
+        root.addEventListener('scroll', () => { placeChips(); replace(); }, { passive: true, capture: true });
         new MutationObserver(rotate).observe(document.documentElement, { attributes: true, attributeFilter: ['data-ov-motion'] });
     }
 
-    root.OVTrending = { attach, detach, refresh: () => { list = null; loading = null; load().then(() => boxes.forEach((_b, i) => show(i))); }, count };
+    /** What people search on OpenVibe, for a page's own list (the menu over the feed); its boxes update when it arrives. */
+    function trending() {
+        if (!list && !loading) load().then(() => boxes.forEach((b, i) => { if (b.own) update(i); }));
+        return list || [];
+    }
+    root.OVTrending = { attach, detach, update, trending, refresh: () => { list = null; loading = null; load().then(() => boxes.forEach((_b, i) => show(i))); }, count, siteSearch };
+    try { document.dispatchEvent(new CustomEvent('ov-trending-ready')); } catch { /* */ }
     if (document.body) start(); else document.addEventListener('DOMContentLoaded', start, { once: true });
 })(typeof window !== 'undefined' ? window : globalThis);
