@@ -47,7 +47,8 @@ function pinsIn(pkg) {
             const lib = byPackage.get(name);
             if (!lib) continue;
             const m = PIN.exec(String(spec));
-            if (m && m[1] === lib.repo) out[name] = m[2];
+            // Our forge spells the repository in lower case (git.openvibe.codes/.../openvibers/openvibe.sdk/archive/...).
+            if (m && m[1].toLowerCase() === lib.repo.toLowerCase()) out[name] = m[2];
         }
     }
     return out;
