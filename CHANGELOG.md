@@ -33,6 +33,10 @@ shared with the other sites … the same composer across sites".
 - **The install is a third of the size.** The tarball leaves out what only this repository's checks read
   (`export-ignore`: `test/` 3.6 MB, `docs/screenshots/` 2.9 MB, `.github/`). Every site downloaded all 10 MB.
 
+**Fixed in this release before it shipped:** the box filtered You's Alerts in place even when You was not on screen. From
+Feed, pressing You (with Alerts the last thing open there) kept the menu on Feed. The box now filters a view in place only
+while that view is shown.
+
 **Edit on all three of You's tabs, with multi-select.** The owner: "people want to completely delete their
 notifications … the edit mode … all three" and "add [Edit] to the history".
 - **History:** pick places, then Select all and Delete (`DELETE /api/history/:id`). The rows fold away.

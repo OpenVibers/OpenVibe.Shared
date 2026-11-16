@@ -886,7 +886,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         tabsEl.addEventListener('click', (e) => {
             const b = e.target.closest && e.target.closest('[data-tab]'); if (!b) return;
             leaveDoor();
-            tab = b.getAttribute('data-tab'); if (tab === 'feed') markFeedSeen(); input.value = ''; render(''); listEl.scrollTop = 0;
+            const was = tab; tab = b.getAttribute('data-tab'); if (tab !== was) shownTab = null; if (tab === 'feed') markFeedSeen(); input.value = ''; render(''); listEl.scrollTop = 0;
             let touch = false; try { touch = root.matchMedia('(pointer: coarse)').matches; } catch { /* */ }
             if (touch) b.focus(); else input.focus();
         });
@@ -2065,6 +2065,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     }
     /** Show a place in the menu: Messages (the Dock's), or Vibe (your runs). */
     function openDoor(id) {
+        shownTab = null;
         if (!doorEl || !canDoor()) return;
         if (door && door !== id) closeDoorBody();
         door = id;
@@ -2090,7 +2091,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     /** Back to the menu's own list (a tab, typing, or closing). The Dock's panels go home with their state. */
     function leaveDoor() {
         if (!door) return;
-        door = null;
+        door = null; shownTab = null;
         closeDoorBody();
         watchActs(false);
         if (doorEl) doorEl.hidden = true;
@@ -2615,7 +2616,11 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         } catch { list.textContent = 'Notifications did not load.'; }
     }
 
+    // The tab whose view is on screen: the box filters a view in place only while it is shown (4.284.0: from Feed, pressing
+    // You with Alerts last open returned before You was drawn, so the menu stayed on Feed).
+    let shownTab = null;
     function renderTab() {
+        shownTab = tab;
         paint(tab === 'feed' ? feedGroups() : tab === 'you' ? youGroups() : hereGroups());
     }
 
@@ -2635,18 +2640,18 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         const homeApi = homeViews.home && homeViews.home.api;
         // Alerts and History under You (4.284.0; the owner, 11-16: the inbox's own search "should just be integrated
         // straight to the top"): the box filters them in place, as it finds an app in All apps.
-        if (tab === 'you' && youTab === 'notifications') {
+        if (tab === 'you' && shownTab === 'you' && youTab === 'notifications') {
             tabsEl.hidden = false; input.placeholder = 'Search your alerts';
             const i = el.querySelector('.openvibe-notif-dock .openvibe-nv-search input');
             if (i && i.value !== q) { i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); }
             return;
         }
-        if (tab === 'you' && youTab === 'recent' && homeApi && typeof homeApi.filterRecent === 'function') {
+        if (tab === 'you' && shownTab === 'you' && youTab === 'recent' && homeApi && typeof homeApi.filterRecent === 'function') {
             tabsEl.hidden = false; input.placeholder = 'Search where you were';
             homeApi.filterRecent(q);
             return;
         }
-        if (tab === 'you' && homeApi && homeApi.view === 'drawer') {
+        if (tab === 'you' && shownTab === 'you' && homeApi && homeApi.view === 'drawer') {
             tabsEl.hidden = false;
             input.placeholder = `Find among ${homeApi.apps()} apps`;
             homeApi.filter(q);
