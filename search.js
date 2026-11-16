@@ -732,7 +732,7 @@ html[data-ov-motion=off] .ovs-recent, html[data-ov-motion=off] .ovs-recent-row {
 html[data-ov-motion=off] .ovs-youpanel { animation: none; }
 @media (max-width: 640px) { .ovs-bar { gap: 8px; padding: 0 4px 0 8px; } .ovs-bar .ovs-input::placeholder { font-size: 15px; } .ovs-tools { gap: 0; } .ovs-tool { width: 36px; height: 36px; } }
 /* One size for every button in the field (4.284.0; the owner, 11-16: "make sure all sizes of things are consistent across
-   everything … dif size"): the mic, the +, a place's ↗ and the Dock's mirrored buttons are 40 px, each glyph 20 px at one
+   everything … dif size"): the mic, the +, a place's link and the Dock's mirrored buttons are 40 px, each glyph 20 px at one
    stroke whatever drawing it brings (36 px on a phone, where the words beside your picture need the room), and the two
    groups sit as one row (no wider gap between the mic and the +). */
 .ovs-bar .ovs-tool, .ovs-bar .ovs-act { width: 40px !important; height: 40px !important; flex: none; }

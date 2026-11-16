@@ -53,7 +53,7 @@ const server = http.createServer((req, res) => {
         await until(p, "!!document.querySelector('#host .ovn-ebar:not([hidden])')", 'the bar shows');
         const before = await p.evaluate('location.href');
         await p.evaluate("(() => { const r = document.querySelectorAll('#host .openvibe-notif-item'); r[0].click(); r[1].click(); })(), 1");
-        await wait(100);
+        await until(p, "document.querySelectorAll('#host .openvibe-notif-item.is-picked').length === 2", 'two picked');
         let s = await p.evaluate(`({ picked: document.querySelectorAll('#host .openvibe-notif-item.is-picked').length, n: document.querySelector('#host .ovn-ebar-n').textContent, href: location.href, role: document.querySelector('#host .openvibe-notif-item').getAttribute('role') })`);
         assert.deepStrictEqual([s.picked, s.n, s.href, s.role], [2, '2 selected', before, 'checkbox'], `a tap picks, never opens (${JSON.stringify(s)})`);
         // Mark read: one batch with both.
@@ -67,11 +67,9 @@ const server = http.createServer((req, res) => {
         // Delete all: Select all, then a second press arms it, a third deletes every notice.
         await p.evaluate("v.edit(true), 1");
         await p.evaluate("document.querySelector('#host .ovn-ebar [data-e=all]').click(), 1");
-        await wait(50);
-        assert.strictEqual(await p.evaluate("document.querySelector('#host .ovn-ebar [data-e=all]').textContent"), 'Delete everything', 'all picked: it offers everything');
+        await until(p, "document.querySelector('#host .ovn-ebar [data-e=all]').textContent === 'Delete everything'", 'all picked: it offers everything');
         await p.evaluate("document.querySelector('#host .ovn-ebar [data-e=all]').click(), 1");
-        await wait(50);
-        assert.match(await p.evaluate("document.querySelector('#host .ovn-ebar [data-e=all]').textContent"), /^Delete all/, 'armed, in words');
+        await until(p, "/^Delete all/.test(document.querySelector('#host .ovn-ebar [data-e=all]').textContent)", 'armed, in words');
         assert.ok(!calls.includes('DELETE all'), 'not yet');
         await p.evaluate("document.querySelector('#host .ovn-ebar [data-e=all]').click(), 1");
         await until(p, "document.querySelectorAll('#host .openvibe-notif-item').length === 0", 'every notice gone');

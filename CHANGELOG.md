@@ -72,6 +72,13 @@ openvibe.chat". The name field rises above it. With no server yet, the field lea
 **Tools in the composer** go through the Frame (`openvibe.network/api/frame/tools`, Network #1032). It was "Failed to
 fetch" on sites whose CSP did not allow openvibe.tools.
 
+**Folds that move** (`kit.fold` and every `.ovk-fold`). The owner: "improve our drop-down system … animations and effects and
+transitions that look really nice and smooth … unique and stand out".
+- Shut, a fold is quiet. Open, it is lit: an accent edge grows down its side, with a soft wash and a deeper shadow.
+- The summary answers the hover, and the chevron turns on a spring.
+- The body opens to its own height (`::details-content`, `interpolate-size`) and rises in. Calm keeps it short; Off is
+  instant.
+
 **Icons in buttons.** One size for each place:
 - 20 px in a button (the showcase's and the kit's);
 - 18 px in a small button;

@@ -424,7 +424,7 @@
         const actorSlot = el('div', 'ovse-actor'); actorSlot.hidden = true;
         // Codes beside your Actor (4.284.0; the owner, 11-16: "we need to add codes by default … actor and codes means the
         // openvibe.codes system … interconnected, same system as the site"): a session that writes and changes code, on a
-        // shared OpenVibe node or your own computer (never OpenVibe's own server).
+        // shared node or your own computer (never OpenVibe's own server).
         const codesSlot = el('div', 'ovse-actor ovse-codes'); codesSlot.hidden = !o.codes;
         if (o.codes) {
             const who = el('button', 'ovse-actor-who is-resting'); who.type = 'button';

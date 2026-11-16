@@ -43,21 +43,13 @@ const SIZES = `[...document.querySelectorAll('.ovs-bar .ovs-tool:not([hidden]) s
         for (let i = 0; i < 60 && !(await p.evaluate('typeof OpenVibeNavbar !== "undefined" && !!document.querySelector(".openvibe-navbar")')); i++) await wait(50);
         await p.evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { key: "/", bubbles: true })), 1');
         for (let i = 0; i < 80 && !(await p.evaluate("!!document.querySelector('.ovs-tab[data-tab=feed]')")); i++) await wait(50);
-        assert.strictEqual(await p.evaluate(PLACE), null, 'the site\'s own tab: no link (you are there)');
+        await h.eventually(async () => assert.strictEqual(await p.evaluate(PLACE), null, 'the site\'s own tab: no link (you are there)'));
         await p.evaluate("document.querySelector('.ovs-tab[data-tab=feed]').click(), 1");
-        await wait(200);
-        let s = await p.evaluate(PLACE);
-        assert.deepStrictEqual(s, { href: 'https://openvibe.community/pulse', turning: true, from: true }, `Feed: the feed's own page, wearing its glyph first (${JSON.stringify(s)})`);
-        await wait(1700);
-        s = await p.evaluate(PLACE);
-        assert.deepStrictEqual(s, { href: 'https://openvibe.community/pulse', turning: false, from: false }, 'then the arrow alone');
+        let s = await h.eventually(async () => { const x = await p.evaluate(PLACE); assert.deepStrictEqual(x, { href: 'https://openvibe.community/pulse', turning: true, from: true }, `Feed: the feed's own page, wearing its glyph first (${JSON.stringify(x)})`); return x; });
+        s = await h.eventually(async () => { const x = await p.evaluate(PLACE); assert.deepStrictEqual(x, { href: 'https://openvibe.community/pulse', turning: false, from: false }, 'then the arrow alone'); return x; }, { timeout: 4000 });
         await p.evaluate("document.querySelector('.ovs-tab[data-tab=you]').click(), 1");
-        await wait(200);
-        s = await p.evaluate(PLACE);
-        assert.deepStrictEqual([s.href, s.turning], ['https://openvibe.my/', true], 'You: OpenVibe.my, turning again (a new place)');
-        await wait(1700);
-        const sizes = await p.evaluate(SIZES);
-        assert.ok(sizes.length >= 2 && sizes.every((w) => w === 20), `every glyph in the field is 20 px (${sizes})`);
+        s = await h.eventually(async () => { const x = await p.evaluate(PLACE); assert.deepStrictEqual([x.href, x.turning], ['https://openvibe.my/', true], 'You: OpenVibe.my, turning again (a new place)'); return x; });
+        const sizes = await h.eventually(async () => { const x = await p.evaluate(SIZES); const t = await p.evaluate(PLACE); assert.ok(!t.turning && x.length >= 2 && x.every((w) => w === 20), `every glyph in the field is 20 px (${x})`); return x; }, { timeout: 4000 });
         console.log(`menu-place-link-chrome: Feed → the feed's page, You → OpenVibe.my, none on the site's own tab; the tab's glyph turns into the arrow; ${sizes.length} glyphs, all 20 px`);
     } finally {
         await browser.close();
