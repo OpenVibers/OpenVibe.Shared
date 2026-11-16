@@ -91,7 +91,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '68c92795c0f7', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
+    const DOCK_REV = { 'ov-tabs.js': '0e8a449da361', 'dock-vibe.js': '200eeae434e9', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -266,6 +266,24 @@
             .ovdk-sv-filter:focus { outline: none; border-color: var(--accent, #3b82f6); }
             .ovdk-gl-more { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; margin: 6px 4px 0; color: var(--text-muted, #8b8b96); font-size: 13px; font-weight: 650; text-decoration: none; }
             .ovdk-gl-more:hover { color: var(--text-primary, #ececf1); }
+            /* The Servers foot (4.284.0): pinned to the pane's bottom over a fade; New server floats in its corner. */
+            .ovdk-sv-foot { position: sticky; bottom: 0; z-index: 2; display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 14px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+                background: linear-gradient(to top, var(--bg-secondary, #141a24) 62%, transparent); }
+            .ovdk-sv-foot .ovdk-gl-more { flex: 1; min-width: 0; margin: 0; justify-content: flex-start; padding: 0 14px; border-radius: 999px;
+                background: color-mix(in srgb, var(--text-primary, #ececf1) 6%, transparent); }
+            .ovdk-sv-foot .ovdk-gl-more span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .ovdk-fab { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 48px; padding: 0 18px 0 14px; border: 0; border-radius: 999px; cursor: pointer;
+                font: inherit; font-size: 14px; font-weight: 750; color: #fff; background: var(--accent, #3b82f6);
+                box-shadow: 0 12px 26px -12px color-mix(in srgb, var(--accent, #3b82f6) 85%, transparent), inset 0 1px 0 rgba(255, 255, 255, .22);
+                animation: ovdk-fab-in .34s cubic-bezier(.3, 1.4, .4, 1) both; }
+            .ovdk-fab .ovdk-i svg { width: 20px; height: 20px; transition: transform .25s cubic-bezier(.3, 1.4, .4, 1); }
+            .ovdk-fab[aria-expanded="true"] .ovdk-i svg { transform: rotate(45deg); }
+            .ovdk-fab:active { transform: scale(.95); }
+            @keyframes ovdk-fab-in { from { opacity: 0; transform: scale(.6) translateY(calc(10px * var(--ov-move, 1))); } }
+            .ovdk-sv-new.is-float { margin: 6px 4px 0; }
+            .ovdk-sv-new.is-rising { animation: ovdk-rise .26s cubic-bezier(.2, .8, .2, 1) both; }
+            @keyframes ovdk-rise { from { opacity: 0; transform: translateY(calc(12px * var(--ov-move, 1))); } }
+            html[data-ov-motion=off] .ovdk-fab, html[data-ov-motion=off] .ovdk-sv-new.is-rising { animation: none; }
             .ovdk-gl-more .ovdk-i svg { width: 15px; height: 15px; }
             html[data-ov-motion="off"] .ovdk-suggest, html[data-ov-motion="off"] .ovdk-gl-list > li { animation: none; }
             html[data-ov-motion="off"] .ovdk-pane, html[data-ov-motion="off"] .ovdk-rows > li, html[data-ov-motion="off"] .ovdk-seg { animation: none; transition: none; }
@@ -649,6 +667,8 @@
         });
         panel.append(segBar, scroll);
         paint();
+        // The segments' ink (4.284.0, ov-tabs.js): it glides to the chosen one, from where it was when the panel is drawn again.
+        load('ov-tabs.js', () => !!root.OVTabs).then((ok) => { if (ok && segBar.isConnected) root.OVTabs.ink(segBar, { key: 'ovdk-chat' }); });
     }
     /**
      * Your friends, on top of your conversations (4.249.0; the owner, 11-14: "our entire OpenVibe.chat product should be a
@@ -948,7 +968,11 @@
             } catch (err) { startNote.textContent = err && err.status === 401 ? 'Sign in to start a server.' : (err && err.message) || 'That did not work.'; }
             finally { make.disabled = false; }
         });
-        box.append(start, startNote);
+        // 4.284.0 (the owner, 11-16: "start another server … move that to the corner … float … every server on openvibe.chat
+        // … fixed to the bottom"): with servers of your own, starting one is a button in the corner of the foot and the
+        // name field rises above it when pressed; with none yet, the field leads the pane (it is what to do first).
+        const haveOwn = ul.children.length > 0;
+        if (!haveOwn) box.append(start, startNote);
 
         // The public ones, below: join with one press (then it is yours above), or open it.
         const mine = new Set(servers.map((sv) => String(sv.slug || '').toLowerCase()));
@@ -985,7 +1009,24 @@
             });
         }
         const more = h('a', 'ovdk-gl-more'); more.href = `${CHAT_SITE}/servers`; more.append(h('span', '', 'Every server on openvibe.chat'), icon(G.open || G.chat));
-        box.append(more);
+        // The foot stays at the bottom of the pane: every server on Chat, and (with servers of your own) New server.
+        const foot = h('div', 'ovdk-sv-foot');
+        foot.append(more);
+        if (haveOwn) {
+            start.hidden = true; start.classList.add('is-float');
+            const fab = h('button', 'ovdk-fab'); fab.type = 'button'; fab.setAttribute('aria-expanded', 'false'); fab.setAttribute('aria-label', 'Start a server');
+            fab.append(icon(G.plus), h('span', '', 'New server'));
+            fab.addEventListener('click', () => {
+                const opening = start.hidden;
+                start.hidden = !opening; startNote.hidden = !opening || !startNote.textContent;
+                fab.setAttribute('aria-expanded', String(opening));
+                if (opening) { start.classList.remove('is-rising'); void start.offsetWidth; start.classList.add('is-rising'); try { name.focus({ preventScroll: true }); } catch { /* */ } }
+            });
+            name.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !start.hidden) { e.stopPropagation(); start.hidden = true; fab.setAttribute('aria-expanded', 'false'); fab.focus(); } });
+            box.append(start, startNote);
+            foot.append(fab);
+        }
+        box.append(foot);
         return box;
     }
     /** "edited", one quiet word after a message's words; when, in its title. */
