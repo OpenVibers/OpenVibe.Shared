@@ -10,6 +10,16 @@
     section stays away.
   - A rename keeps the picture. Pressing a shape or a colour and saving puts the drawn face on instead.
   - Test: `run-actor-pictures-chrome.test.js`.
+- **The top box talks** (the owner, 11-16: "from the top box, start a conversation with Vibe, Actor or any agent"):
+  - A question in the menu's box gets an **Ask** group: your Actor by its name, Codes, and up to two agents you made,
+    with their faces. Each starts that conversation in the menu.
+  - The group leads when the words are a question or a request ("what is live tonight?", "plan my week for the
+    stream"). Words that name a thing keep the results first, and Ask comes near the end.
+  - Enter on a question or a request asks your Actor in the menu; it no longer searches. A picked row still does what
+    it says, and signed out the box still offers Vibe on openvibe.chat.
+  - The empty box says "Search or ask Actor" (your Actor's name), and on a phone only a short name.
+  - `OpenVibeSession.mount(…).start(text, files, { agent })` takes who answers.
+  - Test: `menu-box-asks-chrome.test.js`.
 - **A card's hidden parts stay hidden:** the sheet buttons' `display` outranked `hidden`, so Save showed with nothing
   to save.
 - **The user card's buttons draw glyphs** (the owner, 11-16: emoji are fine in chat; item and button icons become art).

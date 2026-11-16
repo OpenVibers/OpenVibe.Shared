@@ -274,6 +274,8 @@
 /* 4.286.0 (the owner, 11-16, the box's Vibe and Alerts side by side: "still inconsistent", then "I liked the bolder font
    … thicker"): the box's own words look exactly like its suggestion line (ov-trending's: the typing font, the text's
    colour at 62%), never a browser's thin grey placeholder beside a bolder line. */
+.ovs-ic.ovs-face { overflow: hidden; }
+.ovs-ic.ovs-face img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
 .ovs-input::placeholder { font: inherit; letter-spacing: inherit; color: color-mix(in srgb, currentColor 62%, transparent); opacity: 1; }
 .ovs-input::-webkit-search-cancel-button { -webkit-appearance: none; }
 .ovs-ghost { position: absolute; inset: 0; display: flex; align-items: center; white-space: pre; overflow: hidden; pointer-events: none; color: var(--text-muted, #93a0b4); opacity: .75; }
@@ -1026,6 +1028,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             }
             if (door === 'chats') { try { if (root.OpenVibeDock && root.OpenVibeDock.filterChats) root.OpenVibeDock.filterChats(q); } catch { /* Dock is optional */ } return; }
             const it = items[active >= 0 ? active : 0];
+            // 4.287.0: Enter on a question or a request starts the conversation with your Actor here; it does not search.
+            if (q && !moved && !door && looksAsked(q) && askRows(q).length) { askAgent(q, null, 'actor'); return; }
             // Enter shows every result, unless the person picked a row or typed a place's exact name (live, tools).
             if (it && it.kind === 'run' && typeof it.run === 'function' && (moved || /^@/.test(q))) { try { it.run(); } catch { /* the provider's own */ } return; }
             if (q && !moved && view !== 'results' && !exact(it, q)) { showResults(q); return; }
@@ -1097,8 +1101,11 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         const ic = document.createElement('span');
         ic.className = 'ovs-ic';
         if (it.site) { ic.classList.add('ovs-site'); ic.style.setProperty('--ovs-h', String(hueOf(it.site))); const s = document.createElement('span'); s.className = 'ov-icon'; s.setAttribute('data-icon', it.site); s.setAttribute('data-size', '28'); s.setAttribute('data-fx', 'none'); ic.appendChild(s); }
+        else if (it.face) { ic.classList.add('ovs-face'); const i = document.createElement('img'); i.src = it.face; i.alt = ''; i.loading = 'lazy'; ic.append(i); }
         else if (ICON[it.icon]) ic.innerHTML = ICON[it.icon];
+        else if (it.glyph && root.OVGlyphs && typeof root.OVGlyphs.html === 'function') { try { ic.innerHTML = root.OVGlyphs.html(it.glyph); } catch { ic.textContent = '•'; } }
         else ic.textContent = (it.icon || '•').slice(0, 2);
+        if (it.hue != null) ic.style.setProperty('--ovs-h', String(it.hue));
         return ic;
     }
     function option(tag, cls, it) {
@@ -1363,6 +1370,33 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         }
         return out.slice(0, 4);
     }
+    /**
+     * The top box talks (4.287.0; the owner, 11-16: "from the top box, start a conversation with Vibe, Actor or any
+     * agent"): your Actor by its name, Codes, and up to two agents you made (their faces), each starting that conversation
+     * here in the menu. Signed out, or where the menu has no conversations, there are none (the Ask row below links out).
+     */
+    function askRows(q) {
+        if (!q || !canDoor() || !signedInTop()) return [];
+        const name = actorName();
+        // A press asks what is in the box then (the rows may still be the ones drawn for the words before).
+        const words = () => (input && input.value.trim()) || q;
+        const rows = [{ title: `Ask ${name}`, meta: `“${q.slice(0, 80)}” · your agent: answers, searches, does things`, url: '#', icon: 'spark', kind: 'run', run: () => askAgent(words(), null, 'actor') },
+            { title: 'Ask Codes', meta: `“${q.slice(0, 80)}” · writes and changes code`, url: '#', glyph: 'code', kind: 'run', run: () => askAgent(words(), null, 'codes') }];
+        const yours = (agentFaces || []).filter((a) => a && /^agt_[0-9A-HJKMNP-TV-Z]{26}$/.test(String(a.id)) && a.name && String(a.name).trim().toLowerCase() !== name.toLowerCase()).slice(0, 2);
+        for (const a of yours) {
+            const face = /^https:\/\//.test(String(a.avatar_url || '')) ? a.avatar_url : null;
+            rows.push({ title: `Ask ${String(a.name).slice(0, 40)}`, meta: `“${q.slice(0, 80)}” · one of your agents`, url: '#', face, glyph: a.glyph || 'user', hue: Number.isInteger(a.hue) ? a.hue : null, kind: 'run', run: () => askAgent(words(), null, a.id) });
+        }
+        return rows;
+    }
+    // Words that ask something (a question, or a request to do something) rather than name a thing to find.
+    const ASKS = /^(who|what|whats|what's|when|where|why|how|which|whose|can|could|should|would|will|is|are|am|do|does|did|was|were|has|have|plan|build|make|write|create|compare|explain|summari[sz]e|research|draft|design|fix|translate|teach|tell me|show me|give me|help|find me|deep dive|recommend|suggest|list|turn|convert|analy[sz]e)\b/i;
+    function looksAsked(q) {
+        const t = String(q || '').trim();
+        if (!t) return false;
+        if (/\?\s*$/.test(t)) return true;
+        return ASKS.test(t) && t.split(/\s+/).length >= 3;
+    }
     function actions(q) {
         const out = [];
         if (ctx.scope && ctx.scope.page) {
@@ -1370,7 +1404,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             if (u) out.push({ title: `Search “${q}” on ${here()}`, meta: 'This site\'s own search', url: u, icon: 'search', kind: 'action' });
         }
         out.push({ title: `All results for “${q}”`, meta: 'Every OpenVibe site and the web, in one list', url: `${API}/?q=${encodeURIComponent(q)}`, icon: 'search', kind: 'results' });
-        out.push({ title: `Ask Vibe: “${q}”`, meta: 'OpenVibe\'s assistant searches the web and OpenVibe', url: `https://openvibe.chat/vibe?ask=${encodeURIComponent(q)}`, icon: 'spark', kind: 'action' });
+        // Signed out (or with no conversations in the menu), asking opens Vibe on openvibe.chat with the words.
+        if (!askRows(q).length) out.push({ title: `Ask Vibe: “${q}”`, meta: 'OpenVibe\'s assistant searches the web and OpenVibe', url: `https://openvibe.chat/vibe?ask=${encodeURIComponent(q)}`, icon: 'spark', kind: 'action' });
         return out;
     }
     // How well a name answers what was typed: its start (3), inside it (2), or only the words behind it (1).
@@ -1701,8 +1736,12 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             paintCtx();
         };
     }
-    function askHint() { let narrow = false; try { narrow = root.matchMedia('(max-width: 640px)').matches; } catch { /* */ } return narrow ? 'Search or ask Vibe' : `Search ${here()}, or ask Vibe`; }
-    let actorInfo = null, actorAt = 0, listening = null;
+    function askHint() { let narrow = false; try { narrow = root.matchMedia('(max-width: 640px)').matches; } catch { /* */ } const who = signedInTop() && canDoor() ? actorName() : 'Vibe';
+        // A phone names a short name only ("Actor"); a longer one would not fit beside the faces (the rows say who).
+        return narrow ? (who.length <= 6 ? `Search or ask ${who}` : 'Search or ask') : `Search ${here()}, or ask ${who}`; }
+    let actorInfo = null, actorAt = 0, listening = null, agentFaces = [];
+    /** Your Actor's name: the one you gave it, "Actor" until then (never the old "My Actor" or "Vibe"). */
+    function actorName() { const n = String((actorInfo && actorInfo.name) || '').trim(); return (!n || /^(my actor|vibe)$/i.test(n) ? 'Actor' : n).slice(0, 40); }
     const signedInTop = () => !!(ctx && ctx.token && ctx.user && !ctx.user.is_anon);
     function syncTools() {
         if (!el) return;
@@ -1713,7 +1752,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (att) att.hidden = has || !signedInTop();
         if (send) send.hidden = !has;
     }
-    function askVibe(text, files) {
+    function askVibe(text, files) { return askAgent(text, files, null); }
+    /** Starts a conversation in the menu with `agent` ('actor', 'codes', an agt_… of yours; null: the box's default). */
+    function askAgent(text, files, agent) {
         const words = String(text || '').trim();
         if (!words && !(files && files.length)) return;
         if (!canDoor() || !signedInTop()) { location.href = `https://openvibe.chat/vibe${words ? `?ask=${encodeURIComponent(words)}` : ''}`; return; }
@@ -1732,7 +1773,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
                 put();
                 return;
             }
-            Promise.resolve(runView.start(words)).catch(() => { try { runView.prefill(words); } catch { /* */ } });
+            Promise.resolve(runView.start(words, null, agent ? { agent } : undefined)).catch(() => { try { runView.prefill(words); } catch { /* */ } });
         };
         go();
     }
@@ -1772,6 +1813,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             fetch(`${net}/api/frame/actor/faces`, { credentials: 'omit', headers: { Accept: 'application/json', Authorization: `Bearer ${ctx.token}` } })
                 .then((r) => (r.ok ? r.json() : { agents: [] })).then((d) => (Array.isArray(d.agents) ? d.agents : [])).catch(() => []),
         ]);
+        agentFaces = faces;
         const out = [];
         for (const ag of faces.slice(0, 12)) {
             if (!ag || !ag.id || !['working', 'asks'].includes(ag.state)) continue;
@@ -2695,7 +2737,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             const minehere = owner ? found.filter((s) => s.owner === owner) : [];
             // The rest of OpenVibe: the sites this person uses most come first, Search's own order otherwise.
             const rest = found.filter((s) => !minehere.includes(s)).map((s, i) => [useOf(s.owner) * 1000 - i, s]).sort((a, b) => b[0] - a[0]).map(([, s]) => s);
+            const asked = looksAsked(q);
             return [
+                ...(asked ? [{ title: 'Ask', items: askRows(q) }] : []),
                 { title: 'Do it', items: providerRows(q) },
                 { title: 'Go to', items: goTo(q) },
                 { title: `On ${here()}`, items: [...minehere.map(row), ...pagesOf(q)] },
@@ -2703,6 +2747,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
                 { title: 'Across OpenVibe', items: rest.map(row) },
                 { title: 'Tools for it', items: toolsAbout(q) },
                 { title: 'Your searches', items: recentHits },
+                ...(asked ? [] : [{ title: 'Ask', items: askRows(q) }]),
                 { title: 'Search', items: actions(q) },
             ];
         };
