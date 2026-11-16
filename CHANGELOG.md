@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.279.0 — 2026-11-15
+
+**Deep dive this, from every search box** (the owner, 11-15: Exchange's deep dive, "add it to all of em using an
+interconnected system").
+- Typing a question (three letters or more) into any search box opens "Deep dive “…”" under it: OpenVibe Exchange's
+  general deep dive of what is typed, which plans the questions, reads the best pages in full and answers with every
+  source cited. The link follows the words as they change.
+- Arrow Down reaches it and Escape closes it. Taking a trending chip never opens it, and a box with suggestions of
+  its own gets none.
+- `OV_DEEP_DIVE_URL` points elsewhere. `data-ov-deep-dive="off"` on a box, or `window.OV_DEEP_DIVE = false` on a
+  page, leaves it out. Exchange's own Search and Deep dive pages, which have their own, get none.
+
 ## 4.278.0 — 2026-11-15
 
 **Trending as chips on focus** (plan §AD.13 (1): "Focus shows the trending chips").

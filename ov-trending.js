@@ -14,6 +14,11 @@
  * first one, still). Tab takes the line shown (on a keyboard), and the box's hint says so on focus. Typing hides it at
  * once; clearing the box brings it back. A box that reads nothing gets its placeholder back as its accessible name.
  *
+ * Typing a question opens "Deep dive this" under the box (4.279.0; the owner, 11-15: Exchange's deep dive, "added to
+ * all of em using an interconnected system"): OpenVibe Exchange's general deep dive of what is typed, every source read
+ * and cited. Arrow Down reaches it, Escape closes it. OV_DEEP_DIVE_URL points elsewhere; data-ov-deep-dive="off" (or
+ * Exchange's own search and deep dive pages, which have their own) leaves it out.
+ *
  * Focus on an empty box opens the list under it as chips (4.278.0): "Trending" (or "Try" while the list is the site's
  * own pages), up to six, each a button that fills the box and searches. Arrow Down moves into them, the arrows between
  * them, Escape closes; typing closes them. A box with its own suggestions (a datalist, aria-autocomplete, a combobox)
@@ -28,6 +33,7 @@
     'use strict';
     if (typeof document === 'undefined' || root.OVTrending) return;
     const API = root.OV_TRENDING_API || 'https://openvibe.network/api/frame';
+    const DIVE = root.OV_DEEP_DIVE_URL || 'https://openvibe.exchange/deep-dive';
     const BOX = 'input[type="search"]:not([data-ov-trending="off"]), input[data-ov-trending]:not([data-ov-trending="off"])';
     const KEEP_MS = 5 * 60_000;
     const host = (location.hostname || '').replace(/^www\./, '');
@@ -36,7 +42,8 @@
     let index = 0;
     let timer = 0;
     let loading = null;
-    let panel = null;          // the open chips: { el, input }
+    let panel = null;          // the open chips: { el, input, kind }
+    let taking = false;        // a chip being taken fills the box: not a question being typed
 
     const motion = () => {
         const m = document.documentElement.getAttribute('data-ov-motion');
@@ -67,6 +74,10 @@
             + 'animation:ovt-chip .32s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--ovt-n,0) * 40ms);transition:background .15s,border-color .15s,transform .15s}'
             + '.ovt-chip:hover,.ovt-chip:focus-visible{background:color-mix(in srgb,var(--ovk-accent,var(--accent,#7aa2ff)) 20%,transparent);border-color:var(--ovk-accent,var(--accent,#7aa2ff));outline:none}'
             + '.ovt-chip:active{transform:scale(.97)}'
+            + '.ovt-dive{display:grid !important;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:2px 10px;width:100%;border-radius:12px !important;text-align:left;text-decoration:none;white-space:normal !important}'
+            + '.ovt-dive b{grid-row:span 2;display:grid;place-items:center;width:30px;height:30px;border-radius:9px;color:var(--ovk-accent,var(--accent,#7aa2ff));background:color-mix(in srgb,var(--ovk-accent,var(--accent,#7aa2ff)) 16%,transparent);font-size:1rem}'
+            + '.ovt-dive span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:650}'
+            + '.ovt-dive small{opacity:.7;font-size:.76rem}'
             + '@media (pointer:coarse){.ovt-chip{min-height:44px}}'
             + '@keyframes ovt-pop{from{opacity:0;transform:translateY(calc(-6px * var(--ov-move,1))) scale(.98)}}'
             + '@keyframes ovt-chip{from{opacity:0;transform:translateY(calc(4px * var(--ov-move,1)))}}'
@@ -161,12 +172,51 @@
         timer = setInterval(tick, motion() === 'calm' ? 5200 : 3200);
     }
 
+    // ── Deep dive this: a typed question, researched in full on OpenVibe Exchange ──
+    const diveAllowed = (input) => input.getAttribute('data-ov-deep-dive') !== 'off' && root.OV_DEEP_DIVE !== false
+        && !(host === 'openvibe.exchange' && /^\/(search|deep-dive)(\/|$)/.test(location.pathname));
+    const diveHref = (q) => `${DIVE}?q=${encodeURIComponent(String(q).trim().slice(0, 500))}`;
+    function openDive(input) {
+        const q = String(input.value || '').trim();
+        if (q.length < 3 || document.activeElement !== input || !chipsAllowed(input) || !diveAllowed(input)) { if (panel && panel.kind === 'dive') closeChips(); return; }
+        if (panel && panel.input === input && panel.kind === 'dive') {
+            panel.link.href = diveHref(q);
+            panel.text.textContent = `Deep dive \u201c${q.slice(0, 80)}\u201d`;
+            placeChips();
+            return;
+        }
+        closeChips();
+        css();
+        const el = document.createElement('div');
+        el.className = 'ovt-chips';
+        el.setAttribute('role', 'group');
+        el.setAttribute('aria-label', 'Deep dive this');
+        const a = document.createElement('a');
+        a.className = 'ovt-chip ovt-dive';
+        a.href = diveHref(q);
+        const icon = document.createElement('b');
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = '\u2726';
+        const text = document.createElement('span');
+        text.textContent = `Deep dive \u201c${q.slice(0, 80)}\u201d`;
+        const sub = document.createElement('small');
+        sub.textContent = 'Every source read and cited, on OpenVibe Exchange';
+        a.append(icon, text, sub);
+        a.addEventListener('pointerdown', (e) => e.preventDefault()); // the box keeps its focus until the link is taken
+        a.addEventListener('keydown', (e) => chipKey(e, input));
+        el.append(a);
+        el.addEventListener('focusout', (e) => { if (!el.contains(e.relatedTarget) && e.relatedTarget !== input) closeChips(); });
+        document.body.append(el);
+        panel = { el, input, kind: 'dive', link: a, text };
+        placeChips();
+    }
+
     // ── The chips: the list under a focused, empty box ──
     const chipsAllowed = (input) => !input.hasAttribute('list') && !input.getAttribute('aria-autocomplete')
         && input.getAttribute('role') !== 'combobox' && input.getAttribute('data-ov-trending-chips') !== 'off';
     function openChips(input) {
         if (!list || !list.length || input.value || document.activeElement !== input || !chipsAllowed(input)) { closeChips(); return; }
-        if (panel && panel.input === input) { placeChips(); return; }
+        if (panel && panel.input === input && panel.kind !== 'dive') { placeChips(); return; }
         closeChips();
         css();
         const el = document.createElement('div');
@@ -192,7 +242,7 @@
         });
         el.addEventListener('focusout', (e) => { if (!el.contains(e.relatedTarget) && e.relatedTarget !== input) closeChips(); });
         document.body.append(el);
-        panel = { el, input };
+        panel = { el, input, kind: 'chips' };
         placeChips();
     }
     function placeChips() {
@@ -213,7 +263,8 @@
     function take(input, q) {
         closeChips();
         input.value = q;
-        input.dispatchEvent(new Event('input', { bubbles: true }));
+        taking = true;
+        try { input.dispatchEvent(new Event('input', { bubbles: true })); } finally { taking = false; }
         input.focus();
         if (input.form) {
             if (typeof input.form.requestSubmit === 'function') input.form.requestSubmit();
@@ -248,8 +299,8 @@
         const b = { ghost, line, placeholder, prefix: 'Try ', ro: null, sent: new Map() };
         if (typeof ResizeObserver === 'function') { b.ro = new ResizeObserver(() => show(input)); b.ro.observe(input); }
         boxes.set(input, b);
-        input.addEventListener('input', () => { show(input); if (input.value) closeChips(); else openChips(input); });
-        input.addEventListener('focus', () => { show(input); hint(input, true); openChips(input); });
+        input.addEventListener('input', () => { show(input); if (input.value) { if (panel && panel.kind === 'chips') closeChips(); if (!taking) openDive(input); } else openChips(input); });
+        input.addEventListener('focus', () => { show(input); hint(input, true); if (input.value) openDive(input); else openChips(input); });
         input.addEventListener('blur', () => {
             hint(input, false);
             setTimeout(() => { if (panel && panel.input === input && !panel.el.contains(document.activeElement) && document.activeElement !== input) closeChips(); }, 0);
