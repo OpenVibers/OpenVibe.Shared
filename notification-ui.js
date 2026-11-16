@@ -308,6 +308,26 @@
                 box-shadow: inset 0 0 0 1px var(--border, rgba(148, 163, 184, .22)) !important; }
             .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-unread[aria-pressed="true"] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent) !important; }
             .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-unread .ovn-unread-w { display: inline !important; position: static !important; width: auto !important; height: auto !important; overflow: visible !important; clip-path: none !important; font-size: inherit !important; }
+            /* Edit (4.284.0): a picked notice is ringed with its check; the bar stays at the foot, in reach of a thumb. */
+            .openvibe-nv.is-editing .openvibe-notif-item, .is-editing .openvibe-notif-item { cursor: pointer; position: relative; padding-left: 46px !important; transition: background-color .15s; }
+            .is-editing .openvibe-notif-item::before { content: ''; position: absolute; left: 12px; top: 50%; width: 22px; height: 22px; margin-top: -11px; border-radius: 50%;
+                box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--text-secondary, #a8b3c4) 70%, transparent); transition: background-color .15s, box-shadow .15s; }
+            .is-editing .openvibe-notif-item.is-picked { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent) !important; }
+            .is-editing .openvibe-notif-item.is-picked::before { background: var(--accent, #3b82f6) center / 12px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E"); box-shadow: none; animation: ovn-pick-pop .3s cubic-bezier(.3, 1.6, .4, 1); }
+            @keyframes ovn-pick-pop { from { transform: scale(.5); } }
+            .openvibe-notif-item.is-going { animation: ovn-going .24s ease-in both; }
+            @keyframes ovn-going { to { opacity: 0; transform: translateX(calc(-24px * var(--ov-move, 1))); } }
+            .ovn-ebar { position: sticky; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); z-index: 3; display: flex; align-items: center; gap: 6px; margin: 10px 8px 4px; padding: 8px 8px 8px 14px; border-radius: 16px;
+                background: color-mix(in srgb, var(--bg-secondary, #141a24) 92%, transparent); box-shadow: 0 10px 28px -12px rgba(0, 0, 0, .7), inset 0 0 0 1px var(--border, rgba(148, 163, 184, .2));
+                backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); animation: ovn-ebar-in .24s cubic-bezier(.2, .8, .2, 1) both; }
+            .ovn-ebar[hidden] { display: none; }
+            @keyframes ovn-ebar-in { from { opacity: 0; transform: translateY(calc(12px * var(--ov-move, 1))); } }
+            .ovn-ebar-n { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; color: var(--text-secondary, #b6b6c0); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .ovn-ebar button { flex: none; min-height: 40px; padding: 0 12px; border: 0; border-radius: 999px; font: inherit; font-size: 13.5px; font-weight: 750; cursor: pointer;
+                color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--text-primary, #ececf1) 8%, transparent); }
+            .ovn-ebar button.is-danger { color: #fff; background: var(--danger, #dc2626); }
+            .ovn-ebar button:disabled { opacity: .45; cursor: default; }
+            html[data-ov-motion=off] .ovn-ebar, html[data-ov-motion=off] .openvibe-notif-item.is-going, html[data-ov-motion=off] .is-editing .openvibe-notif-item.is-picked::before { animation: none; }
             .ovn-foot-read { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
             .ovn-foot-read:hover { color: var(--text-primary, #ececf1); }
             .ovn-foot-read svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -1206,6 +1226,9 @@
             if (e.target.closest('[data-act="ac"]')) { const anchor = _bellEl; closePanel(); openActions(anchor); return; }
             const item = e.target.closest('.openvibe-notif-item');
             if (!item || (item.__ovnSwipedAt && Date.now() - item.__ovnSwipedAt < 450)) return;
+            // Edit (4.284.0; the owner, 11-16: "people want to completely delete their notifications … the edit mode … all
+            // three"): a tap picks it; the bar below marks the picked read or deletes them.
+            if (v.editing) { e.preventDefault(); e.stopPropagation(); pickNote(v, item); return; }
             const id = item.dataset.id;
             const ids = (item.dataset.ids || id).split(',').filter(Boolean);
             const act = e.target.closest('[data-row]');
@@ -1449,6 +1472,73 @@
         return shared.then((d) => ({ ...d, notifications: (d && d.notifications ? d.notifications.slice() : []) }));
     }
     
+    // ── Edit: pick notices, then mark them read or delete them; or delete them all (4.284.0) ──
+    function editBar(v) {
+        if (v.editBar) return v.editBar;
+        const bar = document.createElement('div'); bar.className = 'ovn-ebar'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', 'Your notifications'); bar.hidden = true;
+        bar.innerHTML = '<span class="ovn-ebar-n"></span><button type="button" data-e="all">Select all</button><button type="button" data-e="read">Mark read</button><button type="button" class="is-danger" data-e="del">Delete</button>';
+        bar.addEventListener('click', (e) => { const b = e.target.closest('[data-e]'); if (b) editAct(v, b.dataset.e, b); });
+        v.root.appendChild(bar);
+        v.editBar = bar;
+        return bar;
+    }
+    function pickedIds(v) { return [...v.picked].flatMap((id) => { const row = v.root.querySelector(`.openvibe-notif-item[data-id="${CSS.escape(String(id))}"]`); return ((row && row.dataset.ids) || String(id)).split(',').filter(Boolean); }); }
+    function paintEdit(v) {
+        const bar = editBar(v);
+        bar.hidden = !v.editing;
+        v.root.classList.toggle('is-editing', !!v.editing);
+        v.root.querySelectorAll('.openvibe-notif-item').forEach((row) => {
+            const on = v.picked.has(row.dataset.id);
+            row.classList.toggle('is-picked', on);
+            if (v.editing) { row.setAttribute('role', 'checkbox'); row.setAttribute('aria-checked', String(on)); if (!row.tabIndex || row.tabIndex < 0) row.tabIndex = 0; }
+            else { row.removeAttribute('role'); row.removeAttribute('aria-checked'); }
+        });
+        const n = v.picked.size;
+        const rows = v.root.querySelectorAll('.openvibe-notif-item').length;
+        bar.querySelector('.ovn-ebar-n').textContent = n ? `${n} selected` : 'Tap notices to pick them';
+        const all = bar.querySelector('[data-e="all"]');
+        all.textContent = rows && n >= rows ? (v.allArmed ? `Delete all ${v.total || ''}`.trim() : 'Delete everything') : 'Select all';
+        all.classList.toggle('is-danger', rows > 0 && n >= rows && !!v.allArmed);
+        bar.querySelector('[data-e="read"]').disabled = !n;
+        bar.querySelector('[data-e="del"]').disabled = !n;
+    }
+    function pickNote(v, item) {
+        const id = item.dataset.id;
+        if (v.picked.has(id)) v.picked.delete(id); else v.picked.add(id);
+        v.allArmed = false;
+        paintEdit(v);
+    }
+    function setEditing(v, on) {
+        v.editing = !!on; v.picked = new Set(); v.allArmed = false;
+        paintEdit(v);
+    }
+    async function editAct(v, what, button) {
+        const rows = [...v.root.querySelectorAll('.openvibe-notif-item')];
+        if (what === 'all') {
+            if (v.picked.size < rows.length) { rows.forEach((r) => v.picked.add(r.dataset.id)); v.allArmed = false; return paintEdit(v); }
+            // Everything picked: a second press arms "Delete all", a third deletes every notice on the account.
+            if (!v.allArmed) { v.allArmed = true; return paintEdit(v); }
+            button.disabled = true;
+            try { await apiJson('/api/notifications', { method: 'DELETE' }); } catch { /* reload says what is left */ }
+            setEditing(v, false); return reload(v);
+        }
+        const ids = pickedIds(v);
+        if (!ids.length) return;
+        button.disabled = true;
+        if (what === 'read') {
+            try { await apiJson('/api/notifications/read-batch', { method: 'POST', body: { ids } }); } catch { /* */ }
+            v.picked.forEach((id) => { const row = v.root.querySelector(`.openvibe-notif-item[data-id="${CSS.escape(String(id))}"]`); if (row) row.classList.remove('unread'); });
+            v.picked = new Set(); paintEdit(v); return;
+        }
+        // Delete: each picked notice dismissed on the account (six at a time); the rows fold away as they go.
+        rows.filter((r) => v.picked.has(r.dataset.id)).forEach((r) => r.classList.add('is-going'));
+        for (let i = 0; i < ids.length; i += 6) {
+            await Promise.all(ids.slice(i, i + 6).map((id) => apiJson(`/api/notifications/${encodeURIComponent(id)}/dismiss`, { method: 'POST' }).catch(() => null)));
+        }
+        v.picked = new Set();
+        setTimeout(() => { reload(v).then(() => paintEdit(v)); }, 240);
+    }
+
     async function reload(v) {
         const seq = ++v.seq;
         loadTabCounts();
@@ -1859,7 +1949,9 @@
             const v = buildView(container, { mode: 'dock' });
             v.pageSize = 3; v.onCount = onCount;
             reload(v);
-            return { showAll() { container.classList.remove('is-preview'); v.pageSize = PAGE_SIZE; reload(v); } };
+            // Edit from outside (You's pencil, 4.284.0): pick, mark read, delete.
+            container.addEventListener('ov-notes-edit', (e) => { setEditing(v, !!(e.detail && e.detail.on)); });
+            return { showAll() { container.classList.remove('is-preview'); v.pageSize = PAGE_SIZE; reload(v); }, edit(on) { setEditing(v, on === undefined ? !v.editing : !!on); } };
         },
         unmountDock(container) {
             const v = _views.get(container);

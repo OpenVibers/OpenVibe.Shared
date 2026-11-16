@@ -207,7 +207,7 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         // The one chip: How it runs → Model → Opus 5.5.
         await p.evaluate("document.querySelector('.ovse-ctx').click()");
         await until(p, "!!document.querySelector('.ovp.is-in .ovp-row')");
-        assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent)"), ['Agent', 'Model', 'Way', 'Runs on', 'Works on', 'Your own setup'], 'the Way (4.281.0: how Actor works it) beside the model; Your own setup last (4.283.0)');
+        assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent)"), ['Harness', 'Model', 'Way', 'Runs on', 'Works on', 'Your own setup'], 'the Way (4.281.0: how Actor works it) beside the model; Your own setup last (4.283.0)');
         await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row')].find((r) => r.textContent.startsWith('Model')).click()");
         await until(p, "!!document.querySelector('.ovp.is-in .ovp-row[data-id=\"openvibe|anthropic/claude-opus-5-5\"]')");
         await p.evaluate("document.querySelector('.ovp.is-in .ovp-row[data-id=\"openvibe|anthropic/claude-opus-5-5\"]').click()");

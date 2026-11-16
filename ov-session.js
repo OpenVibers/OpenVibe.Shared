@@ -1106,7 +1106,9 @@
             const then = (fn) => setTimeout(fn, 230);   // after the last picker has gone
             if (!section) {
                 const rows = [
-                    { id: 'agent', name: 'Agent', line: p.agent === 'Auto' ? 'Auto: the right one for what you ask' : p.agent, glyph: 'robot' },
+                    // 4.284.0 (the owner, 11-16: "labeling this as a harness, not agent … which harness is powering your
+                    // agent … your actor … your codes"): the row names what powers the work.
+                    { id: 'agent', name: 'Harness', line: p.agent === 'Auto' ? 'Auto: the right one for what you ask' : p.agent, glyph: 'robot' },
                     { id: 'model', name: 'Model', line: p.model === 'Auto' ? 'Auto: the best fit, within your budget' : p.model, glyph: 'model' },
                     ...(coding(opts) ? [] : [{ id: 'way', name: 'Way', line: p.way || 'Auto: Actor\'s agent, or what fits the question', glyph: 'spark' }]),
                     { id: 'where', name: 'Runs on', line: p.where === 'Auto' ? (coding(opts) ? 'Auto: a shared node or your own computer' : 'Auto: wherever it fits best') : p.where, glyph: 'computer' },
@@ -1122,7 +1124,7 @@
                 return;
             }
             if (section === 'agent') {
-                P.open({ anchor: ctxB, title: 'Agent', search: 'auto', value: pick.agent, rows: [...(opts.agents || []).map((a) => ({ id: a.id, name: a.name, line: a.line || '', disabled: a.available === false })), SETUP_ROW], onPick: (row) => {
+                P.open({ anchor: ctxB, title: 'Harness', search: 'auto', value: pick.agent, rows: [...(opts.agents || []).map((a) => ({ id: a.id, name: a.name, line: a.line || '', disabled: a.available === false })), SETUP_ROW], onPick: (row) => {
                     if (row.id === SETUP_ROW.id) { then(() => openCtx('setup')); return; } pick.agent = row.id; if (pick.where === 'openvibe' && coding(opts)) pick.where = 'auto'; savePick(); } });
             } else if (section === 'where') {
                 const places = coding(opts) ? (opts.places || []).filter((x) => x.kind !== 'openvibe').map((x) => (x.kind === 'auto' ? { ...x, line: 'A shared node or your own computer' } : x)) : (opts.places || []);

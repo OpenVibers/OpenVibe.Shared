@@ -838,7 +838,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         el.setAttribute('data-sec', 'home');
         // 4.223.0: You is three tabs (Apps first); the one a person chose stays for this tab of the browser.
         let keptTab = null; try { keptTab = sessionStorage.getItem('ovh-you-tab'); } catch { /* */ }
-        const state = { view: 'home', edit: false, folder: null, filter: '', drag: null, suppress: 0, hedit: false, hsel: new Set(), hfilter: '', tab: o.startTab || (['apps', 'notifications', 'recent'].includes(keptTab) ? keptTab : 'apps') };
+        const state = { view: 'home', edit: false, folder: null, filter: '', drag: null, suppress: 0, hedit: false, hsel: new Set(), hfilter: '', nedit: false, tab: o.startTab || (['apps', 'notifications', 'recent'].includes(keptTab) ? keptTab : 'apps') };
         let L = layoutOf(o);
         const save = () => { const keep = { home: L.home.slice(0, HOME_MAX), folders: L.folders.map((f) => ({ id: f.id, name: f.name, apps: f.apps.slice(0, 400) })) }; writeLocal(keep); pushRemote(o, keep); L.arranged = true; };
         const icons = () => { if (typeof o.mountIcons === 'function') { try { o.mountIcons(el); } catch { /* optional */ } } };
@@ -1118,7 +1118,8 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             // facing … the first tab"; then "compact … waste of space"): one row of tabs, and on Apps the All and Edit
             // buttons at its end, so no head of its own. Edit stays pressable while the rest is quiet.
             const tab = known(o) ? state.tab : 'apps';
-            const tools = tab === 'apps' ? homeTools() : tab === 'recent' && typeof o.forget === 'function' && (o.back || []).some((x) => x && x.id != null) ? historyTools() : null;
+            const tools = tab === 'apps' ? homeTools() : tab === 'recent' && typeof o.forget === 'function' && (o.back || []).some((x) => x && x.id != null) ? historyTools()
+                : tab === 'notifications' && o.token ? notesTools() : null;
             if (known(o)) {
                 const row = h('div', 'ovh-tabrow');
                 row.append(calm(youTabs()));
@@ -1335,6 +1336,25 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             return tools;
         }
         let histDraw = null;
+        /** Alerts' Edit (4.284.0): the same pencil; the inbox hears it on its box (ov-notes-edit) and picks instead of opening. */
+        function notesTools() {
+            const edit = h('button', state.nedit ? 'ovh-edit is-done' : 'ovh-edit');
+            edit.type = 'button';
+            edit.append(svgIcon(state.nedit ? 'check' : 'pencil'));
+            edit.setAttribute('aria-label', state.nedit ? 'Done editing your notifications' : 'Edit your notifications');
+            edit.setAttribute('data-ov-tip', state.nedit ? 'Done' : 'Edit: pick notices to mark read or delete');
+            edit.setAttribute('aria-pressed', state.nedit ? 'true' : 'false');
+            edit.addEventListener('click', () => {
+                state.nedit = !state.nedit;
+                if (notesBox) notesBox.dispatchEvent(new CustomEvent('ov-notes-edit', { detail: { on: state.nedit } }));
+                edit.classList.toggle('is-done', state.nedit);
+                edit.textContent = ''; edit.append(svgIcon(state.nedit ? 'check' : 'pencil'));
+                edit.setAttribute('aria-pressed', state.nedit ? 'true' : 'false');
+                edit.setAttribute('aria-label', state.nedit ? 'Done editing your notifications' : 'Edit your notifications');
+            });
+            const tools = h('div', 'ovh-headtools'); tools.append(edit);
+            return tools;
+        }
 
         function paintFolder() {
             const f = L.folders.find((x) => x.id === state.folder);

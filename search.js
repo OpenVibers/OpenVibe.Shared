@@ -2607,7 +2607,12 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // The list draws its own search, tabs and Mark all read: the tab needs no second heading.
         const list = document.createElement('div'); list.className = 'ovs-notifications-host';
         host.append(list);
-        try { const view = N.renderMenuNotifications(list, () => {}); if (view && view.showAll) view.showAll(); } catch { list.textContent = 'Notifications did not load.'; }
+        try {
+            const view = N.renderMenuNotifications(list, () => {}); if (view && view.showAll) view.showAll();
+            // You's pencil (4.284.0) speaks to the tab's box; the inbox inside it does the editing.
+            host.__ovNotesView = view;   // the newest inbox drawn in this box (it is drawn again after a reload)
+            if (!host.__ovNotesEdit) { host.__ovNotesEdit = true; host.addEventListener('ov-notes-edit', (e) => { const nv = host.__ovNotesView; if (e.target === host && nv && typeof nv.edit === 'function') nv.edit(!!(e.detail && e.detail.on)); }); }
+        } catch { list.textContent = 'Notifications did not load.'; }
     }
 
     function renderTab() {

@@ -23,7 +23,7 @@ assert.deepStrictEqual(a.map((x) => x[0]), ['computer', 'machines', 'harnesses',
 // Wired: the row at the end of Agent and Runs on in both, and the session's own section.
 for (const [name, src] of [['ov-session.js', session], ['ov-composer.js', composer]]) {
     assert.ok(/name: 'Use your own…'/.test(src), `${name}: the row`);
-    assert.ok(/'Agent', \[\.\.\.\(opts\.agents \|\| \[\]\)[^\n]*SETUP_ROW\]/.test(src) || /title: 'Agent'[^\n]*SETUP_ROW\]/.test(src), `${name}: at the end of Agent`);
+    assert.ok(/'(Agent|Harness)', \[\.\.\.\(opts\.agents \|\| \[\]\)[^\n]*SETUP_ROW\]/.test(src) || /title: '(Agent|Harness)'[^\n]*SETUP_ROW\]/.test(src), `${name}: at the end of Agent`);
     assert.ok(/'Runs on'[^\n]*SETUP_ROW\]/.test(src) || /title: 'Runs on'[^\n]*SETUP_ROW\]/.test(src), `${name}: at the end of Runs on`);
     assert.ok(/opts\.setup/.test(src), `${name}: the Frame's own list takes over`);
 }
