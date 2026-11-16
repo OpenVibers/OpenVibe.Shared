@@ -88,6 +88,11 @@ async function until(p, expression, ms = 6000) {
         await p.evaluate("document.querySelector('.ovdk-suggest .ovdk-sug').click()");
         await until(p, "/lenore/.test((document.querySelector('.ovdk-addfriend-note') || {}).textContent || '')");
         assert.ok(calls.includes('PUT /api/v1/me/friends/lenore'), 'a press on a name asks them');
+        // A hat or a badge (items.js puts it before the name) sits on the name's line, never a row above it (the owner,
+        // 11-16: "these go way off"); the empty list of names under the field takes no room.
+        const line = await p.evaluate(`(() => { const b = document.querySelector('.ovdk-fr .ovdk-row-n > b'); const s = document.createElement('span'); s.className = 'ov-hat'; s.textContent = 'H'; b.parentNode.insertBefore(s, b);
+            const hr = s.getBoundingClientRect(), br = b.getBoundingClientRect(); const sug = document.querySelector('.ovdk-suggest'); return { dy: Math.round(Math.abs((hr.top + hr.height / 2) - (br.top + br.height / 2))), left: hr.right <= br.left + 1, sug: sug ? sug.getBoundingClientRect().height : 0 }; })()`);
+        assert.deepStrictEqual(line, { dy: 0, left: true, sug: 0 }, `a hat sits beside the name (${JSON.stringify(line)})`);
         await p.evaluate("[...document.querySelectorAll('.ovdk-fr .is-request')].find((r) => /Lena/.test(r.textContent)).querySelector('.ovdk-request-ok').click()");
         await until(p, "!document.querySelector('.ovdk-fr .is-request') || ![...document.querySelectorAll('.ovdk-fr .is-request')].some((r) => /Lena/.test(r.textContent))");
         assert.ok(calls.includes('POST /api/v1/me/friends/usr_9/accept'), 'Accept adds them back on the account');

@@ -55,6 +55,18 @@ function icon(name, size = 22) {
     }
     return `<i class="fa-solid ${esc(n.replace(/[^a-z0-9 -]/gi, ''))}" aria-hidden="true"></i>`;
 }
+// A button's icon (4.284.0; the owner, 11-16 on Quest: "tiny icons … they need to be way more bigger and edge to edge … icons
+// need to be way more consistent"): the plain glyph at 20 px, never a ring set's mark shrunk to 18 px (its glyph drew at 9).
+const BTN_ALIAS = { quest: 'trophy', rundown: 'page', agenda: 'calendar' };
+function btnIcon(name) {
+    const n = String(name || '');
+    if (!n.startsWith('ov:')) return icon(n, 20);
+    glyphSet = glyphSet || require('./glyphs');
+    const key = n.slice(3);
+    const g = glyphSet.NAMES.includes(key) ? key : (BTN_ALIAS[key] && glyphSet.NAMES.includes(BTN_ALIAS[key]) ? BTN_ALIAS[key] : null);
+    if (g) return `<span class="sc-bi" aria-hidden="true">${glyphSet.svg(g, { size: 20 })}</span>`;
+    return icon(n, 22);
+}
 const id = (s) => (s ? ` id="${esc(String(s).replace(/[^a-z0-9_-]/gi, '-'))}"` : '');
 // The arrow on a "more" link is the glyph registry's (no text arrows: the owner, 11-13).
 const goGlyph = () => { headGlyphs = headGlyphs || require('./glyphs'); return headGlyphs.svg('arrow-right', { size: 16 }); };
@@ -75,7 +87,7 @@ const labelled = (title, h) => (title ? ` aria-labelledby="${h}"` : '');
 
 function actions(list, cls = 'sc-actions') {
     if (!has(list)) return '';
-    return `<div class="${cls}">${list.map((a) => `<a class="sc-btn${a.primary ? ' sc-primary' : ''}" href="${esc(a.href)}"${/^https?:/.test(a.href || '') && a.external ? ' rel="noopener"' : ''}>${a.icon ? icon(a.icon, 18) : ''}${esc(a.label)}</a>`).join('')}</div>`;
+    return `<div class="${cls}">${list.map((a) => `<a class="sc-btn${a.primary ? ' sc-primary' : ''}" href="${esc(a.href)}"${/^https?:/.test(a.href || '') && a.external ? ' rel="noopener"' : ''}>${a.icon ? btnIcon(a.icon) : ''}${esc(a.label)}</a>`).join('')}</div>`;
 }
 
 // A site's own name as the eyebrow repeats the navbar's brand right above it ("OpenVibe.Quest" twice, the owner
@@ -694,6 +706,8 @@ a.sc-orb-node:hover .sc-orb-face>*:first-child,a.sc-orb-node:focus-visible .sc-o
 .sc-hero-aside{min-width:0}
 .sc-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
 .sc-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;font-weight:700;font-size:15px;text-decoration:none;color:var(--text-primary,#e6edf7);border:1px solid var(--border-light,var(--border,#2c3d5c));background:transparent;transition:border-color .15s,background .15s,transform .15s}
+.sc-btn .sc-bi{display:grid;place-items:center;flex:none;width:20px;height:20px}.sc-btn .sc-bi svg{width:20px;height:20px}
+.sc-ic .sc-ovi--glyph{background:none!important;box-shadow:none!important;border-radius:0!important;--ovi-size:30px!important;width:30px;height:30px}.sc-ic .sc-ovi--glyph svg{width:30px!important;height:30px!important}
 .sc-btn:hover,.sc-btn:focus-visible{border-color:var(--accent,#3b82f6);background:var(--bg-hover,#1c2a44);outline:0}
 .sc-btn.sc-primary{border-color:transparent;color:var(--on-accent,#fff);background:linear-gradient(135deg,var(--accent,#3b82f6),var(--accent-dark,#1d4ed8))}
 .sc-btn.sc-primary:hover{transform:translateY(-1px);filter:brightness(1.06)}

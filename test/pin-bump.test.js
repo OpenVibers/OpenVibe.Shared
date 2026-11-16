@@ -57,7 +57,9 @@ assert.match(status.contracts, /v0\.112\.0/);
 assert.match(status.sdk, /v0\.26\.0/, 'the other library is untouched');
 
 assert.strictEqual(pinUrl('openvibe-sdk', 'v0.35.0'), url('OpenVibe.SDK', 'v0.35.0'));
-assert.deepStrictEqual(parseArgs(['openvibe-shared', '2.13.0', '--repos', 'A, B', '--apply']), { library: 'openvibe-shared', tag: 'v2.13.0', repos: ['A', 'B'], apply: true, ship: false, workdir: null });
+assert.deepStrictEqual(parseArgs(['openvibe-shared', '2.13.0', '--repos', 'A, B', '--apply']), { library: 'openvibe-shared', tag: 'v2.13.0', repos: ['A', 'B'], apply: true, ship: false, workdir: null, forge: true });
+// Pins move to our own forge by default (4.284.0); --github keeps each pin's own host.
+assert.strictEqual(parseArgs(['openvibe-shared', 'v2.13.0', '--github']).forge, false);
 assert.strictEqual(parseArgs(['openvibe-shared', 'v2.13.0', '--ship']).ship, true);
 assert.strictEqual(parseArgs(['openvibe-shared', 'v2.13.0', '--ship']).apply, false, '--ship is a dry run without --apply');
 assert.throws(() => parseArgs(['left-pad', 'v1.0.0']), /library must be one of/);
@@ -176,4 +178,16 @@ assert.strictEqual(shipCommand('/tools', { repo: 'OpenVibe.New', number: 1 }).ru
 
 fs.rmSync(bdir, { recursive: true, force: true });
 fs.rmSync(dir, { recursive: true, force: true });
+// Our own forge (4.284.0): a codeload pin moves to git.openvibe.codes in a forge round, keeps codeload with --github,
+// and a forge pin stays on the forge either way.
+{
+    const pb = require('../scripts/pin-bump');
+    const code = 'https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.283.0';
+    const forge = 'https://git.openvibe.codes/api/v1/repos/openvibers/openvibe.shared/archive/v4.283.0.tar.gz';
+    const json = (u) => `{ "openvibe-shared": "${u}" }`;
+    const moved = (u, f) => json(u).replace(pb.PIN_RE('openvibe-shared'), pb.movePin('openvibe-shared', 'v4.284.0', f));
+    assert.strictEqual(moved(code, true), json('https://git.openvibe.codes/api/v1/repos/openvibers/openvibe.shared/archive/v4.284.0.tar.gz'), 'a forge round moves a codeload pin to the forge');
+    assert.strictEqual(moved(code, false), json('https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.284.0'), '--github keeps codeload');
+    assert.strictEqual(moved(forge, false), json('https://git.openvibe.codes/api/v1/repos/openvibers/openvibe.shared/archive/v4.284.0.tar.gz'), 'a forge pin stays on the forge');
+}
 console.log('pin-bump: all checks passed');

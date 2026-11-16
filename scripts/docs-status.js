@@ -33,7 +33,7 @@ const LIBS = [
     { pkg: 'openvibe-shared', repo: 'OpenVibe.Shared', field: 'shared' },
     { pkg: 'openvibe-publishing', repo: 'OpenVibe.Publishing', field: null },
 ];
-const PIN = /OpenVibers\/(OpenVibe\.[A-Za-z]+)\/tar\.gz\/refs\/tags\/v(\d+\.\d+\.\d+)$/;
+const PIN = /OpenVibers\/(OpenVibe\.[A-Za-z]+)\/(?:tar\.gz\/refs\/tags\/|archive\/)v(\d+\.\d+\.\d+)(?:\.tar\.gz)?$/i;   // codeload or our forge (4.284.0)
 const VERSION = /(\d+\.\d+\.\d+)/;
 
 const byPackage = new Map(LIBS.map((l) => [l.pkg, l]));

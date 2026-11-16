@@ -10,6 +10,13 @@
  *   data-ov-trending="off"                       leaves a box alone (a box that is not a search, a password, a code)
  *   data-ov-trending="own"                       waits for its page to attach it with its own list (below)
  *   data-ov-trending-site="openvibe.exchange"    the site whose trending lead (default: the page's host)
+ *   data-ov-trending-items='["GPT-5 nano","DeepSeek"]'   on the box or its form: the page's OWN list, with no script
+ *                                                (4.284.0): what this page is about rotates, never the network's
+ *                                                trending people (the owner, 11-16: "curated based on the content on
+ *                                                the page"); with chips on focus
+ *   the shared composer's search (<textarea name="q"> in a GET form, ov-composer.js) is a search box too (4.284.0;
+ *                                                the owner: "the suggestions … animated … shared with the other sites
+ *                                                … the same composer across sites"): the line sits on its first line
  *   OVTrending.attach(input, { items, prefix, chips, dive, count, head })   a box with its OWN list: items is an array
  *                                                or a function returning one, of strings or { query, pre }; it rotates
  *                                                those, not the network's. chips, dive and count are off unless asked
@@ -48,7 +55,7 @@
     if (typeof document === 'undefined' || root.OVTrending) return;
     const API = root.OV_TRENDING_API || 'https://openvibe.network/api/frame';
     const DIVE = root.OV_DEEP_DIVE_URL || 'https://openvibe.exchange/deep-dive';
-    const CANDIDATES = 'input[type="search"], input[name="q"], input[name="query"], input[name="search"], input[data-ov-trending]';
+    const CANDIDATES = 'input[type="search"], input[name="q"], input[name="query"], input[name="search"], input[data-ov-trending], textarea[name="q"], textarea[data-ov-trending]';
     /** A site's own search (a GET form that goes somewhere, or role="search"), or a box that asked: never a filter. */
     function siteSearch(i) {
         const own = i.getAttribute('data-ov-trending');
@@ -161,9 +168,10 @@
         g.style.left = `${r.left - ox + input.clientLeft + pl}px`;
         g.style.top = `${r.top - oy + input.clientTop + pt}px`;
         g.style.width = `${w}px`;
-        g.style.height = `${h}px`;
+        const one = input.tagName === 'TEXTAREA' ? Math.min(h, parseFloat(cs.lineHeight) || (parseFloat(cs.fontSize) || 16) * 1.4) : h;
+        g.style.height = `${one}px`;
         g.style.font = cs.font;
-        g.style.lineHeight = `${h}px`;
+        g.style.lineHeight = `${one}px`;
         g.style.letterSpacing = cs.letterSpacing;
         g.style.color = cs.color;
         g.style.textAlign = cs.textAlign === 'center' ? 'center' : 'left';
@@ -177,9 +185,15 @@
         const items = itemsOf(b);
         if (input.value || !items.length || !place(input, b)) {
             b.ghost.hidden = true;
-            if (b.placeholder != null && input.getAttribute('placeholder') !== b.placeholder) input.setAttribute('placeholder', b.placeholder);
+            // Only the placeholder this file emptied comes back; one the page set since is the page's, and is kept.
+            const now = input.getAttribute('placeholder');
+            if (now) b.placeholder = now;
+            else if (b.placeholder != null) input.setAttribute('placeholder', b.placeholder);
             return;
         }
+        // A placeholder the page set since the line last showed is its newest words: keep them as the box's name.
+        const now = input.getAttribute('placeholder');
+        if (now && now !== b.placeholder) { b.placeholder = now; if (b.labelled) input.setAttribute('aria-label', now); }
         if (input.getAttribute('placeholder')) input.setAttribute('placeholder', '');
         b.ghost.hidden = false;
         if (!b.line.textContent) fill(b.line, items[b.i % items.length], b);
@@ -344,9 +358,19 @@
     }
 
     const ownOf = (o) => (o && (o.items != null) ? { items: o.items, prefix: o.prefix, chips: !!o.chips, dive: !!o.dive, count: !!o.count, head: o.head ? String(o.head) : '' } : null);
+    // The page's own list in markup (data-ov-trending-items, JSON strings, on the box or around it): chips on focus.
+    function markupList(input) {
+        const at = input.closest('[data-ov-trending-items]');
+        if (!at) return null;
+        try {
+            const v = JSON.parse(at.getAttribute('data-ov-trending-items'));
+            const items = Array.isArray(v) ? v.filter((x) => typeof x === 'string' && x.trim()).map((x) => x.trim().slice(0, 80)).slice(0, 24) : [];
+            return items.length ? { items, chips: true } : null;
+        } catch { return null; }
+    }
     function attach(input, opts) {
         if (!input || input.getAttribute('data-ov-trending') === 'off' || input.type === 'password') return;
-        const own = ownOf(opts);
+        const own = ownOf(opts || markupList(input));
         if (boxes.has(input)) {
             if (own) { const b = boxes.get(input); b.own = own; if (own.prefix != null) b.prefix = String(own.prefix); update(input); }
             return;

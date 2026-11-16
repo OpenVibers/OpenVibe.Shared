@@ -139,6 +139,11 @@ html[data-ov-motion=off] .ovk-btn--primary, html[data-ov-motion=off] .ovk-btn--p
         background-color var(--ov-dur-1, .12s), border-color var(--ov-dur-1, .12s), color var(--ov-dur-1, .12s), filter var(--ov-dur-1, .12s); }
 .ovk-btn:hover:not([disabled]):not([aria-disabled="true"]) { transform: translateY(calc(-1px * var(--ov-move, 1))); box-shadow: 0 8px 18px -12px rgba(0, 0, 0, .6); }
 .ovk-btn:active:not([disabled]), .ovk-icon-btn:active:not([disabled]) { transform: scale(calc(1 - .03 * var(--ov-move, 1))); box-shadow: none; transition-duration: .06s; }
+/* One size an icon a place (4.284.0; the owner, 11-16: "tiny icons … way more bigger and edge to edge … consistent";
+   openvibe.design rule icons-fill-their-place): 20 px in a button, 18 in a small one, 22 in a 40 px icon button. */
+.ovk-btn .ovk-i { width: 20px; height: 20px; vertical-align: middle; }
+.ovk-btn--small .ovk-i { width: 18px; height: 18px; }
+.ovk-icon-btn .ovk-i { width: 22px; height: 22px; }
 .ovk-btn .ovk-i, .ovk-icon-btn .ovk-i { transition: transform var(--ov-dur-2, .2s) var(--ov-ease-spring, var(--ov-ease-out, ease)); }
 /* The icon moves the way the button does (data-nudge): forward slides on, add turns, open lifts, down drops, refresh turns. */
 .ovk-btn[data-nudge="forward"]:hover .ovk-i:last-child, .ovk-icon-btn[data-nudge="forward"]:hover .ovk-i { transform: translateX(calc(3px * var(--ov-move, 1))); }
@@ -298,6 +303,30 @@ html[data-ov-motion=off] .ovk-btn--primary, html[data-ov-motion=off] .ovk-btn--p
 .ovk-fold-body > :first-child { margin-top: 0; }
 .ovk-fold-body > :last-child { margin-bottom: 0; }
 .ovk-fold--danger > summary { color: var(--ovk-bad-text); }
+/* Folds that move (4.284.0; the owner, 11-16: "improve our drop-down system … look a little better … animations and
+   effects and transitions that look really nice and smooth … unique and stand out"; openvibe.design Folds). Shut, a fold is
+   quiet; open, it is lit: an accent edge grows down its side, a soft wash of the accent, a deeper shadow. The summary
+   answers the hover, the chevron turns on a little spring, and the body opens to its own height (::details-content with
+   interpolate-size; a browser without them opens it at once) and rises in. Calm keeps it short; Off is instant. */
+:root { interpolate-size: allow-keywords; }
+.ovk-fold { position: relative; overflow: clip; transition: border-color var(--ov-dur-2, .2s) var(--ov-ease-out, ease), background var(--ov-dur-3, .3s) var(--ov-ease-out, ease), box-shadow var(--ov-dur-3, .3s) var(--ov-ease-out, ease); }
+.ovk-fold::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; z-index: 1; background: var(--ovk-accent); transform: scaleY(0); transform-origin: top; transition: transform var(--ov-dur-3, .32s) var(--ov-ease-spring, cubic-bezier(.2, .9, .25, 1.15)); pointer-events: none; }
+.ovk-fold:hover { border-color: color-mix(in srgb, var(--ovk-accent) 38%, var(--ovk-line)); }
+.ovk-fold[open] { border-color: color-mix(in srgb, var(--ovk-accent) 42%, var(--ovk-line)); background: linear-gradient(160deg, color-mix(in srgb, var(--ovk-accent) 10%, var(--ovk-panel)), var(--ovk-panel) 70%); box-shadow: 0 16px 34px -26px color-mix(in srgb, var(--ovk-accent) 80%, transparent); }
+.ovk-fold[open]::before { transform: scaleY(1); }
+.ovk-fold--danger::before { background: var(--ovk-bad); }
+.ovk-fold > summary { transition: background var(--ov-dur-2, .2s); }
+.ovk-fold > summary:hover { background: color-mix(in srgb, var(--ovk-accent) 6%, transparent); }
+.ovk-fold > summary > .ovk-i { width: 20px; height: 20px; transition: transform var(--ov-dur-3, .34s) var(--ov-ease-spring, cubic-bezier(.2, .9, .25, 1.2)), color var(--ov-dur-2, .2s); }
+.ovk-fold[open] > summary > .ovk-i { color: var(--ovk-accent); }
+.ovk-fold[open] > summary { border-bottom-color: color-mix(in srgb, var(--ovk-accent) 22%, var(--ovk-line)); }
+.ovk-fold::details-content { block-size: 0; overflow: clip; transition: block-size var(--ov-dur-3, .32s) var(--ov-ease-out, cubic-bezier(.2, .8, .2, 1)), content-visibility var(--ov-dur-3, .32s) allow-discrete; }
+.ovk-fold[open]::details-content { block-size: auto; }
+.ovk-fold[open] > .ovk-fold-body { animation: ovk-fold-in var(--ov-dur-3, .32s) var(--ov-ease-out, ease) both; }
+@keyframes ovk-fold-in { from { opacity: 0; transform: translateY(calc(-6px * var(--ov-move, 1))); } }
+html[data-ov-motion=reduced] .ovk-fold::details-content { transition-duration: .2s; }
+html[data-ov-motion=off] .ovk-fold, html[data-ov-motion=off] .ovk-fold::before, html[data-ov-motion=off] .ovk-fold::details-content, html[data-ov-motion=off] .ovk-fold > summary > .ovk-i { transition: none; }
+html[data-ov-motion=off] .ovk-fold[open] > .ovk-fold-body { animation: none; }
 .ovk-more { position: relative; display: inline-block; }
 .ovk-more > summary { list-style: none; }
 .ovk-pop { position: absolute; right: 0; top: calc(100% + 4px); z-index: 60; min-width: 210px; padding: 6px; box-sizing: border-box; border-radius: calc(var(--ov-radius-1) + 2px); border: 1px solid var(--ovk-line); background: var(--ovk-panel); box-shadow: var(--ov-elev-3); }

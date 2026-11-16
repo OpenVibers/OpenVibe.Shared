@@ -378,6 +378,37 @@
     }
 
     // ── the surface ──
+    /**
+     * What a link asks the session to start with (4.284.0; the owner, 11-16, on Compare's and Exchange's "Try it in Chat":
+     * "it automatically sets the model or sets the mode … based on what the user clicked. It just redirected me to the
+     * chat"): ?model= (or ?models=a,b: the first), ?agent=, ?way=, ?q= (the words, ready to send). A model alone means
+     * One model: you talk to the model you clicked. Taken once: the address is cleaned so a reload does not take it again.
+     */
+    const LINK_KEYS = ['model', 'models', 'agent', 'way', 'q', 'prompt'];
+    const readableModel = (id) => {
+        const tail = String(id).split(/[/:]/).pop() || String(id);
+        return tail.replace(/[-_]+/g, ' ').replace(/\b(gpt|oss|glm|ai|vl|llm)\b/gi, (w) => w.toUpperCase()).replace(/\b([a-z])/g, (m) => m.toUpperCase());
+    };
+    function linkChoice() {
+        let u;
+        try { u = new URL(location.href); } catch { return null; }
+        const p = u.searchParams;
+        if (!LINK_KEYS.some((k) => p.has(k))) return null;
+        const out = {};
+        const model = String(p.get('model') || String(p.get('models') || '').split(',')[0] || '').trim();
+        if (/^[\w.:/@+-]{2,160}$/.test(model)) out.model = { id: model, source: 'openvibe', name: readableModel(model) };
+        const agent = String(p.get('agent') || '').trim().toLowerCase();
+        if (/^[\w-]{2,40}$/.test(agent)) out.agent = agent;
+        const way = String(p.get('way') || '').trim();
+        if (WAYS.some((w) => w.id === way)) out.way = way;
+        else if (out.model) out.way = 'model';
+        const q = String(p.get('q') || p.get('prompt') || '').trim();
+        if (q) out.q = q.slice(0, 4000);
+        LINK_KEYS.forEach((k) => p.delete(k));
+        try { history.replaceState(history.state, '', `${u.pathname}${p.toString() ? `?${p}` : ''}${u.hash}`); } catch { /* a sandbox */ }
+        return out;
+    }
+
     function mount(host, o = {}) {
         styles();
         const base = String(o.base || 'https://openvibe.network/api/frame').replace(/\/+$/, '');
@@ -394,6 +425,15 @@
         // The choice for a new session, shared with the composer's (localStorage 'ov:composer:run').
         let pick = { agent: o.agent || 'auto', where: 'auto', model: null, works: null, way: 'auto' };
         try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); pick = { ...pick, ...(o.agent ? {} : { agent: kept.agent || 'auto' }), where: kept.where || 'auto', model: kept.model || null, works: kept.works || null, way: WAYS.some((w) => w.id === kept.way) ? kept.way : 'auto' }; } catch { /* private mode */ }
+        // A link's choice wins over the kept one, and is kept (what the person clicked is what they chose).
+        const linked = o.fromLink === false ? null : linkChoice();
+        if (linked) {
+            if (linked.model) pick.model = linked.model;
+            if (linked.agent) pick.agent = linked.agent;
+            if (linked.way) pick.way = linked.way;
+            try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); localStorage.setItem('ov:composer:run', JSON.stringify({ ...kept, agent: pick.agent, model: pick.model, way: pick.way })); } catch { /* private mode */ }
+            emit('linked', { model: pick.model && pick.model.id, agent: pick.agent, way: pick.way });
+        }
         const savePick = () => { try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); localStorage.setItem('ov:composer:run', JSON.stringify({ ...kept, agent: pick.agent, where: pick.where, model: pick.model, works: pick.works, way: pick.way })); } catch { /* private mode */ } paintCtx(); };
         // The way the chosen model is used (Actor's engines), as the body Actor reads: null for Auto, or { kind, model? }.
         const wayBody = () => (pick.way && pick.way !== 'auto' ? { kind: pick.way, ...(pick.model && ['agent', 'model', 'decisions'].includes(pick.way) ? { model: pick.model.id } : {}) } : null);
@@ -422,8 +462,28 @@
         const find = el('label', 'ovse-find'); const findIn = el('input'); findIn.type = 'search'; findIn.placeholder = 'Search sessions'; findIn.setAttribute('aria-label', 'Search sessions'); findIn.setAttribute('data-ov-trending', 'own'); find.append(svg('search'), findIn);
         const runsBox = el('div', 'ovse-runs'); runsBox.setAttribute('role', 'list');
         const actorSlot = el('div', 'ovse-actor'); actorSlot.hidden = true;
+        // Codes beside your Actor (4.284.0; the owner, 11-16: "we need to add codes by default … actor and codes means the
+        // openvibe.codes system … interconnected, same system as the site"): a session that writes and changes code, on a
+        // shared node or your own computer (never OpenVibe's own server).
+        const codesSlot = el('div', 'ovse-actor ovse-codes'); codesSlot.hidden = !o.codes;
+        if (o.codes) {
+            const who = el('button', 'ovse-actor-who is-resting'); who.type = 'button';
+            who.setAttribute('aria-label', 'Codes, your coding agent: start a coding session');
+            const face = el('span', 'ovse-codes-face'); face.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 8 4.5 12l4 4M15.5 8l4 4-4 4M13.2 5.5l-2.4 13"/></svg>';
+            const t = el('span', 'ovse-actor-t');
+            const top = el('span', 'ovse-actor-top'); top.append(el('b', '', 'Codes'), el('i', '', 'your coding agent'));
+            t.append(top, el('small', '', 'On a shared node or your computer · openvibe.codes'));
+            who.append(face, t);
+            who.addEventListener('click', () => { pick.agent = 'codes'; if (pick.where === 'openvibe') pick.where = 'auto'; savePick(); blank(); if (!wide) setDrawer(false); });
+            const away = el('a', 'ovse-ib'); away.href = 'https://openvibe.codes/'; away.target = '_blank'; away.rel = 'noopener';
+            away.setAttribute('aria-label', 'Open OpenVibe.Codes'); away.title = 'Open OpenVibe.Codes'; away.innerHTML = svgMarkup('repo');
+            codesSlot.append(who, away);
+        }
         const topSlot = el('div', 'ovse-top'); topSlot.hidden = true;
-        drawer.append(dHead, actorSlot, topSlot, find, runsBox);
+        // The page's own box searches the sessions (the menu, 4.284.0: "the search can be moved up there and use the icon
+        // system … so we can save the space"): the drawer's field stays out.
+        if (o.searchOutside) find.hidden = true;
+        drawer.append(dHead, actorSlot, codesSlot, topSlot, find, runsBox);
 
         const main = el('section', 'ovse-main');
         const head = el('header', 'ovse-head');
@@ -1086,7 +1146,9 @@
             const then = (fn) => setTimeout(fn, 230);   // after the last picker has gone
             if (!section) {
                 const rows = [
-                    { id: 'agent', name: 'Agent', line: p.agent === 'Auto' ? 'Auto: the right one for what you ask' : p.agent, glyph: 'robot' },
+                    // 4.284.0 (the owner, 11-16: "labeling this as a harness, not agent … which harness is powering your
+                    // agent … your actor … your codes"): the row names what powers the work.
+                    { id: 'agent', name: 'Harness', line: p.agent === 'Auto' ? 'Auto: the right one for what you ask' : p.agent, glyph: 'robot' },
                     { id: 'model', name: 'Model', line: p.model === 'Auto' ? 'Auto: the best fit, within your budget' : p.model, glyph: 'model' },
                     ...(coding(opts) ? [] : [{ id: 'way', name: 'Way', line: p.way || 'Auto: Actor\'s agent, or what fits the question', glyph: 'spark' }]),
                     { id: 'where', name: 'Runs on', line: p.where === 'Auto' ? (coding(opts) ? 'Auto: a shared node or your own computer' : 'Auto: wherever it fits best') : p.where, glyph: 'computer' },
@@ -1102,7 +1164,7 @@
                 return;
             }
             if (section === 'agent') {
-                P.open({ anchor: ctxB, title: 'Agent', search: 'auto', value: pick.agent, rows: [...(opts.agents || []).map((a) => ({ id: a.id, name: a.name, line: a.line || '', disabled: a.available === false })), SETUP_ROW], onPick: (row) => {
+                P.open({ anchor: ctxB, title: 'Harness', search: 'auto', value: pick.agent, rows: [...(opts.agents || []).map((a) => ({ id: a.id, name: a.name, line: a.line || '', disabled: a.available === false })), SETUP_ROW], onPick: (row) => {
                     if (row.id === SETUP_ROW.id) { then(() => openCtx('setup')); return; } pick.agent = row.id; if (pick.where === 'openvibe' && coding(opts)) pick.where = 'auto'; savePick(); } });
             } else if (section === 'where') {
                 const places = coding(opts) ? (opts.places || []).filter((x) => x.kind !== 'openvibe').map((x) => (x.kind === 'auto' ? { ...x, line: 'A shared node or your own computer' } : x)) : (opts.places || []);
@@ -1171,6 +1233,12 @@
             }
         }
         const boxText = () => composeSlot.querySelector('textarea');
+        // The link's words wait in the box, ready to send (never sent for the person).
+        if (linked && linked.q) {
+            let tries = 0;
+            const fill = () => { const ta = boxText(); if (ta && !ta.value) { ta.value = linked.q; ta.dispatchEvent(new Event('input', { bubbles: true })); return; } if (++tries < 40) setTimeout(fill, 100); };
+            fill();
+        }
         // Slash commands and @-mentions, offered as you type.
         const COMMANDS = [
             ['/new', 'A new session', 'plus'], ['/agent', 'Who works on it', 'robot'], ['/model', 'Which model', 'model'], ['/where', 'Where it runs', 'computer'],
@@ -1478,6 +1546,8 @@
         return {
             open: (ref) => { state.stack = []; return open(ref); }, blank, prefill, refresh: () => { loadRuns(); if (o.actor) { actorAt = 0; loadActor().then(paintActor); } },
             start: (text) => start(String(text || '')), list: () => setDrawer(true),
+            /** 4.284.0: the page's own box searches the sessions (the menu's box on Vibe). */
+            search(q) { const v = String(q || '').slice(0, 120); if (findIn.value !== v) findIn.value = v; clearTimeout(findT); findT = setTimeout(() => { state.q = v.trim(); loadRuns(); }, 250); if (!wide && v) setDrawer(true); },
             drawer: (v) => setDrawer(v === undefined ? true : !!v),
             get state() { return { ref: state.ref, run: state.run, steps: state.steps.size, wide, drawer: wide ? !collapsed : state.drawer }; },
             destroy() { clearStream(); state.gen++; if (ro) ro.disconnect(); if (state.topMount && typeof state.topMount.destroy === 'function') { try { state.topMount.destroy(); } catch { /* */ } } host.textContent = ''; },
@@ -1547,6 +1617,9 @@
 .ovse-row-acts .ovse-b { min-height: 36px; padding: 0 14px; font-size: 13.5px; } .ovse-row-acts .ovse-note { margin: 0; }
 .ovse-actor { display: flex; align-items: center; gap: 6px; margin: 2px 10px 8px; padding: 6px; border-radius: 16px; background: var(--ovse-card); border: 1px solid var(--ovse-line); }
 .ovse-actor-who { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 4px; border: 0; border-radius: 12px; background: transparent; text-align: left; cursor: pointer; }
+.ovse-codes { margin-top: 6px; }
+.ovse-codes-face { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, color-mix(in srgb, var(--accent, #3b82f6) 85%, #22d3ee), color-mix(in srgb, var(--accent, #3b82f6) 70%, #0f172a)); }
+.ovse-codes-face svg { width: 22px; height: 22px; }
 .ovse-actor-who:hover { background: color-mix(in srgb, var(--ovse-fg) 6%, transparent); }
 .ovse-actor-t { flex: 1; min-width: 0; display: grid; }
 .ovse-actor-top { display: flex; align-items: baseline; gap: 6px; } .ovse-actor-top i { font-style: normal; font-size: 11.5px; color: var(--ovse-mute); }

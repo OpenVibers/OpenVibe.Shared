@@ -1,5 +1,123 @@
 # Changelog
 
+## 4.284.0 — 2026-11-16
+
+**The menu's box knows where it is.** The owner: "add an icon to the beginning … it should change … animate … alerts to
+apps … history … vibe" and "the search … should just be integrated straight to the top".
+- **A mark at the start of the box** turns as you move (Apps grid, Alerts bell, History clock, Chat, Vibe spark, Feed).
+  Searching OpenVibe has none: your picture leads it.
+- **The box searches inside each place:**
+  - Alerts: the inbox's own search field is gone from the menu.
+  - History: the places you were.
+  - All apps.
+  - Vibe: your sessions; Enter still asks Vibe.
+- **`OpenVibeSearch.mode({ id, icon, placeholder, onInput, onSubmit })`** gives a page's own tab its own way to search.
+- **Place links:** every tab has its place's own site (Chat → openvibe.chat, Feed → the feed's page, You →
+  OpenVibe.my), with an icon that turns from the tab's glyph into the arrow.
+- **One size for everything in the box:** 40 px (36 on a phone), each glyph 20 px. On a crowded phone the mic steps
+  aside.
+- **Placeholders:** a placeholder the page changes is kept, even while a suggestion shows.
+
+**The shared composer's search gets the shared suggestions.** The owner: "the suggestions, like animated effects …
+shared with the other sites … the same composer across sites".
+- A `<textarea name="q">` in a GET form (the composer as a site's search) is a search box to `ov-trending.js`, and the
+  navbar loads it for one. Its line sits on the textarea's first line, one line tall.
+- **`data-ov-trending-items='["…"]'`** on a box or its form is the page's own list, with no script. What the page is
+  about rotates (Exchange: its models), never the network's trending people, and focus opens it as chips.
+
+**Our own Git for every install.** The owner: "use our own Git … faster systems … optimized and efficient".
+- `scripts/pin-bump.js` moves every pin to the forge's tarball (`git.openvibe.codes/api/v1/repos/openvibers/<lib>/archive/vX.Y.Z.tar.gz`),
+  not codeload. Measured on the same tags: 0.20 s against 0.47 s, and 0.73 s against 1.02 s, cached immutable at the edge.
+  It first waits until the forge's mirror serves the tag. `--github` keeps each pin's own host.
+- `pin-drift`, `pin-only` and `docs-status` know both forms.
+- **The install is a third of the size.** The tarball leaves out what only this repository's checks read
+  (`export-ignore`: `test/` 3.6 MB, `docs/screenshots/` 2.9 MB, `.github/`). Every site downloaded all 10 MB.
+
+**Fixed in this release before it shipped:** the box filtered You's Alerts in place even when You was not on screen. From
+Feed, pressing You (with Alerts the last thing open there) kept the menu on Feed. The box now filters a view in place only
+while that view is shown.
+
+**Edit on all three of You's tabs, with multi-select.** The owner: "people want to completely delete their
+notifications … the edit mode … all three" and "add [Edit] to the history".
+- **History:** pick places, then Select all and Delete (`DELETE /api/history/:id`). The rows fold away.
+- **Alerts:** pick notices, then Mark read (one batch) or Delete (each dismissed). Delete all needs a second press.
+
+**Sessions.**
+- **Codes beside Actor:** a coding session on a shared node or your computer.
+- **"Harness", not "Agent"** (the owner: "which harness is powering your agent"): the How it runs row, its sheet and
+  the composer chip.
+
+**Tabs that glide.** `ov-tabs.js` (`OVTabs.ink(list, { kind, key })`):
+- a sliding ink in the theme's tokens, for any tab row;
+- it glides from where it was when a panel draws its bar again;
+- Calm shortens it, Off stops it;
+- it is on Chat's Messages, Friends, Global and Servers.
+
+**Chat's event cards, the same in every chat.** `ov-chat-cards.js` (`OVChatCards.of`, `render`, `fold`, `register`).
+The owner: Global in the menu "is missing all the styles … compared to how it is on .live", and "custom widgets or custom
+HTML or AI vibe coded … shared".
+- Live's cards, now shared:
+  - going live: the face in a live ring, Watch;
+  - a Rundown episode: Read;
+  - a run of deploys: one card that folds them.
+- **A widget** (`metadata.widget = { html, height, title }`): a page of its own in a sandboxed frame (scripts only, no
+  same origin), sized by what it draws, labelled with who made it.
+- **A site's or an agent's own kind:** `register(kind, { match, render })`.
+- Links are only OpenVibe addresses.
+- The menu's Global draws them first.
+
+**Chat's segments say what waits** (the owner, 11-16: "badges on the chat tab … new messages … friend requests … new global
+chats … a blue one … less priority … servers … the mute feature").
+- Red asks for you: messages to you, friend requests (which lead the Friends tab), and servers.
+- A server Chat marks `muted` never asks.
+- Global's new posts since you last looked are a quiet blue count (50+ at most), like the feed's.
+
+**Friends, polished** (the owner's /ov-gui-polish, 11-16: "these go way off … improve").
+- A person's hat and badge sit on their name's line. They are put before the name, and the row stacked them as a line of
+  their own above it.
+- Someone without a picture wears their initial on a colour of their own.
+- Add is a quiet pill, so seven of them no longer shout.
+- The empty list of names under the field takes no room: it drew a dark bar.
+
+**Chat's Servers.** New server is a button in the corner of a foot pinned to the bottom, beside "Every server on
+openvibe.chat". The name field rises above it. With no server yet, the field leads.
+
+**Alerts outside the menu.** The search is a field of its own above the tabs, and Unread is a pill that says so.
+
+**The thread's back.** "‹ Chats" keeps its width beside the name.
+
+**Tools in the composer** go through the Frame (`openvibe.network/api/frame/tools`, Network #1032). It was "Failed to
+fetch" on sites whose CSP did not allow openvibe.tools.
+
+**A link says what to start with.** The owner, on Compare's and Exchange's "Try it in Chat": "it automatically sets the model
+or sets the mode … based on what the user clicked. It just redirected me to the chat".
+- `ov-session.js` takes `?model=` (or `?models=`), `?agent=`, `?way=` and `?q=` from the address once, then cleans it.
+- A model alone means One model: the person talks to the model they clicked.
+- The words wait in the box, never sent for the person. The host hears `linked`.
+
+**Icons centred, checked** (`scripts/icon-center.js`). The owner: "still offset icons in some places … fix this forever and
+across all sites".
+- It finds every framed box whose only content is one icon, and measures the icon's centre against the box's.
+- It adds where the glyph is drawn in its own viewBox.
+- Run it as `node scripts/icon-center.js <url…>` (Chrome) or `page.evaluate(offsetIcons)`.
+- `icon-center-chrome` keeps the navbar, the open menu and the kit's buttons centred, and proves a planted offset is
+  caught. Twelve live sites measured centred at 390 px on 11-16.
+
+**Folds that move** (`kit.fold` and every `.ovk-fold`). The owner: "improve our drop-down system … animations and effects and
+transitions that look really nice and smooth … unique and stand out".
+- Shut, a fold is quiet. Open, it is lit: an accent edge grows down its side, with a soft wash and a deeper shadow.
+- The summary answers the hover, and the chevron turns on a spring.
+- The body opens to its own height (`::details-content`, `interpolate-size`) and rises in. Calm keeps it short; Off is
+  instant.
+
+**Icons in buttons.** One size for each place:
+- 20 px in a button (the showcase's and the kit's);
+- 18 px in a small button;
+- 22 px in a 40 px icon button.
+
+A button carries the plain glyph, never a ring mark at 18 px (whose glyph drew at 9). A glyph inside a row's tile has no
+ring of its own. The owner: "tiny icons … way more bigger and edge to edge … consistent".
+
 ## 4.283.0 — 2026-11-16
 
 **Links are OpenVibe's own, on every site.** The owner: "a completely custom link style with animations and effects …

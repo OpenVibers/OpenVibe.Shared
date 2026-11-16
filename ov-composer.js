@@ -1713,7 +1713,10 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         let panel = form.querySelector('.ovc-tools');
         if (panel) { panel.hidden = !panel.hidden; if (!panel.hidden) { const f = panel.querySelector('input,textarea'); if (f) f.focus(); } return; }
         styles();
-        const base = String(form.getAttribute('data-ovc-tools') || root.OV_TOOLS_URL || 'https://openvibe.tools').replace(/\/+$/, '');
+        // 4.284.0 (11-16, "Failed to fetch" on openvibe.live): through the Frame by default, which every site's CSP
+        // allows (openvibe.network/api/frame/tools/… → the Tools gateway); a page that names Tools itself asks it direct.
+        const own = form.getAttribute('data-ovc-tools') || root.OV_TOOLS_URL;
+        const base = own ? `${String(own).replace(/\/+$/, '')}/api/v1` : FRAME;
         panel = el('div', 'ovc-repo ovc-tools'); panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Run an OpenVibe tool');
         const head = el('div', 'ovc-tools-head');
         const back = el('button', 'ovc-tools-back'); back.type = 'button'; back.setAttribute('aria-label', 'Back to the tools'); back.innerHTML = svg('M15 5l-7 7 7 7'); back.hidden = true;
@@ -1753,7 +1756,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             const popular = async () => {
                 try {
                     const hit = TOOLS_CACHE.get('');
-                    const tools = hit && Date.now() - hit.at < 600000 ? hit.items : ((await get('/api/v1/tools/popular')).tools || []);
+                    const tools = hit && Date.now() - hit.at < 600000 ? hit.items : ((await get('/tools/popular')).tools || []);
                     TOOLS_CACHE.set('', { at: Date.now(), items: tools });
                     if (!field.value.trim()) { draw(tools); say2(tools.length ? 'Most used this week. What you wrote goes into the tool; its answer comes back here.' : ''); }
                 } catch { say2('What you wrote goes into the tool; its answer comes back here.'); }
@@ -1767,7 +1770,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 if (hit && Date.now() - hit.at < 600000) { draw(hit.items); return; }
                 if (!list.children.length) say2('Searching…');
                 try {
-                    const j = await get(`/api/v1/tools?api=true&q=${encodeURIComponent(q)}`);
+                    const j = await get(`/tools?api=true&q=${encodeURIComponent(q)}`);
                     if (my !== gen) return;
                     const items = (j.tools || []).filter((t) => t.status !== 'unavailable' && !t.files && t.auth && t.auth.anonymous);
                     TOOLS_CACHE.set(key, { at: Date.now(), items });
@@ -1795,7 +1798,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             back.hidden = false; title.textContent = String(t.name || t.id);
             body.textContent = ''; say2('Loading…');
             let d, schema;
-            try { [d, schema] = await Promise.all([get(`/api/v1/tools/${encodeURIComponent(t.id)}`), get(`/api/v1/tools/${encodeURIComponent(t.id)}/schema`)]); }
+            try { [d, schema] = await Promise.all([get(`/tools/${encodeURIComponent(t.id)}`), get(`/tools/${encodeURIComponent(t.id)}/schema`)]); }
             catch (err) { say2((err && err.message) || 'That tool did not load'); return; }
             if (!d.api || d.files || !(d.auth && d.auth.anonymous)) { say2(d.files ? 'This tool takes a file: open it on its page.' : 'This tool needs a sign-in: open it on its page.'); body.appendChild(pageLink(d)); return; }
             const input = (schema && schema.$defs && schema.$defs.input) || { properties: {} };
@@ -1850,7 +1853,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 if (missing.length) { say2(`Fill in ${missing.map((k) => (props[k] && props[k].title) || human(k)).join(', ')}.`); return; }
                 go.disabled = true; go.textContent = 'Running…'; say2('');
                 try {
-                    const r = await fetch(`${base}/api/v1/tools/${encodeURIComponent(d.id)}/run`, { method: 'POST', credentials: 'omit', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ input: value, wait_ms: 20000 }) });
+                    const r = await fetch(`${base}/tools/${encodeURIComponent(d.id)}/run`, { method: 'POST', credentials: 'omit', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ input: value, wait_ms: 20000 }) });
                     const j = await r.json().catch(() => null);
                     go.disabled = false; go.textContent = 'Run';
                     if (j && j.state === 'succeeded') { answer(d, toolAnswer(j.result)); return; }
@@ -2095,7 +2098,8 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         try { runPick = Object.assign(runPick, JSON.parse(localStorage.getItem('ov:composer:run') || '{}')); } catch { /* private mode */ }
         const runChips = el('div', 'ovc-run'); runChips.setAttribute('role', 'group'); runChips.setAttribute('aria-label', 'How it runs');
         const runChip = (path, label) => { const b = el('button', 'ovc-chip ovc-chip--btn ovc-run-c', `${svg(path)}<span class="ovc-chip-v"></span>`); b.type = 'button'; b.setAttribute('aria-haspopup', 'dialog'); b.dataset.what = label; return b; };
-        const agentChip = runChip(IC.agent || IC.spark, 'Agent'), runModelChip = runChip(IC.model, 'Model'), whereChip = runChip(IC.computer || IC.globe, 'Runs on');
+        // 4.284.0: "Harness" (what powers your agent), not "Agent".
+        const agentChip = runChip(IC.agent || IC.spark, 'Harness'), runModelChip = runChip(IC.model, 'Model'), whereChip = runChip(IC.computer || IC.globe, 'Runs on');
         let runOpts = null;
         const fallbackRun = () => ({ agents: [{ id: 'auto', name: 'Auto', line: 'The right one for what you ask' }, { id: 'actor', name: 'Actor', line: 'Your agent' }, { id: 'codes', name: 'Codes', line: 'Writes and changes code' }], places: [{ kind: 'auto', name: 'Auto', line: 'Wherever it fits best' }, { kind: 'openvibe', name: 'OpenVibe', line: "OpenVibe's computers" }] });
         const placeKey = (pl) => (pl.kind === 'auto' ? 'auto' : pl.id ? `${pl.kind}:${pl.id}` : pl.kind);
@@ -2106,7 +2110,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             // Unpicked, each says what it is (three bare "Auto" chips said nothing).
             const auto = (v, word) => (v === 'Auto' ? word : v);
             const m = model.name || model.model;
-            agentChip.querySelector('.ovc-chip-v').textContent = auto(a.name, 'Any agent'); agentChip.setAttribute('aria-label', `Agent: ${a.name}. Change it`);
+            agentChip.querySelector('.ovc-chip-v').textContent = auto(a.name, 'Any agent'); agentChip.setAttribute('aria-label', `Harness: ${a.name}. Change it`);
             runModelChip.querySelector('.ovc-chip-v').textContent = auto(m, 'Auto model'); runModelChip.setAttribute('aria-label', `Model: ${m}. Change it`);
             whereChip.querySelector('.ovc-chip-v').textContent = auto(w.name, 'Anywhere'); whereChip.setAttribute('aria-label', `Runs on: ${w.name}. Change it`);
             agentChip.classList.toggle('is-on', runPick.agent !== 'auto'); whereChip.classList.toggle('is-on', runPick.where !== 'auto');
@@ -2157,7 +2161,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         const setupOf = (opts) => { const own = opts && Array.isArray(opts.setup) ? opts.setup.filter((x) => x && x.id && x.name && /^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(String(x.url || ''))) : []; return own.length ? own.slice(0, 12) : SETUP; };
         const SETUP_ROW = { id: '__setup', name: 'Use your own…', line: 'Your computer, coding agents and keys, instead of OpenVibe\'s' };
         const openSetup = (opts, anchor) => setTimeout(() => pickSheet('Your own setup', setupOf(opts), () => false, (x) => { try { window.open(x.url, '_blank', 'noopener'); } catch { /* a blocked window */ } }, anchor), 230);
-        agentChip.addEventListener('click', async () => { pickAnchor = agentChip; const opts = await loadRun(); pickSheet('Agent', [...(opts.agents || []), SETUP_ROW], (x) => x.id === runPick.agent, (x) => { if (x.id === SETUP_ROW.id) return openSetup(opts, agentChip); runPick.agent = x.id; if (runPick.where === 'openvibe' && coding(opts)) runPick.where = 'auto'; saveRun(); }); });
+        agentChip.addEventListener('click', async () => { pickAnchor = agentChip; const opts = await loadRun(); pickSheet('Harness', [...(opts.agents || []), SETUP_ROW], (x) => x.id === runPick.agent, (x) => { if (x.id === SETUP_ROW.id) return openSetup(opts, agentChip); runPick.agent = x.id; if (runPick.where === 'openvibe' && coding(opts)) runPick.where = 'auto'; saveRun(); }); });
         // Coding (Codes or a coding harness) never runs on OpenVibe's own server (the owner, 11-15): its sheet leaves
         // OpenVibe out, and Auto means a shared node or your computer.
         const coding = (opts) => { const a = (opts.agents || []).find((x) => x.id === runPick.agent); return runPick.agent === 'codes' || !!(a && (a.kind === 'harness' || a.kind === 'codes')); };

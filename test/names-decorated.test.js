@@ -24,7 +24,8 @@ const FILES = [
 const NAME = /display_name|\busername\b|\bname\(c\)|\bnameOf\(|\w*NameMarkup\(/;
 const WRITES = /(textContent|innerHTML|outerHTML|appendChild|insertAdjacentHTML|\btext\(|\bel\(|\belement\(|\bh\(|\bhtml\(|\bsetSubject\(|\bovmSetSubject\(|\bsubjectAttr\(|\w*NameMarkup\()/;
 // The same element carrying its person's subject.
-const SUBJECT = /(data-ov-subject|\bsetSubject\(|\bovmSetSubject\(|\bsubjectAttr\(|\w*NameMarkup\()/;
+// named(text, person) (dock.js, 4.284.0): the name on a line of its own, through setSubject.
+const SUBJECT = /(data-ov-subject|\bsetSubject\(|\bovmSetSubject\(|\bsubjectAttr\(|\w*NameMarkup\(|\bnamed\()/;
 // The places that write something of a person that is not the name: each with its reason.
 const SKIP = [
     { file: 'ov-user.js', at: /person\.username\[0\]/, reason: 'the picture\'s initial letter — a letter, not the name' },
