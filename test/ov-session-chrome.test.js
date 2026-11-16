@@ -207,7 +207,7 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         // The one chip: How it runs → Model → Opus 5.5.
         await p.evaluate("document.querySelector('.ovse-ctx').click()");
         await until(p, "!!document.querySelector('.ovp.is-in .ovp-row')");
-        assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent)"), ['Agent', 'Model', 'Runs on', 'Works on']);
+        assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent)"), ['Agent', 'Model', 'Way', 'Runs on', 'Works on'], 'the Way (4.281.0: how Actor works it) beside the model');
         await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row')].find((r) => r.textContent.startsWith('Model')).click()");
         await until(p, "!!document.querySelector('.ovp.is-in .ovp-row[data-id=\"openvibe|anthropic/claude-opus-5-5\"]')");
         await p.evaluate("document.querySelector('.ovp.is-in .ovp-row[data-id=\"openvibe|anthropic/claude-opus-5-5\"]').click()");
@@ -281,6 +281,26 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         await send('Something cheaper?');
         for (let i = 0; i < 60 && said.messages.length < before + 1; i++) await pause(50);
         assert.deepStrictEqual(said.messages[before].model, { id: 'anthropic/claude-opus-5-5', source: 'openvibe', name: 'Opus 5.5' }, 'the changed model goes with the words');
+        // The Way (4.281.0; Actor's engines): one model, chosen on the chip, goes with a new conversation as its engine.
+        const wy = await h.openPage(browser, await browser.newContext(), { width: 390, height: 844 });
+        await wy.goto(`${base}?open=none`, { maxMs: 8000 });
+        await wy.evaluate("localStorage.setItem('ov:composer:run', JSON.stringify({ way: 'model', model: { id: 'anthropic/claude-opus-5-5', source: 'openvibe', name: 'Opus 5.5' } }))");
+        await wy.goto(`${base}?open=none`, { maxMs: 8000 });
+        await until(wy, "!!document.querySelector('.ovse-ctx span') && /One model/.test(document.querySelector('.ovse-ctx span').textContent)");
+        assert.strictEqual(await wy.evaluate("document.querySelector('.ovse-ctx span').textContent"), 'Any agent · One model · Opus 5.5', 'the chip says the way');
+        const startsBefore = said.starts.length;
+        await typeIn(wy, 'Is 17 a prime number?');
+        await wy.evaluate("document.querySelector('.ovse-compose form') ? document.querySelector('.ovse-compose form').requestSubmit() : document.querySelector('.ovse-compose textarea').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))");
+        for (let i = 0; i < 60 && said.starts.length < startsBefore + 1; i++) await pause(50);
+        assert.deepStrictEqual(said.starts[startsBefore].engine, { kind: 'model', model: 'anthropic/claude-opus-5-5' }, 'the way goes with the new conversation');
+        // The sheet's Way: every way, and Compare the ways.
+        await wy.goto(`${base}?open=none`, { maxMs: 8000 });
+        await until(wy, "!!document.querySelector('.ovse-ctx')");
+        await wy.evaluate("document.querySelector('.ovse-ctx').click()");
+        await until(wy, "!!document.querySelector('.ovp.is-in .ovp-row')");
+        await wy.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row')].find((r) => r.textContent.startsWith('Way')).click()");
+        await until(wy, "!!document.querySelector('.ovp.is-in .ovp-row[data-id=\"decisions\"]')");
+        assert.deepStrictEqual(await wy.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent)"), ['Auto', 'Actor\'s agent', 'One model', 'Decisions', 'OpenAI agent', 'Open model', 'Compare the ways']);
         console.log('ov-session-chrome: a coding session (grouped tools, changed files and the diff, a helper and Back, the plan, streaming), an approval answered in place, the drawer, a new session with @ and the one chip, queued words, the column on a computer; your Actor and the Action Center in the list');
     } finally {
         await browser.close();

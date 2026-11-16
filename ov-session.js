@@ -43,6 +43,15 @@
  * Everything a run says is set as text, never markup. Motion follows html[data-ov-motion]; colours are theme tokens.
  */
 (function (root) {
+    // The ways Actor can work a message (Actor's engines; openvibe.actor/api/v1/engines): the session's Way choice.
+    const WAYS = [
+        { id: 'auto', name: 'Auto', line: 'Actor\'s agent, or what fits the question' },
+        { id: 'agent', name: 'Actor\'s agent', line: 'Plans, uses tools, checks its answer' },
+        { id: 'model', name: 'One model', line: 'One answer from the model you picked, no tools: quick and cheap' },
+        { id: 'decisions', name: 'Decisions', line: 'Yes or no, pick one, rate it: with how sure it is' },
+        { id: 'openai-agent', name: 'OpenAI agent', line: 'OpenAI\'s agent with its own web search' },
+        { id: 'open-model', name: 'Open model', line: 'A small model on OpenVibe\'s own server: nothing leaves OpenVibe' },
+    ];
     'use strict';
     if (typeof document === 'undefined' || root.OpenVibeSession) return;
 
@@ -366,9 +375,11 @@
         const emit = (type, data) => { if (typeof o.onEvent === 'function') { try { o.onEvent(type, data); } catch { /* the host's */ } } };
         const state = { gen: 0, ref: null, run: null, steps: new Map(), nodes: new Map(), stack: [], stop: null, abort: null, tick: null, runs: [], partial: [], q: '', listGen: 0, paint: 0, queue: [], open: new Set(), drawer: false };
         // The choice for a new session, shared with the composer's (localStorage 'ov:composer:run').
-        let pick = { agent: o.agent || 'auto', where: 'auto', model: null, works: null };
-        try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); pick = { ...pick, ...(o.agent ? {} : { agent: kept.agent || 'auto' }), where: kept.where || 'auto', model: kept.model || null, works: kept.works || null }; } catch { /* private mode */ }
-        const savePick = () => { try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); localStorage.setItem('ov:composer:run', JSON.stringify({ ...kept, agent: pick.agent, where: pick.where, model: pick.model, works: pick.works })); } catch { /* private mode */ } paintCtx(); };
+        let pick = { agent: o.agent || 'auto', where: 'auto', model: null, works: null, way: 'auto' };
+        try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); pick = { ...pick, ...(o.agent ? {} : { agent: kept.agent || 'auto' }), where: kept.where || 'auto', model: kept.model || null, works: kept.works || null, way: WAYS.some((w) => w.id === kept.way) ? kept.way : 'auto' }; } catch { /* private mode */ }
+        const savePick = () => { try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); localStorage.setItem('ov:composer:run', JSON.stringify({ ...kept, agent: pick.agent, where: pick.where, model: pick.model, works: pick.works, way: pick.way })); } catch { /* private mode */ } paintCtx(); };
+        // The way the chosen model is used (Actor's engines), as the body Actor reads: null for Auto, or { kind, model? }.
+        const wayBody = () => (pick.way && pick.way !== 'auto' ? { kind: pick.way, ...(pick.model && ['agent', 'model', 'decisions'].includes(pick.way) ? { model: pick.model.id } : {}) } : null);
         let options = null;   // the Frame's /run-options: { agents, places }
         const fallbackOptions = { agents: [{ id: 'auto', name: 'Auto', line: 'The right one for what you ask', kind: 'auto' }, { id: 'actor', name: 'Actor', line: 'Your agent: answers, searches, does things for you', kind: 'actor' }, { id: 'codes', name: 'Codes', line: 'Writes and changes code', kind: 'codes' }], places: [{ kind: 'auto', name: 'Auto', line: 'Wherever it fits best' }, { kind: 'openvibe', name: 'OpenVibe', line: 'OpenVibe\'s own computers' }] };
         const loadOptions = async () => {
@@ -1007,7 +1018,8 @@
             const w = (opts.places || []).find((x) => placeKey(x) === pick.where) || { name: 'Auto' };
             const m = pick.model && pick.model.name ? pick.model.name : 'Auto';
             const works = Array.isArray(o.works) ? o.works.find((x) => String(x.value) === String(pick.works)) : null;
-            return { agent: a.name, model: m, where: w.name, works: works ? works.name : '' };
+            const way = WAYS.find((x) => x.id === pick.way) || WAYS[0];
+            return { agent: a.name, model: m, where: w.name, works: works ? works.name : '', way: way.id === 'auto' ? '' : way.name };
         }
         function paintCtx() {
             const r = state.run;
@@ -1019,10 +1031,10 @@
             }
             ctxB.hidden = false; ctxInfo.hidden = true;
             const p = ctxParts();
-            const said = [p.agent === 'Auto' ? 'Any agent' : p.agent, p.model === 'Auto' ? '' : p.model, p.where === 'Auto' ? '' : p.where, p.works].filter(Boolean);
+            const said = [p.agent === 'Auto' ? 'Any agent' : p.agent, p.way, p.model === 'Auto' ? '' : p.model, p.where === 'Auto' ? '' : p.where, p.works].filter(Boolean);
             ctxB.querySelector('span').textContent = said.join(' · ');
             ctxB.setAttribute('aria-label', `How it runs: ${said.join(', ')}. Change it`);
-            ctxB.classList.toggle('is-on', pick.agent !== 'auto' || !!pick.model || pick.where !== 'auto' || !!pick.works);
+            ctxB.classList.toggle('is-on', pick.agent !== 'auto' || !!pick.model || pick.where !== 'auto' || !!pick.works || (pick.way && pick.way !== 'auto'));
             paintCost();
         }
         /**
@@ -1051,6 +1063,7 @@
                 const rows = [
                     { id: 'agent', name: 'Agent', line: p.agent === 'Auto' ? 'Auto: the right one for what you ask' : p.agent, glyph: 'robot' },
                     { id: 'model', name: 'Model', line: p.model === 'Auto' ? 'Auto: the best fit, within your budget' : p.model, glyph: 'model' },
+                    ...(coding(opts) ? [] : [{ id: 'way', name: 'Way', line: p.way || 'Auto: Actor\'s agent, or what fits the question', glyph: 'spark' }]),
                     { id: 'where', name: 'Runs on', line: p.where === 'Auto' ? (coding(opts) ? 'Auto: a shared node or your own computer' : 'Auto: wherever it fits best') : p.where, glyph: 'computer' },
                 ];
                 if (Array.isArray(o.works) && o.works.length) rows.push({ id: 'works', name: 'Works on', line: p.works || 'Anything: it works out what you mean', glyph: 'repo' });
@@ -1062,6 +1075,16 @@
             } else if (section === 'where') {
                 const places = coding(opts) ? (opts.places || []).filter((x) => x.kind !== 'openvibe').map((x) => (x.kind === 'auto' ? { ...x, line: 'A shared node or your own computer' } : x)) : (opts.places || []);
                 P.open({ anchor: ctxB, title: 'Runs on', search: 'auto', value: pick.where, rows: places.map((x) => ({ id: placeKey(x), name: x.name, line: x.line || '', disabled: x.available === false })), onPick: (row) => { pick.where = row.id; savePick(); } });
+            } else if (section === 'way') {
+                // How Actor works it (4.281.0; Actor's engines, the owner 11-16: "use an agent or harness or model system or a
+                // decisions API or swap between and benchmark"): mid-session a change goes with the next message.
+                const actorBase = String(o.actorUrl || 'https://openvibe.actor').replace(/\/+$/, '');
+                P.open({ anchor: ctxB, title: 'Way', search: false, value: pick.way || 'auto',
+                    rows: [...WAYS.map((x) => ({ id: x.id, name: x.name, line: x.line })), { id: 'compare', name: 'Compare the ways', line: 'One question, several ways side by side, each answer graded' }],
+                    onPick: (row) => {
+                        if (row.id === 'compare') { try { window.open(`${actorBase}/compare`, '_blank', 'noopener'); } catch { /* a blocked window */ } return; }
+                        pick.way = row.id; savePick();
+                    } });
             } else if (section === 'works') {
                 P.open({ anchor: ctxB, title: 'Works on', search: 'auto', value: pick.works || '', rows: [{ id: '', name: 'Anything', line: 'It works out what you mean: a new site, a repository, a question' }, ...o.works.map((x) => ({ id: String(x.value), name: x.name, line: x.line || '' }))], onPick: (row) => { pick.works = row.id || null; savePick(); } });
             } else if (section === 'model') {
@@ -1203,6 +1226,8 @@
             const opts = options || fallbackOptions;
             if (pick.where && pick.where !== 'auto') { const w = (opts.places || []).find((x) => placeKey(x) === pick.where); if (w) how.where = { kind: w.kind, ...(w.id ? { id: w.id } : {}), name: w.name }; }
             if (pick.works) { how.kind = 'code'; how.target = /^[\w.-]+\/[\w.-]+$/.test(pick.works) ? { repo: pick.works } : pick.works; }
+            // The way (4.281.0; Actor's engines): Actor's agent, one model, the Decisions API … Only for Actor's runs.
+            if (wayBody() && !coding(opts) && !pick.works) { how.engine = wayBody(); state.waySent = pick.way; }
             if (o.context) how.context = o.context;
             // The thread opens at once: your words on the right, the agent working on the left.
             const gen = ++state.gen; clearStream();
@@ -1240,8 +1265,12 @@
             const attachments = files && files.length ? await uploadFiles(files) : [];
             // A model changed on the chip mid-session goes with the words, and the conversation stays on it after.
             const swap = pick.model && pick.model.id !== state.modelSent ? { model: { id: pick.model.id, source: pick.model.source || 'openvibe', name: pick.model.name } } : {};
+            // The way, swapped on the chip mid-session (4.281.0): sent once, and the conversation keeps it after.
+            const wayKey = `${pick.way || 'auto'}|${(wayBody() && wayBody().model) || ''}`;
+            if (String(state.ref || '').startsWith('actor:') && state.waySent !== undefined && wayKey !== state.waySent) swap.engine = wayBody() || 'auto';
             const step = await api(`/runs/${encodeURIComponent(state.ref)}/messages`, { method: 'POST', body: JSON.stringify({ text, ...(attachments.length ? { attachments } : {}), ...swap }) });
             if (swap.model) state.modelSent = swap.model.id;
+            if (String(state.ref || '').startsWith('actor:')) state.waySent = wayKey;
             if (step && Number.isInteger(step.seq)) state.steps.set(step.seq, step);
             if (state.run && !isLive(state.run)) state.run = { ...state.run, status: 'running' };
             schedule();
@@ -1309,6 +1338,8 @@
             state.ref = ref; state.run = known || null; state.steps = new Map(); state.queue = []; state.open = new Set(); state.pending = false; state.replay = null;
             // The model this session last asked for: a message carries the chip's model only when it changed (plan §AD.8.3).
             state.modelSent = how.modelSent !== undefined ? how.modelSent : (known && known.model && known.model.id) || null;
+            // The way the chip shows when a session opens is taken as the one it runs: a later change on the chip is a swap.
+            state.waySent = `${pick.way || 'auto'}|${(wayBody() && wayBody().model) || ''}`;
             wrap.classList.remove('is-blank');
             if (how.said) { state.steps.set(-1, { seq: -1, kind: 'message', from: 'person', text: how.said }); state.pending = true; }
             paint(); paintCtx();

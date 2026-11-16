@@ -1,5 +1,24 @@
 # Changelog
 
+## 4.281.0 — 2026-11-16
+
+**The Way, in every session** (the owner, 11-16: "Actor should allow a mix or modular system where you can use an agent
+or harness or model system or a decisions API or swap between and benchmark the different ways").
+- The session's chip has a **Way** beside the Model, for Actor's conversations. It chooses how Actor works what you say:
+  - **Auto**;
+  - **Actor's agent**: plans, uses tools, checks its answer;
+  - **One model**: one answer from the model you picked, no tools;
+  - **Decisions**: yes or no, pick one or rate it, with how sure it is;
+  - **OpenAI agent**;
+  - **Open model**.
+
+  The chip says it, for example "Any agent · One model · Opus 5.5".
+- **Starting and swapping:** a new conversation starts that way (`engine` on `POST /runs`). Changing the Way mid-conversation
+  goes with the next message once, and the conversation keeps it after; Auto gives the choice back to Actor.
+- **Compare the ways** in the same list opens openvibe.actor/compare: one question several ways side by side, each answer
+  graded.
+- **Who needs it:** Actor #544/#546 and Network #1028 carry it; a coding agent (a harness) is chosen under Agent, as before.
+
 ## 4.280.0 — 2026-11-16
 
 **Tools, in every composer** (the owner, 11-15: the tools "interconnected with all relevant open vibe sites", one
