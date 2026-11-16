@@ -18,6 +18,10 @@
     let _lead = null;
     const _actions = new Map();
 
+    // Running-text links (4.283.0): where they are, and where they are left alone (bars, menus, the footer).
+    const LINK_IN = ':where(p, dd, blockquote, figcaption, label, small, .ov-prose, .prose, .markdown-body)';
+    const LINK_OUT = ':not(:where(nav, menu, [role="navigation"], [role="menu"], [role="tablist"], .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer, .ovf) *)';
+    const LZ = `${LINK_IN} :where(a[href]:not([class]))${LINK_OUT}`, LB = `${LINK_IN} a[href]:not([class])${LINK_OUT}`;
     function injectStyles() {
         if (document.getElementById('openvibe-navbar-styles')) return;
         const s = document.createElement('style');
@@ -578,15 +582,10 @@
             }
             html[data-ov-motion=off] :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer) :where(a, button, [role="button"]):not(:disabled):active{scale: none;opacity: .82}
 
-            /* Links in running text, OpenVibe's own on every site (4.283.0; the owner, 11-16: "a completely custom link style
-               with animations and effects … rather than these default ass looking ones"). The person's theme draws them: its
-               light accent, and a second tone turned from it on the colour wheel, so every theme has its own pair. Resting,
-               a fine line in the accent (never colour alone); hovering or focusing sweeps a two-tone line in from the start
-               and lifts a soft glow; a press washes the words in the accent; the visited purple is gone. Running text only
-               (p, dd, blockquote, figcaption, label, small, .ov-prose): a link with a class is a component and keeps its own
-               look, and bars, menus and the footer are left alone. Colours, lines and glow are at zero specificity, so a
-               site's own look for a link still wins; only the browser's own underline is turned off above that. */
-            :where(p, dd, blockquote, figcaption, label, small, .ov-prose, .prose, .markdown-body) :where(a[href]:not([class])):not(:where(nav, menu, [role="navigation"], [role="menu"], [role="tablist"], .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer, .ovf) *) {
+            /* Running-text links, OpenVibe's own (4.283.0, the owner 11-16): the theme's accent and a turned second tone; a
+               resting line, a two-tone sweep and glow on hover or focus, a wash on press. LZ is zero specificity (a site's own
+               look wins); LB only drops the browser underline. Components (a class), bars, menus and the footer keep theirs. */
+            ${LZ} {
                 --ovl-a: var(--accent-light, var(--accent, #60a5fa));
                 --ovl-b: var(--accent, #3b82f6);
                 color: var(--ovl-a);
@@ -600,13 +599,13 @@
                 -webkit-tap-highlight-color: transparent;
                 transition: background-size .42s cubic-bezier(.22, 1, .36, 1), color .2s ease, text-shadow .3s ease;
             }
-            @supports (color: oklch(from red l c h)) { :where(p, dd, blockquote, figcaption, label, small, .ov-prose, .prose, .markdown-body) :where(a[href]:not([class])):not(:where(nav, menu, [role="navigation"], [role="menu"], [role="tablist"], .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer, .ovf) *) { --ovl-b: oklch(from var(--ovl-a) l c calc(h + 60)); } }
-            :where(p, dd, blockquote, figcaption, label, small, .ov-prose, .prose, .markdown-body) a[href]:not([class]):not(:where(nav, menu, [role="navigation"], [role="menu"], [role="tablist"], .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer, .ovf) *) { text-decoration: none; }
-            @media (hover: hover) { :where(p, dd, blockquote, figcaption, label, small, .ov-prose, .prose, .markdown-body) :where(a[href]:not([class])):not(:where(nav, menu, [role="navigation"], [role="menu"], [role="tablist"], .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer, .ovf) *):hover { background-size: 100% 2px, 100% 1px, 100% 0%; color: color-mix(in oklab, var(--ovl-a) 80%, var(--text-primary, #fff)); text-shadow: 0 0 .9em color-mix(in srgb, var(--ovl-a) 45%, transparent); } }
-            :where(p, dd, blockquote, figcaption, label, small, .ov-prose, .prose, .markdown-body) :where(a[href]:not([class])):not(:where(nav, menu, [role="navigation"], [role="menu"], [role="tablist"], .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer, .ovf) *):focus-visible { background-size: 100% 2px, 100% 1px, 100% 0%; outline: 2px solid var(--ovl-a); outline-offset: 3px; }
-            :where(p, dd, blockquote, figcaption, label, small, .ov-prose, .prose, .markdown-body) :where(a[href]:not([class])):not(:where(nav, menu, [role="navigation"], [role="menu"], [role="tablist"], .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer, .ovf) *):active { background-size: 100% 2px, 100% 1px, 100% 100%; transition-duration: .12s; }
-            html[data-ov-motion=off] :where(p, dd, blockquote, figcaption, label, small, .ov-prose, .prose, .markdown-body) :where(a[href]:not([class])):not(:where(nav, menu, [role="navigation"], [role="menu"], [role="tablist"], .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer, .ovf) *) { transition: none; }
-            @media (forced-colors: active) { :where(p, dd, blockquote, figcaption, label, small, .ov-prose, .prose, .markdown-body) a[href]:not([class]):not(:where(nav, menu, [role="navigation"], [role="menu"], [role="tablist"], .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer, .ovf) *) { text-decoration: underline; background-image: none; } }
+            @supports (color: oklch(from red l c h)) { ${LZ} { --ovl-b: oklch(from var(--ovl-a) l c calc(h + 60)); } }
+            ${LB} { text-decoration: none; }
+            @media (hover: hover) { ${LZ}:hover { background-size: 100% 2px, 100% 1px, 100% 0%; color: color-mix(in oklab, var(--ovl-a) 80%, var(--text-primary, #fff)); text-shadow: 0 0 .9em color-mix(in srgb, var(--ovl-a) 45%, transparent); } }
+            ${LZ}:focus-visible { background-size: 100% 2px, 100% 1px, 100% 0%; outline: 2px solid var(--ovl-a); outline-offset: 3px; }
+            ${LZ}:active { background-size: 100% 2px, 100% 1px, 100% 100%; transition-duration: .12s; }
+            html[data-ov-motion=off] ${LZ} { transition: none; }
+            @media (forced-colors: active) { ${LB} { text-decoration: underline; background-image: none; } }
         `;
         document.head.appendChild(s);
     }
@@ -666,7 +665,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '862b047a6a7a', 'dock.js': '41aeb777b7f5', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '22cd763909cc', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '073d6cc55244', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'c58f990574e6', 'nav-slots.js': 'c4890d9e86ea', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': '3ee92fca1262', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'e9515fa14ab5', 'ov-composer.js': '542acc36f1db', 'items.js': '9f0ba1844c20', 'items.css': 'e917ec14cd4d' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '862b047a6a7a', 'dock.js': '92c83f1b2e6b', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '22cd763909cc', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '073d6cc55244', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'c58f990574e6', 'nav-slots.js': 'c4890d9e86ea', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': '3ee92fca1262', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'e9515fa14ab5', 'ov-composer.js': 'f732a9bf10bf', 'items.js': '9f0ba1844c20', 'items.css': 'e917ec14cd4d' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.

@@ -34,6 +34,18 @@ to have it here in the vibe … it's also spacing wrong, offset to the top".
   - A folded box keeps its placeholder.
 - Test: `trending-context-chrome`.
 
+**Use your own setup, from any agent.** The owner: "a place where it brings you to set up your different harnesses and
+API keys … even if you choose Actor … the shared node, their own computer".
+- The Agent and Runs on lists, in every session and composer, end with "Use your own…".
+- The session's "How it runs" has "Your own setup". It lists the places that already do each part:
+  - your computer and your computers and shared nodes (OpenVibe Link);
+  - coding agents installed and signed in where they run (Codes);
+  - Actor's model and where it runs (Actor);
+  - your keys and sign-ins, sealed in Locker.
+- The Frame's options may send their own list (`setup: [{ id, name, line, url }]`, https only).
+- Test: `your-setup`.
+- `navbar.js` budget: 59.6 KB brotli (measured 59.3) for the links and the narrower trending loader.
+
 ## 4.282.0 — 2026-11-16
 
 **Escape closes only what it is meant to.**
