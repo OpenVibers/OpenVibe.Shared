@@ -93,7 +93,16 @@ const LOOK = `(() => {
         await until(p, `(() => { const l = ${LOOK}; return l && l.kind === 'line' && Math.abs(l.x - l.start) <= 1; })()`, 4000);
         const vibe = await p.evaluate(LOOK);
         assert.strictEqual(vibe.kind, 'line');
-        assert.ok(Math.abs(vibe.x - vibe.start) <= 1, `"${vibe.words}" starts where typing starts (${vibe.x} vs ${vibe.start})`);
+        if (Math.abs(vibe.x - vibe.start) > 1) {
+            // Where the 30 px comes from, when it does (CI's Chrome only so far): every box between the field and the words.
+            const geo = await p.evaluate(`(() => { const ovs = document.querySelector('.ovs.is-open'); const i = ovs.querySelector('.ovs-input'); const g = i.nextElementSibling;
+                const R = (e) => { if (!e) return null; const b = e.getBoundingClientRect(); const c = getComputedStyle(e); return { cls: String(e.className).slice(0, 40), x: Math.round(b.left), w: Math.round(b.width),
+                    pos: c.position, disp: c.display, pl: c.paddingLeft, ml: c.marginLeft, ti: c.textIndent, left: c.left, tr: c.transform === 'none' ? '' : c.transform, ta: c.textAlign, jc: c.justifyContent }; };
+                const line = g && g.querySelector('.ovt-line'); const pre = line && line.querySelector('.ovt-pre'); const term = line && line.querySelector('.ovt-term');
+                return { field: R(i.parentElement), input: R(i), ghost: R(g), ghostStyleLeft: g && g.style.left, offsetParent: g && g.offsetParent && String(g.offsetParent.className).slice(0, 40),
+                    lines: g ? g.querySelectorAll('.ovt-line').length : 0, line: R(line), pre: R(pre), preText: pre && JSON.stringify(pre.textContent), term: R(term), styleEl: !!document.getElementById('ovt-style') || !!document.querySelector('style[data-ovt]'), ua: navigator.userAgent }; })()`);
+            assert.fail(`"${vibe.words}" starts where typing starts (${vibe.x} vs ${vibe.start}): ${JSON.stringify(geo)}`);
+        }
 
         const seen = [];
         for (const tab of ['notifications', 'recent']) {
