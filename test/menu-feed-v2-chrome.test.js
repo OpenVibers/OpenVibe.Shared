@@ -142,7 +142,7 @@ const server = http.createServer((req, res) => {
         // intersection: #542 and #544 on 11-14), as a person keeps scrolling.
         // 4.266.0: the end is brought into view by whatever scrolls (the list or the page), as a person's scroll does.
         assert.ok(await until(p, `(() => { const l = document.querySelector('.ovs-list'); l.scrollTop = l.scrollHeight; const m = document.querySelector('.ovfd-more'); if (m) m.scrollIntoView({ block: 'end' });
-            return document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length >= 24; })()`, 12000), 'the next page loads as the end comes near');
+            return document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length >= 24; })()`, 30000), 'the next page loads as the end comes near');   // 30 s: macOS CI missed 12 s on 11-16 (4.287.0)
         assert.ok(await until(p, `!!document.querySelector('.ovfd-caught')`), 'the end says so');
         await p.evaluate(`[...document.querySelectorAll('.ovfd-chip')].find((b) => b.textContent === 'Clips').click(), true`);
         assert.ok(await until(p, `(window.__feedCalls || []).some((u) => u.includes('kind=clip'))`), 'the chip asks for its kind');

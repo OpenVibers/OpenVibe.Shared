@@ -610,6 +610,26 @@
         const label = title ? ` role="img" aria-label="${esc(title)}"><title>${esc(title)}</title>` : ' aria-hidden="true">';
         return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${Number(size) || 24}" height="${Number(size) || 24}" fill="${style === 'solid' && solidPath ? 'currentColor' : 'none'}" stroke="currentColor"${extra} stroke-linecap="round" stroke-linejoin="round"${label}${layered}</svg>`;
     }
+    // 4.287.0 (the owner, 11-16: "there was use cases where you had like item icons and stuff as emojis or buttons …
+    // the chat one, emoji's fine"): an emoji or symbol a page used as an icon, and the glyph that stands for it. Emoji
+    // people write stay emoji; this table is for buttons, labels and menus.
+    const EMOJI = Object.freeze({
+        '👤': 'user', '👥': 'group', '💬': 'chat', '🗨️': 'chat', '➕': 'plus', '＋': 'plus', '+': 'plus', '⚠️': 'alert', '⚠': 'alert',
+        '🔇': 'mute', '🔊': 'volume', '🚫': 'slash', '⛔': 'slash', '⚙️': 'gear', '⚙': 'gear', '🔄': 'swap', '🔁': 'retry',
+        '🔔': 'bell', '⭐': 'star', '🌟': 'star', '★': 'star', '🔒': 'lock', '🔑': 'key', '📞': 'phone', '🎤': 'mic', '🎙️': 'mic',
+        '🎵': 'music', '♪': 'music', '🔥': 'fire', '✨': 'spark', '🚀': 'rocket', '🤖': 'robot', '🏆': 'trophy', '👑': 'crown',
+        '⚡': 'zap', '❤️': 'heart', '♥': 'heart', '👍': 'thumbs-up', '👀': 'eye', '🧠': 'brain', '📋': 'clipboard', '📌': 'pin',
+        '🛡️': 'shield', '🗺️': 'map', '🎁': 'gift', '💡': 'idea', '🔍': 'search', '🔎': 'search', '🏠': 'home', '📷': 'camera',
+        '🎮': 'game', '📺': 'tv', '🎬': 'clapper', '📁': 'folder', '📄': 'file', '✏️': 'pencil', '🗑️': 'trash', '✅': 'check-circle',
+        '❌': 'x-circle', '✖': 'close', '✕': 'close', '🔴': 'live', '📢': 'megaphone', '🙋': 'hand', '🤝': 'handshake', '💰': 'coin',
+        '🪙': 'coin', '💎': 'gem', '🎲': 'dice', '🌐': 'globe', '📅': 'calendar', '⏰': 'clock', '⌛': 'hourglass', '🧩': 'puzzle',
+    });
+    /** The glyph for an emoji or symbol used as an icon, or null (an emoji person-written stays as it is). */
+    const fromEmoji = (ch) => {
+        const k = String(ch || '').trim();
+        const n = Object.prototype.hasOwnProperty.call(EMOJI, k) ? EMOJI[k] : (Object.prototype.hasOwnProperty.call(EMOJI, k.replace(/\uFE0F/g, '')) ? EMOJI[k.replace(/\uFE0F/g, '')] : null);
+        return n && path(n) ? n : null;
+    };
     const fromFa = (fa) => { const n = String(fa || '').replace(/^fa-/, ''); return Object.prototype.hasOwnProperty.call(FA, n) && path(FA[n]) ? FA[n] : null; };
 
     const solid = (name) => (Object.prototype.hasOwnProperty.call(SOLID, name) ? SOLID[name] : '');
@@ -686,5 +706,5 @@
         return g && path(g) ? g : null;
     };
 
-    return { NAMES, META, FA, SOLID, DRAWN: Object.freeze(Object.keys(DRAWN)), path, solid, inner, svg, fromFa, markup, fromFaClasses, FA_HOW, APP_GLYPH, forApp };
+    return { NAMES, META, FA, SOLID, EMOJI, fromEmoji, DRAWN: Object.freeze(Object.keys(DRAWN)), path, solid, inner, svg, fromFa, markup, fromFaClasses, FA_HOW, APP_GLYPH, forApp };
 });

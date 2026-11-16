@@ -70,11 +70,13 @@ const LOOK = `(() => Object.fromEntries(['prose', 'comp', 'navl', 'site', 'cta',
         // Focus sweeps the line in and rings it; a press washes it.
         await p.evaluate("document.getElementById('prose').focus(), true");
         await p.evaluate("(() => { const a = document.getElementById('prose'); a.blur(); document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' })); a.focus({ focusVisible: true }); })(), true");
-        await wait(600);
+        // The sweep eases in over .42 s, but a slow runner can still be mid-sweep after 600 ms (macOS CI, 11-16: 85%):
+        // wait for it to settle, up to 4 s, instead of a fixed pause.
+        const sweptOf = (look) => parseFloat(String(look.prose.size).split(' ')[0]);
         s = await p.evaluate(LOOK);
+        for (let i = 0; i < 80 && sweptOf(s) < 99; i++) { await wait(50); s = await p.evaluate(LOOK); }
         const visible = await p.evaluate("document.getElementById('prose').matches(':focus-visible')");
-        // The sweep eases in over .42 s: on a slow runner it may still be a hair short of 100% here (macOS CI: 99.99%).
-        const swept = parseFloat(String(s.prose.size).split(' ')[0]);
+        const swept = sweptOf(s);
         if (visible) assert.ok(swept >= 99 && / 100% 1px, 100% 0%$/.test(s.prose.size) && s.prose.outline === 'solid', `focus sweeps the line in and rings it (${JSON.stringify(s.prose)})`);
         // Motion Off: no sweep motion.
         await p.goto(`${base}/off`, { maxMs: 6000 });

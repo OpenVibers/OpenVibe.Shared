@@ -1,5 +1,49 @@
 # Changelog
 
+## 4.287.0 — 2026-11-16
+
+- **Your Actor's pictures in the menu's card** (the owner, 11-16: "an avatar generator for agents … on the image
+  models configured in the admin's guided setup and usable through the exchange"):
+  - The card lists your pictures; a tap wears one, and the card's face and the strip's face show it.
+  - A few words and a style draw three more. Actor asks OpenVibe.AI as you, on your allowance, through the Frame
+    (`/actor/pictures`, `/actor/pictures/generate`, `/actor/face`; Network #1042, Actor #554). Without the relay the
+    section stays away.
+  - A rename keeps the picture. Pressing a shape or a colour and saving puts the drawn face on instead.
+  - **New agent, in the menu** ("add new actors in the UI"): the strip's New opens a sheet asking what it should do,
+    with a name taken from those words that you can change. Create makes it (`/actor/agents`, Network #1043).
+    Without the relay, New still goes to openvibe.actor/new.
+  - Test: `run-actor-pictures-chrome.test.js`.
+- **The top box talks** (the owner, 11-16: "from the top box, start a conversation with Vibe, Actor or any agent"):
+  - A question in the menu's box gets an **Ask** group: your Actor by its name, Codes, and up to two agents you made,
+    with their faces. Each starts that conversation in the menu.
+  - The group leads when the words are a question or a request ("what is live tonight?", "plan my week for the
+    stream"). Words that name a thing keep the results first, and Ask comes near the end.
+  - Enter on a question or a request asks your Actor in the menu; it no longer searches. A picked row still does what
+    it says, and signed out the box still offers Vibe on openvibe.chat.
+  - The empty box says "Search or ask Actor" (your Actor's name), and on a phone only a short name.
+  - `OpenVibeSession.mount(…).start(text, files, { agent })` takes who answers.
+  - Test: `menu-box-asks-chrome.test.js`.
+- **A site's search suggests from where it is** (the owner, 11-16: "more curated based on the content on the page …
+  smart based on where it is and what it's being used for"):
+  - The empty box mixes three sources:
+    - **Yours:** your recent searches on this site, kept on this device, recorded when you search there.
+    - **On this page:** the page's own titles: headings and card titles in its main content, never its nav, header
+      or a hidden part; `data-ov-title` wins.
+    - **Trending:** the site's trending.
+  - The chips label each group. The line in the box never names where a word came from.
+  - A box can say what it is for: `data-ov-trending="people|streams|tools|docs"` picks the people on the page, its
+    streams, its tools, or its headings.
+  - Test: `trending-content-chrome.test.js`. `trending-box` now expects the search just made to lead.
+- **A card's hidden parts stay hidden:** the sheet buttons' `display` outranked `hidden`, so Save showed with nothing
+  to save.
+- **The user card's buttons draw glyphs** (the owner, 11-16: emoji are fine in chat; item and button icons become art).
+  - `glyphs.EMOJI` and `glyphs.fromEmoji()` map the common emoji to their glyphs.
+  - A site's action registered with an emoji icon (Chat's 💬 Message, ＋ Add friend …) is drawn as its glyph.
+  - Test: `user-card-glyphs.test.js`.
+- **`openvibe-shared/pins`:** one reader of a library pin in both forms, codeload and the forge
+  (`git.openvibe.codes/…/archive/vX.Y.Z.tar.gz`). It has `parsePin`, `pinsOf`, `pinOf`, `pinUrl` and `PIN`.
+  Pin parsers had broken three times on the forge form. Test: `pins.test.js`.
+
 ## 4.286.0 — 2026-11-16
 
 - **Every product has its glyph** (the owner, openvibe.space's buttons: "the icons still suck, or are way too tiny, or

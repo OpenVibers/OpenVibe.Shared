@@ -79,13 +79,14 @@ const GHOST = `(() => { const g = document.querySelector('#q + .ovt-ghost'); con
         await new Promise((ok) => setTimeout(ok, 100));
         let chips = await p.evaluate("(() => { const el = document.querySelector('.ovt-chips'); if (!el) return null; const r = el.getBoundingClientRect(); const q = document.getElementById('q').getBoundingClientRect(); return { head: el.querySelector('.ovt-chips-head').textContent, label: el.getAttribute('aria-label'), chips: [...el.querySelectorAll('.ovt-chip')].map((c) => c.textContent), below: r.top >= q.bottom, inside: r.left >= 0 && r.right <= innerWidth, h: Math.round(el.querySelector('.ovt-chip').getBoundingClientRect().height) }; })()");
         assert.ok(chips, 'focus opens the chips');
-        assert.deepStrictEqual([chips.head, chips.label, chips.chips, chips.below, chips.inside], ['Trending', 'Trending searches', ['synthesizers', 'go live from a browser', 'drum machines'], true, true], JSON.stringify(chips));
+        // 4.287.0: the search just made here is remembered (on this device) and leads under Yours; Trending follows without it.
+        assert.deepStrictEqual([chips.head, chips.label, chips.chips, chips.below, chips.inside], ['Yours', 'Suggestions', ['go live from a browser', 'synthesizers', 'drum machines'], true, true], JSON.stringify(chips));
         assert.ok(chips.h >= 40, `a chip is a target (${chips.h}px)`);
         // Arrow Down into them, Arrow Up back to the box, Escape closes.
         await p.evaluate("(() => { document.getElementById('q').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true })); return true; })()");
-        assert.strictEqual(await p.evaluate('document.activeElement.textContent'), 'synthesizers', 'Arrow Down: the first chip');
+        assert.strictEqual(await p.evaluate('document.activeElement.textContent'), 'go live from a browser', 'Arrow Down: the first chip');
         await p.evaluate("(() => { document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })); return true; })()");
-        assert.strictEqual(await p.evaluate('document.activeElement.textContent'), 'go live from a browser', 'Arrow Right: the next');
+        assert.strictEqual(await p.evaluate('document.activeElement.textContent'), 'synthesizers', 'Arrow Right: the next');
         await p.evaluate("(() => { document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); return true; })()");
         assert.deepStrictEqual(await p.evaluate("[!!document.querySelector('.ovt-chips'), document.activeElement.id]"), [false, 'q'], 'Escape: closed, back in the box');
         // Typing closes them; clearing opens them again.
@@ -122,7 +123,7 @@ const GHOST = `(() => { const g = document.querySelector('#q + .ovt-ghost'); con
         await still.goto(`${base}/off`, { maxMs: 5000 });
         await new Promise((ok) => setTimeout(ok, 4000));
         s = await still.evaluate(GHOST);
-        assert.deepStrictEqual([s.shown, s.text], [true, 'synthesizers'], 'motion Off: the first trending search, never moving');
+        assert.deepStrictEqual([s.shown, s.text], [true, 'drum machines'], 'motion Off: the first suggestion (your last search here: the chip above), never moving');
         await still.close();
 
         // Nothing trending: the box keeps its own placeholder.

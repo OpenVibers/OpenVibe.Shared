@@ -1405,10 +1405,12 @@
             const a = ((options || fallbackOptions).agents || []).find((x) => x.id.toLowerCase() === m[1].toLowerCase() || String(x.name).toLowerCase() === m[1].toLowerCase());
             return a ? { text: m[2], agent: a.id } : { text, agent: null };
         }
-        async function start(raw, files) {
+        async function start(raw, files, choice) {
             const { text, agent } = mention(raw);
             const how = {};
-            const who = agent || pick.agent;
+            // 4.287.0: the menu's box may name who answers (Ask Actor, Ask Codes, Ask one of your agents).
+            const named = choice && typeof choice.agent === 'string' && choice.agent.trim() ? choice.agent.trim().slice(0, 160) : null;
+            const who = named || agent || pick.agent;
             if (who && who !== 'auto') how.agent = who;
             if (pick.model) how.model = { id: pick.model.id, source: pick.model.source || 'openvibe', name: pick.model.name };
             const opts = options || fallbackOptions;
@@ -1640,7 +1642,7 @@
         need(o, 'ov-picker.js', 'OpenVibePicker');
         return {
             open: (ref) => { state.stack = []; return open(ref); }, blank, prefill, refresh: () => { loadRuns(); if (o.actor) { actorAt = 0; loadActor().then(paintActor); } },
-            start: (text) => start(String(text || '')), list: () => setDrawer(true),
+            start: (text, files, choice) => start(String(text || ''), Array.isArray(files) ? files : undefined, choice), list: () => setDrawer(true),
             /** 4.284.0: the page's own box searches the sessions (the menu's box on Vibe). */
             search(q) { const v = String(q || '').slice(0, 120); if (findIn.value !== v) findIn.value = v; clearTimeout(findT); findT = setTimeout(() => { state.q = v.trim(); loadRuns(); }, 250); if (!wide && v) setDrawer(true); },
             drawer: (v) => setDrawer(v === undefined ? true : !!v),

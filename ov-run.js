@@ -362,7 +362,7 @@
         function agentFace(size, st) {
             const f = el('span', `ovr-face is-${size} ovr-me is-${st || agentState()}`);
             f.style.setProperty('--ovr-h', String(hueOf(agentName())));
-            const pic = agent && agent.avatar && httpsUrl(agent.avatar.url);
+            const pic = agent && (httpsUrl(agent.avatar_url) || (agent.avatar && httpsUrl(agent.avatar.url)));
             const drawn = agent && agent.avatar && agent.avatar.blob && Number.isInteger(agent.avatar.blob.hue) && SHAPES.includes(agent.avatar.blob.shape) ? agent.avatar.blob : null;
             if (pic) { const i = el('img'); i.src = pic; i.alt = ''; f.append(i); }
             else if (drawn) { f.style.setProperty('--ovr-h', String(drawn.hue)); blob(f, 'vibe:' + agentName()); f.dataset.shape = drawn.shape; }
@@ -534,7 +534,9 @@
                 if (seen.size >= 8) break;
             }
             const plus = el('a', 'ovr-person is-new'); plus.href = 'https://openvibe.actor/new'; plus.target = '_blank'; plus.rel = 'noopener';
-            plus.setAttribute('role', 'listitem'); plus.setAttribute('aria-label', 'Make a new agent on OpenVibe.Actor');
+            plus.setAttribute('role', 'listitem'); plus.setAttribute('aria-label', 'Make a new agent');
+            // 4.287.0: made here, in a sheet (the link stays for a page without the Frame's relay).
+            plus.addEventListener('click', (e) => { if (!agent || !agent.id) return; e.preventDefault(); newAgent(); });
             const pf = el('span', 'ovr-face is-l ovr-face-new'); pf.append(svg('plus')); plus.append(pf, el('span', 'ovr-person-n', 'New'));
             strip.append(plus);
         }
@@ -552,9 +554,15 @@
             const drawn = agent && agent.avatar && agent.avatar.blob && Number.isInteger(agent.avatar.blob.hue) ? agent.avatar.blob : null;
             const pick = { name: agentName(), hue: drawn ? drawn.hue : hueOf(agentName()), shape: drawn && SHAPES.includes(drawn.shape) ? drawn.shape : SHAPES[Math.abs(hueOf('vibe:' + agentName()) * 7) % SHAPES.length] };
             const faceSlot = el('div', 'ovr-sheet-face');
+            // A picture it wears shows until a shape or a colour is pressed (then Save puts the drawn face on instead).
+            let touched = false;
+            const wornUrl = () => (agent && (httpsUrl(agent.avatar_url) || (agent.avatar && httpsUrl(agent.avatar.url)))) || null;
             const drawFace = () => {
                 faceSlot.textContent = '';
-                const f = el('span', `ovr-face is-xl ovr-me is-${st}`); f.style.setProperty('--ovr-h', String(pick.hue)); blob(f, 'vibe:' + pick.name); f.dataset.shape = pick.shape;
+                const f = el('span', `ovr-face is-xl ovr-me is-${st}`); f.style.setProperty('--ovr-h', String(pick.hue));
+                const pic = !touched && wornUrl();
+                if (pic) { const i = el('img'); i.src = pic; i.alt = ''; f.append(i); }
+                else { blob(f, 'vibe:' + pick.name); f.dataset.shape = pick.shape; }
                 faceSlot.append(f);
             };
             drawFace();
@@ -571,25 +579,28 @@
             SHAPES.forEach((sh) => {
                 const b = el('button', 'ovr-pick-shape'); b.type = 'button'; b.setAttribute('role', 'radio'); b.dataset.shape = sh; b.setAttribute('aria-label', sh);
                 const f = el('span', 'ovr-face is-s'); blob(f, sh); f.dataset.shape = sh; b.append(f);
-                b.addEventListener('click', () => { pick.shape = sh; drawFace(); paintPick(); dirty(); });
+                b.addEventListener('click', () => { pick.shape = sh; touched = true; drawFace(); paintPick(); dirty(); });
                 shapes.append(b);
             });
             [215, 258, 285, 320, 345, 12, 32, 48, 145, 175].forEach((hue) => {
                 const b = el('button', 'ovr-pick-hue'); b.type = 'button'; b.setAttribute('role', 'radio'); b.dataset.hue = String(hue); b.setAttribute('aria-label', `Colour ${hue}`);
                 b.style.setProperty('--ovr-h', String(hue));
-                b.addEventListener('click', () => { pick.hue = hue; drawFace(); paintPick(); dirty(); });
+                b.addEventListener('click', () => { pick.hue = hue; touched = true; drawFace(); paintPick(); dirty(); });
                 hues.append(b);
             });
             paintPick();
             const note = el('p', 'ovr-sheet-note'); note.setAttribute('role', 'status');
             const save = el('button', 'ovr-sheet-btn is-save'); save.type = 'button'; save.append(svg('check'), el('span', '', 'Save')); save.hidden = true;
-            function dirty() { save.hidden = !(nameIn.value.trim() && (nameIn.value.trim() !== agentName() || !drawn || drawn.hue !== pick.hue || drawn.shape !== pick.shape)); }
+            function dirty() {
+                const faceChanged = wornUrl() ? touched : (!drawn || drawn.hue !== pick.hue || drawn.shape !== pick.shape);
+                save.hidden = !(nameIn.value.trim() && (nameIn.value.trim() !== agentName() || faceChanged));
+            }
             nameIn.addEventListener('input', () => { pick.name = nameIn.value.trim() || agentName(); dirty(); });
             nameIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); if (!save.hidden) save.click(); } });
             save.addEventListener('click', async () => {
                 save.disabled = true; note.textContent = 'Saving…';
                 try {
-                    const r = await fetch(`${base}/actor`, { method: 'PATCH', credentials: 'omit', headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers() }, body: JSON.stringify({ name: nameIn.value.trim().slice(0, 80), avatar: { blob: { hue: pick.hue, shape: pick.shape } } }) });
+                    const r = await fetch(`${base}/actor`, { method: 'PATCH', credentials: 'omit', headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers() }, body: JSON.stringify({ name: nameIn.value.trim().slice(0, 80), ...(touched || !wornUrl() ? { avatar: { blob: { hue: pick.hue, shape: pick.shape } } } : {}) }) });
                     if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.detail || j.error || 'That did not save.'); }
                     agentAt = 0; await loadAgent();
                     sheet.remove();
@@ -612,10 +623,139 @@
             const links = el('div', 'ovr-sheet-links');
             const link = (href, words, ic) => { const a = el('a', 'ovr-sheet-link'); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.append(svg(ic), el('span', '', words), svg('open')); return a; };
             links.append(link('https://openvibe.actor/you', 'Rules, money and computer', 'gear'), link('https://openvibe.actor/', 'What Actor can do', 'spark'));
-            const face = el('div', 'ovr-sheet-sec'); face.append(el('b', 'ovr-sheet-h', 'Face'), shapes, hues);
-            sheet.append(close, top, face, acts, note, links);
+            const face = el('div', 'ovr-sheet-sec'); face.append(el('b', 'ovr-sheet-h', wornUrl() ? 'Or a drawn face' : 'Face'), shapes, hues);
+            const pics = pictureSection(note, () => { drawFace(); dirty(); });
+            sheet.append(close, top, ...(pics ? [pics] : []), face, acts, note, links);
             box.append(sheet);
             nameIn.addEventListener('focus', () => nameIn.select(), { once: true });
+        }
+        /** A name from what an agent should do: its first few words, capitalised ("find cheap flights …" → "Find cheap flights"). */
+        function nameFrom(words) {
+            const t = String(words || '').replace(/[^\p{L}\p{N}\s'-]+/gu, ' ').replace(/\s+/g, ' ').trim().split(' ')
+                .filter((w) => !/^(a|an|the|me|my|for|to|and|of|please|that|which|who|i|you)$/i.test(w)).slice(0, 3).join(' ');
+            return t ? (t.charAt(0).toUpperCase() + t.slice(1)).slice(0, 40) : '';
+        }
+        /** A new agent (4.287.0; the owner, 11-16: "add new actors in the UI"): what it does, a name from those words. */
+        function newAgent() {
+            const old = box.querySelector('.ovr-sheet'); if (old) old.remove();
+            const sheet = el('div', 'ovr-sheet ovr-new'); sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', 'A new agent');
+            const close = el('button', 'ovr-ib ovr-sheet-x'); close.type = 'button'; close.setAttribute('aria-label', 'Close'); close.append(svg('x'));
+            close.addEventListener('click', () => sheet.remove());
+            const face = el('div', 'ovr-sheet-face'); const f = el('span', 'ovr-face is-xl ovr-face-new'); f.append(svg('plus')); face.append(f);
+            const form = el('form', 'ovr-sheet-sec ovr-new-form');
+            const what = el('textarea', 'ovr-draw-in ovr-new-what'); what.rows = 3; what.maxLength = 2000;
+            what.placeholder = 'Find cheap flights to Lisbon every Friday and tell me the best three'; what.setAttribute('aria-label', 'What should it do?');
+            const name = el('input', 'ovr-draw-in ovr-new-name'); name.type = 'text'; name.maxLength = 80; name.placeholder = 'Its name'; name.setAttribute('aria-label', 'Its name');
+            let named = false;
+            what.addEventListener('input', () => { if (!named) name.value = nameFrom(what.value); });
+            name.addEventListener('input', () => { named = !!name.value.trim(); });
+            const go = el('button', 'ovr-sheet-btn ovr-draw-go'); go.type = 'submit'; go.append(svg('plus'), el('span', '', 'Create'));
+            const more = el('a', 'ovr-sheet-link'); more.href = 'https://openvibe.actor/new'; more.target = '_blank'; more.rel = 'noopener';
+            more.append(svg('gear'), el('span', '', 'More choices on OpenVibe.Actor'), svg('open'));
+            form.append(el('b', 'ovr-sheet-h', 'What should it do?'), what, el('b', 'ovr-sheet-h', 'Its name'), name, go);
+            const note = el('p', 'ovr-sheet-note'); note.setAttribute('role', 'status');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const instructions = what.value.trim(), nm = (name.value.trim() || nameFrom(instructions)).slice(0, 80);
+                if (!instructions) { note.textContent = 'Say what it should do.'; what.focus(); return; }
+                if (!nm) { note.textContent = 'Give it a name.'; name.focus(); return; }
+                go.disabled = true; note.textContent = 'Making it…';
+                try {
+                    const r = await fetch(`${base}/actor/agents`, { method: 'POST', credentials: 'omit', headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers() }, body: JSON.stringify({ name: nm, instructions }) });
+                    const j = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(j.detail || j.error || (r.status === 404 ? 'Make it on OpenVibe.Actor for now.' : 'It was not made.'));
+                    sheet.remove();
+                    const strip = box.querySelector('.ovr-people'); if (strip) paintPeople(strip);
+                    flashMade(nm);
+                } catch (err) { note.textContent = (err && err.message) || 'It was not made.'; go.disabled = false; }
+            });
+            sheet.append(close, face, form, note, more);
+            box.append(sheet);
+            what.focus();
+        }
+        /** A short word that the agent was made (in the list's note, gone after a moment). */
+        function flashMade(nm) {
+            const foot = box.querySelector('.ovr-list-note');
+            if (!foot) return;
+            const p0 = el('p', 'ovr-note', `${nm} is ready: tell it what to do, or it waits for you.`);
+            foot.prepend(p0);
+            setTimeout(() => p0.remove(), 6000);
+        }
+        /**
+         * Your Actor's pictures (4.287.0; the owner, 11-16: "an avatar generator for agents … on the image models
+         * configured in the admin's guided setup"): the ones you have, to wear with a tap, and three more drawn from a
+         * few words in a style. Actor asks OpenVibe.AI as you, on your allowance; the Frame relays it (GET /actor/pictures,
+         * POST /actor/pictures/generate, POST /actor/face). Without the relay the section stays away.
+         */
+        function pictureSection(note, repaint) {
+            if (!agent || !agent.id) return null;
+            const sec = el('div', 'ovr-sheet-sec ovr-pics'); sec.hidden = true;
+            const row = el('div', 'ovr-pic-row'); row.setAttribute('role', 'radiogroup'); row.setAttribute('aria-label', 'Your pictures');
+            const form = el('form', 'ovr-draw'); form.setAttribute('aria-label', 'Draw new pictures');
+            const words = el('input', 'ovr-draw-in'); words.type = 'text'; words.maxLength = 200; words.placeholder = 'A calm fox in a hoodie'; words.setAttribute('aria-label', 'Describe the picture'); words.enterKeyHint = 'go';
+            const styles = el('div', 'ovr-draw-styles'); styles.setAttribute('role', 'radiogroup'); styles.setAttribute('aria-label', 'Style');
+            const go = el('button', 'ovr-sheet-btn ovr-draw-go'); go.type = 'submit'; go.append(svg('spark'), el('span', '', 'Draw three'));
+            form.append(words, styles, go);
+            sec.append(el('b', 'ovr-sheet-h', 'Picture'), row, form);
+            let list = [], style = 'openvibe';
+            const json = () => ({ Accept: 'application/json', 'Content-Type': 'application/json', ...headers() });
+            const worn = () => (agent && agent.avatar && typeof agent.avatar.face === 'string' ? agent.avatar.face : null);
+            const paint = () => {
+                row.textContent = '';
+                list.slice(0, 8).forEach((p) => {
+                    const on = p.id === worn();
+                    const b = el('button', 'ovr-pic'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(on));
+                    b.setAttribute('aria-label', on ? 'Wearing this picture' : 'Wear this picture');
+                    const i = el('img'); i.src = p.url; i.alt = ''; i.loading = 'lazy'; i.decoding = 'async'; b.append(i);
+                    b.addEventListener('click', () => wear(p.id));
+                    row.append(b);
+                });
+                row.hidden = !row.childElementCount;
+            };
+            async function wear(id) {
+                if (id === worn()) return;
+                note.textContent = 'Putting it on…';
+                try {
+                    const r = await fetch(`${base}/actor/face`, { method: 'POST', credentials: 'omit', headers: json(), body: JSON.stringify({ face: id }) });
+                    if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.detail || j.error || 'That picture did not go on.'); }
+                    agentAt = 0; await loadAgent();
+                    note.textContent = ''; paint(); repaint();
+                    const strip = box.querySelector('.ovr-people'); if (strip) paintPeople(strip);
+                } catch (err) { note.textContent = (err && err.message) || 'That picture did not go on.'; }
+            }
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (go.disabled) return;
+                go.disabled = true; note.textContent = 'Drawing three pictures…';
+                const mark = root.OVMark && typeof root.OVMark.busy === 'function' ? (() => { try { return root.OVMark.busy(go); } catch { return null; } })() : null;
+                try {
+                    const r = await fetch(`${base}/actor/pictures/generate`, { method: 'POST', credentials: 'omit', headers: json(),
+                        body: JSON.stringify({ name: agentName(), description: words.value.trim().slice(0, 200) || undefined, style, n: 3 }) });
+                    const j = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(j.detail || j.error || 'The pictures did not come. Try again in a moment.');
+                    list = (j.faces || []).concat(list.filter((p) => !(j.faces || []).some((n) => n.id === p.id)));
+                    paint();
+                    note.textContent = `Three new pictures${Number(j.cost_usd) > 0 ? ` · ${money(j.cost_usd)}` : ''}: tap one to wear it.`;
+                    if (mark && mark.done) mark.done();
+                } catch (err) {
+                    note.textContent = (err && err.message) || 'The pictures did not come.';
+                    if (mark && mark.fail) mark.fail();
+                } finally { go.disabled = false; }
+            });
+            fetch(`${base}/actor/pictures`, { credentials: 'omit', headers: { Accept: 'application/json', ...headers() } })
+                .then((r) => (r.ok ? r.json() : null)).then((j) => {
+                    if (!j || !sec.isConnected) return;
+                    list = Array.isArray(j.faces) ? j.faces.filter((p) => p && httpsUrl(p.url)) : [];
+                    (Array.isArray(j.styles) && j.styles.length ? j.styles : [{ id: 'openvibe', name: 'OpenVibe' }]).slice(0, 6).forEach((st0, k) => {
+                        const c = el('button', 'ovr-draw-style', String(st0.name || st0.id)); c.type = 'button'; c.setAttribute('role', 'radio');
+                        if (k === 0) style = st0.id;
+                        c.setAttribute('aria-checked', String(k === 0));
+                        c.addEventListener('click', () => { style = st0.id; styles.querySelectorAll('[role="radio"]').forEach((x) => x.setAttribute('aria-checked', String(x === c))); });
+                        styles.append(c);
+                    });
+                    paint(); sec.hidden = false;
+                }).catch(() => { /* no relay yet: the drawn face stays the way */ });
+            return sec;
         }
         function homeHead(where) {
             const wrap = el('div', 'ovr-home');
@@ -1214,6 +1354,26 @@ html[data-ov-motion="off"] .ovr-coder-cursor, html[data-ov-motion="off"] .ovr-co
 .ovr-pick-shape:focus-visible, .ovr-pick-hue:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
 .ovr-sheet-btn.is-save { background: var(--accent-strong, var(--accent, #3b82f6)); color: var(--on-accent-strong, #fff); }
 .ovr-sheet-note { margin: 0; min-height: 1em; font-size: 13px; color: var(--text-secondary, #96a7c2); }
+.ovr-pic-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.ovr-pic { all: unset; box-sizing: border-box; cursor: pointer; width: 56px; height: 56px; border-radius: 16px; overflow: hidden; -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 12%, transparent);
+  transition: transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s ease; }
+.ovr-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ovr-pic:active { transform: scale(calc(1 - .06 * var(--ov-move, 1))); }
+.ovr-pic[aria-checked="true"] { box-shadow: 0 0 0 2px var(--bg-card, #131c2e), 0 0 0 4px var(--accent, #3b82f6); }
+.ovr-pic:focus-visible, .ovr-draw-style:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovr-draw { display: grid; gap: 8px; width: 100%; }
+.ovr-new-form { justify-items: stretch; }
+.ovr-new-what { resize: vertical; min-height: 88px; line-height: 1.4; }
+.ovr-draw-in { box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 12px; font: inherit; font-size: 15px; color: var(--text-primary, #e6edf7);
+  background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); border: 1px solid color-mix(in srgb, var(--text-primary, #e6edf7) 12%, transparent); }
+.ovr-draw-in:focus { outline: none; border-color: var(--accent, #3b82f6); }
+.ovr-draw-styles { display: flex; flex-wrap: wrap; gap: 6px; }
+.ovr-draw-style { all: unset; box-sizing: border-box; cursor: pointer; min-height: 32px; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 650;
+  color: var(--text-secondary, #96a7c2); background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
+.ovr-draw-style[aria-checked="true"] { color: var(--accent, #3b82f6); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
+
+html[data-ov-motion="off"] .ovr-pic { transition: none; }
 .ovr-sheet-note:empty { display: none; }
 .ovr-sheet-links { display: grid; gap: 4px; width: min(100%, 320px); }
 .ovr-sheet-link { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: var(--text-secondary, #a8b3c4); text-decoration: none; font-size: 14px; font-weight: 650; }
@@ -1283,6 +1443,12 @@ html[data-ov-motion=off] .ovr-welcome-n, html[data-ov-motion=off] .ovr-welcome-s
 .ovr-sheet-btn:hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 13%, transparent); }
 .ovr-sheet-btn:active { transform: scale(.98); }
 .ovr-sheet-btn svg { width: 18px; height: 18px; }
+/* 4.287.0: a sheet's hidden parts stay hidden (the display above outranked the hidden attribute: Save showed with
+   nothing to save, and a section still loading showed empty). */
+.ovr-sheet-btn[hidden], .ovr-sheet-sec[hidden], .ovr-pic-row[hidden] { display: none; }
+.ovr-sheet-btn.ovr-draw-go { justify-self: stretch; background: var(--accent-strong, var(--accent, #3b82f6)); color: var(--on-accent-strong, #fff); }
+.ovr-sheet-btn.ovr-draw-go:hover { background: color-mix(in srgb, var(--accent-strong, var(--accent, #3b82f6)) 86%, #fff); }
+.ovr-sheet-btn.ovr-draw-go:disabled { opacity: .7; cursor: progress; }
 .ovr.is-list { position: relative; }
 .ovr-face.is-working { animation: ovr-breathe 2.4s ease-in-out infinite; }
 .ovr-doing { position: absolute; right: -4px; bottom: -4px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: #fff; background: linear-gradient(140deg, var(--accent, #3b82f6), color-mix(in srgb, var(--accent, #3b82f6) 45%, #a855f7)); box-shadow: 0 0 0 2px var(--bg-secondary, #121826); }

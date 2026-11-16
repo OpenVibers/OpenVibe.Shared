@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.286.0",
+  "version": "4.287.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -12,6 +12,7 @@
     "./offer-card": "./offer-card.js",
     "./ov-arrange": "./ov-arrange.js",
     "./ov-arrange-core": "./ov-arrange-core.js",
+    "./pins": "./scripts/pins.js",
     "./quest": "./quest.js",
     "./quest-guide": "./guide.js",
     "./account-switcher": "./account-switcher.js",
