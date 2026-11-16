@@ -34,6 +34,19 @@ notifications … the edit mode … all three" and "add [Edit] to the history".
 - Calm shortens it, Off stops it;
 - it is on Chat's Messages, Friends, Global and Servers.
 
+**Chat's event cards, the same in every chat.** `ov-chat-cards.js` (`OVChatCards.of`, `render`, `fold`, `register`).
+The owner: Global in the menu "is missing all the styles … compared to how it is on .live", and "custom widgets or custom
+HTML or AI vibe coded … shared".
+- Live's cards, now shared:
+  - going live: the face in a live ring, Watch;
+  - a Rundown episode: Read;
+  - a run of deploys: one card that folds them.
+- **A widget** (`metadata.widget = { html, height, title }`): a page of its own in a sandboxed frame (scripts only, no
+  same origin), sized by what it draws, labelled with who made it.
+- **A site's or an agent's own kind:** `register(kind, { match, render })`.
+- Links are only OpenVibe addresses.
+- The menu's Global draws them first.
+
 **Chat's Servers.** New server is a button in the corner of a foot pinned to the bottom, beside "Every server on
 openvibe.chat". The name field rises above it. With no server yet, the field leads.
 

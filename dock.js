@@ -91,7 +91,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'ov-tabs.js': '0e8a449da361', 'dock-vibe.js': '200eeae434e9', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
+    const DOCK_REV = { 'ov-chat-cards.js': '43cbb5c8c9d6', 'ov-tabs.js': '0e8a449da361', 'dock-vibe.js': '200eeae434e9', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -102,6 +102,8 @@
             sc.addEventListener('error', () => ok(false));
         });
     }
+    // Chat's event cards (ov-chat-cards.js), loaded with Global; a pane's own load() shadows the name inside it.
+    const loadCards = () => load('ov-chat-cards.js', () => !!root.OVChatCards);
 
     function styles() {
         if (document.getElementById('ovdk-styles')) return;
@@ -865,6 +867,10 @@
         const nearEnd = () => { const el = sc(); return !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120; };
         const toEnd = () => requestAnimationFrame(() => { const el = sc(); if (el) el.scrollTop = el.scrollHeight; });
         function rowOf(m) {
+            // An event (someone went live, a Rundown episode, a run of deploys, a widget) is a card, as on Live (4.284.0,
+            // ov-chat-cards.js; the owner: Global "is missing all the styles that exist when you're out").
+            const C = root.OVChatCards; const card = C && C.of(m);
+            if (card) return C.render(card);
             const li = h('li', 'ovdk-gl-row');
             const who = { username: m.username, display_name: m.display_name, avatar_url: m.avatar_url };
             const head = h('span', 'ovdk-gl-h'); head.append(setSubject(h('b', '', String(m.display_name || m.username || 'Someone').slice(0, 40)), who), h('time', '', when(m.timestamp)));
@@ -876,7 +882,11 @@
             const keep = nearEnd();
             const fresh = (rows || []).filter((m) => m && !m.is_deleted && m.message && Number(m.id) > lastId)
                 .sort((a, b2) => Number(a.id) - Number(b2.id) || String(a.timestamp || '').localeCompare(String(b2.timestamp || '')));
-            for (const m of fresh) { list.append(rowOf(m)); lastId = Math.max(lastId, Number(m.id) || 0); }
+            for (const m of fresh) {
+                const C = root.OVChatCards; const card = C && C.of(m);
+                if (!(card && C.fold(list.lastElementChild, card))) list.append(card ? C.render(card) : rowOf(m));
+                lastId = Math.max(lastId, Number(m.id) || 0);
+            }
             while (list.children.length > 120) list.firstChild.remove();
             quiet.hidden = list.children.length > 0;
             if (fresh.length && (scroll || keep)) toEnd();
@@ -891,10 +901,12 @@
                 poll();
             }, 5000);
         }
+        // The cards' module loads with the pane (a run of deploys folds into one card).
+        const cardsJob = loadCards();
         function load() {
             if (!wait.isConnected) box.insertBefore(wait, list);
             const failed = box.querySelector('.ovdk-gl-fail'); if (failed) failed.remove();
-            chatCall('/api/chat/global/history?limit=30').then((d) => {
+            Promise.all([chatCall('/api/chat/global/history?limit=30'), cardsJob.catch(() => false)]).then(([d]) => {
                 wait.remove();
                 addRows(d && d.messages, { scroll: true });
                 quiet.hidden = list.children.length > 0;
