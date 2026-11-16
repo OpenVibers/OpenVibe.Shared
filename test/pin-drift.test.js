@@ -63,3 +63,16 @@ console.log('pin-drift: all checks passed');
     fs.rmSync(pn, { recursive: true, force: true });
 }
 console.log('pin-drift: one copy of openvibe-shared checked');
+
+// It runs piped (`curl …/scripts/pin-drift.js | node -` in every repository's CI): no require of a file beside it, and
+// its inline reader is openvibe-shared/pins' (4.288.0 required ./pins and every CI failed, 2026-11-16).
+{
+    const fs = require('fs');
+    const path = require('path');
+    const cp = require('child_process');
+    const src = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'pin-drift.js'), 'utf8');
+    assert.doesNotMatch(src, /require\(['"]\.\.?\//, 'pin-drift.js requires nothing beside it');
+    assert.strictEqual(/const PIN_RE = (\/.*\/i);/.exec(src)[1], String(require('../scripts/pins').PIN), 'the same pin reader as openvibe-shared/pins');
+    const out = cp.execFileSync(process.execPath, ['-', path.join(__dirname, '..')], { input: src, encoding: 'utf8' });
+    assert.match(out, /pin-drift: \d+ pin\(s\)/, 'and it runs piped');
+}
