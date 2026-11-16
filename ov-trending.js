@@ -160,15 +160,11 @@
         if (w < 64 || h < 12) return false;   // a folded or tiny box keeps its own placeholder
         const was = g.hidden;
         g.hidden = false;
-        const cb = g.offsetParent;
-        let ox, oy;
-        if (!cb || (cb === document.body && getComputedStyle(cb).position === 'static')) { ox = -root.scrollX; oy = -root.scrollY; }
-        else { const c = cb.getBoundingClientRect(); ox = c.left + cb.clientLeft - cb.scrollLeft; oy = c.top + cb.clientTop - cb.scrollTop; }
-        const r = input.getBoundingClientRect();
-        // Where the box was when its line was placed: follow() places the line again when the box has moved since.
-        b.at = { x: r.left, y: r.top, w: r.width, h: r.height, pl };
-        g.style.left = `${r.left - ox + input.clientLeft + pl}px`;
-        g.style.top = `${r.top - oy + input.clientTop + pt}px`;
+        const at = spot(input, g.offsetParent, pl, pt);
+        g.style.left = `${at.x}px`;
+        g.style.top = `${at.y}px`;
+        // What it was placed for: follow() places the line again when the box has moved or changed since.
+        b.at = { x: at.x, y: at.y, w: input.clientWidth, h: input.clientHeight };
         g.style.width = `${w}px`;
         const one = input.tagName === 'TEXTAREA' ? Math.min(h, parseFloat(cs.lineHeight) || (parseFloat(cs.fontSize) || 16) * 1.4) : h;
         g.style.height = `${one}px`;
@@ -181,15 +177,40 @@
         g.style.color = cs.color;
         // 4.286.0: always from where typing starts (a centred line floated away from the box's icon: "Plan my week").
         g.style.textAlign = cs.direction === 'rtl' ? 'right' : 'left';
-        // Then measured where it really landed and moved by the difference: an ancestor that holds absolute children
-        // without being their offsetParent (a transform, contain) puts the line somewhere else than the sums say. On
-        // CI's Chrome the menu's line sat 30 px right of its words that way (the owner's "still inconsistent").
-        const got = g.getBoundingClientRect();
-        const wantX = r.left + input.clientLeft + pl, wantY = r.top + input.clientTop + pt;
-        if (Math.abs(got.left - wantX) > 0.5) g.style.left = `${parseFloat(g.style.left) + wantX - got.left}px`;
-        if (Math.abs(got.top - wantY) > 0.5) g.style.top = `${parseFloat(g.style.top) + wantY - got.top}px`;
         g.hidden = was;
         return true;
+    }
+
+    /**
+     * Where typing starts in `input`, as `left`/`top` inside `cb` (the line's containing block), from layout offsets:
+     * offsetLeft/offsetTop up the offsetParent chain, which no transform changes. 4.286.0: measured boxes are
+     * transformed, and the menu opens with a transform animation; a line placed and "corrected" from them mid-animation
+     * sat 30 px right of its words once the menu settled (CI's Chrome, the owner's phone: "still inconsistent").
+     * A box outside `cb`'s chain (a fixed box, a portal) falls back to the boxes' rectangles.
+     */
+    function spot(input, cb, pl, pt) {
+        let x = input.clientLeft + pl, y = input.clientTop + pt, n = input;
+        while (n && n !== cb) {
+            x += n.offsetLeft; y += n.offsetTop;
+            const p = n.offsetParent;
+            // An offsetParent on the way (not the line's own block, whose scroll moves the line with the box) adds its
+            // border and shifts by its scroll.
+            if (p && p !== cb) { x += p.clientLeft - p.scrollLeft; y += p.clientTop - p.scrollTop; }
+            n = p;
+        }
+        if (n === cb && cb) {
+            // offsetLeft skips the scroll of ancestors between the box and its offsetParent: count those too.
+            for (let a = input.parentElement; a && a !== cb; a = a.parentElement) {
+                if (a.scrollLeft || a.scrollTop) { x -= a.scrollLeft; y -= a.scrollTop; }
+            }
+            return { x, y };
+        }
+        const r = input.getBoundingClientRect();
+        let ox = -root.scrollX, oy = -root.scrollY;
+        if (cb && !(cb === document.body && getComputedStyle(cb).position === 'static')) {
+            const c = cb.getBoundingClientRect(); ox = c.left + cb.clientLeft - cb.scrollLeft; oy = c.top + cb.clientTop - cb.scrollTop;
+        }
+        return { x: r.left - ox + input.clientLeft + pl, y: r.top - oy + input.clientTop + pt };
     }
 
     function show(input) {
@@ -493,24 +514,19 @@
      * A box that moves without resizing or animating (a picture loading beside it, a neighbour appearing, fonts arriving)
      * takes its line along (4.286.0: on CI's Chrome and the owner's phone the menu's line sat 30 px right of its words, the
      * width of what moved after it was placed). A few times a second, while a line shows, each box is measured; one that
-     * moved has its line placed again. Nothing runs while no line shows or the page is hidden.
+     * moved has its line placed again. Nothing runs while no line shows (a hidden tab's timers are slowed anyway).
      */
     var following = 0;   // var: show() may run before this line does
     function follow() {
-        if (document.hidden) return;
         let any = false;
         boxes.forEach((b, input) => {
             if (b.ghost.hidden || !input.isConnected) return;
             any = true;
-            // Where the line is against where it belongs: its container can move under it while the box stays put (on CI
-            // the field moved 30 px right as the box inside it moved 30 px left), so the line itself is measured.
-            const r = input.getBoundingClientRect();
+            // Where the line belongs now, from layout (no transform, so a menu still opening counts as settled).
             const cs = getComputedStyle(input);
-            const wantX = r.left + input.clientLeft + (parseFloat(cs.paddingLeft) || 0);
-            const wantY = r.top + input.clientTop + (parseFloat(cs.paddingTop) || 0);
-            const g = b.ghost.getBoundingClientRect();
+            const at = spot(input, b.ghost.offsetParent, parseFloat(cs.paddingLeft) || 0, parseFloat(cs.paddingTop) || 0);
             const a = b.at;
-            if (!a || Math.abs(g.left - wantX) > 0.5 || Math.abs(g.top - wantY) > 0.5 || Math.abs(a.w - r.width) > 0.5 || Math.abs(a.h - r.height) > 0.5) show(input);
+            if (!a || Math.abs(a.x - at.x) > 0.5 || Math.abs(a.y - at.y) > 0.5 || a.w !== input.clientWidth || a.h !== input.clientHeight) show(input);
         });
         if (!any) { clearInterval(following); following = 0; }
     }

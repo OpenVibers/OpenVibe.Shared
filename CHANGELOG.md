@@ -25,9 +25,13 @@
   - Test: `trending-overlap-chrome.test.js`.
 - **The menu's open button follows You's parts** (Alerts: your alerts page, History: where you were, Apps: your
   page on OpenVibe.my), and turns from that part's sign. The ring that pulsed around it is a soft tint now.
-- **Every line of suggestions sits where typing starts, always**: a line measured while its box was still moving (a
-  menu sliding in) is measured again when the movement ends, and at every turn. That stale measurement was the
-  "Plan my week" floating right of its icon.
+- **Every line of suggestions sits where typing starts, always**:
+  - The line is placed from layout (`offsetLeft`/`offsetTop`), which no transform changes. Before, it was measured
+    from the screen while the menu was still opening with its scale animation. A measurement taken then put the line
+    up to the box's padding to the right once the menu settled: the "Plan my week" floating right of its icon (30 px
+    on a phone).
+  - A box that moves without resizing (a neighbour arriving) takes its line along. The line is also placed again
+    when animations end, and at every turn.
 - **The rocket's line drawing** is the set's size (it was smaller than its neighbours).
 - **How it runs offers Effort and Allowed to** ("make sure reasoning effort is configurable and everything else, all
   settings for all harnesses exist").

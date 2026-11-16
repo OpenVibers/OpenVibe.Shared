@@ -73,6 +73,17 @@ const STATE = `(() => { const i = document.getElementById('q'); const gs = [...d
         assert.ok(Math.abs((await p.evaluate(lineAt)) - (await p.evaluate(startOf))) <= 1, 'the line follows its box when the box moves');
         await p.evaluate("(() => { document.getElementById('pusher').remove(); const i = document.getElementById('q'); i.style.width = ''; i.style.flex = ''; document.getElementById('wrap').style.display = ''; return 1; })()");
 
+        // The box's block opens with a transform (the menu's open animation, mid-way on CI's slower Chrome and on the
+        // owner's phone): a line placed then starts where typing starts the moment the block settles. 4.286.0: it was
+        // "corrected" from transformed boxes and sat the box's padding away (120 vs 90 in the menu). Measured in the same
+        // frame the transform goes, before anything could place it again.
+        await p.evaluate("(() => { const w = document.getElementById('wrap'); w.style.position = 'relative'; w.style.transformOrigin = '0 0'; w.style.transform = 'scale(.25)'; const i = document.getElementById('q'); i.style.paddingLeft = '40px'; i.dispatchEvent(new Event('input')); return 1; })()");
+        await pause(120);
+        const settled = await p.evaluate(`(() => { document.getElementById('wrap').style.transform = ''; return [${lineAt}, ${startOf}]; })()`);
+        assert.ok(settled[0] != null && Math.abs(settled[0] - settled[1]) <= 1, `a line placed mid-transform starts where typing starts once it settles (${settled[0]} vs ${settled[1]})`);
+        await p.evaluate("(() => { const w = document.getElementById('wrap'); w.style.position = ''; w.style.transformOrigin = ''; document.getElementById('q').style.paddingLeft = ''; return 1; })()");
+        await pause(400);
+
         // A composer fitting its words to the box puts the same words back: out again before the next frame.
         const after = await p.evaluate(`new Promise((ok) => { const i = document.getElementById('q'); i.setAttribute('placeholder', 'Search the feed');
             requestAnimationFrame(() => ok(i.getAttribute('placeholder'))); })`);
