@@ -133,7 +133,7 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         // 4.260.0: the run's choice goes with the send: nothing picked is Auto, and a pick (from the Agent and Runs on
         // sheets) is the agent and the place agents.run-start@1 takes, kept for the next box.
         assert.deepEqual(await page.evaluate(`window.runs[0]`), { agent: 'auto' }, 'unpicked: Auto, no model and no place');
-        await page.evaluate(`document.querySelector('#g1 .ovc-run-c[data-what="Agent"]').click(), true`);
+        await page.evaluate(`document.querySelector('#g1 .ovc-run-c[data-what="Harness"]').click(), true`);
         for (let i = 0; i < 40 && !(await page.evaluate(`!!document.querySelector('dialog.ovc-sheet .ovc-model-b')`)); i++) await new Promise((r) => setTimeout(r, 50));
         await page.evaluate(`[...document.querySelectorAll('dialog.ovc-sheet .ovc-model-b')].find((b) => b.querySelector('.ovc-model-t b').textContent === 'Codes').click(), true`);
         await page.evaluate(`document.querySelector('#g1 .ovc-run-c[data-what="Runs on"]').click(), true`);
