@@ -880,7 +880,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             const t = document.createElement('span'); t.textContent = 'Recent searches';
             const clear = document.createElement('button'); clear.type = 'button'; clear.className = 'ovs-recent-clear'; clear.setAttribute('data-ovs-clear', ''); clear.textContent = 'Clear';
             clear.addEventListener('pointerdown', (e) => e.preventDefault());
-            clear.addEventListener('click', () => { recent.clear(); paintRecent(); input.focus(); });
+            clear.addEventListener('click', () => { recent.clear(); recentEl.hidden = true; input.focus(); });
             head.append(t, clear); recentEl.append(head);
             list.forEach((q, n) => {
                 const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-recent-row'; b.setAttribute('role', 'option'); b.style.setProperty('--i', String(n));
