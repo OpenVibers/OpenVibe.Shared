@@ -30,10 +30,11 @@
 const cp = require('child_process');
 
 const LIB_RE = /openvibe-(contracts|shared|sdk|publishing)/;
-const PIN_URL_RE = /codeload\.github\.com\/OpenVibers\/OpenVibe\.(Contracts|Shared|SDK|Publishing)\/tar\.gz\/refs\/tags\/v\d+\.\d+\.\d+/;
+// codeload, or our own forge (4.284.0: pins move to git.openvibe.codes).
+const PIN_URL_RE = /codeload\.github\.com\/OpenVibers\/OpenVibe\.(Contracts|Shared|SDK|Publishing)\/tar\.gz\/refs\/tags\/v\d+\.\d+\.\d+|git\.openvibe\.codes\/api\/v1\/repos\/openvibers\/openvibe\.(contracts|shared|sdk|publishing)\/archive\/v\d+\.\d+\.\d+\.tar\.gz/;
 const PKG_KEY_RE = /"openvibe-(contracts|shared|sdk|publishing)"\s*:\s*"/;
 const LOCK_VALUE_RE = /^\s*"?(resolved|resolution|integrity|version)"?\s*:/;
-const CODELOAD_RE = /codeload\.github\.com\/OpenVibers\/OpenVibe\./;
+const CODELOAD_RE = /codeload\.github\.com\/OpenVibers\/OpenVibe\.|git\.openvibe\.codes\/api\/v1\/repos\/openvibers\/openvibe\./;
 const VERSION_RE = /\d+\.\d+\.\d+/;
 const BUDGET_KEY_RE = /(^|[^A-Za-z])(htmlRawKB|htmlBrotliKB|jsFiles|jsRawKB|jsBrotliKB|cssFiles|cssRawKB|cssBrotliKB|externalFiles|lcpMs|inpMs|cls)\s*:/;
 

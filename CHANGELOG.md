@@ -25,6 +25,14 @@ shared with the other sites … the same composer across sites".
 - **`data-ov-trending-items='["…"]'`** on a box or its form is the page's own list, with no script. What the page is
   about rotates (Exchange: its models), never the network's trending people, and focus opens it as chips.
 
+**Our own Git for every install.** The owner: "use our own Git … faster systems … optimized and efficient".
+- `scripts/pin-bump.js` moves every pin to the forge's tarball (`git.openvibe.codes/api/v1/repos/openvibers/<lib>/archive/vX.Y.Z.tar.gz`),
+  not codeload. Measured on the same tags: 0.20 s against 0.47 s, and 0.73 s against 1.02 s, cached immutable at the edge.
+  It first waits until the forge's mirror serves the tag. `--github` keeps each pin's own host.
+- `pin-drift`, `pin-only` and `docs-status` know both forms.
+- **The install is a third of the size.** The tarball leaves out what only this repository's checks read
+  (`export-ignore`: `test/` 3.6 MB, `docs/screenshots/` 2.9 MB, `.github/`). Every site downloaded all 10 MB.
+
 **Edit on all three of You's tabs, with multi-select.** The owner: "people want to completely delete their
 notifications … the edit mode … all three" and "add [Edit] to the history".
 - **History:** pick places, then Select all and Delete (`DELETE /api/history/:id`). The rows fold away.

@@ -13,7 +13,7 @@
  * cannot prove (no budget test, a failed install, a failure without an "over budget" line, a forbidden
  * file on Live's home page) is left for the round driver, exactly as before.
  *
- *   node scripts/pin-bump.js <library> <tag> [--repos A,B] [--apply] [--ship] [--workdir DIR]
+ *   node scripts/pin-bump.js <library> <tag> [--repos A,B] [--apply] [--ship] [--workdir DIR] [--github]
  *     library   openvibe-contracts | openvibe-shared | openvibe-sdk | openvibe-publishing
  *     tag       the published release, e.g. v0.112.0 (must exist in the library's repository)
  *     --repos   only these repositories (names under OpenVibers/), default every repository of the organisation
@@ -22,6 +22,10 @@
  *               Live and Media last, never --force), one at a time. Dry-run by default: without
  *               --apply it prints the ship plan instead of running it.
  *     --workdir where the shallow clones go (default a fresh directory under the OS temp dir, removed afterwards)
+ *     --github  keep each pin's own host (default since 4.284.0: every pin moves to our own forge,
+ *               git.openvibe.codes, the owner's "use our own Git … faster", 11-16; it served the same tag in 0.2 s against
+ *               codeload's 0.47 s, cached immutable at the edge). The forge mirrors GitHub every few minutes, so a forge
+ *               round first waits (up to 15 minutes) until the forge serves the tag.
  *
  * Needs git, npm, pnpm (for pnpm repositories) and an authenticated `gh` (it lists the organisation's repositories
  * and opens the PRs). Commits are made as OpenVibers <contact@openvibe.network>. A repository that already has an
@@ -47,12 +51,13 @@ function run(cmd, args, opts = {}) {
 }
 
 function parseArgs(argv) {
-    const out = { library: argv[0], tag: argv[1], repos: null, apply: false, ship: false, workdir: null };
+    const out = { library: argv[0], tag: argv[1], repos: null, apply: false, ship: false, workdir: null, forge: true };
     for (let i = 2; i < argv.length; i++) {
         if (argv[i] === '--apply') out.apply = true;
         else if (argv[i] === '--ship') out.ship = true;
         else if (argv[i] === '--repos') out.repos = String(argv[++i] || '').split(',').map((s) => s.trim()).filter(Boolean);
         else if (argv[i] === '--workdir') out.workdir = argv[++i];
+        else if (argv[i] === '--github') out.forge = false;
         else throw new Error(`unknown argument ${argv[i]}`);
     }
     if (!LIBS[out.library]) throw new Error(`library must be one of ${Object.keys(LIBS).join(', ')}`);
@@ -68,7 +73,17 @@ const pinUrl = (library, tag) => `https://codeload.github.com/${ORG}/${LIBS[libr
 // codeload pins were seen).
 const forgeUrl = (library, tag) => `https://git.openvibe.codes/api/v1/repos/${ORG.toLowerCase()}/${LIBS[library].toLowerCase()}/archive/${tag}.tar.gz`;
 const PIN_RE = (library) => new RegExp(`(?:https://codeload\\.github\\.com/${ORG}/${LIBS[library].replace('.', '\\.')}/tar\\.gz/refs/tags/|https://git\\.openvibe\\.codes/api/v1/repos/${ORG.toLowerCase()}/${LIBS[library].toLowerCase().replace('.', '\\.')}/archive/)(v\\d+\\.\\d+\\.\\d+)(?:\\.tar\\.gz)?`, 'g');
-const movePin = (library, tag) => (m) => (m.startsWith('https://git.openvibe.codes/') ? forgeUrl(library, tag) : pinUrl(library, tag));
+const movePin = (library, tag, forge = false) => (m) => (forge || m.startsWith('https://git.openvibe.codes/') ? forgeUrl(library, tag) : pinUrl(library, tag));
+/** Wait (up to `ms`) until our forge serves `library` at `tag`: it mirrors GitHub on a poll. */
+function waitForForge(library, tag, ms = 15 * 60_000) {
+    const url = forgeUrl(library, tag);
+    const until = Date.now() + ms;
+    for (;;) {
+        try { run('curl', ['-sfIL', '--max-time', '20', '-o', '/dev/null', url]); return true; } catch { /* not mirrored yet */ }
+        if (Date.now() > until) return false;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 30_000);
+    }
+}
 
 /** Every package.json the repository tracks, with the pins of `library` it holds below `tag`. */
 function stalePins(dir, library, tag) {
@@ -379,6 +394,7 @@ function main() {
     const { library, tag } = opts;
     const tags = run('git', ['ls-remote', '--tags', `https://github.com/${ORG}/${LIBS[library]}.git`]);
     if (!tags.split('\n').some((l) => l.endsWith(`refs/tags/${tag}`))) throw new Error(`${tag} is not published in ${ORG}/${LIBS[library]}`);
+    if (opts.forge && !waitForForge(library, tag)) throw new Error(`${tag} is not on git.openvibe.codes yet (its mirror lags): run again, or pass --github`);
     const work = opts.workdir || fs.mkdtempSync(path.join(os.tmpdir(), 'pin-bump-'));
     const branch = `pin-bump/${library}-${tag}`;
     let sharedSha = null;
@@ -411,7 +427,7 @@ function main() {
             const changed = new Set();
             for (const { file } of stale) {
                 const p = path.join(dir, file);
-                fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(PIN_RE(library), movePin(library, tag)));
+                fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(PIN_RE(library), movePin(library, tag, opts.forge)));
                 changed.add(file);
                 const lock = refreshLock(dir, file);
                 if (lock) changed.add(lock);

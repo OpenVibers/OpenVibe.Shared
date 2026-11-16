@@ -3,3 +3,10 @@
 *.woff2 binary
 *.ttf binary
 *.otf binary
+
+# What a site installs is git archive's tarball of a tag (our forge, git.openvibe.codes, and codeload alike): it leaves out
+# what only this repository's own checks read (4.284.0; the owner, 11-16: "faster … optimized and efficient"). The tests
+# (3.6 MB) and the docs' screenshots (2.9 MB) were two thirds of every site's 10 MB install.
+/test/ export-ignore
+/docs/screenshots/ export-ignore
+/.github/ export-ignore

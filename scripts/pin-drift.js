@@ -31,7 +31,9 @@ const path = require('path');
 const cp = require('child_process');
 
 const LIBS = { 'openvibe-contracts': 'OpenVibe.Contracts', 'openvibe-shared': 'OpenVibe.Shared', 'openvibe-sdk': 'OpenVibe.SDK', 'openvibe-publishing': 'OpenVibe.Publishing' };
-const PIN = /OpenVibers\/(OpenVibe\.[A-Za-z]+)\/tar\.gz\/refs\/tags\/v(\d+)\.(\d+)\.(\d+)$/;
+// A pin on codeload (…/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/vX.Y.Z) or on our own forge
+// (…/api/v1/repos/openvibers/openvibe.shared/archive/vX.Y.Z.tar.gz, 4.284.0): the same tag either way.
+const PIN = /OpenVibers\/(OpenVibe\.[A-Za-z]+)\/(?:tar\.gz\/refs\/tags\/|archive\/)v(\d+)\.(\d+)\.(\d+)(?:\.tar\.gz)?$/i;
 
 const GRACE_DAYS = 14;
 const parse = (t) => { const m = /^v(\d+)\.(\d+)\.(\d+)$/.exec(t); return m ? m.slice(1).map(Number) : null; };
