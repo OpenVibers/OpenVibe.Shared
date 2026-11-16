@@ -18,6 +18,13 @@ apps … history … vibe" and "the search … should just be integrated straigh
   aside.
 - **Placeholders:** a placeholder the page changes is kept, even while a suggestion shows.
 
+**The shared composer's search gets the shared suggestions.** The owner: "the suggestions, like animated effects …
+shared with the other sites … the same composer across sites".
+- A `<textarea name="q">` in a GET form (the composer as a site's search) is a search box to `ov-trending.js`, and the
+  navbar loads it for one. Its line sits on the textarea's first line, one line tall.
+- **`data-ov-trending-items='["…"]'`** on a box or its form is the page's own list, with no script. What the page is
+  about rotates (Exchange: its models), never the network's trending people, and focus opens it as chips.
+
 **Edit on all three of You's tabs, with multi-select.** The owner: "people want to completely delete their
 notifications … the edit mode … all three" and "add [Edit] to the history".
 - **History:** pick places, then Select all and Delete (`DELETE /api/history/:id`). The rows fold away.
