@@ -405,6 +405,21 @@
      * question waiting in its box, this page's context included, for them to read and send; it never sends for them.
      * Signed out, the navbar sends them to sign in. text: the prefilled question ("About this stream: …").
      */
+    /**
+     * An icon in its tile (4.285.0; the owner, 11-16: "the background border … needs to be customized so it fits the icon
+     * better"): the glyph is 60 % of the tile, the corners scale with it (30 %), and the tile is a soft gradient of the
+     * icon's own colour with an inner highlight, never an outer border. tone: accent | ok | warn | bad | muted, or hue (a
+     * number, an app's own colour). A glyph that reads off its centre (play, send, an arrow) is nudged by kit.css.
+     *   kit.tile('server', { size: 44 })   kit.tile('chip', { size: 48, tone: 'ok' })   kit.tile('chat', { hue: 210 })
+     */
+    function tile(name, { size = 40, tone = 'accent', hue = null, cls = '', label = '' } = {}) {
+        const ic = icon(name);
+        if (!ic) return '';
+        const t = Math.max(20, Math.min(96, Math.round(Number(size) || 40)));
+        const style = `--ovk-t:${t}px${hue != null && Number.isFinite(Number(hue)) ? `;--ovk-tone:hsl(${Math.round(Number(hue)) % 360} 85% 64%)` : ''}`;
+        const name2 = ['accent', 'ok', 'warn', 'bad', 'muted'].includes(tone) ? tone : 'accent';
+        return `<span class="ovk-tile ovk-tile--${name2}${cls ? ` ${esc(cls)}` : ''}" data-glyph="${esc(name)}" style="${style}"${label ? ` role="img" aria-label="${esc(label)}"` : ' aria-hidden="true"'}>${ic}</span>`;
+    }
     function askAgent({ text = '', label = 'Ask your agent', small = true } = {}) {
         return button({ type: 'button', label, icon: 'spark', kind: 'quiet', small, attrs: { 'data-ov-ask': String(text || '').slice(0, 2000), class: null } }).replace('class="ovk-btn', 'class="ovk-ask ovk-btn');
     }
@@ -1164,7 +1179,7 @@
 
     return {
         skeleton,
-        esc, url, mediaW, icon, ICONS, PATHS, KIT_PATHS, when, hueOf, mark, button, share, askAgent, iconButton, action, badge, dot, card, rail, CARD_RATIO,
+        esc, url, mediaW, icon, tile, ICONS, PATHS, KIT_PATHS, when, hueOf, mark, button, share, askAgent, iconButton, action, badge, dot, card, rail, CARD_RATIO,
         head, pageHead, tabs, tabOf, list, row, section, fold, more, sidebar, sidebarButton, withSidebar,
         switchRow, rangeRow, selectRow, seg, segmented, chips, saveBar, find, dock, stats, labels, labelsAttr, LABEL_NAMES, empty, notice, snippet, sheet, sheetButton,
         enhance, VERSION: 2,

@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.285.0 — 2026-11-16
+
+**Icon tiles that fit their icon.** The owner: "the background border … needs to be customized so it fits the icon
+better", and "tiny icons … this can't happen anymore on any site".
+- **`kit.tile(name, { size, tone, hue })` and the kit's title tile:**
+  - the glyph is 60 % of the tile, and the corners 30 %;
+  - the tile is a soft gradient of the icon's own colour, with a hairline and a highlight inside it, never an outer border;
+  - tones: accent, ok, warn, bad, muted, or an app's hue;
+  - a glyph whose weight sits to one side (play, send, an arrow) or that is drawn small (chip) is nudged or scaled
+    optically.
+- **The footer's GitHub, Discord and Sitemap tiles** carry the same look, with glyphs at 58 % of the tile (they inherited
+  15 px in 36-44 px boxes). Its "more" arrows grow to the words.
+- `icon-center-chrome` measures it: every tile's drawn glyph fills 40 % or more, centred, with no outer border.
+
 ## 4.284.0 — 2026-11-16
 
 **The menu's box knows where it is.** The owner: "add an icon to the beginning … it should change … animate … alerts to
