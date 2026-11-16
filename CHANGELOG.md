@@ -15,7 +15,13 @@
   - The same words put back while the line shows are taken out again.
   - A line whose box was redrawn goes with it.
   - The box says the line owns it, so ov-composer's own examples stand down.
-  - The line reads like the box's words (the same weight) and always starts where typing starts.
+  - The line always starts where typing starts.
+  - In the menu, the box's own words now look exactly like the suggestion line: the bolder typing font at 62%, where
+    they used to be a browser's thin grey placeholder (the owner, a fourth time, the menu's Vibe beside its Alerts:
+    "still inconsistent", then "I liked the bolder font … thicker and … had a cool animation"). "Plan my week" with its
+    shimmer and "Search alerts" are the same box now. Test: `menu-box-look-chrome.test.js`.
+  - The menu's words fit a phone ("Search alerts", "Search history", "Search chats"), and anything longer ends in "…",
+    never cut mid-letter.
   - Test: `trending-overlap-chrome.test.js`.
 - **The menu's open button follows You's parts** (Alerts: your alerts page, History: where you were, Apps: all your
   apps), and turns from that part's sign. The ring that pulsed around it is a soft tint now.

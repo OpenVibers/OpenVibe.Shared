@@ -7,7 +7,7 @@
 // - a page that sets new words (a menu changing tabs): the line reads its list again and the words stay out;
 // - a box redrawn under its line (the old one removed): the old line goes with it;
 // - the box says the line owns it (data-ovt-on), so ov-composer's own examples stand down;
-// - the line starts where typing starts, never centred.
+// - the line starts where typing starts, never centred, in the box's typing font (bolder than a placeholder).
 const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
@@ -22,7 +22,7 @@ if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) {
 
 const ROOT = path.join(__dirname, '..');
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Overlap</title><link rel="icon" href="data:,">
-<style>body{margin:0;font:16px/1.4 sans-serif;padding:16px}#wrap{position:relative}input{box-sizing:border-box;font:inherit;height:48px;border:1px solid #888;border-radius:14px;padding:0 14px;width:340px;text-align:center}</style>
+<style>body{margin:0;font:16px/1.4 sans-serif;padding:16px}#wrap{position:relative}input{box-sizing:border-box;font:inherit;height:48px;border:1px solid #888;border-radius:14px;padding:0 14px;width:340px;text-align:center}input::placeholder{font-size:13px;font-weight:300;color:rgb(90, 100, 110)}</style>
 <script>window.OV_TRENDING_API = location.origin + '/api/frame';</script></head>
 <body><form id="f" action="/search" method="get" onsubmit="event.preventDefault()"><div id="wrap"><input id="q" name="q" type="search" placeholder="Search the feed" aria-label="Search"></div></form>
 <script src="/ov-trending.js"></script>
@@ -55,6 +55,11 @@ const STATE = `(() => { const i = document.getElementById('q'); const gs = [...d
         assert.strictEqual(s.placeholder, '', 'the line shows and the box\'s own words are out');
         assert.strictEqual(s.owns, true, 'the box says the line owns it');
         assert.strictEqual(s.align, 'left', 'from where typing starts, though the box centres its text');
+        // The line keeps the box's typing font and colour, bolder than a thin placeholder, at 62% (the owner, 11-16: "I
+        // liked the bolder font … thicker and … had a cool animation"); a page's own placeholder style is not its.
+        const look = await p.evaluate(`(() => { const g = [...document.querySelectorAll('.ovt-ghost')].find((x) => !x.hidden); const c = getComputedStyle(g);
+            const i = getComputedStyle(document.getElementById('q')); return { size: c.fontSize, box: i.fontSize, weight: c.fontWeight, opacity: c.opacity }; })()`);
+        assert.deepStrictEqual(look, { size: '16px', box: '16px', weight: '400', opacity: '0.62' }, 'the typing font, at 62%');
 
         // A composer fitting its words to the box puts the same words back: out again before the next frame.
         const after = await p.evaluate(`new Promise((ok) => { const i = document.getElementById('q'); i.setAttribute('placeholder', 'Search the feed');

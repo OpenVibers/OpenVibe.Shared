@@ -270,7 +270,11 @@
 .ovs-bar > svg { width: 18px; height: 18px; flex: none; color: var(--text-muted, #93a0b4); }
 .ovs-field { position: relative; flex: 1; min-width: 0; display: flex; }
 .ovs-input, .ovs-ghost { height: 48px; font: inherit; font-size: 17px; letter-spacing: normal; }
-.ovs-input { position: relative; z-index: 1; flex: 1; min-width: 0; border: 0; outline: 0; padding: 0; background: transparent; color: inherit; }
+.ovs-input { position: relative; z-index: 1; flex: 1; min-width: 0; border: 0; outline: 0; padding: 0; background: transparent; color: inherit; text-overflow: ellipsis; }   /* 4.286.0: words too long for a phone end in …, never cut mid-letter */
+/* 4.286.0 (the owner, 11-16, the box's Vibe and Alerts side by side: "still inconsistent", then "I liked the bolder font
+   … thicker"): the box's own words look exactly like its suggestion line (ov-trending's: the typing font, the text's
+   colour at 62%), never a browser's thin grey placeholder beside a bolder line. */
+.ovs-input::placeholder { font: inherit; letter-spacing: inherit; color: color-mix(in srgb, currentColor 62%, transparent); opacity: 1; }
 .ovs-input::-webkit-search-cancel-button { -webkit-appearance: none; }
 .ovs-ghost { position: absolute; inset: 0; display: flex; align-items: center; white-space: pre; overflow: hidden; pointer-events: none; color: var(--text-muted, #93a0b4); opacity: .75; }
 .ovs-ghost b { color: transparent; font-weight: inherit; }
@@ -734,7 +738,7 @@ html[data-ov-motion=off] .ovs-recent, html[data-ov-motion=off] .ovs-recent-row {
 .ovs-youpanel[hidden] { display: none; }
 @keyframes ovs-drop { from { opacity: 0; transform: translateY(-8px) scale(.96); } }
 html[data-ov-motion=off] .ovs-youpanel { animation: none; }
-@media (max-width: 640px) { .ovs-bar { gap: 8px; padding: 0 4px 0 8px; } .ovs-bar .ovs-input::placeholder { font-size: 15px; } .ovs-tools { gap: 0; } .ovs-tool { width: 36px; height: 36px; } }
+@media (max-width: 640px) { .ovs-bar { gap: 8px; padding: 0 4px 0 8px; } .ovs-tools { gap: 0; } .ovs-tool { width: 36px; height: 36px; } }
 /* One size for every button in the field (4.284.0; the owner, 11-16: "make sure all sizes of things are consistent across
    everything … dif size"): the mic, the +, a place's link and the Dock's mirrored buttons are 40 px, each glyph 20 px at one
    stroke whatever drawing it brings (36 px on a phone, where the words beside your picture need the room), and the two
@@ -2092,7 +2096,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         }
         watchActs(true);
         // Vibe: the box finds your sessions, and Enter asks Vibe (4.284.0).
-        input.placeholder = id === 'chats' ? 'Search your chats' : 'Find a session, or ask Vibe';
+        input.placeholder = id === 'chats' ? 'Search chats' : 'Find a session, or ask Vibe';
         paintTabs();
     }
     function closeDoorBody() {
@@ -2561,10 +2565,10 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (!input || tab !== 'you') return;
         if (was !== youTab) input.value = '';
         if (was !== youTab) { try { requestAnimationFrame(() => { try { mirrorActs(); } catch { /* */ } }); } catch { /* */ } }
-        if (youTab === 'notifications') { input.placeholder = 'Search your alerts'; paintCtx(); return; }
-        if (youTab === 'recent') { input.placeholder = 'Search where you were'; paintCtx(); return; }
+        if (youTab === 'notifications') { input.placeholder = 'Search alerts'; paintCtx(); return; }
+        if (youTab === 'recent') { input.placeholder = 'Search history'; paintCtx(); return; }
         if (view === 'drawer') { input.placeholder = `Find among ${(info && info.apps) || ''} apps`.replace('  ', ' '); input.value = ''; paintCtx(); return; }
-        if (/^(Find among |Search your alerts|Search where you were)/.test(input.placeholder)) { input.placeholder = askHint(); input.value = ''; }
+        if (/^(Find among |Search alerts|Search history|Search your alerts|Search where you were)/.test(input.placeholder)) { input.placeholder = askHint(); input.value = ''; }
         paintCtx();
     }
     function homeOpts() {
@@ -2654,13 +2658,13 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // Alerts and History under You (4.284.0; the owner, 11-16: the inbox's own search "should just be integrated
         // straight to the top"): the box filters them in place, as it finds an app in All apps.
         if (tab === 'you' && shownTab === 'you' && youTab === 'notifications') {
-            tabsEl.hidden = false; input.placeholder = 'Search your alerts';
+            tabsEl.hidden = false; input.placeholder = 'Search alerts';
             const i = el.querySelector('.openvibe-notif-dock .openvibe-nv-search input');
             if (i && i.value !== q) { i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); }
             return;
         }
         if (tab === 'you' && shownTab === 'you' && youTab === 'recent' && homeApi && typeof homeApi.filterRecent === 'function') {
-            tabsEl.hidden = false; input.placeholder = 'Search where you were';
+            tabsEl.hidden = false; input.placeholder = 'Search history';
             homeApi.filterRecent(q);
             return;
         }

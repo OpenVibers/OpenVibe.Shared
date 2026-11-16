@@ -92,7 +92,7 @@
             + '.ovt-line{position:absolute;left:0;right:0;top:0;height:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:transform var(--ovt-dur,.55s) cubic-bezier(.2,.8,.2,1),opacity var(--ovt-dur,.55s) ease,filter var(--ovt-dur,.55s) ease}'
             + '.ovt-line.is-out{transform:translateY(calc(-110% * var(--ov-move,1)));opacity:0;filter:blur(2px)}'
             + '.ovt-line.is-in{transform:translateY(calc(110% * var(--ov-move,1)));opacity:0;filter:blur(2px)}'
-            + '.ovt-ghost{opacity:.62}.ovt-pre{opacity:.8}.ovt-term{font-weight:inherit;background:linear-gradient(90deg,currentColor 0 38%,var(--ovk-accent,var(--accent,#7aa2ff)) 50%,currentColor 62% 100%);background-size:300% 100%;background-position:0 0;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:ovt-shine 1.6s ease-out .15s 1 both}'
+            + '.ovt-ghost{opacity:.62}.ovt-pre{opacity:.8}.ovt-term{font-weight:inherit;min-width:0;overflow:hidden;text-overflow:ellipsis;background:linear-gradient(90deg,currentColor 0 38%,var(--ovk-accent,var(--accent,#7aa2ff)) 50%,currentColor 62% 100%);background-size:300% 100%;background-position:0 0;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:ovt-shine 1.6s ease-out .15s 1 both}'
             + '.ovt-tab{position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:.72em;padding:1px 6px;border:1px solid currentColor;border-radius:6px;opacity:.55;font-weight:600}'
             + '@keyframes ovt-shine{from{background-position:100% 0}to{background-position:0 0}}'
             + '.ovt-tab{opacity:.8}'
@@ -170,6 +170,9 @@
         g.style.width = `${w}px`;
         const one = input.tagName === 'TEXTAREA' ? Math.min(h, parseFloat(cs.lineHeight) || (parseFloat(cs.fontSize) || 16) * 1.4) : h;
         g.style.height = `${one}px`;
+        // The line is drawn in the box's own typing font and colour, bolder than a browser's dim placeholder, with its
+        // shimmer (the owner, 11-16: "I liked the bolder font … thicker and … had a cool animation"). A box that wants
+        // its own words to match styles its placeholder after it (the menu does: search.js `.ovs-input::placeholder`).
         g.style.font = cs.font;
         g.style.lineHeight = `${one}px`;
         g.style.letterSpacing = cs.letterSpacing;
