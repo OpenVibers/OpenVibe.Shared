@@ -62,6 +62,7 @@
     "./drop": "./ov-drop.js",
     "./tip": "./ov-tip.js",
     "./trending": "./ov-trending.js",
+    "./agent": "./ov-agent.js",
     "./tabs": "./ov-tabs.js",
     "./chat-cards": "./ov-chat-cards.js",
     "./mini": "./mini.js",

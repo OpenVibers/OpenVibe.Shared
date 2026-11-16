@@ -22,6 +22,8 @@ const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov
     'ov-harness.js',
     // 4.277.0: trending searches in every search box (§AD.13 (1)).
     'ov-trending.js',
+    // 4.288.0: the agent button (§AD.15), loaded once a page has one.
+    'ov-agent.js',
     // 4.191.0: the one dropdown (the site's name opens its pages).
     'ov-drop.js',
     // 4.193.0: the one tooltip (Sign in, the menu button, short labels).
