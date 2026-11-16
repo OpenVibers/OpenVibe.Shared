@@ -27,6 +27,12 @@ to have it here in the vibe … it's also spacing wrong, offset to the top".
   - The menu's box suggests by where you are: your recent searches, the sites to open, and what to ask Vibe.
     - Over the feed it shows what people search; in Vibe it shows what to ask.
   - The sessions drawer's search suggests your own sessions.
+- **No "Try":** the line is the suggestion alone. The owner: "remove the text try … just use the extra space to have
+  whatever the recommendation is".
+- **Holds on focus:** a focused box holds the suggestion it showed, and `OVTrending.current(input)` names it. The owner:
+  "it should stay on whatever one it was on … put it into the list so you can click it".
+  - The menu lists it first, under "Suggested", above Recent searches. A press fills the box.
+  - The menu never suggests the site you are on.
 - **No overlap:** a placeholder its page changes later is taken up at once. The menu's tabs had drawn "Search your
   chats" under "Try …".
 - **Placement:** the line sits on the box's text line, measured on screen.

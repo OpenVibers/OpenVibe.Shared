@@ -857,15 +857,30 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         el.querySelector('.ovs-bar').append(recentEl);
         const paintRecent = () => {
             const list = recent.get();
-            const show = document.activeElement === input && !input.value && list.length > 0;
+            // The suggestion the box showed when it was opened, first and pressable (the owner, 11-16: "whatever one it was
+            // on when you clicked it, it should put into the list so you can click it and actually choose it").
+            let sug = null;
+            try { sug = root.OVTrending && root.OVTrending.current ? root.OVTrending.current(input) : null; } catch { sug = null; }
+            if (sug && list.some((q) => q.toLowerCase() === String(sug.query).toLowerCase())) sug = null;
+            const show = document.activeElement === input && !input.value && (list.length > 0 || !!sug);
             recentEl.hidden = !show;
             if (!show) return;
             recentEl.textContent = '';
+            if (sug) {
+                const sh = document.createElement('div'); sh.className = 'ovs-recent-h';
+                const st = document.createElement('span'); st.textContent = 'Suggested'; sh.append(st); recentEl.append(sh);
+                const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-recent-row ovs-recent-sug'; b.setAttribute('role', 'option');
+                b.innerHTML = ICON.spark; const w = document.createElement('span'); w.textContent = sug.query; b.append(w);
+                b.addEventListener('pointerdown', (e) => e.preventDefault());
+                b.addEventListener('click', () => { input.value = sug.query; recentEl.hidden = true; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus(); });
+                recentEl.append(b);
+            }
+            if (!list.length) return;
             const head = document.createElement('div'); head.className = 'ovs-recent-h';
             const t = document.createElement('span'); t.textContent = 'Recent searches';
             const clear = document.createElement('button'); clear.type = 'button'; clear.className = 'ovs-recent-clear'; clear.setAttribute('data-ovs-clear', ''); clear.textContent = 'Clear';
             clear.addEventListener('pointerdown', (e) => e.preventDefault());
-            clear.addEventListener('click', () => { recent.clear(); recentEl.hidden = true; input.focus(); });
+            clear.addEventListener('click', () => { recent.clear(); paintRecent(); input.focus(); });
             head.append(t, clear); recentEl.append(head);
             list.forEach((q, n) => {
                 const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-recent-row'; b.setAttribute('role', 'option'); b.style.setProperty('--i', String(n));
@@ -1534,13 +1549,14 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     const VIBE_ASKS = ['Plan my week', 'Deep dive the best budget GPU right now', 'Build me a landing page', 'Make a tool that checks a domain', 'What happened on OpenVibe today?', 'Compare two models for coding'];
     function boxHints() {
         if (door === 'chats') return [];
-        if (door === 'vibe') return VIBE_ASKS.map((q) => ({ pre: 'Ask ', query: q }));
+        if (door === 'vibe') return VIBE_ASKS.map((q) => ({ pre: '', query: q }));
         if (tab === 'feed') return root.OVTrending && root.OVTrending.trending ? root.OVTrending.trending() : [];
         if (tab === 'you') return [];
-        const again = recent.get().slice(0, 3).map((q) => ({ pre: 'Again: ', query: q }));
+        const again = recent.get().slice(0, 3).map((q) => ({ pre: '', query: q }));
         let places = [];
-        try { places = sites().filter((s) => s && s.name).slice(0, 8).map((s) => ({ pre: 'Open ', query: s.name })); } catch { /* */ }
-        const asks = VIBE_ASKS.slice(0, 4).map((q) => ({ pre: 'Ask ', query: q }));
+        // Never the site you are on (on Live, "Live" suggests nothing).
+        try { const on = String(here() || '').toLowerCase(); places = sites().filter((s) => s && s.name && String(s.name).toLowerCase() !== on && !(s.host && s.host === location.hostname)).slice(0, 8).map((s) => ({ pre: '', query: s.name })); } catch { /* */ }
+        const asks = VIBE_ASKS.slice(0, 4).map((q) => ({ pre: '', query: q }));
         const out = [];
         for (let i = 0; i < 8; i++) [again[i], places[i], asks[i]].forEach((x) => { if (x) out.push(x); });
         return out;

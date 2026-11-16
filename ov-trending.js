@@ -22,8 +22,9 @@
  * list (the menu: what you can ask and open; the sessions drawer: your sessions). A placeholder its page changes later
  * is taken up at once, so two lines are never drawn on top of each other, and the line sits on the box's own text line.
  *
- * While a box is empty, its placeholder gives way to the trending searches, one at a time in the box itself: the line
- * slides up and out, the next slides up and in, every few seconds (Calm: slower and shorter; Off and reduced motion: the
+ * While a box is empty, its placeholder gives way to the trending searches, one at a time in the box itself, the suggestion
+ * alone (no "Try"): the line slides up and out, the next slides up and in, every few seconds, and holds while the box
+ * is focused (current(input) gives it to the page's own list) (Calm: slower and shorter; Off and reduced motion: the
  * first one, still). Tab takes the line shown (on a keyboard), and the box's hint says so on focus. Typing hides it at
  * once; clearing the box brings it back. A box that reads nothing gets its placeholder back as its accessible name.
  *
@@ -207,7 +208,9 @@
     function tick() {
         if (motion() === 'off' || document.hidden) return;
         boxes.forEach((b, input) => {
-            if (b.ghost.hidden || input.value) return;
+            // A focused box holds the line it showed (the owner, 11-16: "if you open the box it should stay on whatever one
+            // it was on … put it into the list so you can click it"): its page lists it (current()).
+            if (b.ghost.hidden || input.value || document.activeElement === input) return;
             const items = itemsOf(b);
             if (items.length < 2) return;
             b.i = (b.i + 1) % items.length;
@@ -362,7 +365,8 @@
         // A box named only by its placeholder keeps that name while the line shows.
         const named = input.getAttribute('aria-label') || input.getAttribute('aria-labelledby') || (input.id && document.querySelector(`label[for="${CSS.escape(input.id)}"]`)) || input.closest('label');
         if (!named && placeholder) input.setAttribute('aria-label', placeholder);
-        const b = { ghost, line, placeholder, prefix: own && own.prefix != null ? String(own.prefix) : 'Try ', ro: null, mo: null, own, i: 0, labelled: !named && !!placeholder, sent: new Map() };
+        // No "Try" (the owner, 11-16: "remove the text try … just use the extra space to have whatever the recommendation is").
+        const b = { ghost, line, placeholder, prefix: own && own.prefix != null ? String(own.prefix) : '', ro: null, mo: null, own, i: 0, labelled: !named && !!placeholder, sent: new Map() };
         if (typeof ResizeObserver === 'function') { b.ro = new ResizeObserver(() => show(input)); b.ro.observe(input); }
         // Its page changes the placeholder later (the menu does, tab by tab): take the new one up and read the list again,
         // so the page's words and the line are never drawn over each other.
@@ -454,7 +458,14 @@
         if (!list && !loading) load().then(() => boxes.forEach((b, i) => { if (b.own) update(i); }));
         return list || [];
     }
-    root.OVTrending = { attach, detach, update, trending, refresh: () => { list = null; loading = null; load().then(() => boxes.forEach((_b, i) => show(i))); }, count, siteSearch };
+    /** The suggestion a box shows now ({ query, pre }), or null: a page lists it with its own choices. */
+    function current(input) {
+        const b = boxes.get(input);
+        if (!b || b.ghost.hidden || input.value) return null;
+        const items = itemsOf(b);
+        return items.length ? items[b.i % items.length] : null;
+    }
+    root.OVTrending = { attach, detach, update, trending, current, refresh: () => { list = null; loading = null; load().then(() => boxes.forEach((_b, i) => show(i))); }, count, siteSearch };
     try { document.dispatchEvent(new CustomEvent('ov-trending-ready')); } catch { /* */ }
     if (document.body) start(); else document.addEventListener('DOMContentLoaded', start, { once: true });
 })(typeof window !== 'undefined' ? window : globalThis);

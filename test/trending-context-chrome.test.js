@@ -31,7 +31,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 <p><input id="own" type="search" data-ov-trending="own" placeholder="Search sessions" style="width:300px;height:60px;padding:6px 14px 18px"></p>
 <div style="position:relative"><div id="row" style="overflow-x:auto;white-space:nowrap;width:300px"><span style="display:inline-block;width:420px;height:10px"></span><span role="search" style="display:inline-block"><input id="rowq" type="search" placeholder="Search here" style="width:220px;height:40px"></span></div></div>
 <script src="/ov-trending.js"></script>
-<script>OVTrending.attach(document.getElementById('own'), { items: () => window.MINE, prefix: 'Find ' }); window.MINE = ['Alpha session', 'Beta session'];</script>
+<script>OVTrending.attach(document.getElementById('own'), { items: () => window.MINE }); window.MINE = ['Alpha session', 'Beta session'];</script>
 </body></html>`;
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
@@ -63,10 +63,10 @@ const CENTRE = (id) => `(() => { const i = document.getElementById(${JSON.string
         await p.goto(`${base}/`, { maxMs: 5000 });
         await wait(700);
         let s = await p.evaluate(STATE);
-        assert.deepStrictEqual([s.site.ghost, s.site.text], [true, 'Try GraveGateKeeper'], `a site's own search gets what people search (${JSON.stringify(s.site)})`);
+        assert.deepStrictEqual([s.site.ghost, s.site.text], [true, 'GraveGateKeeper'], `a site's own search gets what people search (${JSON.stringify(s.site)})`);
         assert.deepStrictEqual([s.filter.ghost, s.filter.placeholder], [false, 'Filter your things'], 'a filter of the person\'s own things keeps its placeholder, nothing else');
-        assert.deepStrictEqual([s.own.ghost, s.own.text, s.own.placeholder, s.own.label], [true, 'Find Alpha session', '', 'Search sessions'], `its own list, its own words (${JSON.stringify(s.own)})`);
-        assert.deepStrictEqual([s.row.ghost, s.row.text], [true, 'Try GraveGateKeeper'], 'role="search" is a site search too');
+        assert.deepStrictEqual([s.own.ghost, s.own.text, s.own.placeholder, s.own.label], [true, 'Alpha session', '', 'Search sessions'], `its own list, its own words (${JSON.stringify(s.own)})`);
+        assert.deepStrictEqual([s.row.ghost, s.row.text], [true, 'GraveGateKeeper'], 'role="search" is a site search too');
 
         // On the box's text line: a tall box with uneven padding, and the plain one.
         for (const id of ['own', 'site']) {
@@ -83,13 +83,19 @@ const CENTRE = (id) => `(() => { const i = document.getElementById(${JSON.string
         await p.evaluate("document.getElementById('own').placeholder = 'Search everything', true");
         await wait(80);
         s = await p.evaluate(STATE);
-        assert.deepStrictEqual([s.own.placeholder, s.own.label, s.own.ghost, s.own.text], ['', 'Search everything', true, 'Find Alpha session'], `a later placeholder is taken up (${JSON.stringify(s.own)})`);
+        assert.deepStrictEqual([s.own.placeholder, s.own.label, s.own.ghost, s.own.text], ['', 'Search everything', true, 'Alpha session'], `a later placeholder is taken up (${JSON.stringify(s.own)})`);
 
         // Its own box: no chips, no deep dive, no beacon.
         await p.evaluate("document.getElementById('own').focus(), true");
         await wait(120);
         s = await p.evaluate(STATE);
         assert.deepStrictEqual([s.chips, s.dive], [false, false], 'its own box gets no chips');
+        // Focused, the line holds (no rotation past the 3.2 s step) and current() names it for the page's own list
+        // (the owner, 11-16: "it should stay on whatever one it was on … put it into the list so you can click it").
+        await wait(3600);
+        s = await p.evaluate(STATE);
+        const cur = await p.evaluate("JSON.stringify(OVTrending.current(document.getElementById('own')))");
+        assert.deepStrictEqual([s.own.text, JSON.parse(cur).query], ['Alpha session', 'Alpha session'], `focused: it holds, and current() names it (${cur})`);
         await p.evaluate("(() => { const i = document.getElementById('own'); i.value = 'what is a synthesizer'; i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); })(), true");
         await wait(200);
         s = await p.evaluate(STATE);

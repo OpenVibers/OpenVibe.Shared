@@ -500,7 +500,7 @@
         }
         // The search suggests the person's own sessions, never what other people searched (the owner, 11-16: "this should
         // be your session search"); with fewer than two it keeps its placeholder.
-        need(o, 'ov-trending.js', 'OVTrending').then((T) => { if (T) T.attach(findIn, { items: () => state.hints || [], prefix: 'Find ' }); });
+        need(o, 'ov-trending.js', 'OVTrending').then((T) => { if (T) T.attach(findIn, { items: () => state.hints || [], prefix: '' }); });
         const titleOf = (r) => String((r && (r.title || (r.preview && r.preview.text) || r.preview)) || '').replace(/\s+/g, ' ').trim().slice(0, 120) || 'A session';
         async function loadRuns() {
             const gen = ++state.listGen;
