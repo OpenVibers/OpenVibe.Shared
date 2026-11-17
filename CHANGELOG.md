@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.290.0 — 2026-11-16
+
+- **Every glyph meant to be even is now exact** (the owner, 11-16: "regenerate icons that look fucked up like this, even
+  if it's slight"). openvibe.design's geometry audit measured the whole set; the ones that missed a symmetry they are
+  meant to keep are redrawn, the ones uneven on purpose (a clock's hands, the @, a clipboard's short line, the gauge's
+  needle, the box's band) are left as they are:
+  - **gift** (line and solid): the bow's right loop sat 1.9 units higher than its left; it is now the left's mirror, the
+    lid is centred, and the gift sits on the middle at the set's size.
+  - **brain**: the halves met at x 12.2 on one side and 11.9 on the other, and the right lobe had no top arc; the right is
+    now the left's mirror, meeting on one line at x 12.
+  - **live** (line and solid): the dot sat at y 11.8 and the arcs a twentieth lower; all three are on the middle.
+  - **airplane** and **upload** (solid): written again mirror-exact about x 12 (the nose and tail were at 11.8, the
+    arrowhead's sides at 14.5 and 14.7).
+  - dock-vibe.js and ov-wallet.js carry the same drawings; the fonts, the navbar icons and the icon-ink fixture are
+    rebuilt.
+- openvibe-contracts v0.443.0 (#589).
+
 ## 4.289.0 — 2026-11-16
 
 - **The gear, the star and the heart are drawn exactly** (the owner, 11-16: the settings gear "looks completely scuffed

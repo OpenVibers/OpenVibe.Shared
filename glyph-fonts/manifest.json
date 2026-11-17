@@ -1,22 +1,22 @@
 {
   "family": "OV Glyphs",
   "glyphs": 288,
-  "source_sha256": "03c1274be5542916c1a4fe91cf76a456674ea0690635d73c3e967c16ad93c19b",
+  "source_sha256": "fdc2c5a870eaf37cccace3f0f3389d418796d6dfdc7843c1c4f2f398f3665cf5",
   "files": {
-    "ov-glyphs.woff2": 26640,
-    "glyph-fonts/ov-glyphs.ttf": 57384,
-    "glyph-fonts/ov-glyphs.otf": 72108,
-    "ov-glyphs-thin.woff2": 26896,
-    "glyph-fonts/ov-glyphs-thin.ttf": 62060,
-    "glyph-fonts/ov-glyphs-thin.otf": 72964,
-    "ov-glyphs-light.woff2": 27016,
-    "glyph-fonts/ov-glyphs-light.ttf": 62340,
+    "ov-glyphs.woff2": 26620,
+    "glyph-fonts/ov-glyphs.ttf": 57424,
+    "glyph-fonts/ov-glyphs.otf": 72120,
+    "ov-glyphs-thin.woff2": 26916,
+    "glyph-fonts/ov-glyphs-thin.ttf": 62068,
+    "glyph-fonts/ov-glyphs-thin.otf": 72960,
+    "ov-glyphs-light.woff2": 27020,
+    "glyph-fonts/ov-glyphs-light.ttf": 62336,
     "glyph-fonts/ov-glyphs-light.otf": 72700,
-    "ov-glyphs-bold.woff2": 27048,
-    "glyph-fonts/ov-glyphs-bold.ttf": 57348,
-    "glyph-fonts/ov-glyphs-bold.otf": 71276,
-    "ov-glyphs-solid.woff2": 15928,
-    "glyph-fonts/ov-glyphs-solid.ttf": 32692,
-    "glyph-fonts/ov-glyphs-solid.otf": 29856
+    "ov-glyphs-bold.woff2": 27088,
+    "glyph-fonts/ov-glyphs-bold.ttf": 57372,
+    "glyph-fonts/ov-glyphs-bold.otf": 71288,
+    "ov-glyphs-solid.woff2": 15932,
+    "glyph-fonts/ov-glyphs-solid.ttf": 32696,
+    "glyph-fonts/ov-glyphs-solid.otf": 29868
   }
 }
