@@ -1615,7 +1615,7 @@
         const go = () => {
             const N = root.OpenVibeNotifications; if (!N) return;
             try {
-                if (!N.__ovNavInit) { N.init({ token: _config.token, apiBase: 'https://openvibe.network', realtime: _config.notificationsRealtime === true }); N.__ovNavInit = true; }
+                if (!N.__ovNavInit) { N.init({ token: () => _config.token, apiBase: 'https://openvibe.network', realtime: _config.notificationsRealtime === true }); N.__ovNavInit = true; }   // 4.292.0: read per request, so a refreshed token reaches the bell
                 const paint = () => { if (!badge) return; const n = Number(N.unread()) || 0; badge.textContent = n > 99 ? '99+' : String(n); badge.hidden = !n; };
                 paint(); document.addEventListener('openvibe-notifications-count', paint);
             } catch { /* */ }
