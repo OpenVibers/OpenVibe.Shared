@@ -19,6 +19,11 @@
   catalog is asked once, fetched while the page is idle, shared by every open, and kept ten minutes in the tab's
   sessionStorage.
 - `test/ov-picker-big-chrome.test.js` covers all of it in a real Chrome.
+- **A session's thread reads right** (the owner's phone, 11-17).
+  - **Tool results join their calls.** Actor writes each tool's result as a step of its own, and the thread showed it
+    as a row called "A step" under every call; now the result joins its call.
+  - **An answer written twice in a row is shown once.** Actor stored the draft again at each review round; Actor
+    stops that too.
 
 ## 4.304.0 — 2026-11-17
 

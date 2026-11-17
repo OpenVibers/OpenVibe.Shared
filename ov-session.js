@@ -1291,7 +1291,34 @@
         }
 
         // ── the thread: steps become blocks (words, a group of tool rows, the files it changed, approvals, helpers) ──
-        const ordered = () => [...state.steps.values()].sort((a, b) => a.seq - b.seq);
+        // 4.305.0 (the owner's phone, 11-17: tool rows read "A step" and the answer showed twice): a tool's result, which
+        // Actor writes as a step of its own, joins its call (the call's row then has what it found), and the same answer
+        // written twice in a row is shown once (the later step's receipt kept).
+        const ordered = () => {
+            const out = [];
+            for (const s of [...state.steps.values()].sort((a, b) => a.seq - b.seq)) {
+                if (s.kind === 'tool' && !s.tool_call && !s.title && s.result != null) {
+                    let at = -1;
+                    for (let k = out.length - 1; k >= 0; k--) {
+                        const c = out[k];
+                        if (c.kind === 'message') break;
+                        if (c.kind === 'tool' && c.tool_call && c.result == null) { at = k; break; }
+                    }
+                    if (at >= 0) {
+                        const c = out[at];
+                        out[at] = { ...c, result: s.result, ended_at: s.ended_at || c.ended_at, status: c.status === 'running' ? 'done' : c.status };
+                        continue;
+                    }
+                }
+                const prev = out[out.length - 1];
+                if (prev && s.kind === 'message' && prev.kind === 'message' && s.from !== 'person' && prev.from !== 'person' && s.text && s.text === prev.text) {
+                    out[out.length - 1] = { ...prev, ...s };
+                    continue;
+                }
+                out.push(s);
+            }
+            return out;
+        };
         function changed() {
             const by = new Map();
             for (const s of ordered()) for (const f of filesOf(s)) {
