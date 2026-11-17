@@ -309,7 +309,7 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         await until(wy, "!!document.querySelector('.ovp.is-in .ovp-row')");
         await wy.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row')].find((r) => r.textContent.startsWith('Way')).click()");
         await until(wy, "!!document.querySelector('.ovp.is-in .ovp-row[data-id=\"decisions\"]')");
-        assert.deepStrictEqual(await wy.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent)"), ['Auto', 'Actor\'s agent', 'One model', 'Decisions', 'OpenAI agent', 'Open model', 'Compare the ways']);
+        assert.deepStrictEqual(await wy.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent)"), ['Auto', 'Actor\'s agent', 'One model', 'Decisions', 'OpenAI agent', 'Open model', 'A coding agent', 'Compare the ways']);
         // A link that says what to start with (4.284.0; the owner: "Try it in Chat … should auto set"): Compare's and
         // Exchange's ?model= picks that model and One model, ?q= waits in the box, and the address is cleaned.
         const lk = await h.openPage(browser, await browser.newContext(), { width: 390, height: 844 });

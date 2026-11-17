@@ -10,6 +10,11 @@
   **Where it runs** (your computers online or offline, the shared node, add a computer) and **Sign-ins**. The
   spent-allowance card leads with "Set up your AI"; How it runs' last chip and the agent sheet open it too (the agent
   sheet no longer repeats the list). test/your-ai-chrome.test.js.
+- **One session, its mode on a switch** (the owner: "the fully modular agentic system … even with the chat mode"; plan
+  §AD.17). The box carries Auto · Chat · Agent · Code. In a new session Code goes to Codes, Chat starts your Actor with
+  one model (no tools, quick), Agent with its agent (plans, tools, a check). In an open Actor session the switch changes
+  the way of the next words, sent once with them; Code there is a coding agent on your computer through Codes (Actor's
+  harness engine), in the same conversation. A Codes session has no switch. test/session-modes-chrome.test.js.
 
 ## 4.295.0 — 2026-11-17
 
