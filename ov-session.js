@@ -148,9 +148,28 @@
     const KEY_NAMES = { openai: 'OpenAI', openrouter: 'OpenRouter', xai: 'xAI', deepseek: 'DeepSeek', minimax: 'MiniMax' };
     const keyName = (prov) => KEY_NAMES[prov] || String(prov || '').charAt(0).toUpperCase() + String(prov || '').slice(1);
     const atTime = (iso) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'midnight UTC'; };
-    const shortN = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n));
+    const shortN = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(/\.0$/, '')}M` : n >= 1e4 ? `${Math.round(n / 1e3)}k` : n >= 1e3 ? `${(n / 1e3).toFixed(1).replace(/\.0$/, '')}k` : String(n));
     const keyOk = (k) => !k.status || /^(ok|ready|active|valid)$/i.test(k.status);
     const actorMay = (res, prov) => ((res && res.key_apps) || []).some((x) => x.service === 'actor' && (x.providers || []).some((q) => q === '*' || q === prov));
+    // An answer's receipt (4.298.0, agents.step@1 1.3.0): the rungs in the order Actor tries them, a model's readable
+    // name from its id ("claude-sonnet-5-5" reads "Claude Sonnet 5.5", "deepseek-chat" reads "DeepSeek Chat").
+    const RUNGS = ['allowance', 'key', 'machine', 'plan', 'credits'];
+    const RUNG_GLYPH = { allowance: 'spark', key: 'key', machine: 'computer', plan: 'tune', credits: 'coin' };
+    const rungWord = (k, provider) => ({ allowance: 'Free AI', key: provider && provider !== 'machine' ? `Your ${keyName(provider)} key` : 'Your own key',
+        machine: 'Your computer', plan: 'Your plan', credits: 'Your Balance' }[k] || k);
+    const BRANDS = { deepseek: 'DeepSeek', openai: 'OpenAI', gpt: 'GPT', claude: 'Claude', gemini: 'Gemini', qwen: 'Qwen', llama: 'Llama', kimi: 'Kimi', glm: 'GLM', minimax: 'MiniMax', mistral: 'Mistral', grok: 'Grok', gemma: 'Gemma', phi: 'Phi', oss: 'OSS' };
+    const modelName = (id) => {
+        const bare = String(id || '').split('/').pop().replace(/:.*$/, '');
+        if (!bare) return '';
+        const parts = bare.split(/[-_ ]+/).filter(Boolean);
+        const out = [];
+        parts.forEach((w) => {
+            const prev = out[out.length - 1];
+            if (/^\d+$/.test(w) && prev && /^\d+(\.\d+)*$/.test(prev) && w.length <= 2) { out[out.length - 1] = `${prev}.${w}`; return; }
+            out.push(BRANDS[w.toLowerCase()] || (/^v?\d/i.test(w) ? w.toUpperCase().replace(/^V/, 'V') : w.charAt(0).toUpperCase() + w.slice(1)));
+        });
+        return out.join(' ').replace(/^GPT (\d)/, 'GPT-$1').slice(0, 60);
+    };
     const setupUrl = (x) => { if (!x || !x.url) return null; if (!x.back) return x.url; try { const u = new URL(x.url); u.searchParams.set('return_to', root.location.href); return u.href; } catch { return x.url; } };
     const setupGlyph = (id) => ({ keys: 'key', computer: 'computer', harnesses: 'code', machines: 'computer', signins: 'key', actor: 'robot' }[id] || 'link');
     /** The free AI allowance is spent (OpenVibe.AI's ai.allowance_spent, said through Exchange's 402). */
@@ -1417,7 +1436,47 @@
                 n.append(src);
             }
             attachments(n, s);
+            const rc = s.status !== 'running' ? receiptNode(s) : null;
+            if (rc) n.append(rc);
             return n;
+        }
+        /**
+         * An answer's receipt (4.298.0, agents.step@1 1.3.0's cost.by and model; plan §AD.17): one quiet line under the
+         * words, what paid for it (the free AI, your own key, your computer), the model, what it took. It opens on the
+         * spend by rung. Nothing for an answer without one.
+         */
+        function receiptNode(s) {
+            const c = s.cost && typeof s.cost === 'object' ? s.cost : null;
+            const by = c && c.by && typeof c.by === 'object' ? c.by : null;
+            if (!by) return null;
+            const rungs = RUNGS.filter((k) => by[k] && typeof by[k] === 'object');
+            if (!rungs.length) return null;
+            const provider = s.model && typeof s.model.provider === 'string' ? s.model.provider : null;
+            const last = rungs[rungs.length - 1];
+            const paid = rungs.length === 1 ? rungWord(last, provider) : `${rungWord(rungs[0], provider)}, then ${rungWord(last, provider).replace(/^Your/, 'your')}`;
+            const took = (sec) => (sec >= 60 ? clock(Math.round(sec)) : sec >= 1 ? `${Math.round(sec)} s` : '');
+            const tokens = Number(c.tokens) || 0;
+            const head = [paid, s.model && s.model.id ? modelName(s.model.id) : ''].filter(Boolean);
+            const more = [tokens ? `${shortN(tokens)} tokens` : '', took(Number(c.seconds) || 0)].filter(Boolean);
+            const bits = head.concat(more);
+            const d = el('details', 'ovse-receipt'); d.dataset.key = `receipt:${s.seq}`;
+            // A narrow box keeps what paid and the model; the tokens and the time are in the breakdown.
+            const sm = el('summary'); sm.append(svg(RUNG_GLYPH[last] || 'spark'), el('span', 'ovse-receipt-head', head.join(' · ')));
+            if (more.length) sm.append(el('span', 'ovse-receipt-more', ` · ${more.join(' · ')}`));
+            sm.setAttribute('aria-label', `How this answer ran: ${bits.join(', ')}. Show the breakdown`);
+            d.append(sm);
+            const list = el('div', 'ovse-receipt-rows');
+            rungs.forEach((k, i) => {
+                const r = by[k];
+                const usd = Number(r.usd) || 0;
+                const line = [Number(r.tokens) ? `${shortN(Number(r.tokens))} tokens` : '', took(Number(r.seconds) || 0),
+                    usd > 0 ? costWords(usd) : (k === 'allowance' || k === 'machine' ? 'free' : '')].filter(Boolean).join(' · ');
+                const row = el('div', 'ovse-receipt-r'); row.style.setProperty('--i', String(i));
+                row.append(svg(RUNG_GLYPH[k] || 'spark'), el('b', '', rungWord(k, provider)), el('span', '', line));
+                list.append(row);
+            });
+            d.append(list);
+            return d;
         }
         function attachments(n, s) {
             const list = Array.isArray(s.attachments) ? s.attachments : []; if (!list.length) return;
@@ -2422,6 +2481,24 @@ html[data-ov-motion="off"] .ovse-sb-pane, html[data-ov-motion="off"] .ovse-sb-li
 .ovse-cite { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin: 0 2px; padding: 0 4px; border-radius: 6px; background: color-mix(in srgb, var(--ovse-acc) 22%, transparent); color: var(--ovse-acc2) !important; font-size: 11px; font-weight: 700; text-decoration: none !important; vertical-align: 2px; }
 .ovse-pre, .ovse-out { margin: 0 0 10px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--ovse-bg) 60%, #000 40%); border: 1px solid var(--ovse-line); overflow-x: auto; overflow-y: auto; font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; }
 .ovse-say.is-writing .ovse-words > :last-child::after { content: ''; display: inline-block; width: 7px; height: 15px; margin-left: 2px; vertical-align: -2px; border-radius: 2px; background: var(--ovse-acc2); animation: ovse-caret 1s steps(2) infinite; }
+/* An answer's receipt (4.298.0): one quiet line; it opens on the spend by rung. */
+.ovse-receipt { margin-top: 8px; color: var(--ovse-mute); font-size: 12px; container-type: inline-size; }
+.ovse-receipt > summary { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 28px; padding: 0 9px 0 7px; border-radius: 999px;
+  list-style: none; cursor: pointer; font-variant-numeric: tabular-nums; transition: background .18s, color .18s; }
+.ovse-receipt > summary::-webkit-details-marker { display: none; }
+.ovse-receipt > summary span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovse-receipt-more { flex: none; margin-left: -3px; }
+@container (max-width: 520px) { .ovse-receipt-more { display: none; } }
+.ovse-receipt > summary .ovse-g { flex: none; width: 13px; height: 13px; color: var(--ovse-acc2); }
+.ovse-receipt > summary:hover, .ovse-receipt[open] > summary { background: color-mix(in srgb, var(--ovse-fg) 6%, transparent); color: var(--ovse-dim); }
+.ovse-receipt-rows { display: grid; gap: 4px; margin: 6px 0 2px; padding: 8px 10px; border: 1px solid var(--ovse-line); border-radius: 12px; background: var(--ovse-card); max-width: 460px; }
+.ovse-receipt-r { display: grid; grid-template-columns: 16px auto minmax(0, 1fr); align-items: center; gap: 8px; min-height: 24px;
+  animation: ovse-receipt-in .26s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 50ms); }
+.ovse-receipt-r .ovse-g { width: 14px; height: 14px; color: var(--ovse-acc2); }
+.ovse-receipt-r b { color: var(--ovse-fg); font-weight: 650; white-space: nowrap; }
+.ovse-receipt-r span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+@keyframes ovse-receipt-in { from { opacity: 0; transform: translateY(calc(3px * var(--ov-move, 1))); } }
+html[data-ov-motion="off"] .ovse-receipt-r { animation: none; }
 .ovse-sources { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .ovse-source { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; height: 30px; padding: 0 10px 0 4px; border-radius: 999px; background: var(--ovse-card); border: 1px solid var(--ovse-line); color: var(--ovse-dim); font-size: 12.5px; text-decoration: none; }
 .ovse-source i { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--ovse-acc) 22%, transparent); color: var(--ovse-acc2); font-style: normal; font-weight: 700; font-size: 11px; }

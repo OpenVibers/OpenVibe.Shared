@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.298.0 — 2026-11-17
+
+- **Every answer says how it ran** (plan §AD.17; `agents.step@1` 1.3.0, OpenVibe.Contracts #498; Actor #569 fills it).
+  Under an answer that carries `cost.by` and `model`, one quiet line says what paid for it ("Free AI", "Your Anthropic
+  key", "Your computer", or "Free AI, then your Anthropic key" when the free AI ran out mid-turn), the model by a
+  readable name ("Claude Sonnet 5.5", "DeepSeek Chat", "GPT-5.1 Mini") and, where there is room, the tokens and the
+  time. A tap opens the spend by rung, each with its tokens, time and cost (free on OpenVibe's AI and your computer).
+  An answer without a receipt, or one still being written, shows none. test/answer-receipt-chrome.test.js.
+- Token counts under 10k keep one decimal ("6.1k", "2k"), here and in Your AI.
+
 ## 4.297.0 — 2026-11-17
 
 - **Your AI shows where you stand** (plan §AD.17). With the Frame's `/api/frame/resources` (OpenVibe.Network #1056,
