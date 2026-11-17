@@ -1349,7 +1349,7 @@
                 row.style.transform = `translateX(${dx > 0 ? w : -w}px)`; row.style.opacity = '0';
                 if (ids.length) markRead(ids);
                 setTimeout(() => {
-                    if (v.unread) { item.style.transition = 'height .22s ease, margin .22s ease, opacity .22s ease'; item.style.height = `${item.offsetHeight}px`; requestAnimationFrame(() => { item.style.height = '0px'; item.style.marginBottom = '0px'; item.style.opacity = '0'; }); setTimeout(() => item.remove(), 240); }
+                    if (v.unread) foldAway(v, item);
                     else { row.style.transition = 'none'; row.style.transform = ''; row.style.opacity = ''; item.classList.remove('unread'); settle(); requestAnimationFrame(() => { row.style.transition = ''; }); }
                 }, 260);
                 try { localStorage.setItem('ovn-swiped', '1'); } catch { /* */ }
@@ -1365,6 +1365,52 @@
         const done = () => { if (btn) { const was = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = was; }, 1400); } };
         try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, () => {}); return; } } catch { /* */ }
         done();
+    }
+
+    /**
+     * A row leaves the list: it folds to nothing, then goes, and the day headers it leaves with nothing under them go
+     * too (4.304.0; the owner's phone, 11-17: "These dates don't clear when you swipe everything away": TODAY,
+     * YESTERDAY and SUNDAY stayed over an empty Unread list). Safe to call twice on one row.
+     */
+    function foldAway(v, item) {
+        if (!item || item.__ovnFolding) return;
+        item.__ovnFolding = true;
+        const motion = document.documentElement.getAttribute('data-ov-motion');
+        if (motion === 'off' || !item.isConnected) { item.remove(); tidyDays(v); return; }
+        item.style.overflow = 'hidden';
+        item.style.transition = 'height .22s ease, margin .22s ease, opacity .22s ease';
+        item.style.height = `${item.offsetHeight}px`;
+        requestAnimationFrame(() => { item.style.height = '0px'; item.style.marginBottom = '0px'; item.style.opacity = '0'; });
+        setTimeout(() => { item.remove(); tidyDays(v); }, 240);
+    }
+    /**
+     * Every day header with no row under it (before the next header, the Earlier line or the end) goes, folding away;
+     * and when the unread part of an Unread list is left empty above the Earlier line, it says so in the one line a
+     * list that opened with nothing unread shows.
+     */
+    function tidyDays(v) {
+        const list = v.root.querySelector('[data-role="list"]');
+        if (!list) return;
+        const isItem = (el) => el.classList.contains('openvibe-notif-item') && !el.__ovnFolding;
+        const stops = (el) => el.classList.contains('openvibe-nv-day') || el.classList.contains('openvibe-nv-earlier');
+        const heads = [...list.querySelectorAll('.openvibe-nv-day')];
+        heads.forEach((h, i) => {
+            if (h.__ovnFolding) return;
+            let el = h.nextElementSibling;
+            while (el && !stops(el) && !isItem(el)) el = el.nextElementSibling;
+            if (el && isItem(el)) return;
+            h.__ovnFolding = true;
+            // The last header goes: the next page's first row prints its own day again.
+            if (i === heads.length - 1) v.lastDay = null;
+            const motion = document.documentElement.getAttribute('data-ov-motion');
+            if (motion === 'off' || typeof h.animate !== 'function') { h.remove(); return; }
+            const a = h.animate([{ opacity: 1, height: `${h.offsetHeight}px` }, { opacity: 0, height: '0px', paddingTop: '0px', paddingBottom: '0px' }], { duration: 200, easing: 'ease' });
+            a.onfinish = () => h.remove();
+        });
+        if (v.unread && v.earlier && !list.querySelector('.ovn-caught')) {
+            const first = [...list.children].find((el) => isItem(el) || el.classList.contains('openvibe-nv-earlier'));
+            if (first && first.classList.contains('openvibe-nv-earlier')) first.insertAdjacentHTML('beforebegin', `<p class="ovn-caught">${svg(ICON.read)}<span>You're all caught up</span></p>`);
+        }
     }
 
     function renderItems(v, { append = false, view = null } = {}) {
@@ -1611,7 +1657,12 @@
         for (const n of v.items) if (all || set.has(String(n.id))) n.is_read = 1;
         v.root.querySelectorAll('.openvibe-notif-item.unread').forEach(el => {
             const elIds = (el.dataset.ids || el.dataset.id || '').split(',');
-            if (all || elIds.some(x => set.has(x))) { el.classList.remove('unread'); el.querySelector('.unread-dot')?.remove(); el.querySelector('[data-row="read"]')?.remove(); }
+            if (all || elIds.some(x => set.has(x))) {
+                el.classList.remove('unread'); el.querySelector('.unread-dot')?.remove(); el.querySelector('[data-row="read"]')?.remove();
+                // In an Unread list, read is gone: it folds away like a swipe (4.304.0, "Clear all" left the rows standing).
+                // A row being swiped folds once it has slid off (the swipe's own end), not under the finger.
+                if (v.unread && !el.closest('.is-editing') && !(Date.now() - (el.__ovnSwipedAt || 0) < 400)) foldAway(v, el);
+            }
         });
     }
 
@@ -1681,7 +1732,7 @@
         if (row) {
             const rest = (row.dataset.ids || '').split(',').filter(x => x && x !== String(id));
             if (rest.length) { row.dataset.ids = rest.join(','); row.dataset.id = rest[0]; const c = row.querySelector('.title .count'); if (c) { if (rest.length > 1) c.textContent = `×${rest.length}`; else c.remove(); } }
-            else row.remove();
+            else { row.remove(); tidyDays(v); }
         }
         if (v.total != null) v.total = Math.max(0, v.total - 1);
         if (!v.items.length) renderItems(v);
