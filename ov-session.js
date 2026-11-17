@@ -66,13 +66,20 @@
         { id: 'decisions', name: 'Decisions', line: 'Yes or no, pick one, rate it: with how sure it is' },
         { id: 'openai-agent', name: 'OpenAI agent', line: 'OpenAI\'s agent with its own web search' },
         { id: 'open-model', name: 'Open model', line: 'A small model on OpenVibe\'s own server: nothing leaves OpenVibe' },
+        // 4.296.0: a coding agent on your computer, through Codes, inside the same conversation (the Code mode).
+        { id: 'harness', name: 'A coding agent', line: 'Claude Code, Codex and the rest on your computer, through Codes' },
     ];
+    // 4.296.0 (the owner, 11-17: "the fully modular agentic system … even with the chat mode"; plan §AD.17): one session,
+    // its mode on a switch. Chat is one model talking, Agent is your Actor working (plans, tools, a check), Code is a
+    // coding agent; Auto lets the route choose.
+    const MODES = [['auto', 'Auto', 'spark'], ['chat', 'Chat', 'chat'], ['agent', 'Agent', 'robot'], ['code', 'Code', 'code']];
     'use strict';
     if (typeof document === 'undefined' || root.OpenVibeSession) return;
 
     // ── glyphs (the registry's drawings; 24-unit strokes) ──
     const G = {
         list: '<path d="M4 6.5h16M4 12h16M4 17.5h10"/>',
+        coin: '<circle cx="12" cy="12" r="8.2"/><path d="M14.7 9.5c-.5-.8-1.5-1.3-2.7-1.3-1.5 0-2.6.8-2.6 1.9 0 2.6 5.3 1.5 5.3 4.1 0 1.1-1.1 2-2.7 2-1.2 0-2.3-.6-2.8-1.5M12 6.6v1.6M12 16.2v1.4"/>',
         tune: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/>',
         sidebar: '<rect x="3" y="5.5" width="18" height="13" rx="1.6"/><rect class="ovse-sb-pane" x="4.7" y="7.2" width="4" height="9.6" rx=".7" fill="currentColor" stroke="none"/><path class="ovse-sb-line" d="M9.5 5.5v13"/>',
         back: '<path d="M20.8 12H4M10.3 5.7l-6.3 6.3l6.3 6.3"/>',
@@ -467,7 +474,8 @@
         }
         const savePick = () => { try { const kept = JSON.parse(localStorage.getItem('ov:composer:run') || '{}'); localStorage.setItem('ov:composer:run', JSON.stringify({ ...kept, agent: pick.agent, where: pick.where, model: pick.model, works: pick.works, way: pick.way, effort: pick.effort, permission: pick.permission })); } catch { /* private mode */ } paintCtx(); };
         // The way the chosen model is used (Actor's engines), as the body Actor reads: null for Auto, or { kind, model? }.
-        const wayBody = () => (pick.way && pick.way !== 'auto' ? { kind: pick.way, ...(pick.model && ['agent', 'model', 'decisions'].includes(pick.way) ? { model: pick.model.id } : {}) } : null);
+        const wayBody = () => (pick.way && pick.way !== 'auto' ? { kind: pick.way, ...(pick.model && ['agent', 'model', 'decisions'].includes(pick.way) ? { model: pick.model.id } : {}),
+            ...(pick.way === 'harness' && pick.harness ? { harness: pick.harness } : {}) } : null);
         let options = null;   // the Frame's /run-options: { agents, places }
         const fallbackOptions = { agents: [{ id: 'auto', name: 'Auto', line: 'The right one for what you ask', kind: 'auto' }, { id: 'actor', name: 'Actor', line: 'Your agent: answers, searches, does things for you', kind: 'actor' }, { id: 'codes', name: 'Codes', line: 'Writes and changes code', kind: 'codes' }], places: [{ kind: 'auto', name: 'Auto', line: 'Wherever it fits best' }, { kind: 'openvibe', name: 'OpenVibe', line: 'OpenVibe\'s own computers' }] };
         const loadOptions = async () => {
@@ -517,7 +525,20 @@
         // The page's own box searches the sessions (the menu, 4.284.0: "the search can be moved up there and use the icon
         // system … so we can save the space"): the drawer's field stays out.
         if (o.searchOutside) find.hidden = true;
-        drawer.append(dHead, actorSlot, codesSlot, topSlot, find, runsBox);
+        // 4.296.0 (the owner, 11-17: "a menu that brings them to set up their agents and their harnesses and their API keys,
+        // or to enable billing"): Your AI, one row under your agents.
+        const aiSlot = el('div', 'ovse-actor ovse-ai-row');
+        {
+            const who = el('button', 'ovse-actor-who'); who.type = 'button'; who.setAttribute('aria-label', 'Your AI: your agents, coding agents, keys, Balance and computers');
+            const face = el('span', 'ovse-ai-face'); face.append(svg('tune'));
+            const t = el('span', 'ovse-actor-t');
+            const top = el('span', 'ovse-actor-top'); top.append(el('b', '', 'Your AI'), el('i', '', 'set up'));
+            t.append(top, el('small', '', 'Agents, coding agents, keys, Balance, computers'));
+            who.append(face, t, svg('fold', 'ovse-ai-go'));
+            who.addEventListener('click', () => yourAI());
+            aiSlot.append(who);
+        }
+        drawer.append(dHead, actorSlot, codesSlot, aiSlot, topSlot, find, runsBox);
 
         const main = el('section', 'ovse-main');
         const head = el('header', 'ovse-head');
@@ -539,7 +560,13 @@
         const ctxInfo = el('span', 'ovse-ctxinfo');
         // The price before it runs (plan §AD.6): a chosen model's typical message, from its own price.
         const ctxCost = el('span', 'ovse-cost'); ctxCost.hidden = true;
-        ctxRow.append(ctxB, ctxCost, ctxInfo);
+        const modes = el('div', 'ovse-modes'); modes.setAttribute('role', 'radiogroup'); modes.setAttribute('aria-label', 'Mode');
+        MODES.forEach(([id, label, glyph]) => {
+            const m = btn('ovse-mode', null, glyph, label); m.dataset.mode = id; m.setAttribute('role', 'radio');
+            m.addEventListener('click', () => setMode(id));
+            modes.append(m);
+        });
+        ctxRow.append(modes, ctxB, ctxCost, ctxInfo);
         const composeSlot = el('div', 'ovse-compose');
         foot.append(planBox, slash, ctxRow, composeSlot);
         main.append(head, body, foot);
@@ -908,18 +935,103 @@
                 // Your own setup, and Actor's site
                 const own = el('section', 'ovse-ag-sec');
                 own.append(el('b', 'ovse-ag-h', 'Your own setup'));
-                setupOf(options || fallbackOptions).forEach((x) => {
-                    const r0 = btn('ovse-ag-row', `${x.name}: ${x.line}`, setupGlyph(x.id));
-                    const t0 = el('span', 'ovse-ag-rt'); t0.append(el('b', '', x.name), el('small', '', x.line));
-                    r0.append(t0, svg('open', 'ovse-ag-go')); r0.addEventListener('click', () => goSetup(x));
+                {
+                    const r0 = btn('ovse-ag-row', 'Your AI: keys, Balance, computers and coding agents', 'tune');
+                    const t0 = el('span', 'ovse-ag-rt'); t0.append(el('b', '', 'Your AI'), el('small', '', 'Your own keys, your Balance, your computers and coding agents'));
+                    r0.append(t0, svg('fold', 'ovse-ag-go')); r0.addEventListener('click', () => { end(); setTimeout(() => yourAI(), 240); });
                     own.append(r0);
-                });
+                }
                 [['https://openvibe.actor/you', 'Rules, money and computer', 'key'], ['https://openvibe.actor/', 'What Actor can do', 'spark']].forEach(([href, w, g]) => {
                     const a = el('a', 'ovse-ag-link'); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.append(svg(g), el('span', '', w), svg('open'));
                     own.append(a);
                 });
                 b.append(own);
                 setTimeout(() => { try { nameIn.focus({ preventScroll: true }); } catch { /* */ } }, 260);
+            });
+        }
+        /**
+         * Your AI (4.296.0; the owner, 11-17: "a menu that brings them to set up their agents and their harnesses and their
+         * API keys, or to enable billing … buy credits"; plan §AD.17): every road an answer can take, with its state, in
+         * one sheet. Who works (your Actor, Codes, the coding agents and whether each is ready), how it is paid (the free
+         * AI, your Balance with Top up in the Wallet, your own key), where it runs (your computers and the shared nodes,
+         * online or not) and the sign-ins agents use. Each row does its thing here or opens the one page that does.
+         */
+        function yourAI() {
+            sheet('Your AI', (b, { end }) => {
+                b.classList.add('ovse-yai');
+                const opts = options || fallbackOptions;
+                let i = 0;
+                const section = (title, glyph) => { const sec = el('section', 'ovse-yai-sec'); const h = el('h3', 'ovse-yai-h'); h.append(svg(glyph), el('span', '', title)); sec.append(h); b.append(sec); return sec; };
+                const row = (sec, { face, glyph, name, line, chip = null, tone = '', go = 'fold', onClick }) => {
+                    const r = el('button', 'ovse-yai-r'); r.type = 'button'; r.style.setProperty('--i', String(i++));
+                    r.setAttribute('aria-label', `${name}: ${line}${chip ? ` (${chip})` : ''}`);
+                    const tile = face || el('span', 'ovse-yai-tile'); if (!face) tile.append(svg(glyph));
+                    const t = el('span', 'ovse-yai-t'); t.append(el('b', '', name), el('small', '', line));
+                    r.append(tile, t);
+                    if (chip) r.append(el('i', `ovse-yai-chip${tone ? ` is-${tone}` : ''}`, chip));
+                    r.append(svg(go, `ovse-yai-go${go === 'fold' ? ' is-next' : ''}`));
+                    r.addEventListener('click', onClick);
+                    sec.append(r); return r;
+                };
+                const later = (fn) => () => { end(); setTimeout(fn, 240); };
+                const setup = (id) => setupOf(opts).find((x) => x.id === id) || SETUP.find((x) => x.id === id);
+
+                // Who works
+                const who = section('Who works', 'robot');
+                if (o.actor) {
+                    const st = actorState(); const now = (actor && actor.now) || {};
+                    const cap = actor && actor.caps && Number(actor.caps.usd) > 0 ? ` of $${Number(actor.caps.usd).toFixed(2)}` : '';
+                    row(who, { face: actorFace('m'), name: actorName(), line: `Your agent · ${ACTOR_WORD[st]} · $${(Number(now.cost_today) || 0).toFixed(2)}${cap} today`, onClick: later(() => agentSheet()) });
+                }
+                if (o.codes) row(who, { glyph: 'code', name: 'Codes', line: 'Your coding agent, on a shared node or your computer', onClick: later(() => setupFor('codes')) });
+                const harnesses = (opts.agents || []).filter((a) => a && (a.kind === 'harness'));
+                harnesses.slice(0, 12).forEach((a) => {
+                    const ready = a.available !== false;
+                    row(who, { glyph: 'term', name: a.name, line: a.line || 'A coding agent', chip: ready ? 'Ready' : 'Set it up', tone: ready ? 'ok' : 'warn', go: ready ? 'fold' : 'open',
+                        onClick: ready ? later(() => { pick.agent = a.id; if (pick.where === 'openvibe') pick.where = 'auto'; savePick(); blank(); }) : () => goSetup(setup('harnesses')) });
+                });
+                if (!harnesses.length) row(who, { glyph: 'term', name: 'Coding agents', line: 'Claude Code, Codex, OpenCode and the rest, signed in where they run', go: 'open', onClick: () => goSetup(setup('harnesses')) });
+
+                // How it's paid
+                const pay = section('How it\'s paid', 'coin');
+                row(pay, { glyph: 'spark', name: 'Free AI', line: 'OpenVibe\'s free allowance: it comes back every day', chip: 'Daily', onClick: later(() => openCtx('model')) });
+                const bal = row(pay, { glyph: 'coin', name: 'Your Balance', line: 'Pays for AI you run on OpenVibe, by the cent', chip: '…', go: 'plus', onClick: () => topUp() });
+                row(pay, { glyph: 'key', name: 'Your own AI key', line: setup('keys').line, go: 'open', onClick: () => goSetup(setup('keys')) });
+                // The Balance as the Wallet says it: its amount and what it is for.
+                fetch(`${base}/wallet/api/v1/me/wallet`, { credentials: 'omit', headers: { Accept: 'application/json', ...headers() } })
+                    .then((r) => (r.ok ? r.json() : null)).then((w) => {
+                        const x = w && w.balances && w.balances.balance;
+                        if (!x || !bal.isConnected) { const c = bal.querySelector('.ovse-yai-chip'); if (c) c.remove(); return; }
+                        const n = Number(x.amount) / Math.pow(10, Number(x.scale) || 0);
+                        const c = bal.querySelector('.ovse-yai-chip'); if (c) { c.textContent = Number.isFinite(n) ? `$${n.toFixed(2)}` : ''; c.classList.add('is-money'); }
+                        if (x.purpose) bal.querySelector('.ovse-yai-t small').textContent = String(x.purpose).slice(0, 140);
+                        if (w.money_writes_frozen) bal.querySelector('.ovse-yai-t small').textContent = 'Top-ups are paused for now; your Balance is still here.';
+                    }).catch(() => { const c = bal.querySelector('.ovse-yai-chip'); if (c) c.remove(); });
+                async function topUp() {
+                    const W = await need(o, 'ov-wallet.js', 'OpenVibeWallet');
+                    if (!document.getElementById('ovse-wallet-css') && typeof o.sibling === 'function') { const l = document.createElement('link'); l.id = 'ovse-wallet-css'; l.rel = 'stylesheet'; l.href = o.sibling('ov-wallet.css'); document.head.append(l); }
+                    if (!W || typeof W.open !== 'function') { goSetup({ id: 'wallet', url: 'https://openvibe.network/wallet' }); return; }
+                    end();
+                    try { await W.open({ getToken: () => tokenOf(), frameBase: base }); } catch { goSetup({ id: 'wallet', url: 'https://openvibe.network/wallet' }); }
+                }
+
+                // Where it runs
+                const where = section('Where it runs', 'computer');
+                const machines = (opts.places || []).filter((x) => x && x.kind === 'machine');
+                machines.slice(0, 8).forEach((m) => {
+                    const on = m.available !== false;
+                    row(where, { glyph: 'computer', name: m.name || 'A computer', line: m.line || 'Yours, through OpenVibe Link', chip: on ? 'Online' : 'Offline', tone: on ? 'ok' : 'off',
+                        onClick: later(() => { pick.where = placeKey(m); savePick(); blank(); }) });
+                });
+                const shared = (opts.places || []).find((x) => x && x.kind === 'shared');
+                if (shared) row(where, { glyph: 'globe', name: shared.name || 'A shared node', line: shared.line || 'OpenVibe\'s shared machines, for coding and desks', onClick: later(() => { pick.where = placeKey(shared); savePick(); blank(); }) });
+                row(where, { glyph: 'plus', name: machines.length ? 'Add another computer' : 'Add your computer', line: setup('computer').line, go: 'open', onClick: () => goSetup(setup('computer')) });
+                row(where, { glyph: 'list', name: 'Shared nodes and your computers', line: setup('machines').line, go: 'open', onClick: () => goSetup(setup('machines')) });
+
+                // Sign-ins
+                const ins = section('Sign-ins', 'key');
+                row(ins, { glyph: 'key', name: 'Sign-ins for your agents', line: setup('signins').line, go: 'open', onClick: () => goSetup(setup('signins')) });
+                emit('setup.your-ai', {});
             });
         }
         function goSetup(x) {
@@ -1383,7 +1495,39 @@
             return { agent: a.name, model: m, where: w.name, works: works ? works.name : '', way: way.id === 'auto' ? '' : way.name,
                 effort: eff.id === 'auto' ? '' : `${eff.name} effort`, permission: allowed ? allowed.name : '' };
         }
+        /** The mode the next words go in: Code for a coding session or the harness way, Chat for one model, Agent, Auto. */
+        function modeNow() {
+            const r = state.run;
+            if (r && !String(r.ref || '').startsWith('actor:')) return null;
+            if (pick.way === 'harness' || (!r && coding(options || fallbackOptions))) return 'code';
+            if (pick.way === 'model') return 'chat';
+            if (pick.way === 'agent') return 'agent';
+            return 'auto';
+        }
+        function paintModes() {
+            const now = modeNow();
+            modes.hidden = now === null;
+            modes.querySelectorAll('[data-mode]').forEach((m) => m.setAttribute('aria-checked', String(m.dataset.mode === now)));
+        }
+        /** A new session changes who it goes to; an open Actor session changes its way for the next words. */
+        function setMode(id) {
+            const open = state.run && String(state.run.ref || '').startsWith('actor:');
+            if (id === 'code') {
+                if (open) pick.way = 'harness';
+                else { pick.agent = 'codes'; pick.way = 'auto'; if (pick.where === 'openvibe') pick.where = 'auto'; }
+            } else {
+                if (!open && (pick.agent === 'codes' || coding(options || fallbackOptions))) pick.agent = o.actor ? 'actor' : 'auto';
+                pick.way = id === 'chat' ? 'model' : id === 'agent' ? 'agent' : 'auto';
+                if (id === 'auto' && !open) pick.agent = 'auto';
+                else if (!open && id !== 'auto' && o.actor) pick.agent = 'actor';
+            }
+            savePick();
+            emit('session.mode', { mode: id, open: !!open });
+            if (open) { paintModes(); paintCtx(); flash(id === 'code' ? 'Your next words go to a coding agent on your computer.' : id === 'chat' ? 'Your next words go to one model: quick, no tools.' : id === 'agent' ? 'Your next words go to your agent: it plans, uses tools and checks.' : 'Your next words go where they fit best.'); }
+            else blank();
+        }
         function paintCtx() {
+            paintModes();
             const r = state.run;
             if (r) {
                 // An open session says how it runs; the chip's choice is for the next new one.
@@ -1825,9 +1969,9 @@
                 b.append(t); b.addEventListener('click', () => openCtx(id));
                 box.append(b);
             });
-            const own = btn('ovse-how-c is-own', 'Your own setup: keys, your computer, coding agents', 'key');
-            const t = el('span', 'ovse-how-t'); t.append(el('small', '', 'Your own'), el('b', '', 'Keys · computer'));
-            own.append(t); own.style.setProperty('--i', String(chips.length)); own.addEventListener('click', () => openCtx('setup'));
+            const own = btn('ovse-how-c is-own', 'Your AI: keys, Balance, computers and coding agents', 'tune');
+            const t = el('span', 'ovse-how-t'); t.append(el('small', '', 'Your AI'), el('b', '', 'Keys · Balance · computers'));
+            own.append(t); own.style.setProperty('--i', String(chips.length)); own.addEventListener('click', () => yourAI());
             box.append(own);
             // Drawn at once from what is known; once, when the Frame's choices first arrive, again with their names.
             if (!options) loadOptions().then(() => { if (box.isConnected && options) box.replaceWith(howCard()); }).catch(() => {});
@@ -1840,6 +1984,9 @@
             const n = el('div', 'ovse-say ovse-setup'); n.dataset.seq = String(s.seq);
             const h = el('div', 'ovse-setup-h'); h.append(svg('key'), el('b', '', 'Your free AI is used up for today'));
             n.append(h, el('p', 'ovse-setup-l', 'It comes back tomorrow. Or keep going now, your way:'));
+            const all = btn('ovse-setup-all', 'Set up your AI: agents, keys, Balance and computers', 'tune', 'Set up your AI');
+            all.addEventListener('click', () => yourAI());
+            n.append(all);
             const last = () => { const m = [...state.steps.values()].filter((x) => x.kind === 'message' && x.from === 'person').pop(); return m ? String(m.text || '') : ''; };
             const opts = options || fallbackOptions;
             const go = (id) => goSetup(setupOf(opts).find((x) => x.id === id) || SETUP.find((x) => x.id === id));
@@ -1999,6 +2146,51 @@
 .ovse-actor { transition: border-color .2s, box-shadow .2s; }
 .ovse-actor.is-on { border-color: color-mix(in srgb, var(--ovse-acc) 70%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovse-acc) 45%, transparent), 0 10px 24px -18px var(--ovse-acc); }
 .ovse-actor-set .ovse-g { width: 20px; height: 20px; }
+/* 4.296.0: one session, its mode on a switch */
+.ovse-ctxrow { flex-wrap: wrap; }
+.ovse-modes { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; border: 1px solid var(--ovse-line); background: var(--ovse-card); }
+.ovse-mode { display: inline-flex; align-items: center; gap: 5px; min-height: 36px; padding: 0 11px; border: 0; border-radius: 999px; background: transparent;
+  color: var(--ovse-dim); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: background .18s, color .18s, transform .15s; }
+.ovse-mode .ovse-g { width: 15px; height: 15px; }
+.ovse-mode:hover { color: var(--ovse-fg); }
+.ovse-mode[aria-checked="true"] { color: var(--on-accent, #fff); background: var(--ovse-acc); box-shadow: 0 6px 16px -10px var(--ovse-acc); }
+.ovse-mode:active { transform: scale(.95); }
+@media (max-width: 420px) { .ovse-mode { padding: 0 9px; } .ovse-mode[aria-checked="false"] span { display: none; } }
+/* 4.296.0: Your AI, the one setup menu */
+.ovse-ai-row { margin-top: 6px; border-style: dashed; }
+.ovse-ai-face { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: var(--accent-light, var(--accent, #3b82f6));
+  background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
+.ovse-ai-face .ovse-g { width: 22px; height: 22px; }
+.ovse-ai-go { flex: none; width: 16px; height: 16px; transform: rotate(-90deg); color: var(--ovse-mute); }
+.ovse-yai { display: grid; gap: 4px; }
+.ovse-yai-sec { display: grid; gap: 6px; padding: 4px 0 10px; }
+.ovse-yai-sec + .ovse-yai-sec { border-top: 1px solid var(--border, rgba(255,255,255,.09)); padding-top: 12px; }
+.ovse-yai-h { display: flex; align-items: center; gap: 8px; margin: 0 2px 2px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
+.ovse-yai-h .ovse-g { width: 16px; height: 16px; }
+.ovse-yai-r { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 8px 10px; border: 1px solid var(--border, rgba(255,255,255,.09)); border-radius: 16px;
+  background: color-mix(in srgb, var(--text-primary, #ececf1) 3%, transparent); color: inherit; font: inherit; text-align: left; cursor: pointer;
+  transition: border-color .15s, background .15s, transform .15s; animation: ovse-in .36s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 32ms); }
+.ovse-yai-r:hover { border-color: color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); }
+.ovse-yai-r:active { transform: scale(.98); }
+.ovse-yai-tile { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: var(--accent-light, var(--accent, #3b82f6));
+  background: color-mix(in srgb, var(--accent, #3b82f6) 13%, transparent); }
+.ovse-yai-tile .ovse-g { width: 22px; height: 22px; }
+.ovse-yai-t { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.ovse-yai-t b { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovse-yai-t small { font-size: 12.5px; line-height: 1.35; color: var(--text-muted, #8b8b96); }
+.ovse-yai-chip { flex: none; padding: 3px 9px; border-radius: 999px; font-style: normal; font-size: 11.5px; font-weight: 750; color: var(--text-secondary, #a8b3c4);
+  background: color-mix(in srgb, var(--text-primary, #ececf1) 8%, transparent); }
+.ovse-yai-chip.is-ok { color: var(--success, #22c55e); background: color-mix(in srgb, var(--success, #22c55e) 14%, transparent); }
+.ovse-yai-chip.is-warn { color: var(--warning, #f5a524); background: color-mix(in srgb, var(--warning, #f5a524) 14%, transparent); }
+.ovse-yai-chip.is-off { opacity: .75; }
+.ovse-yai-chip.is-money { color: var(--text-primary, #ececf1); font-variant-numeric: tabular-nums; }
+.ovse-yai-go { flex: none; width: 16px; height: 16px; color: var(--text-muted, #8b8b96); }
+.ovse-yai-go.is-next { transform: rotate(-90deg); }
+.ovse-setup-all { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin: 0 0 10px; padding: 0 16px; border: 0; border-radius: 12px; cursor: pointer;
+  font: inherit; font-weight: 750; color: var(--on-accent, #fff); background: var(--accent, #3b82f6); box-shadow: 0 10px 22px -12px var(--accent, #3b82f6); transition: transform .15s; }
+.ovse-setup-all:active { transform: scale(.97); }
+.ovse-setup-all .ovse-g { width: 18px; height: 18px; }
+html[data-ov-motion="off"] .ovse-yai-r { animation: none; }
 /* 4.295.0: Your agent, edited in place */
 .ovse-ag-top { display: flex; align-items: center; gap: 14px; padding: 6px 2px 4px; }
 .ovse-ag-face { flex: none; }

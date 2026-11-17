@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.296.0 — 2026-11-17
+
+- **Your AI: one menu for everything an answer can run on** (the owner, 11-17: "a menu that brings them to set up their
+  agents and their harnesses and their API keys, or to enable billing … buy credits"; plan §AD.17). Vibe's sessions
+  carry "Your AI" under your agents; it opens one sheet: **Who works** (your Actor with today's spend, Codes, every
+  coding agent marked Ready or Set it up; a ready one becomes the new session's), **How it's paid** (the free AI, your
+  Balance with its amount and what it is for as the Wallet says it, Top up in the Wallet in place, your own AI key),
+  **Where it runs** (your computers online or offline, the shared node, add a computer) and **Sign-ins**. The
+  spent-allowance card leads with "Set up your AI"; How it runs' last chip and the agent sheet open it too (the agent
+  sheet no longer repeats the list). test/your-ai-chrome.test.js.
+- **One session, its mode on a switch** (the owner: "the fully modular agentic system … even with the chat mode"; plan
+  §AD.17). The box carries Auto · Chat · Agent · Code. In a new session Code goes to Codes, Chat starts your Actor with
+  one model (no tools, quick), Agent with its agent (plans, tools, a check). In an open Actor session the switch changes
+  the way of the next words, sent once with them; Code there is a coding agent on your computer through Codes (Actor's
+  harness engine), in the same conversation. A Codes session has no switch. test/session-modes-chrome.test.js.
+
 ## 4.295.0 — 2026-11-17
 
 - **Your agent, edited in place** (the owner, 11-17: "you can't even edit these properly, or like edit and configure
