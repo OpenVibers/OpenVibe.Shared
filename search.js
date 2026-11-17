@@ -98,6 +98,7 @@
     let el = null, input = null, ghost = null, listEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
     let tab = 'here', mine = null, catalog = null, completion = '';
     let repaintRecent = null;   // the list of recent searches under the field (4.262.0), once the account's arrive
+    let historyFailed = false;  // 4.292.0: the last read of the person's history failed (History says so, with Try again)
     // The results view (4.29.0): Enter shows the Search Fabric's answer here, by scope, instead of leaving the page.
     const RTABS = [['all', 'All'], ['openvibe', 'OpenVibe'], ['web', 'Web'], ['video', 'Video'], ['news', 'News'], ['products', 'Products'], ['mine', 'Yours']];
     const PROVIDER = { open_index: 'OpenVibe\'s index', deepseek: 'DeepSeek', wikipedia: 'Wikipedia', brave: 'Brave', exa: 'Exa', tavily: 'Tavily' };
@@ -190,15 +191,33 @@
 
     /** The person's history: one request per opening, kept two minutes (signed in only; anonymous sessions keep none). */
     function historyKey() { return `ov_hist3:${(ctx && ctx.user && (ctx.user.id || ctx.user.username)) || ''}`; }
+    /**
+     * 4.292.0 (the owner, 11-17: "The history tab no longer loads"): a page open longer than its access token lives (an
+     * hour) sent the Network a token it refused (401), and History said "Nothing here yet". A refused token is now
+     * refreshed through the bar (OpenVibeNavbar.refreshAuth, the site's own session) and the read retried once.
+     */
+    async function freshToken() {
+        const N = root.OpenVibeNavbar;
+        if (!N || typeof N.refreshAuth !== 'function') return false;
+        try { await N.refreshAuth(); } catch { return false; }
+        const s = N.session;
+        if (s && s.token && s.token !== ctx.token) { ctx.token = s.token; return true; }
+        return false;
+    }
     async function loadHistory() {
         if (!signedIn()) return null;
         const key = historyKey();
-        try { const c = JSON.parse(sessionStorage.getItem(key) || 'null'); if (c && Date.now() - c.at < 120000) return c.data; } catch { /* */ }
+        try { const c = JSON.parse(sessionStorage.getItem(key) || 'null'); if (c && Date.now() - c.at < 120000) { historyFailed = false; return c.data; } } catch { /* */ }
         try {
-            const auth = { headers: { Authorization: `Bearer ${ctx.token}` }, credentials: 'omit' };
             // The places, and the account's own recent searches (4.252.0), side by side.
-            const [r, s] = await Promise.all([fetch(historyApi('?limit=60'), auth), fetch(historyApi('?type=search&limit=8'), auth).catch(() => null)]);
-            if (!r.ok) return null;
+            const read = () => {
+                const auth = { headers: { Authorization: `Bearer ${ctx.token}` }, credentials: 'omit' };
+                return Promise.all([fetch(historyApi('?limit=60'), auth), fetch(historyApi('?type=search&limit=8'), auth).catch(() => null)]);
+            };
+            let [r, s] = await read();
+            if (r.status === 401 && await freshToken()) [r, s] = await read();
+            if (!r.ok) { historyFailed = true; return null; }
+            historyFailed = false;
             const j = await r.json();
             const sj = s && s.ok ? await s.json().catch(() => null) : null;
             const data = {
@@ -208,7 +227,15 @@
             };
             try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data })); } catch { /* */ }
             return data;
-        } catch { return null; }
+        } catch { historyFailed = true; return null; }
+    }
+    /** The person's history arrived: repaint what shows it. On You → History, render() only filters the list, so the
+     *  You view is handed the new options itself (4.292.0: Try again showed nothing until the menu was reopened). */
+    function historyArrived() {
+        render(input.value);
+        const kept = homeViews && homeViews.home;
+        if (kept && kept.api && typeof kept.api.update === 'function') { try { kept.api.update(homeOpts()); } catch { /* keep what shows */ } }
+        if (repaintRecent) repaintRecent();
     }
     /** OpenVibe.Tools' catalog (families and tools), kept 30 minutes; the same copy the navbar used to keep. */
     async function loadCatalog() {
@@ -2644,6 +2671,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             // You's Notifications tab: the whole list with Mark all read, mounted once; the count rides on the tab.
             // History's Edit (4.284.0): forget the picked places on the account; → the ids it forgot.
             forget: signedIn() ? forgetHistory : null,
+            // 4.292.0: History says when the person's history could not be read, and offers to read it again.
+            historyError: signedIn() && !mine && historyFailed,
+            reloadHistory: () => loadHistory().then((h) => { if (h && el && el.classList.contains('is-open')) { mine = h; historyArrived(); } return !!h; }),
             notifications: (host) => mountNotes(host), unread: () => { try { return root.OpenVibeNotifications ? Number(root.OpenVibeNotifications.unread()) || 0 : 0; } catch { return 0; } },
             startTab: ['notifications', 'recent', 'apps'].includes(ctx.section) ? ctx.section : null, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
             onSearch: (q) => { input.value = q; render(q); input.focus(); },
@@ -3106,7 +3136,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         setTimeout(() => { if (phoneSheet() && !opts.q && !opts.search && orbEl && orbEl.isConnected) orbEl.focus({ preventScroll: true }); else input.focus(); }, 0);
         // What makes it the person's own arrives after the first paint: their history, and the tools catalog.
         mine = null;
-        loadHistory().then((h) => { if (h && el.classList.contains('is-open')) { mine = h; paintGhost(); render(input.value); if (repaintRecent) repaintRecent(); } });
+        loadHistory().then((h) => { if (h && el.classList.contains('is-open')) { mine = h; paintGhost(); historyArrived(); } });
         if (!catalog) loadCatalog().then((c) => { if (c) { catalog = c; if (el.classList.contains('is-open')) render(input.value); } });
         loadPulse().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
         loadChanges().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
