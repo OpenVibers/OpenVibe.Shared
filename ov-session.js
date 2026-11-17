@@ -1677,6 +1677,27 @@
             const m = modeNow();
             if (m === null || m === 'code') return null;
             const a = res.allowance;
+            // The Frame's own answer when it sends one (4.301.0): Network answers openvibe-sdk/agents/roads, the one order
+            // Actor's engine walks, over these facts and your computers, so the chip and Actor cannot disagree. The copy
+            // of that order below is for a Frame that does not send it yet.
+            const fr = res.road && res.road[m === 'chat' ? 'chat' : 'agent'];
+            if (fr && fr.road) {
+                const tokens = Number(a.tokens) || 0, left = Math.max(0, Number(a.left) || 0), pct = tokens ? left / tokens : 0;
+                const back = a.resets_at ? ` Back in full at ${atTime(a.resets_at)}.` : '';
+                const say = String(fr.say || '').trim();
+                if (fr.road === 'free') {
+                    if (a.unlimited || a.left == null) return { road: 'free', glyph: 'spark', text: 'Free AI', pct: 1, say: 'The free AI, with no daily cap for you' };
+                    return { road: 'free', glyph: 'spark', text: `${Math.max(1, Math.round(pct * 100))}% free`, pct, say: `The free AI: ${shortN(left)} of ${shortN(tokens)} tokens left today` };
+                }
+                if (fr.road === 'key' && fr.provider) return { road: 'key', glyph: 'key', text: `${keyName(fr.provider)} key`, say: `${say}${back}` };
+                if (fr.road === 'computer') {
+                    const name = String((fr.machine && fr.machine.name) || 'Your computer');
+                    return { road: 'computer', glyph: 'computer', text: name.slice(0, 24), say: `${say}${back}` };
+                }
+                if (fr.road === 'none') return fr.chat_only
+                    ? { road: 'none', glyph: 'spark', text: 'Chat only', pct, say: `${say}${back}` }
+                    : { road: 'none', glyph: 'spark', text: `Back ${atTime(a.resets_at)}`, pct: 0, say: `${say}${back}` };
+            }
             if (a.unlimited) return { road: 'free', glyph: 'spark', text: 'Free AI', pct: 1, say: 'The free AI, with no daily cap for you' };
             const tokens = Number(a.tokens) || 0, left = Math.max(0, Number(a.left) || 0);
             const need = m === 'chat' ? 1 : TURN_TOKENS;

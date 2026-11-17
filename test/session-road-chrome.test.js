@@ -26,6 +26,11 @@ const SCENES = {
     key: { allowance: day(0), keys: [{ provider: 'openrouter', status: 'ok' }, { provider: 'anthropic', status: 'ok' }], key_apps: [{ service: 'actor', providers: ['anthropic'] }], balance: null, partial: [] },
     computer: { allowance: day(0), keys: [{ provider: 'openrouter', status: 'ok' }], key_apps: [], balance: null, partial: [] },
     none: { allowance: day(0), keys: [], key_apps: [], balance: null, partial: [] },
+    // 4.301.0: the Frame's own road (Network, openvibe-sdk/agents/roads) is what the chip says, not its own copy: here
+    // the Frame names Tower while the run options list Studio PC.
+    frame: { allowance: day(0), keys: [], key_apps: [], balance: null, partial: [], road: {
+        agent: { road: 'computer', need: 12000, machine: { id: 'dev_tower', name: 'Tower' }, say: 'Tower answers: the free allowance is used up today.', ladder: [] },
+        chat: { road: 'none', need: 1, chat_only: false, say: 'OpenVibe\'s free AI is used up for today. Add your own AI key or your computer to keep going.', ladder: [] } } },
 };
 let scene = 'free', machineOnline = true, resourceReads = 0;
 const page = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -119,6 +124,16 @@ const CHIP = `(() => { const r = document.querySelector('.ovse-road'); if (!r ||
         await p.evaluate("document.querySelector('.ovse-mode[data-mode=\"chat\"]').click()");
         c = await until(p, `(() => { const c = ${CHIP}; return c && /is-free/.test(c.cls) ? c : null; })()`);
         assert.strictEqual(c.text, '18% free', 'Chat mode: the free AI');
+        await p.evaluate("document.querySelector('.ovse-mode[data-mode=\"auto\"]').click()");
+
+        // 4.301.0: the Frame's road wins over the chip's own copy (Tower from the Frame, though Studio PC is online here).
+        await open('frame');
+        c = await until(p, `(() => { const c = ${CHIP}; return c && /is-computer/.test(c.cls) ? c : null; })()`);
+        assert.strictEqual(c.text, 'Tower');
+        assert.match(c.label, /^Tower answers: the free allowance is used up today\. Back in full at /);
+        await p.evaluate("document.querySelector('.ovse-mode[data-mode=\"chat\"]').click()");
+        c = await until(p, `(() => { const c = ${CHIP}; return c && /is-none/.test(c.cls) ? c : null; })()`);
+        assert.match(c.text, /^Back /, 'Chat mode reads the Frame\'s chat road');
         await p.evaluate("document.querySelector('.ovse-mode[data-mode=\"auto\"]').click()");
 
         // A Network without /resources: no chip, no error.
