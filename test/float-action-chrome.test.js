@@ -50,9 +50,13 @@ window.a = OVFloat.action(document.getElementById('act'), { when: () => window.a
 
         // Before the person reaches it: floating, above the 64 px bar, the same width, centred; its home keeps 52 px.
         await eventually(async () => assert.equal((await st()).fab, 'floating', 'before its home: it floats'));
-        let s = await st();
-        assert.deepEqual([s.count, s.pos, s.visible, s.homeH, s.w, s.centred], [1, 'fixed', true, 52, 260, true], 'one element, fixed, its home holds the space');
-        assert.ok(s.bottomGap >= 64 + 12 - 1 && s.bottomGap <= 64 + 12 + 4, `above the bar with a 12 px gap (${s.bottomGap})`);
+        // Measured once the glide has settled: it starts at scale(.96), so a slow machine read 250 for 260 (macOS CI, 11-16).
+        let s;
+        await eventually(async () => {
+            s = await st();
+            assert.deepEqual([s.count, s.pos, s.visible, s.homeH, s.w, s.centred], [1, 'fixed', true, 52, 260, true], 'one element, fixed, its home holds the space');
+            assert.ok(s.bottomGap >= 64 + 12 - 1 && s.bottomGap <= 64 + 12 + 4, `above the bar with a 12 px gap (${s.bottomGap})`);
+        });
 
         // Its home on screen: back home, in the page.
         await p.evaluate(`document.getElementById('card').scrollIntoView({ block: 'center' }), true`);

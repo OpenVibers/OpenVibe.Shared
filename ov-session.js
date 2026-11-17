@@ -1027,12 +1027,29 @@
                     row(who, { face: actorFace('m'), name: actorName(), line: `Your agent · ${ACTOR_WORD[st]} · $${(Number(now.cost_today) || 0).toFixed(2)}${cap} today`, onClick: later(() => agentSheet()) });
                 }
                 if (o.codes) row(who, { glyph: 'code', name: 'Codes', line: 'Your coding agent, on a shared node or your computer', onClick: later(() => setupFor('codes')) });
+                // 4.299.0 (Your AI on a phone, 11-17: nine coding agents pushed keys and the Balance far below the fold): the
+                // ready ones first, three shown, the rest one row that unfolds them in place.
                 const harnesses = (opts.agents || []).filter((a) => a && (a.kind === 'harness'));
-                harnesses.slice(0, 12).forEach((a) => {
+                const ordered = harnesses.filter((a) => a.available !== false).concat(harnesses.filter((a) => a.available === false)).slice(0, 12);
+                const SHOWN = 3;
+                const folded = [];
+                ordered.forEach((a, k) => {
                     const ready = a.available !== false;
-                    row(who, { glyph: 'term', name: a.name, line: a.line || 'A coding agent', chip: ready ? 'Ready' : 'Set it up', tone: ready ? 'ok' : 'warn', go: ready ? 'fold' : 'open',
+                    const r = row(who, { glyph: 'term', name: a.name, line: a.line || 'A coding agent', chip: ready ? 'Ready' : 'Set it up', tone: ready ? 'ok' : 'warn', go: ready ? 'fold' : 'open',
                         onClick: ready ? later(() => { pick.agent = a.id; if (pick.where === 'openvibe') pick.where = 'auto'; savePick(); blank(); }) : () => goSetup(setup('harnesses')) });
+                    if (k >= SHOWN && ordered.length > SHOWN + 1) { r.hidden = true; r.classList.add('ovse-yai-more'); folded.push(r); }
                 });
+                if (folded.length) {
+                    const rest = ordered.slice(ordered.length - folded.length);
+                    const more = row(who, { glyph: 'term', name: `${folded.length} more coding agents`, line: rest.map((a) => a.name).join(', '), go: 'fold', onClick: () => {
+                        folded.forEach((r, k) => { r.style.setProperty('--i', String(k)); r.hidden = false; });
+                        more.remove();
+                        if (folded[0]) folded[0].focus({ preventScroll: true });
+                    } });
+                    more.classList.add('is-unfold');
+                    const g = more.querySelector('.ovse-yai-go'); if (g) g.classList.remove('is-next');
+                    more.setAttribute('aria-expanded', 'false');
+                }
                 if (!harnesses.length) row(who, { glyph: 'term', name: 'Coding agents', line: 'Claude Code, Codex, OpenCode and the rest, signed in where they run', go: 'open', onClick: () => goSetup(setup('harnesses')) });
 
                 // How it's paid
@@ -2333,6 +2350,9 @@
 .ovse-yai-r { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 8px 10px; border: 1px solid var(--border, rgba(255,255,255,.09)); border-radius: 16px;
   background: color-mix(in srgb, var(--text-primary, #ececf1) 3%, transparent); color: inherit; font: inherit; text-align: left; cursor: pointer;
   transition: border-color .15s, background .15s, transform .15s; animation: ovse-in .36s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 32ms); }
+.ovse-yai-r[hidden] { display: none; }
+.ovse-yai-r.is-unfold { border-style: dashed; background: transparent; }
+.ovse-yai-r.is-unfold .ovse-yai-tile { opacity: .8; }
 .ovse-yai-r:hover { border-color: color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); }
 .ovse-yai-r:active { transform: scale(.98); }
 .ovse-yai-tile { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: var(--accent-light, var(--accent, #3b82f6));

@@ -2081,9 +2081,21 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         form.append(to, field, err);
         sheet.append(head, list, form); wrap.append(scrim, sheet); document.body.append(wrap);
         requestAnimationFrame(() => wrap.classList.add('is-in'));
+        // The layer manager (OVSurfaces) dismisses its top layer on Escape, in the capture phase and before any listener added
+        // later: the sheet joins it, so Escape (and a swipe down) closes the sheet alone, never the menu under it. Its own
+        // Escape listener ran second, and a slow machine closed both (macOS CI, 11-14 … 11-17; reproduced at 6x CPU).
+        const S = typeof window !== 'undefined' ? window.OVSurfaces : null;
+        let shut = false;
+        const layer = S && typeof S.sheet === 'function' ? S.sheet({ el: sheet, header: head, body: list, close: () => close(true) }) : null;
         const esc = (e) => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); close(); } };
-        const close = () => { document.removeEventListener('keydown', esc, true); wrap.classList.remove('is-in'); wrap.classList.add('is-leaving'); setTimeout(() => wrap.remove(), 200); };
-        document.addEventListener('keydown', esc, true); scrim.addEventListener('click', close); x.addEventListener('click', close);
+        const close = (fromLayer) => {
+            if (shut) return; shut = true;
+            document.removeEventListener('keydown', esc, true);
+            if (layer) { if (fromLayer !== true) layer.close(); layer.destroy(); }
+            wrap.classList.remove('is-in'); wrap.classList.add('is-leaving'); setTimeout(() => wrap.remove(), 200);
+        };
+        if (layer) layer.open(); else document.addEventListener('keydown', esc, true);
+        scrim.addEventListener('click', () => close()); x.addEventListener('click', () => close());
         box.addEventListener('input', () => { send.disabled = !box.value.trim(); box.style.height = 'auto'; box.style.height = `${Math.min(box.scrollHeight, 160)}px`; });
         box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!send.disabled) form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true })); } });
         let thread = null, parent = null, total = 0;

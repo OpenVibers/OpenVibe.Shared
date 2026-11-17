@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.299.0 — 2026-11-17
+
+- **Your AI keeps your keys and Balance in reach.** Signed in on a phone (11-17), nine coding agents pushed How it's
+  paid below the fold. Now the ready coding agents come first, three are shown, and one dashed row ("3 more coding
+  agents", naming them) unfolds the rest in place; How it's paid starts on the first screen. With Network #1059 a coding
+  agent's line names its maker ("A coding agent by Anthropic") in place of Codes' slug. test/your-ai-compact-chrome.test.js.
+- **Escape closes the comment sheet alone, never the menu under it.** The feed's comment sheet joins the layer manager
+  (OVSurfaces), which dismisses its top layer on Escape in the capture phase before any later listener: the sheet's own
+  Escape ran second, so on a slow machine the menu closed with it (the macOS CI flake in menu-feed-v2-chrome, 11-14 to
+  11-17; reproduced at 6x CPU, gone at 10x). A swipe down closes the sheet too.
+- The macOS CI flakes: float-action-chrome measures the floating button once its glide has settled: the glide starts at scale(.96), so a
+  slow machine read 250 px for 260 (another macOS CI flake); surfaces-chrome touches the sheet's header where it comes
+  to rest, not where it was mid-slide (the third).
+
 ## 4.298.0 — 2026-11-17
 
 - **Every answer says how it ran** (plan §AD.17; `agents.step@1` 1.3.0, OpenVibe.Contracts #498; Actor #569 fills it).
