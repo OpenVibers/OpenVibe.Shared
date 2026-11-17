@@ -33,6 +33,8 @@
         open: '<path d="M13.5 5.5h5v5M18.5 5.5l-8 8M16.5 13.5v4a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h4"/>',
         chat: '<path d="M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-7l-4 3v-3H5A1.5 1.5 0 0 1 3.5 16V8A1.5 1.5 0 0 1 5 6.5z"/>',
         back: '<path d="M14.5 6.5L9 12l5.5 5.5"/>',
+        down: '<path d="M12 4.5v14.5M6 13l6 6 6-6"/>',
+        check: '<path d="M5.5 12.6l4.2 4.2 8.8-9.4"/>',
         send: '<path d="M12 20.7V4.2M3.7 12.4l8.3-8.3l8.3 8.3"/>',   // 4.220.0: the registry's (openvibe-shared/glyphs), as Vibe's box
         vibe: '<path d="M12 4.5a7.5 7.5 0 0 1 6.4 11.4L19.5 19.5l-3.6-1.1A7.5 7.5 0 1 1 12 4.5z"/><path d="M9 11.5h.01M12 11.5h.01M15 11.5h.01"/>',
         clock: '<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.5M9.5 3h5"/>',
@@ -281,6 +283,47 @@
             .ovdk-gl-send:focus-visible, .ovdk-sv-make:focus-visible { outline: 2px solid var(--accent-light, var(--accent, #3b82f6)); outline-offset: 2px; }
             .ovdk-gl-send .ovdk-i svg, .ovdk-sv-make .ovdk-i svg { width: 18px; height: 18px; }
             .ovdk-gl-note { margin: 0 14px 6px; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+            /* 4.293.0, Global opens where you stopped (the owner, 11-17): the New messages line, new lines lit until they
+               have been on screen (then they fade to read), the pill to what waits below, older lines as you scroll up. */
+            .ovdk-gl-new { display: flex; align-items: center; gap: 10px; max-height: 40px; margin: 10px 6px 6px; color: var(--accent-light, var(--accent, #3b82f6));
+                font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; overflow: hidden; }
+            .ovdk-gl-new::before, .ovdk-gl-new::after { content: ""; flex: 1; height: 2px; border-radius: 2px; transform-origin: right;
+                background: linear-gradient(90deg, transparent, var(--accent, #3b82f6)); animation: ovdk-new-line .55s cubic-bezier(.2, .8, .2, 1) both; }
+            .ovdk-gl-new::after { transform-origin: left; background: linear-gradient(90deg, var(--accent, #3b82f6), transparent); }
+            .ovdk-gl-new-l { flex: none; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent);
+                box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 38%, transparent); animation: ovdk-new-l .42s .1s cubic-bezier(.3, 1.4, .4, 1) both; }
+            .ovdk-gl-new.is-done { animation: ovdk-new-done .34s ease forwards; }
+            @keyframes ovdk-new-line { from { transform: scaleX(0); opacity: 0; } }
+            @keyframes ovdk-new-l { from { opacity: 0; transform: translateY(calc(4px * var(--ov-move, 1))) scale(.9); } }
+            @keyframes ovdk-new-done { to { opacity: 0; max-height: 0; margin-top: 0; margin-bottom: 0; } }
+            .ovdk-gl-list > .is-unread { box-shadow: inset 3px 0 0 var(--accent, #3b82f6); }
+            .ovdk-gl-list > .ovdk-gl-row.is-unread { background: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); }
+            .ovdk-gl-list > .is-read { transition: background-color 1.1s ease, box-shadow 1.1s ease; }
+            .ovdk-gl-older { display: grid; place-items: center; min-height: 2px; }
+            .ovdk-gl-older.is-busy { min-height: 36px; }
+            .ovdk-gl-older.is-busy::after { content: ""; width: 18px; height: 18px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--accent, #3b82f6) 25%, transparent);
+                border-top-color: var(--accent, #3b82f6); animation: ovdk-older-spin .8s linear infinite; }
+            @keyframes ovdk-older-spin { to { transform: rotate(360deg); } }
+            .ovdk-gl-jump { position: sticky; bottom: 64px; z-index: 3; height: 0; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+            .ovdk-gl-jump-c { pointer-events: auto; display: inline-flex; align-items: stretch; margin-bottom: 8px; border-radius: 999px; overflow: hidden; color: #fff;
+                background: var(--accent, #3b82f6); box-shadow: 0 12px 26px -12px color-mix(in srgb, var(--accent, #3b82f6) 85%, transparent), inset 0 1px 0 rgba(255, 255, 255, .22);
+                animation: ovdk-jump-in .34s cubic-bezier(.3, 1.4, .4, 1) both; }
+            .ovdk-gl-jump button { all: unset; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; font-size: 13.5px; font-weight: 750; cursor: pointer; }
+            .ovdk-gl-jump .ovdk-gl-jump-read { padding: 0 13px; border-left: 1px solid rgba(255, 255, 255, .28); }
+            .ovdk-gl-jump button:hover { background: rgba(255, 255, 255, .12); }
+            .ovdk-gl-jump button:active { background: rgba(0, 0, 0, .12); }
+            .ovdk-gl-jump button:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
+            .ovdk-gl-jump .ovdk-i svg { width: 16px; height: 16px; }
+            .ovdk-gl-jump-go .ovdk-i { animation: ovdk-jump-nudge 1.8s ease-in-out infinite; }
+            .ovdk-gl-jump-n.is-tick, .ovdk-seg-n.is-tick { animation: ovdk-tick .32s cubic-bezier(.3, 1.6, .4, 1); }
+            .ovdk-seg-n.is-gone { animation: ovdk-gone .2s ease forwards; }
+            @keyframes ovdk-jump-in { from { opacity: 0; transform: translateY(calc(14px * var(--ov-move, 1))) scale(.9); } }
+            @keyframes ovdk-jump-nudge { 0%, 70%, 100% { transform: none; } 35% { transform: translateY(calc(2px * var(--ov-move, 1))); } }
+            @keyframes ovdk-tick { from { transform: scale(.7); } }
+            @keyframes ovdk-gone { to { opacity: 0; transform: scale(.5); } }
+            html[data-ov-motion="off"] .ovdk-gl-new::before, html[data-ov-motion="off"] .ovdk-gl-new::after, html[data-ov-motion="off"] .ovdk-gl-new-l,
+            html[data-ov-motion="off"] .ovdk-gl-jump-c, html[data-ov-motion="off"] .ovdk-gl-jump-go .ovdk-i, html[data-ov-motion="off"] .is-tick { animation: none; }
+            html[data-ov-motion="off"] .ovdk-gl-list > .is-read { transition: none; }
             .ovdk-sv-find .ovdk-row-b { color: inherit; text-decoration: none; }
             .ovdk-sv-filter { box-sizing: border-box; width: calc(100% - 8px); height: 40px; margin: 2px 4px 6px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border, rgba(148,163,184,.2)); background: var(--bg-input, var(--bg-primary, #0f1522)); color: var(--text-primary, #ececf1); font: inherit; font-size: 15px; -webkit-appearance: none; appearance: none; }
             .ovdk-sv-filter:focus { outline: none; border-color: var(--accent, #3b82f6); }
@@ -517,12 +560,72 @@
     // The person's conversations and DMs, from OpenVibe.Chat's own API with their Network token (Chat checks they are
     // in each one). Everything people wrote is set as text, never markup; only https pictures are shown. A thread polls
     // for new messages every 5 s while it is open in the Dock, and is marked read as it is shown.
-    /** The last Global post you have seen (this device): read with a number, written with one. */
+    /** The last Global post you have read on this device: read with a number, written with one (never moved back). */
     function globalSeen(id) {
         try {
-            if (id != null) { const was = Number(localStorage.getItem('ovdk-global-seen')) || 0; if (Number(id) > was) localStorage.setItem('ovdk-global-seen', String(id)); return Number(id); }
+            if (id != null) { const was = Number(localStorage.getItem('ovdk-global-seen')) || 0; if (Number(id) > was) localStorage.setItem('ovdk-global-seen', String(id)); return Math.max(was, Number(id) || 0); }
             return Number(localStorage.getItem('ovdk-global-seen')) || 0;
         } catch { return 0; }
+    }
+    // ── Where you stopped reading Global (4.293.0; the owner, 11-17: "remember where you were in the chat last and …
+    // save it locally and on the server … do it intelligently") ──
+    // This device's mark (above) and Chat's (GET and POST /api/chat/global/read: the same on every site and device). The
+    // later of the two wins; reading moves this device's at once and Chat's a moment later, or as the page goes away.
+    const glRead = { at: 0, job: null, server: 0, want: 0, timer: 0, signedIn: false };
+    /** { id, unread, more }: the mark, and what came after it when Chat counted it (null: count it from the history). */
+    function readMark() {
+        if (glRead.job && Date.now() - glRead.at < 15000) {
+            return glRead.job.then((mk) => { const local = globalSeen(); return local > mk.id ? { id: local, unread: null, more: false } : mk; });
+        }
+        glRead.at = Date.now();
+        glRead.job = tokenOf().catch(() => null).then((t) => (t ? chatCall('/api/chat/global/read').catch(() => null) : null)).then((r) => {
+            const local = globalSeen();
+            const server = r && Number.isFinite(Number(r.last_read_id)) ? Number(r.last_read_id) : 0;
+            glRead.signedIn = !!r;
+            glRead.server = Math.max(glRead.server, server);
+            if (server > local) globalSeen(server);
+            if (r && local > server) markRead(local);   // this device read further: Chat hears of it
+            return { id: Math.max(local, server), unread: r && server >= local ? Number(r.unread) || 0 : null, more: !!(r && r.more && server >= local) };
+        });
+        return glRead.job;
+    }
+    /** Read up to a post: this device now, Chat after a short pause (at once with now, or when the page goes away). */
+    function markRead(id, now = false) {
+        id = Number(id) || 0;
+        if (id <= 0) return;
+        globalSeen(id);
+        if (id > glRead.want) glRead.want = id;
+        clearTimeout(glRead.timer);
+        if (glRead.want <= glRead.server) return;
+        if (now) flushRead(false); else glRead.timer = setTimeout(() => flushRead(false), 1500);
+    }
+    function flushRead(leaving) {
+        clearTimeout(glRead.timer);
+        const id = glRead.want;
+        if (!glRead.signedIn || !id || id <= glRead.server) return;
+        const prev = glRead.server; glRead.server = id;
+        chatCall('/api/chat/global/read', { method: 'POST', body: JSON.stringify({ id }), keepalive: !!leaving })
+            .then((r) => { if (r && Number(r.last_read_id) > glRead.server) glRead.server = Number(r.last_read_id); })
+            .catch(() => { if (glRead.server === id) glRead.server = prev; });
+    }
+    window.addEventListener('pagehide', () => flushRead(true));
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushRead(true); });
+    /** The Global segment's count, live: it falls as you read and comes back as people talk (4.293.0). */
+    function setGlobalCount(n, more) {
+        chats.globalNew = n; chats.globalMore = !!more;
+        const text = n > 99 || (more && n >= 99) ? '99+' : more ? `${n}+` : String(n);
+        document.querySelectorAll('.ovdk-seg[data-seg="global"]').forEach((b) => {
+            let c = b.querySelector('.ovdk-seg-n');
+            if (!n) {
+                if (c && !c.classList.contains('is-gone')) { const gone = c; gone.classList.add('is-gone'); setTimeout(() => { if (gone.classList.contains('is-gone')) gone.remove(); }, 220); }
+                b.setAttribute('aria-label', 'Global');
+                return;
+            }
+            if (!c) { c = h('b', 'ovdk-seg-n is-quiet'); b.append(c); }
+            c.classList.remove('is-gone');
+            if (c.textContent !== text) { c.textContent = text; c.classList.remove('is-tick'); void c.offsetWidth; c.classList.add('is-tick'); }
+            b.setAttribute('aria-label', `Global, ${text} new`);
+        });
     }
     const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, edits: null, unread: 0, unreadT: 0, busy: false, draft: null, vibeSummary: null, filter: '' };
     const chatBase = () => String(o.chatBase || 'https://openvibe.chat').replace(/\/+$/, '');
@@ -619,10 +722,14 @@
         if (!chats.list) { panel.innerHTML = '<div class="ovdk-wait"><span></span></div>'; }
         const sharing = chats.draft && canWriteChat() ? load('dock-share.js', () => !!(root.OpenVibeDockShare && root.OpenVibeDockShare.bar)) : null;
         try {
-            const seen = globalSeen();
+            // 4.293.0: Global's count is what came after where you stopped (Chat counts it; else this device's mark).
+            const markJob = readMark();
             const [dm, ai, people, srv, glob] = await Promise.all([chatCall('/api/dm/conversations'), Promise.resolve(null), friendsCall('').catch(() => chatCall('/api/dm/contacts').catch(() => null)), chatCall('/api/chat/servers?limit=30').catch(() => null),
-                seen ? chatCall(`/api/chat/global/history?after_id=${seen}&limit=50`).catch(() => null) : Promise.resolve(null)]);
-            chats.globalNew = glob && Array.isArray(glob.messages) ? glob.messages.filter((m) => m && !m.is_deleted && m.message && Number(m.id) > seen).length : 0;
+                markJob.then((mk) => (mk.unread != null || !mk.id ? null : chatCall(`/api/chat/global/history?after_id=${mk.id}&limit=100`).catch(() => null)))]);
+            const mark = await markJob;
+            chats.globalMore = !!mark.more || !!(glob && glob.complete === false);
+            chats.globalNew = mark.unread != null ? mark.unread
+                : glob && Array.isArray(glob.messages) ? glob.messages.filter((m) => m && !m.is_deleted && m.message && Number(m.id) > mark.id && !(me() && String(m.username || '') === me())).length : 0;
             chats.servers = srv && Array.isArray(srv.mine) ? srv.mine.slice(0, 12) : [];
             chats.publicServers = srv && Array.isArray(srv.public) ? srv.public.slice(0, 30) : [];
             chats.people = people && Array.isArray(people.mutual) ? { friends: people.mutual, requests: people.requests || [], asked: people.asked || [], network: true } : people && Array.isArray(people.friends) ? people : null;
@@ -692,7 +799,7 @@
             const n = waiting[id] || 0;
             // Red asks for you (a message to you, a friend request, a server you have not muted); Global's new posts are a
             // quiet blue, like the feed's: there to see, never urgent (the owner, 11-16).
-            if (n) { b.append(h('b', `ovdk-seg-n${id === 'global' ? ' is-quiet' : ''}`, n > 99 ? '99+' : n >= 50 && id === 'global' ? '50+' : String(n))); b.setAttribute('aria-label', `${label}, ${n} ${id === 'global' ? 'new' : 'waiting'}`); }
+            if (n) { b.append(h('b', `ovdk-seg-n${id === 'global' ? ' is-quiet' : ''}`, n > 99 || (id === 'global' && chats.globalMore && n >= 99) ? '99+' : id === 'global' && chats.globalMore ? `${n}+` : String(n))); b.setAttribute('aria-label', `${label}, ${n} ${id === 'global' ? 'new' : 'waiting'}`); }
             b.addEventListener('click', () => pick(id));
             segBar.append(b);
         }
@@ -885,25 +992,52 @@
     }
     /** Global, built in (4.275.0; the owner's phone, 11-15: "Global chat did not load … improve"): what everyone is saying,
      *  newest last, new lines every few seconds while it is open, and a box to say something (Chat's /api/chat/send, as the
-     *  person). It no longer sends people to openvibe.chat to read it; a quiet link still opens the full room there. */
+     *  person). A quiet link still opens the full room on openvibe.chat.
+     *  4.293.0 (the owner, 11-17: "remember where you were in the chat last … new messages … in the middle of the chat
+     *  wherever you last read so that you can scroll through and read them all, and then that should actually mark these
+     *  down as you scroll through them … animated … smart and fast"): Global opens where you stopped, at a New messages
+     *  line with what you read just above it. A line counts as read once it has been on screen a moment; the Global count
+     *  falls as you go, and the mark is kept on this device and on Chat, the same on every site. A pill says how many
+     *  wait below you and takes you there (or marks them all read); older lines come as you scroll up; the last lines
+     *  stay in memory, so coming back to Global paints at once. */
     function globalPane() {
         const box = h('div', 'ovdk-pane ovdk-gl');
         const top = h('div', 'ovdk-gl-top');
         const full = h('a', 'ovdk-gl-full'); full.href = `${CHAT_SITE}/`; full.target = '_blank'; full.rel = 'noopener'; full.append(icon(G.open || G.chat)); full.setAttribute('aria-label', 'Open Global chat on openvibe.chat'); full.title = 'Open on openvibe.chat';
         top.append(icon(G.globe), h('span', 'ovdk-gl-title', 'Everyone on OpenVibe'), full);
+        const older = h('div', 'ovdk-gl-older');
         const list = h('ul', 'ovdk-gl-list'); list.setAttribute('aria-label', 'Global chat'); list.setAttribute('aria-live', 'polite');
         const wait = h('div', 'ovdk-wait'); wait.append(h('span'));
         const quiet = h('p', 'ovdk-gl-quiet', 'It is quiet in Global. Say the first thing.'); quiet.hidden = true;
+        // The pill: what waits below the screen, and a way to say it is all read.
+        const jump = h('div', 'ovdk-gl-jump'); jump.hidden = true;
+        const pill = h('span', 'ovdk-gl-jump-c');
+        const jumpGo = h('button', 'ovdk-gl-jump-go'); jumpGo.type = 'button';
+        const jumpN = h('span', 'ovdk-gl-jump-n', '');
+        jumpGo.append(icon(G.down), jumpN);
+        const jumpRead = h('button', 'ovdk-gl-jump-read'); jumpRead.type = 'button'; jumpRead.append(icon(G.check));
+        jumpRead.setAttribute('aria-label', 'Mark all as read'); jumpRead.title = 'Mark all as read';
+        pill.append(jumpGo, jumpRead); jump.append(pill);
         const say = h('form', 'ovdk-gl-say');
         const field = h('input'); field.type = 'text'; field.maxLength = 500; field.placeholder = 'Say something to everyone'; field.setAttribute('aria-label', 'Message to Global chat'); field.autocomplete = 'off'; field.enterKeyHint = 'send';
         const send = h('button', 'ovdk-gl-send'); send.type = 'submit'; send.append(icon(G.send)); send.setAttribute('aria-label', 'Send');
         const sayNote = h('p', 'ovdk-gl-note'); sayNote.hidden = true; sayNote.setAttribute('role', 'status');
         say.append(field, send);
-        box.append(top, wait, list, quiet, say, sayNote);
-        let lastId = 0, timer = 0;
+        box.append(top, wait, older, list, quiet, jump, say, sayNote);
+
+        let lastId = 0, firstId = 0, timer = 0, readTo = 0, divider = null, io = null, topIo = null, dwell = 0, frame = 0;
+        let moreAfter = false, noOlder = false, busyOlder = false, busyAfter = false;
+        const unread = new Map();       // id → a line after the mark, not yet on screen long enough
+        const onScreen = new Set();     // the unread lines the screen shows now
         const sc = () => box.closest('.ovdk-scroll');
+        const motionOff = () => document.documentElement.getAttribute('data-ov-motion') === 'off';
         const nearEnd = () => { const el = sc(); return !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120; };
-        const toEnd = () => requestAnimationFrame(() => { const el = sc(); if (el) el.scrollTop = el.scrollHeight; });
+        const scrollTo = (topPx, smooth) => { const el = sc(); if (el) el.scrollTo({ top: topPx, behavior: smooth && !motionOff() ? 'smooth' : 'auto' }); };
+        const toEnd = (smooth) => requestAnimationFrame(() => { const el = sc(); if (el) scrollTo(el.scrollHeight, smooth); });
+        const shown = (m) => m && !m.is_deleted && m.message;
+        const mine = (m) => !!me() && String(m.username || '') === me();
+        const byId = (a, b2) => Number(a.id) - Number(b2.id) || String(a.timestamp || '').localeCompare(String(b2.timestamp || ''));
+
         function rowOf(m) {
             // An event (someone went live, a Rundown episode, a run of deploys, a widget) is a card, as on Live (4.284.0,
             // ov-chat-cards.js; the owner: Global "is missing all the styles that exist when you're out").
@@ -916,46 +1050,224 @@
             li.append(avatar(who, false), body);
             return li;
         }
-        function addRows(rows, { scroll = false } = {}) {
-            const keep = nearEnd();
-            const fresh = (rows || []).filter((m) => m && !m.is_deleted && m.message && Number(m.id) > lastId)
-                .sort((a, b2) => Number(a.id) - Number(b2.id) || String(a.timestamp || '').localeCompare(String(b2.timestamp || '')));
-            for (const m of fresh) {
-                const C = root.OVChatCards; const card = C && C.of(m);
-                if (!(card && C.fold(list.lastElementChild, card))) list.append(card ? C.render(card) : rowOf(m));
-                lastId = Math.max(lastId, Number(m.id) || 0);
-                globalSeen(lastId);
-            }
-            while (list.children.length > 120) list.firstChild.remove();
-            quiet.hidden = list.children.length > 0;
-            if (fresh.length && (scroll || keep)) toEnd();
+        /** The last lines, kept for the next time Global opens in this page (it paints from them at once). */
+        function remember(rows) {
+            const all = new Map((chats.glMsgs || []).map((m) => [Number(m.id), m]));
+            for (const m of rows) if (shown(m)) all.set(Number(m.id), m);
+            chats.glMsgs = [...all.values()].sort(byId).slice(-300);
+            chats.glAt = Date.now();
         }
+        function newLine() {
+            const d = h('li', 'ovdk-gl-new'); d.setAttribute('role', 'separator'); d.setAttribute('aria-label', 'New messages below');
+            d.append(h('span', 'ovdk-gl-new-l', 'New messages'));
+            return d;
+        }
+        /** A line after the mark that is not the person's own is new: lit until it has been on screen. */
+        function track(el, m) {
+            const id = Number(m.id) || 0;
+            if (id <= readTo || mine(m)) return;
+            el.classList.remove('is-read'); el.classList.add('is-unread');
+            unread.set(id, el);
+            if (io) io.observe(el);
+        }
+        function addRows(rows, { scroll = false, initial = false } = {}) {
+            const keep = nearEnd();
+            const fresh = (rows || []).filter((m) => shown(m) && Number(m.id) > lastId).sort(byId);
+            for (const m of fresh) {
+                const isNew = Number(m.id) > readTo && !mine(m);
+                // The line goes where you stopped: on opening, or when lines come while you are reading further up.
+                if (isNew && !divider && (initial || !keep)) { divider = newLine(); list.append(divider); }
+                const C = root.OVChatCards; const card = C && C.of(m);
+                let el;
+                if (card && C.fold(list.lastElementChild, card)) el = list.lastElementChild;
+                else { el = card ? C.render(card) : rowOf(m); list.append(el); }
+                el.dataset.id = String(m.id);
+                track(el, m);
+                lastId = Math.max(lastId, Number(m.id) || 0);
+                if (!firstId || Number(m.id) < firstId) firstId = Number(m.id);
+            }
+            remember(fresh);
+            // A long tail is trimmed from the top only while you are at the end (never under what you are reading).
+            if (keep && !initial && list.children.length > 400) {
+                while (list.children.length > 300) { const f = list.firstElementChild; if (f === divider) divider = null; f.remove(); }
+                const f = list.querySelector('[data-id]'); firstId = f ? Number(f.dataset.id) : firstId; noOlder = false;
+            }
+            quiet.hidden = list.children.length > 0;
+            if (fresh.length && !initial && (scroll || keep)) toEnd(true);
+            return fresh.length;
+        }
+        /** Older lines above the first one, the scroll kept where it was. */
+        async function loadOlder() {
+            if (busyOlder || noOlder || !firstId) return;
+            busyOlder = true; older.classList.add('is-busy');
+            try {
+                const d = await chatCall(`/api/chat/global/history?limit=30&before=${firstId}`);
+                const rows = (d && Array.isArray(d.messages) ? d.messages : []).filter(shown).sort(byId);
+                if (!d || !d.more || !rows.length) noOlder = true;
+                const el = sc(); const h0 = el ? el.scrollHeight : 0, t0 = el ? el.scrollTop : 0;
+                const frag = document.createDocumentFragment();
+                for (const m of rows) { if (Number(m.id) >= firstId) continue; const r = rowOf(m); r.dataset.id = String(m.id); frag.append(r); }
+                list.insertBefore(frag, list.firstChild);
+                if (rows.length) firstId = Math.min(firstId, ...rows.map((m) => Number(m.id)));
+                remember(rows);
+                if (el) el.scrollTop = t0 + (el.scrollHeight - h0);
+            } catch { /* the next scroll up tries again */ }
+            busyOlder = false; older.classList.remove('is-busy');
+        }
+        /** More of what came after (a long absence: a hundred at a time, as you reach the end). */
+        async function loadAfter() {
+            if (busyAfter || !lastId) return;
+            busyAfter = true;
+            try {
+                const d = await chatCall(`/api/chat/global/history?after_id=${lastId}&limit=100`);
+                addRows(d && d.messages);
+                moreAfter = !!(d && d.complete === false);
+            } catch { /* the next tick tries again */ }
+            busyAfter = false;
+            update();
+        }
+        /** Read down to a line: it and everything above it stop being new, here and in the Global count. */
+        function readUpTo(id) {
+            if (id > readTo) { readTo = id; markRead(id); }
+            for (const [k, el] of unread) {
+                if (k > readTo) continue;
+                el.classList.remove('is-unread'); el.classList.add('is-read');
+                unread.delete(k); onScreen.delete(el); if (io) io.unobserve(el);
+            }
+            update();
+        }
+        async function markAll() {
+            if (divider) { const d = divider; divider = null; d.classList.add('is-done'); setTimeout(() => d.remove(), motionOff() ? 0 : 360); }
+            if (!moreAfter) { readUpTo(lastId); markRead(lastId, true); return; }
+            // More waited than one page holds: read is the present. Global starts again from its newest lines.
+            const d = await chatCall('/api/chat/global/history?limit=30').catch(() => null);
+            const rows = d && Array.isArray(d.messages) ? d.messages : [];
+            const top = Math.max(lastId, Number(d && d.latest_id) || 0, ...rows.map((m) => Number(m.id) || 0));
+            for (const el of unread.values()) if (io) io.unobserve(el);
+            unread.clear(); onScreen.clear();
+            list.textContent = ''; lastId = 0; firstId = 0; moreAfter = false; noOlder = false;
+            readTo = top; markRead(top, true);
+            addRows(rows, { initial: true });
+            update(); toEnd(false);
+        }
+        /** What is seen counts once the screen has held still a moment (a fast flick past is not reading). */
+        function settle() {
+            clearTimeout(dwell);
+            if (!onScreen.size) return;
+            dwell = setTimeout(() => {
+                if (document.visibilityState !== 'visible' || !box.isConnected) return;
+                let best = 0;
+                for (const el of onScreen) best = Math.max(best, Number(el.dataset.id) || 0);
+                if (best) readUpTo(best);
+            }, 450);
+        }
+        function watch() {
+            const el = sc();
+            if (!el || io || typeof IntersectionObserver !== 'function') return;
+            // The box at the bottom and the pill cover the last 64 px: a line under them is not on screen yet.
+            io = new IntersectionObserver((entries) => {
+                for (const e of entries) { if (e.isIntersecting && e.intersectionRatio >= 0.5) onScreen.add(e.target); else onScreen.delete(e.target); }
+                settle();
+            }, { root: el, rootMargin: '0px 0px -64px 0px', threshold: [0, 0.5, 1] });
+            for (const r of unread.values()) io.observe(r);
+            topIo = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) loadOlder(); }, { root: el, rootMargin: '240px 0px 0px 0px' });
+            topIo.observe(older);
+            const onScroll = () => {
+                if (!box.isConnected) { el.removeEventListener('scroll', onScroll); return; }
+                cancelAnimationFrame(frame); frame = requestAnimationFrame(update);
+                if (moreAfter && nearEnd()) loadAfter();
+            };
+            el.addEventListener('scroll', onScroll, { passive: true });
+            const onShow = () => {
+                if (!box.isConnected) { document.removeEventListener('visibilitychange', onShow); return; }
+                if (document.visibilityState === 'visible') settle();
+            };
+            document.addEventListener('visibilitychange', onShow);
+        }
+        /** The Global count and the pill, from what is still new. */
+        function update() {
+            const n = unread.size;
+            setGlobalCount(n, moreAfter);
+            const el = sc();
+            // The pill shows while a new line is still under the box at the bottom (or more wait to load), and counts
+            // every line not read yet, the same number as the Global count.
+            let first = null;
+            if (el && n) {
+                const edge = el.getBoundingClientRect().bottom - 64;
+                for (const r of unread.values()) if (r.getBoundingClientRect().bottom > edge) { first = r; break; }
+            }
+            const wantPill = n > 0 && (!!first || moreAfter);
+            if (wantPill) {
+                const text = `${n}${moreAfter ? '+' : ''} new message${n === 1 && !moreAfter ? '' : 's'}`;
+                if (jumpN.textContent !== text) { const was = jumpN.textContent; jumpN.textContent = text; if (was) { jumpN.classList.remove('is-tick'); void jumpN.offsetWidth; jumpN.classList.add('is-tick'); } }
+                jumpGo.setAttribute('aria-label', `${text}: go to them`);
+            }
+            if (wantPill !== !jump.hidden) jump.hidden = !wantPill;
+            jump.dataset.first = first ? first.dataset.id : '';
+        }
+        jumpGo.addEventListener('click', () => {
+            const el = sc(); if (!el) return;
+            const r = jump.dataset.first ? list.querySelector(`[data-id="${CSS.escape(jump.dataset.first)}"]`) : null;
+            if (r) scrollTo(el.scrollTop + r.getBoundingClientRect().top - el.getBoundingClientRect().top - el.clientHeight * 0.2, true);
+            else { toEnd(true); if (moreAfter) loadAfter(); }
+        });
+        jumpRead.addEventListener('click', () => { markAll(); jump.hidden = true; });
         function poll() {
             clearTimeout(timer);
             timer = setTimeout(async () => {
-                if (!box.isConnected) return;   // the pane was left: stop
-                if (document.visibilityState === 'visible' && lastId) {
-                    try { const d = await chatCall(`/api/chat/global/history?after_id=${lastId}&limit=50`); addRows(d && d.messages); } catch { /* the next tick tries again */ }
+                if (!box.isConnected) { flushRead(false); return; }   // the pane was left: stop
+                if (document.visibilityState === 'visible' && lastId && !busyAfter) {
+                    busyAfter = true;
+                    try {
+                        const d = await chatCall(`/api/chat/global/history?after_id=${lastId}&limit=100`);
+                        if (addRows(d && d.messages)) update();
+                        if (d && d.complete === false) moreAfter = true;
+                    } catch { /* the next tick tries again */ }
+                    busyAfter = false;
                 }
                 poll();
             }, 5000);
         }
+        /** Open where you stopped: the line under what you read last, a little of that above it. */
+        function place() {
+            const el = sc(); if (!el) return;
+            if (divider) {
+                const want = el.scrollTop + divider.getBoundingClientRect().top - el.getBoundingClientRect().top - Math.min(el.clientHeight * 0.22, 140);
+                el.scrollTop = Math.max(0, want);
+            } else el.scrollTop = el.scrollHeight;
+        }
         // The cards' module loads with the pane (a run of deploys folds into one card).
         const cardsJob = loadCards();
-        function load() {
-            if (!wait.isConnected) box.insertBefore(wait, list);
+        async function load() {
+            if (!wait.isConnected) box.insertBefore(wait, older);
             const failed = box.querySelector('.ovdk-gl-fail'); if (failed) failed.remove();
-            Promise.all([chatCall('/api/chat/global/history?limit=30'), cardsJob.catch(() => false)]).then(([d]) => {
+            const cached = chats.glMsgs && chats.glMsgs.length && Date.now() - (chats.glAt || 0) < 10 * 60000 ? chats.glMsgs.slice() : null;
+            try {
+                const [mk] = await Promise.all([readMark(), cardsJob.catch(() => false)]);
+                readTo = mk.id || 0;
+                let rows;
+                if (cached && (!readTo || readTo >= Number(cached[0].id))) rows = cached;
+                else if (!readTo) rows = ((await chatCall('/api/chat/global/history?limit=30')) || {}).messages || [];
+                else {
+                    const [b, a] = await Promise.all([chatCall(`/api/chat/global/history?limit=15&before=${readTo + 1}`), chatCall(`/api/chat/global/history?after_id=${readTo}&limit=100`)]);
+                    rows = [...((b && b.messages) || []), ...((a && a.messages) || [])];
+                    moreAfter = !!(a && a.complete === false);
+                }
                 wait.remove();
-                addRows(d && d.messages, { scroll: true });
+                // Never read here before: nothing is new yet (the newest lines, the end in view; from now on, the mark).
+                if (!readTo) { const ids = rows.filter(shown).map((m) => Number(m.id)); readTo = ids.length ? Math.max(...ids) : 0; if (readTo) markRead(readTo); }
+                addRows(rows, { initial: true });
                 quiet.hidden = list.children.length > 0;
+                requestAnimationFrame(() => { place(); watch(); update(); requestAnimationFrame(update); });
+                if (cached && rows === cached) loadAfter();
                 poll();
-            }).catch(() => {
+            } catch {
                 wait.remove();
+                if (list.children.length) { poll(); return; }
                 const none = h('div', 'ovdk-none ovdk-gl-fail'); none.append(h('b', '', 'Global chat did not load'), document.createTextNode('Check your connection and try again.'));
                 const again = h('button', 'ovdk-none-go', 'Try again'); again.type = 'button'; again.addEventListener('click', load);
                 none.append(again); box.insertBefore(none, list);
-            });
+            }
         }
         say.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -964,8 +1276,9 @@
             try {
                 await chatCall('/api/chat/send', { method: 'POST', body: JSON.stringify({ message: text }) });
                 field.value = '';
-                const d = await chatCall(`/api/chat/global/history?after_id=${lastId}&limit=50`).catch(() => null);
+                const d = await chatCall(`/api/chat/global/history?after_id=${lastId}&limit=100`).catch(() => null);
                 addRows(d && d.messages, { scroll: true });
+                markAll();   // saying something is being caught up
             } catch (err) {
                 sayNote.hidden = false;
                 sayNote.textContent = err && err.status === 401 ? 'Sign in to say something.' : (err && err.message) || 'That did not send.';
