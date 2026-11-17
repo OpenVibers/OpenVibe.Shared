@@ -214,7 +214,7 @@ html[data-ov-motion=off] .ov-icon .ovi-comet{display:none}`;
         // network: the glyph nodes
         network: '<circle cx="12" cy="5.2" r="3"/><circle cx="5.6" cy="18" r="3"/><circle cx="18.4" cy="18" r="3"/><path class="ln" d="M10.9 7.6L6.8 15.5M13.1 7.6l4.1 7.9M8.4 18h7.1"/>',
         // live: the glyph live
-        live: '<circle cx="12" cy="12" r="2.5"/><path class="ln" d="M8.5 8.5a4.9 4.9 0 0 0 0 6.9M15.5 8.5a4.9 4.9 0 0 1 0 6.9M6.2 6.2a8.2 8.2 0 0 0 0 11.5M17.8 6.2a8.2 8.2 0 0 1 0 11.5"/>',
+        live: '<circle cx="12" cy="12" r="2.5"/><path class="ln" d="M8.5 8.55a4.9 4.9 0 0 0 0 6.9M15.5 8.55a4.9 4.9 0 0 1 0 6.9M6.2 6.25a8.2 8.2 0 0 0 0 11.5M17.8 6.25a8.2 8.2 0 0 1 0 11.5"/>',
         // tools: the glyph wrench
         tools: '<path d="M14.9 2.5a6 6 0 0 0-5.5 8.3L2.7 17.5V21.3H6.5l6.7-6.7a6 6 0 0 0 8.3-5.5l-3.5 1.3l-2.9-2.9l1.3-3.5Z"/>',
         // media: the glyph film
