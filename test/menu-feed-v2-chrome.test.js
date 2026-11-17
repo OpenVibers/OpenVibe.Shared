@@ -96,6 +96,16 @@ const server = http.createServer((req, res) => {
         assert.ok(await until(p, `!!document.getElementById('openvibe-burger')`), 'the navbar is up');
         await p.evaluate(`document.getElementById('openvibe-burger').click(), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open [data-tab="feed"]')`), 'the menu opened');
+        // What happened to the menu, for a failure's message: on macOS CI the menu has been found closed after Escape
+        // closed only the comment sheet, and the next page never came (11-14 … 11-16). Every event that can close it
+        // (popstate, focus, resize, page hide) and the moment it lost is-open, with times.
+        await p.evaluate(`(() => { const t0 = performance.now(); window.__menuEv = []; const at = () => Math.round(performance.now() - t0);
+            ['popstate', 'blur', 'focus', 'resize', 'pagehide', 'visibilitychange', 'hashchange'].forEach((n) => window.addEventListener(n, () => window.__menuEv.push(n + '@' + at()), true));
+            document.addEventListener('keydown', (e) => window.__menuEv.push('key:' + e.key + (e.defaultPrevented ? ':prevented' : '') + '@' + at()));
+            const o = document.querySelector('.ovs');
+            new MutationObserver(() => window.__menuEv.push((o.classList.contains('is-open') ? 'open' : 'closed') + '@' + at() + (history.state ? ':' + JSON.stringify(history.state) : ''))).observe(o, { attributes: true, attributeFilter: ['class'] });
+            return true; })()`);
+        const menuEvents = async () => p.evaluate(`JSON.stringify({ ev: (window.__menuEv || []).slice(-24), open: !!document.querySelector('.ovs.is-open'), url: location.pathname + location.hash, len: history.length })`);
         await p.evaluate(`document.querySelector('.ovs [data-tab="feed"]').click(), true`);
         assert.ok(await until(p, `document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length >= 12`), 'the feed painted');
         // 4.250.0: the cards a person saw count as views: after a second half on screen, one beacon to the Network.
@@ -124,7 +134,7 @@ const server = http.createServer((req, res) => {
         assert.ok(sheet.wide <= 390, 'nothing off the screen');
         await p.evaluate("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })), true");
         assert.ok(await until(p, "!document.querySelector('.ovfd-sheet-wrap')"), 'Escape closes it');
-        assert.ok(await p.evaluate("!!document.querySelector('.ovs.is-open')"), 'and the menu stays');
+        assert.ok(await p.evaluate("!!document.querySelector('.ovs.is-open')"), `and the menu stays (${await menuEvents()})`);
         const first = await p.evaluate(`({ chips: [...document.querySelectorAll('.ovfd-chip')].map((b) => b.textContent), selected: (document.querySelector('.ovfd-chip[aria-selected=true]') || {}).textContent,
             kinds: [...new Set([...document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a')].map((a) => a.className))], live: !!document.querySelector('.ovfd-livechip'), media: document.querySelectorAll('.ovfd-media img').length,
             bolds: document.querySelectorAll('.ovfd-list b b').length, posts: [...document.querySelectorAll('.ovfd-k-post .ovfd-title')].map((b) => b.textContent)[0],
@@ -142,7 +152,8 @@ const server = http.createServer((req, res) => {
         // intersection: #542 and #544 on 11-14), as a person keeps scrolling.
         // 4.266.0: the end is brought into view by whatever scrolls (the list or the page), as a person's scroll does.
         assert.ok(await until(p, `(() => { const l = document.querySelector('.ovs-list'); l.scrollTop = l.scrollHeight; const m = document.querySelector('.ovfd-more'); if (m) m.scrollIntoView({ block: 'end' });
-            return document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length >= 24; })()`, 30000), 'the next page loads as the end comes near');   // 30 s: macOS CI missed 12 s on 11-16 (4.287.0)
+            return document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length >= 24; })()`, 30000),
+            `the next page loads as the end comes near (${await p.evaluate(`JSON.stringify({ cards: document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length, more: !!document.querySelector('.ovfd-more'), caught: !!document.querySelector('.ovfd-caught'), calls: (window.__feedCalls || []).slice(-4) })`)} ${await menuEvents()})`);   // 30 s: macOS CI missed 12 s on 11-16 (4.287.0)
         assert.ok(await until(p, `!!document.querySelector('.ovfd-caught')`), 'the end says so');
         await p.evaluate(`[...document.querySelectorAll('.ovfd-chip')].find((b) => b.textContent === 'Clips').click(), true`);
         assert.ok(await until(p, `(window.__feedCalls || []).some((u) => u.includes('kind=clip'))`), 'the chip asks for its kind');
