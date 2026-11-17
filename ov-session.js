@@ -1735,8 +1735,21 @@
             if (from !== 'person' && isAllowance(s.text)) return allowanceCard(s);
             const n = el('div', `ovse-say${s.status === 'running' ? ' is-writing' : ''}`);
             n.dataset.seq = String(s.seq);
-            if (s.author && s.author.name) n.append(el('small', 'ovse-author', s.author.name));
-            if (s.text) n.append(words(s.text, s.sources));
+            // 4.307.0 (rooms, plan §AD.25): in a group, why an agent spoke ("Review 1 of 2", "@design asked for changes")
+            // rides beside its name, and a reviewer's last word (APPROVED, a CHANGES list) or a builder's DONE is a chip,
+            // not a shouted word at the end of the text.
+            const said = groupWords(s);
+            if (s.author && s.author.name) {
+                const who = el('small', 'ovse-author', s.author.name);
+                if (said.why) who.append(el('i', 'ovse-why', said.why));
+                n.append(who);
+            }
+            if (said.text) n.append(words(said.text, s.sources));
+            if (said.chip) {
+                const c = el('span', `ovse-verdict is-${said.chip.tone}`); c.setAttribute('role', 'status');
+                c.append(svg(said.chip.glyph), el('span', '', said.chip.words));
+                n.append(c);
+            }
             if (s.ui && s.ui.type) { const render = cardRender(s.ui.type); if (render) { try { const c = render(s.ui.data || {}, s, { open }); if (c) { c.classList && c.classList.add('ovse-card'); n.append(c); } } catch { /* the words say it */ } } }
             if (Array.isArray(s.sources) && s.sources.length) {
                 const src = el('div', 'ovse-sources');
@@ -2021,7 +2034,36 @@
         }
         const groupId = () => (state.run && state.run.kind === 'group' ? String(state.run.id || String(state.ref || '').replace(/^group:/, '')) : null);
         const roleWords = (m) => (m.personal ? (m.owner_name ? ` · ${m.owner_name}'s own agent` : ' · someone\'s own agent')
-            : m.engine && m.engine.harness ? ` · ${m.engine.harness}` : m.harness ? ` · ${m.harness}` : m.engine && m.engine.kind === 'model' ? ' · one model' : '');
+            : m.engine && m.engine.specialist === 'design' ? ' · openvibe.design\'s rules and tools'
+            : m.engine && m.engine.harness ? ` · ${m.engine.harness}` : m.harness ? ` · ${m.harness}` : m.engine && m.engine.kind === 'model' ? ' · one model' : '') + (m.reviewer ? ' · reviews' : '');
+        /**
+         * A group message as a room shows it (4.307.0, plan §AD.25): its words without the trailing DONE or APPROVED,
+         * why the agent spoke, and a chip for the verdict (Approved; Asks for changes, with how many) or for DONE.
+         * Anything not in a group is shown as it was.
+         */
+        function groupWords(st) {
+            const text = st && st.text ? String(st.text) : '';
+            if (!state.run || state.run.kind !== 'group' || !st || st.from === 'person') return { text };
+            // Why it spoke, only where it says something the thread does not: a review's number, who asked for changes,
+            // a handoff, plainly coding words. A person's @mention or the lead answering needs no note.
+            const w = String(st.why || '');
+            const why = /^review (\d+) of (\d+)$/.test(w) ? w.replace(/^review (\d+) of (\d+)$/, 'Review $1 of $2')
+                : /asked for changes$/.test(w) ? w.slice(0, 80)
+                    : /^handed to /.test(w) ? 'A handoff'
+                        : /^the words are about code$/.test(w) ? 'About code' : '';
+            const approved = /(?:^|\s)APPROVED[.!]?\s*$/.test(text);
+            const changes = !approved && /(?:^|\n)\s*(?:\*\*)?CHANGES\b/.test(text);
+            const done = !approved && !changes && /(?:^|\s)DONE[.!]?\s*$/.test(text);
+            // The chip says the verdict, so the bare words go: a trailing APPROVED or DONE, and a CHANGES line's keyword.
+            const shown = text.replace(/\s*(?:APPROVED|DONE)[.!]?\s*$/, '').replace(/(^|\n)[ \t]*(?:\*\*)?CHANGES(?:\*\*)?:?[ \t]*(?=\n|$)/, '$1').trim();
+            if (approved) return { text: shown, why, chip: { tone: 'ok', glyph: 'check', words: 'Approved' } };
+            if (changes) {
+                const asks = (text.split(/(?:^|\n)\s*(?:\*\*)?CHANGES\b/)[1] || '').split('\n').filter((l) => /^\s*\d+[.)]\s+\S/.test(l)).length;
+                return { text: shown, why, chip: { tone: 'warn', glyph: 'edit', words: asks ? `Asks for ${asks} change${asks === 1 ? '' : 's'}` : 'Asks for changes' } };
+            }
+            if (done) return { text: shown, why, chip: { tone: 'done', glyph: 'check', words: 'Done' } };
+            return { text, why };
+        }
         // A handle for one of your agents from its name: how people @mention it (2–24 letters, digits, - or _).
         const handleFor = (name, taken) => {
             let h = String(name || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9_-]+/g, '-').replace(/^[^a-z]+/, '').replace(/-+$/, '').slice(0, 20) || 'agent';
@@ -2162,12 +2204,34 @@
         }
         let canGroup = null;
         const groupsAllowed = () => (canGroup !== null ? Promise.resolve(canGroup) : tokenOf() ? api('/groups').then((j) => (canGroup = !!(j && j.can_start))).catch(() => (canGroup = false)) : Promise.resolve(false));
+        // 4.307.0 (rooms, plan §AD.25): a group starts from a recipe. The presets come from the Frame (/groups/presets);
+        // a recipe names their handles and a role, and one whose presets are missing falls back to the defaults.
+        const RECIPES = [
+            { id: 'room', name: 'Actor, Codes and Design', line: 'Actor leads, Codes builds, Design reviews what is built', icon: 'members', title: 'A group', agents: null },
+            { id: 'review', name: 'Build, then review', line: 'Codes builds; Design and Codex look at it at once; Codes fixes until both approve', icon: 'code', title: 'Build and review',
+                agents: [['actor', { lead: true }], ['codes', {}], ['design', { reviewer: true }], ['codex-review', { reviewer: true }]] },
+            { id: 'critics', name: 'A panel of critics', line: 'Design leads; Claude Code, Muse and one model each give their own view. Ask @all', icon: 'edit', title: 'Design review',
+                agents: [['design', { lead: true, reviewer: false }], ['claude-review', {}], ['muse-review', {}], ['model-review', {}]] },
+        ];
         async function startGroup(btnEl) {
-            if (btnEl) btnEl.disabled = true;
-            try {
-                const made = await api('/groups', { method: 'POST', body: JSON.stringify({ title: 'A group' }) });
-                open(`group:${made.id}`);
-            } catch (err) { if (btnEl) btnEl.disabled = false; flash((err && err.message) || 'The group did not start.'); }
+            const make = async (recipe) => {
+                if (btnEl) btnEl.disabled = true;
+                try {
+                    let agents = null;
+                    if (recipe.agents) {
+                        const presets = await api('/groups/presets').then((j) => (j && Array.isArray(j.agents) ? j.agents : []), () => []);
+                        const picked = recipe.agents.map(([handle, role]) => { const a = presets.find((x) => x.handle === handle); return a ? { ...a, ...role } : null; });
+                        if (picked.every(Boolean)) agents = picked;
+                    }
+                    const made = await api('/groups', { method: 'POST', body: JSON.stringify({ title: recipe.title, ...(agents ? { agents } : {}) }) });
+                    open(`group:${made.id}`);
+                } catch (err) { if (btnEl) btnEl.disabled = false; flash((err && err.message) || 'The group did not start.'); }
+            };
+            const P = await need(o, 'ov-picker.js', 'OpenVibePicker');
+            if (!P || typeof P.open !== 'function') { make(RECIPES[0]); return; }
+            P.open({ anchor: btnEl || main, title: 'Start a group', value: 'room',
+                sections: [{ title: '', rows: RECIPES.map((r) => ({ id: r.id, name: r.name, line: r.line, icon: r.icon })) }],
+                onPick: (row) => { const r = RECIPES.find((x) => x.id === row.id); if (r) make(r); } });
         }
 
         function paintCtx() {
@@ -3077,6 +3141,16 @@ html[data-ov-motion="off"] .ovse-sb-pane, html[data-ov-motion="off"] .ovse-sb-li
 .ovse-me.is-failed .ovse-queued { color: var(--danger, #ef4444); }
 .ovse-say { min-width: 0; overflow-wrap: anywhere; animation: ovse-in .3s cubic-bezier(.2,.8,.2,1) both; }
 .ovse-author { display: block; margin-bottom: 2px; color: var(--ovse-mute); font-size: 12px; font-weight: 600; }
+/* 4.307.0: rooms — why an agent spoke, and a reviewer's verdict */
+.ovse-why { margin-left: 6px; font-style: normal; font-weight: 600; color: var(--ovse-mute); opacity: .85; }
+.ovse-why::before { content: "·"; margin-right: 6px; }
+.ovse-verdict { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; min-height: 28px; padding: 0 11px 0 9px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 750; color: var(--ovse-dim); background: color-mix(in srgb, var(--ovse-fg) 7%, transparent);
+  animation: ovse-in .36s cubic-bezier(.2,.8,.2,1) both; }
+.ovse-verdict .ovse-g { width: 16px; height: 16px; }
+.ovse-verdict.is-ok { color: var(--success, #22c55e); background: color-mix(in srgb, var(--success, #22c55e) 14%, transparent); }
+.ovse-verdict.is-warn { color: var(--warning, #f5a524); background: color-mix(in srgb, var(--warning, #f5a524) 14%, transparent); }
+.ovse-verdict.is-done { color: var(--ovse-acc2); background: color-mix(in srgb, var(--ovse-acc) 13%, transparent); }
 .ovse-words > :first-child { margin-top: 0; } .ovse-words > :last-child { margin-bottom: 0; }
 .ovse-words p { margin: 0 0 10px; } .ovse-words .ovse-h { font-weight: 700; margin-top: 14px; }
 .ovse-words ul, .ovse-words ol { margin: 0 0 10px; padding-left: 22px; } .ovse-words li { margin: 3px 0; }

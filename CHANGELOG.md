@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.307.0 — 2026-11-17
+
+- **Rooms: a group reads as a studio** (plan §AD.25; the owner, 11-17: "have claude code work on the code and
+  interface and then have muse and codex or API analyze and review the gui and critique it … a Design bot as a default
+  next to Actor and Codes").
+  - **Each agent's message says why it spoke, beside its name**, where that adds something: "Review 1 of 2",
+    "@design asked for changes", a handoff, "About code".
+  - **A reviewer's last word is a chip:** Approved, or "Asks for 2 changes" with the numbered asks kept as a list. A
+    builder's DONE is a Done chip. The bare APPROVED, DONE and CHANGES words are no longer shouted at the end of the text.
+  - **The members sheet says who reviews,** and that Design works with openvibe.design's rules and tools.
+  - **Start a group offers three recipes,** built from the Frame's presets:
+    - **Actor, Codes and Design:** the defaults.
+    - **Build, then review:** Actor leads; Codes builds; Design and the Codex critic review at once, and Codes fixes
+      them, again and again, if they ask for changes, to the point where both approve.
+    - **A panel of critics:** Design leads; Claude Code, Muse and one model each give their own view.
+  - `test/session-rooms-chrome.test.js` covers all of it at 390 px.
+
 ## 4.306.0 — 2026-11-17
 
 - **Usage: what a session used, and what you have left** (the owner, 11-17, on the Vibe session: "display usage stats
