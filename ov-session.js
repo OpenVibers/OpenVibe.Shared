@@ -1057,7 +1057,7 @@
             const usd = Math.max(Number(r && r.cost && r.cost.usd) || 0, u.usd);
             const bits = [];
             if (u.tokens > 0) bits.push(`${shortN(Math.round(u.tokens))} tokens`);
-            if (usd > 0) bits.push(moneyWord(usd));
+            if (usd > 0) bits.push(spent({ usd }));
             return bits.length ? bits.join(' · ') : spent(r && r.cost);
         }
         /** Top up (the Wallet's own sheet, else its page); `close` ends the sheet it was opened from. */
@@ -1445,7 +1445,7 @@
             const [word, tone] = STATUS[r.status] || ['', 'off'];
             statN.className = `ovse-stat is-${tone}`;
             // The line's nodes stay (it repaints every second while live, and a button rebuilt under a finger loses the tap).
-            if (!statN.querySelector('.ovse-stat-t')) { statN.textContent = ''; statN.append(el('i', 'ovse-dot'), el('span', 'ovse-stat-t'), el('span', 'ovse-stat-sep', '·'), useB); }
+            if (!statN.querySelector('.ovse-stat-t')) { statN.textContent = ''; statN.append(el('i', 'ovse-dot'), el('span', 'ovse-stat-t'), el('span', 'ovse-stat-sep', ' · '), useB); }
             const bits = [needsYou(r) ? WAITING[r.waiting.for] || word : word];
             const startT = ms(r.started_at || r.created_at), endT = ms(r.ended_at) || (isEnd(r) ? ms(r.updated_at) : 0);
             if (startT && (isLive(r) || endT)) bits.push(clock(((endT || Date.now()) - startT) / 1000));

@@ -77,7 +77,7 @@ const SHEET = `(() => { const s = document.querySelector('.ovse-sheet.is-in'); i
         assert.deepStrictEqual(sh.heads, ['Who works', 'How it\'s paid', 'Where it runs', 'Sign-ins']);
         assert.deepStrictEqual(sh.rows, [
             ['Juniper', ''], ['Codes', ''], ['Claude Code', 'Ready'], ['Codex', 'Set it up'],
-            ['Free AI', 'Daily'], ['Your Balance', '$12.34'], ['Your own AI key', ''],
+            ['What you used', ''], ['Free AI', 'Daily'], ['Your Balance', '$12.34'], ['Your own AI key', ''],
             ['Studio PC', 'Online'], ['Old laptop', 'Offline'], ['A shared node', ''], ['Add another computer', ''], ['Shared nodes and your computers', ''],
             ['Sign-ins for your agents', ''],
         ]);
