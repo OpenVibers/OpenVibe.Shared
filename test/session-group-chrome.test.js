@@ -44,9 +44,10 @@ const server = http.createServer((req, res) => {
         return res.end(fs.readFileSync(path.join(root, p.slice(1))));
     }
     if (p === '/api/frame/groups' && req.method === 'GET') return json(res, 200, { groups: [], can_start: true });
+    if (p === '/api/frame/actor/faces') return json(res, 200, { agents: [{ id: 'agt_01J0SC0VT0000000000000000Z', name: 'Scout Bot', glyph: 'spark', hue: 200, state: 'resting' }, { id: 'not-an-agent', name: 'Nope' }] });
     if (p === '/api/frame/groups/presets') return json(res, 200, { agents: [{ handle: 'opencode', name: 'Codes · OpenCode', product: 'codes', harness: 'opencode', line: 'Codes on the OpenCode harness' }] });
     if (p === '/api/frame/groups/g1/members' && req.method === 'POST') {
-        let raw = ''; req.on('data', (c) => { raw += c; }); req.on('end', () => { const b = JSON.parse(raw || '{}'); added.push(b); members = [...members, { id: `agent:${b.agent.handle}`, kind: 'agent', name: b.agent.name, handle: b.agent.handle, product: b.agent.product, harness: b.agent.harness }]; json(res, 201, { members }); });
+        let raw = ''; req.on('data', (c) => { raw += c; }); req.on('end', () => { const b = JSON.parse(raw || '{}'); added.push(b); members = [...members, { id: `agent:${b.agent.handle}`, kind: 'agent', name: b.agent.name, handle: b.agent.handle, product: b.agent.product, harness: b.agent.harness, ...(b.agent.agent ? { personal: true, owner_name: 'Ada' } : {}) }]; json(res, 201, { members }); });
         return undefined;
     }
     if (p === '/api/frame/runs') return json(res, 200, { runs: [{ id: 'g1', ref: 'group:g1', kind: 'group', title: 'Launch room', status: 'running', updated_at: new Date().toISOString(), agent: { id: 'group', name: 'Launch room', product: 'group' } }] });
@@ -106,6 +107,19 @@ const server = http.createServer((req, res) => {
                 await p.evaluate("document.querySelector('.ovse-gsheet button.ovse-gfile').click()");
                 await until(p, "[...document.querySelectorAll('.ovse-gm-face')].some((x) => x.dataset.handle === 'opencode')");
                 assert.deepStrictEqual(added[0].agent.handle, 'opencode');
+                // Your own agent (Network #1070): listed with its face, added by its agt_ id with a handle from its name.
+                await p.evaluate("[...document.querySelectorAll('.ovse-group-b')].find((b) => /Add/.test(b.textContent)).click()");
+                await until(p, "!!document.querySelector('.ovse-gsheet .ovse-gyours')");
+                assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovse-gsheet .ovse-gyours b')].map((b) => b.textContent)"), ['Scout Bot · @scout-bot'], 'only real agt_ ids, named for @');
+                assert.ok(await p.evaluate("!!document.querySelector('.ovse-gsheet .ovse-gyours .ovse-face')"), 'with its face');
+                await p.evaluate("document.querySelector('.ovse-gsheet .ovse-gyours').click()");
+                // Six faces show; the seventh member is the +1 and the count.
+                await until(p, "document.querySelector('.ovse-group-count').textContent === '2 people · 5 agents'");
+                assert.deepStrictEqual(added[1].agent, { product: 'actor', agent: 'agt_01J0SC0VT0000000000000000Z', name: 'Scout Bot', handle: 'scout-bot' });
+                await p.evaluate("document.querySelector('.ovse-group-faces').click()");
+                await until(p, "!!document.querySelector('.ovse-gsheet .ovse-gmember')");
+                assert.ok(await p.evaluate("[...document.querySelectorAll('.ovse-gsheet .ovse-gmember')].some((r) => /Ada's own agent/.test(r.textContent))"), 'whose agent it is');
+                await p.evaluate("document.querySelector('.ovse-gsheet .ovse-ib').click()");
             }
             assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), w, 'no sideways scroll');
             assert.deepStrictEqual(errors, [], 'no page errors');

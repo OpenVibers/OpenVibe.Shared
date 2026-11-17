@@ -1753,7 +1753,16 @@
             road.title = r.say;
         }
         const groupId = () => (state.run && state.run.kind === 'group' ? String(state.run.id || String(state.ref || '').replace(/^group:/, '')) : null);
-        const roleWords = (m) => (m.engine && m.engine.harness ? ` · ${m.engine.harness}` : m.harness ? ` · ${m.harness}` : m.engine && m.engine.kind === 'model' ? ' · one model' : '');
+        const roleWords = (m) => (m.personal ? (m.owner_name ? ` · ${m.owner_name}'s own agent` : ' · someone\'s own agent')
+            : m.engine && m.engine.harness ? ` · ${m.engine.harness}` : m.harness ? ` · ${m.harness}` : m.engine && m.engine.kind === 'model' ? ' · one model' : '');
+        // A handle for one of your agents from its name: how people @mention it (2–24 letters, digits, - or _).
+        const handleFor = (name, taken) => {
+            let h = String(name || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9_-]+/g, '-').replace(/^[^a-z]+/, '').replace(/-+$/, '').slice(0, 20) || 'agent';
+            if (h.length < 2) h = `${h}-a`;
+            let out = h; let n = 2;
+            while (taken.has(out)) out = `${h}${n++}`;
+            return out;
+        };
         function memberFace(m, i = 0) {
             const dot = el('i', `ovse-gm-face is-${m.kind === 'agent' ? 'agent' : 'person'}`); dot.style.setProperty('--i', String(i));
             dot.dataset.handle = m.handle || '';
@@ -1840,6 +1849,25 @@
                     });
                     if (!agentsBox.childElementCount) agentsBox.append(el('p', 'ovse-gsheet-empty', 'Every agent role is already here.'));
                 }).catch(() => { agentsBox.append(el('p', 'ovse-gsheet-empty', 'The agents could not be listed right now.')); });
+                // Your own Actor agents (Network #1070): each brings its own instructions, memory and engine, and answers you.
+                const yoursBox = el('div', 'ovse-gsheet-list');
+                sh.insertBefore(el('small', 'ovse-gsheet-l', 'Your agents'), note); sh.insertBefore(yoursBox, note);
+                api('/actor/faces').then((j) => {
+                    const taken = new Set((state.run.members || []).map((m) => m.handle));
+                    const here = new Set((state.run.members || []).filter((m) => m.personal).map((m) => m.name));
+                    (Array.isArray(j && j.agents) ? j.agents : []).filter((a) => /^agt_[0-9A-Z]{26}$/.test(String(a.id || '')) && !here.has(a.name)).slice(0, 20).forEach((a) => {
+                        const handle = handleFor(a.name, taken); taken.add(handle);
+                        const b = btn('ovse-gfile ovse-gyours', `Add ${a.name}`, null, '');
+                        const t = el('span'); t.append(el('b', '', `${a.name} · @${handle}`), el('small', '', 'Your own agent: its instructions, memory and engine come with it'));
+                        b.append(face({ agent: a }, 's'), t);
+                        b.addEventListener('click', async () => {
+                            b.disabled = true;
+                            try { done(await api(`/groups/${encodeURIComponent(id)}/members`, { method: 'POST', body: JSON.stringify({ agent: { product: 'actor', agent: a.id, name: String(a.name || '').slice(0, 60), handle } }) })); } catch (er) { b.disabled = false; fail(er); }
+                        });
+                        yoursBox.append(b);
+                    });
+                    if (!yoursBox.childElementCount) yoursBox.append(el('p', 'ovse-gsheet-empty', 'No agents of your own here yet: make one on OpenVibe.Actor.'));
+                }).catch(() => { yoursBox.append(el('p', 'ovse-gsheet-empty', 'Your agents could not be listed right now.')); });
             }
             main.append(sh);
         }

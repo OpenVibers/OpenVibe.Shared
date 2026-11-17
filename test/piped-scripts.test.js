@@ -21,7 +21,18 @@ for (const file of PIPED) {
 }
 // Piped, from another directory, the way CI runs them (stdin is the script; the repository is the argument).
 const run = (file, args) => execFileSync(process.execPath, ['-', ...args], { input: fs.readFileSync(path.join(root, 'scripts', file)), cwd: require('os').tmpdir(), encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
-assert.match(run('pin-drift.js', [root]), /pin-drift: \d+ pin\(s\)/, 'pin-drift.js runs piped');
+// Offline (the forge's test sandbox, OV_SANDBOX_OFFLINE=1) pin-drift loads and then cannot read GitHub's tags: still piped.
+{
+    let pd;
+    try { pd = run('pin-drift.js', [root]); } catch (err) {
+        if (process.env.OV_SANDBOX_OFFLINE !== '1') throw err;
+        pd = String(err.stdout || '') + String(err.stderr || '');
+        assert.doesNotMatch(pd, /Cannot find module/, 'pin-drift.js loads piped');
+        assert.match(pd, /pin-drift: could not read tags/);
+        pd = 'pin-drift: 0 pin(s) (offline)';
+    }
+    assert.match(pd, /pin-drift: \d+ pin\(s\)/, 'pin-drift.js runs piped');
+}
 let out = '';
 try { out = run('docs-status.js', [root, '--check']); } catch (err) { out = String(err.stdout || '') + String(err.stderr || ''); }
 assert.ok(!/Cannot find module/.test(out), `docs-status.js runs piped (${out.slice(0, 300)})`);
