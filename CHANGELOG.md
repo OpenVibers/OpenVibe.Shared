@@ -1,5 +1,25 @@
 # Changelog
 
+## 4.305.0 — 2026-11-17
+
+- **The picker is light at any size** (the owner's phone, 11-17, on the Vibe menu's model sheet: "Picker is very
+  unoptimized … lazy loading, asynchronous, dynamic loading … Search feature … less intensive").
+  - **Rows come as you scroll:** 40 are drawn at a time when the end of the list comes near (an IntersectionObserver),
+    and rows off screen skip layout (`content-visibility`).
+  - **One listener on the list** serves every row, and moving the active row touches two rows, not all of them.
+  - **Search:** each row's search text is made once. A query keeps the rows that hold every word, ranks the whole
+    phrase in the name first, and redraws at most once a frame.
+  - **Arrows and the chosen row:** the arrows draw ahead past the drawn rows, and a chosen row far down opens drawn
+    and focused.
+  - **The list can come later** (`opts.load`): the sheet opens at once with the OpenVibe mark busy. Words typed while
+    it loads are kept and applied when the rows arrive.
+  - **Measured at 390 px with 2,000 rows:** it opens in 30–36 ms instead of 700–743 ms, with 40 rows built instead of
+    2,000; a broad search takes 19–27 ms instead of 82–111.
+- **The session's model sheet opens at once** (`ov-session.js`): it no longer waits for `/choices` before showing. The
+  catalog is asked once, fetched while the page is idle, shared by every open, and kept ten minutes in the tab's
+  sessionStorage.
+- `test/ov-picker-big-chrome.test.js` covers all of it in a real Chrome.
+
 ## 4.304.0 — 2026-11-17
 
 - **A day's header goes with its last alert** (the owner's phone, 11-17: "These dates don't clear when you swipe
