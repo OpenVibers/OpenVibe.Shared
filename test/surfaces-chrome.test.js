@@ -77,9 +77,12 @@ const server = http.createServer((req, res) => {
         let adopted = false;
         for (let i = 0; i < 60 && !adopted; i++) { adopted = await p.evaluate('document.querySelector("#sheet").open && document.body.style.position === "fixed"'); if (!adopted) await new Promise((ok) => setTimeout(ok, 50)); }
         assert.strictEqual(adopted, true, 'the sheet opens again and locks the page');
-        await new Promise((ok) => setTimeout(ok, 60));
-        const head = await p.evaluate(`(() => { const r=document.querySelector('[data-ov-sheet-head]').getBoundingClientRect();
-            return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+        // The header where it comes to rest: the sheet slides up as it opens, and a slow runner touched where the header
+        // had been (macOS, 11-16). Two reads 50 ms apart that agree.
+        const headAt = () => p.evaluate(`(() => { const r=document.querySelector('[data-ov-sheet-head]').getBoundingClientRect();
+            return {x:Math.round(r.left+r.width/2),y:Math.round(r.top+r.height/2)}; })()`);
+        let head = await headAt();
+        for (let i = 0; i < 40; i++) { await new Promise((ok) => setTimeout(ok, 50)); const now = await headAt(); if (now.x === head.x && now.y === head.y) break; head = now; }
         await p.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [head] });
         await p.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: head.x, y: head.y + 130 }] });
         await p.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
