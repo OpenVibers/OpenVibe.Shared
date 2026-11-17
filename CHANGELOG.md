@@ -1,5 +1,31 @@
 # Changelog
 
+## 4.306.0 — 2026-11-17
+
+- **Usage: what a session used, and what you have left** (the owner, 11-17, on the Vibe session: "display usage stats
+  and tokens and all that for each harness or API balances or cost").
+  - **The status line** says the session's tokens and cost ("8.4k tokens · under 1¢"), summed from each answer's
+    receipt. It is a button that opens Usage. The line keeps its nodes, so the button is not rebuilt under a finger
+    while a run is live.
+  - **The Usage sheet** has three tabs:
+    - **This session:** from the answers' receipts.
+    - **Today** and **30 days:** from the Frame's new `/usage`, which reads Actor's `GET /api/v1/me/usage`.
+    - Each tab shows a big token count, the cost and the answers or tasks, then one bar with a part for each way it was
+      paid (Free AI, your key, your computer, your plan, your Balance), and the models, most tokens first.
+  - **Limits and balances** follow:
+    - the free AI left today;
+    - your day with Actor against its limit;
+    - your Balance, which opens Top up;
+    - each key and whether it answers.
+  - **Coding agents** comes last: each agent on your computers, from the Frame's `/resources` `harnesses`. It shows
+    where the agent is, whether it is signed in, and every limit window as a gauge with its reset time, tinted amber
+    from 70% and red from 90%.
+  - **Your AI**'s first payment row, **What you used**, says today's tokens and opens the same sheet. The session's
+    menu has **Usage** too.
+  - Top up moved out of Your AI into the session, so both sheets open the Wallet the same way.
+  - `test/session-usage-chrome.test.js` covers all of it in a real Chrome at 390 px: the numbers, the gauges drawn to
+    their share, and every row inside the sheet.
+
 ## 4.305.0 — 2026-11-17
 
 - **The picker is light at any size** (the owner's phone, 11-17, on the Vibe menu's model sheet: "Picker is very
