@@ -274,6 +274,10 @@ html[data-ov-motion=off] .ovh-tab-n { animation: none; }
 .ovh-empty { display: flex; align-items: center; gap: 14px; margin: 6px 0; padding: 14px 16px; border-radius: 14px; border: 1px dashed color-mix(in srgb, var(--text-muted, #93a0b4) 45%, transparent); }
 .ovh-empty > svg { width: 22px; height: 22px; flex: none; fill: none; stroke: var(--accent-light, var(--accent, #60a5fa)); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .ovh-empty > div { display: grid; gap: 2px; } .ovh-empty b { font-size: 14.5px; } .ovh-empty span { font-size: 13px; color: var(--text-muted, #93a0b4); }
+.ovh-empty--err { border-style: solid; border-color: color-mix(in srgb, var(--warning, #f59e0b) 40%, transparent); }
+.ovh-empty--err > svg { stroke: var(--warning, #f59e0b); }
+.ovh-retry { justify-self: start; margin-top: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); color: var(--text-primary, #e6edf7); font: inherit; font-size: 14px; font-weight: 650; cursor: pointer; }
+.ovh-retry:disabled { opacity: .65; cursor: default; }
 /* Your own AI is one notice under your row: a slim line, not a card (the owner: "make that a notification … up there"). */
 .ovh-notice .ovh-actor.is-invite { margin: 8px 0 0; padding: 8px 8px 8px 10px; gap: 10px; min-height: 0; border-radius: 14px; }
 .ovh-notice .ovh-actor.is-invite .ovh-face { width: 32px; height: 32px; border-radius: 10px; }
@@ -1132,6 +1136,15 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
                 const u = usage(), b = history();
                 if (u) el.append(u);
                 if (b) el.append(b);
+                if (!u && !b && o.historyError) {
+                    // 4.292.0: the read failed (the owner, 11-17: "The history tab no longer loads"), so this is not an
+                    // empty history: say so, and read it again on request.
+                    const e = h('div', 'ovh-empty ovh-empty--err'); e.setAttribute('role', 'status'); e.append(svgIcon('history'));
+                    const w = h('div'); w.append(h('b', '', "Couldn't load your history"), h('span', '', 'The network did not answer this time.'));
+                    const again = h('button', 'ovh-retry', 'Try again'); again.type = 'button';
+                    again.addEventListener('click', () => { again.disabled = true; again.textContent = 'Loading…'; Promise.resolve(typeof o.reloadHistory === 'function' ? o.reloadHistory() : false).then((ok) => { if (!ok) { again.disabled = false; again.textContent = 'Try again'; } }); });
+                    w.append(again); e.append(w); el.append(e); return later();
+                }
                 if (!u && !b) { const e = h('div', 'ovh-empty'); e.append(svgIcon('history')); const w = h('div'); w.append(h('b', '', 'Nothing here yet'), h('span', '', 'The places you open and the apps you use most show up here.')); e.append(w); el.append(e); }
                 return later();
             }

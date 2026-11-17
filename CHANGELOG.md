@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.292.0 — 2026-11-17
+
+- **History loads again when a page has been open a while** (the owner, 11-17: "The history tab no longer loads or is
+  broken"). A page open longer than its access token lives (an hour) sent the Network a token it refused (401), and
+  You → History said "Nothing here yet". The menu now asks the bar for a fresh session on a refused token
+  (`OpenVibeNavbar.refreshAuth`) and reads again once; a read that still fails says "Couldn't load your history" with
+  Try again, never the empty state; and the You view is handed the history when it arrives (on History, `render()` only
+  filtered the list, so Try again showed nothing until the menu reopened). openvibe.live, which signs people in itself,
+  now hands its refreshed token to the bar (OpenVibe.Live #939). test/history-token-chrome.test.js.
+- **The bar keeps its own token live** on every site that does not sign people in itself: just after the access token
+  expires it asks its session again (a refused token is what renews it), and a tab that comes back to the front does so
+  at once when its token has lapsed, so History, the feed, the home screen and the bell keep working on a page left
+  open. The bell reads the token per request (it kept the one it was started with). test/navbar-token-refresh.test.js.
+
 ## 4.291.0 — 2026-11-17
 
 - **"One account. 61 sites." looks like Live's on every site** (plan §AD.15: "showcase.network takes Live's version …

@@ -665,7 +665,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5287054b7807', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': 'db90736b5af9', 'dock.js': '6f8013ce6bb0', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '0cf2a13d9ab8', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '95c86e40988c', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '5d3cb3ad469f', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'c1e7daded213', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': 'd05bd5afc225', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'fec07c961aa3', 'soft.js': '98ab9b8080b1', 'ov-run.js': '01382e7b5ee9', 'ov-composer.js': '9e3e3120ae8a', 'items.js': '321850a5bd67', 'items.css': 'ccb7103adad6' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5287054b7807', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': 'e72527aa25ce', 'dock.js': '6f8013ce6bb0', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '0cf2a13d9ab8', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '95c86e40988c', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'c3260936e563', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'c1e7daded213', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': 'd05bd5afc225', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'fec07c961aa3', 'soft.js': '98ab9b8080b1', 'ov-run.js': '01382e7b5ee9', 'ov-composer.js': '9e3e3120ae8a', 'items.js': '321850a5bd67', 'items.css': 'ccb7103adad6' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -1615,7 +1615,7 @@
         const go = () => {
             const N = root.OpenVibeNotifications; if (!N) return;
             try {
-                if (!N.__ovNavInit) { N.init({ token: _config.token, apiBase: 'https://openvibe.network', realtime: _config.notificationsRealtime === true }); N.__ovNavInit = true; }
+                if (!N.__ovNavInit) { N.init({ token: () => _config.token, apiBase: 'https://openvibe.network', realtime: _config.notificationsRealtime === true }); N.__ovNavInit = true; }   // 4.292.0: read per request, so a refreshed token reaches the bell
                 const paint = () => { if (!badge) return; const n = Number(N.unread()) || 0; badge.textContent = n > 99 ? '99+' : String(n); badge.hidden = !n; };
                 paint(); document.addEventListener('openvibe-notifications-count', paint);
             } catch { /* */ }
@@ -2345,6 +2345,38 @@
         document.head.appendChild(script);
     }
 
+    /**
+     * 4.292.0 (the owner, 11-17: "The history tab no longer loads"): an access token lives an hour, and nothing renewed
+     * the bar's copy while a page stayed open, so History, the feed, the home screen and the bell all asked the Network
+     * with a token it refused. Just after the token expires (a refused token is what renews it, resolveSessionUser) the
+     * bar asks its session again; a tab that comes back to the front does so at once when its token has lapsed (a
+     * phone's background tab sleeps its timers). A site that signs people in itself (auth: 'external', Live) renews its
+     * own and hands it over with init().
+     */
+    let _tokenTimer = null;
+    function tokenExpiry(tok) {
+        try {
+            const part = String(tok || '').split('.')[1];
+            const j = part ? JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/'))) : null;
+            return j && Number(j.exp) > 0 ? Number(j.exp) * 1000 : 0;
+        } catch { return 0; }
+    }
+    function planTokenRefresh() {
+        if (typeof document === 'undefined') return;
+        clearTimeout(_tokenTimer);
+        if (_config.auth === 'external' || !_config.user || typeof _config.token !== 'string') return;
+        const exp = tokenExpiry(_config.token);
+        if (!exp) return;
+        _tokenTimer = setTimeout(() => { refreshAuthState(); }, Math.min(Math.max(5000, exp - Date.now() + 2000), 2147483000));
+    }
+    if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState !== 'visible' || _config.auth === 'external' || !_config.user || typeof _config.token !== 'string') return;
+            const exp = tokenExpiry(_config.token);
+            if (exp && exp < Date.now() + 5000) refreshAuthState();
+        });
+    }
+
     function refreshAuthState() {
         if (_authInFlight) return _authInFlight;
         _authInFlight = resolveSessionUser()
@@ -2353,6 +2385,7 @@
                 if (session && session.user) {
                     _config.user = session.user;
                     if (session.token) _config.token = session.token;
+                    planTokenRefresh();
                     render();
                     recordHistory();
                     enableHandoff();
@@ -3150,7 +3183,7 @@
             // auth: 'external' — the site signs people in itself (Live) and tells us with setUser().
             if (_config.auth === 'external') { if (_config.user) { recordHistory(); enableHandoff(); } }
             else if (!_config.user) refreshAuthState();
-            else { recordHistory(); enableHandoff(); }
+            else { recordHistory(); enableHandoff(); planTokenRefresh(); }
             startQuestGuide();
             return el;
         },
