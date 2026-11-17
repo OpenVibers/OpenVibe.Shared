@@ -1,5 +1,20 @@
 # Changelog
 
+## 4.297.0 — 2026-11-17
+
+- **Your AI shows where you stand** (plan §AD.17). With the Frame's `/api/frame/resources` (OpenVibe.Network #1056,
+  OpenVibe.AI #634) the sheet shows the free AI left today ("76% left", the tokens and when it is back in full; "No cap"
+  for a rank without one; "Used up" with the time it returns), each of your own keys with whether Actor may use it
+  ("Ready", or "Allow" when it may not yet, opening OpenVibe.AI's grant page with the provider filled in; "Check it"
+  when its last check failed), Add another key, and the Balance from the same
+  read. An older Network without the read keeps the Wallet's Balance. test/your-ai-chrome.test.js.
+- **The road, before you send** (plan §AD.17). Beside "How it runs", a chip says where the next answer goes, in Actor's
+  own order: the free AI with a ring filled to what is left ("76% free"), else a key you allowed Actor to use
+  ("Anthropic key"), else a computer of yours that is online, else amber "Back 00:00". A tap opens Your AI. A coding
+  run routes itself, so Code shows none; in a narrow box (a phone, the menu's panel) it is the ring alone, keeping the
+  row to one line. After a session ends the read is fresh. test/session-road-chrome.test.js.
+- The agent card keeps your agent's name whole: "your agent" shortens first (it wrapped into a stack at 1280 px).
+
 ## 4.296.0 — 2026-11-17
 
 - **Your AI: one menu for everything an answer can run on** (the owner, 11-17: "a menu that brings them to set up their

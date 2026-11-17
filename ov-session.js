@@ -144,6 +144,13 @@
         { id: 'signins', name: 'Sign-ins for your agents', line: 'Kept sealed in Locker; an agent asks you before it uses one', url: 'https://openvibe.locker/passwords' },
     ];
     /** A setup page's address; the ones that send you back are told where to (this page). */
+    // Your AI's words (4.297.0): a provider's name, a time today, short token counts, a key that answered its check.
+    const KEY_NAMES = { openai: 'OpenAI', openrouter: 'OpenRouter', xai: 'xAI', deepseek: 'DeepSeek', minimax: 'MiniMax' };
+    const keyName = (prov) => KEY_NAMES[prov] || String(prov || '').charAt(0).toUpperCase() + String(prov || '').slice(1);
+    const atTime = (iso) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'midnight UTC'; };
+    const shortN = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n));
+    const keyOk = (k) => !k.status || /^(ok|ready|active|valid)$/i.test(k.status);
+    const actorMay = (res, prov) => ((res && res.key_apps) || []).some((x) => x.service === 'actor' && (x.providers || []).some((q) => q === '*' || q === prov));
     const setupUrl = (x) => { if (!x || !x.url) return null; if (!x.back) return x.url; try { const u = new URL(x.url); u.searchParams.set('return_to', root.location.href); return u.href; } catch { return x.url; } };
     const setupGlyph = (id) => ({ keys: 'key', computer: 'computer', harnesses: 'code', machines: 'computer', signins: 'key', actor: 'robot' }[id] || 'link');
     /** The free AI allowance is spent (OpenVibe.AI's ai.allowance_spent, said through Exchange's 402). */
@@ -477,6 +484,18 @@
         const wayBody = () => (pick.way && pick.way !== 'auto' ? { kind: pick.way, ...(pick.model && ['agent', 'model', 'decisions'].includes(pick.way) ? { model: pick.model.id } : {}),
             ...(pick.way === 'harness' && pick.harness ? { harness: pick.harness } : {}) } : null);
         let options = null;   // the Frame's /run-options: { agents, places }
+        // The Frame's /resources (4.297.0, plan §AD.17): the free AI left, your keys and who may use them, your Balance.
+        // One read for the road chip and Your AI, kept a minute; 'old' from a Network without it; null when it failed.
+        let resources = null, resourcesAt = 0, resourcesWait = null;
+        function loadResources(fresh) {
+            if (!tokenOf()) return Promise.resolve(null);
+            if (!fresh && resourcesAt && Date.now() - resourcesAt < 60000) return Promise.resolve(resources);
+            if (resourcesWait) return resourcesWait;
+            resourcesWait = fetch(`${base}/resources`, { credentials: 'omit', headers: { Accept: 'application/json', ...headers() } })
+                .then((r) => (r.ok ? r.json() : r.status === 404 ? 'old' : null)).catch(() => null)
+                .then((x) => { resources = x; resourcesAt = Date.now(); resourcesWait = null; if (typeof paintRoad === 'function') paintRoad(); return x; });
+            return resourcesWait;
+        }
         const fallbackOptions = { agents: [{ id: 'auto', name: 'Auto', line: 'The right one for what you ask', kind: 'auto' }, { id: 'actor', name: 'Actor', line: 'Your agent: answers, searches, does things for you', kind: 'actor' }, { id: 'codes', name: 'Codes', line: 'Writes and changes code', kind: 'codes' }], places: [{ kind: 'auto', name: 'Auto', line: 'Wherever it fits best' }, { kind: 'openvibe', name: 'OpenVibe', line: 'OpenVibe\'s own computers' }] };
         const loadOptions = async () => {
             if (options) return options;
@@ -566,7 +585,12 @@
             m.addEventListener('click', () => setMode(id));
             modes.append(m);
         });
-        ctxRow.append(modes, ctxB, ctxCost, ctxInfo);
+        // The road (4.297.0, plan §AD.17): where the next answer goes before it is sent: the free AI with what is left,
+        // your own key, your computer, or nothing left today (then it opens Your AI on the ways).
+        const road = btn('ovse-road', 'Where your next answer runs', null, ''); road.hidden = true;
+        { const ring = el('i', 'ovse-road-ring'); ring.append(svg('spark')); road.append(ring, el('span')); }
+        road.addEventListener('click', () => yourAI());
+        ctxRow.append(modes, ctxB, road, ctxCost, ctxInfo);
         const composeSlot = el('div', 'ovse-compose');
         foot.append(planBox, slash, ctxRow, composeSlot);
         main.append(head, body, foot);
@@ -994,19 +1018,58 @@
 
                 // How it's paid
                 const pay = section('How it\'s paid', 'coin');
-                row(pay, { glyph: 'spark', name: 'Free AI', line: 'OpenVibe\'s free allowance: it comes back every day', chip: 'Daily', onClick: later(() => openCtx('model')) });
+                const free = row(pay, { glyph: 'spark', name: 'Free AI', line: 'OpenVibe\'s free allowance: it comes back every day', chip: 'Daily', onClick: later(() => openCtx('model')) });
                 const bal = row(pay, { glyph: 'coin', name: 'Your Balance', line: 'Pays for AI you run on OpenVibe, by the cent', chip: '…', go: 'plus', onClick: () => topUp() });
-                row(pay, { glyph: 'key', name: 'Your own AI key', line: setup('keys').line, go: 'open', onClick: () => goSetup(setup('keys')) });
-                // The Balance as the Wallet says it: its amount and what it is for.
-                fetch(`${base}/wallet/api/v1/me/wallet`, { credentials: 'omit', headers: { Accept: 'application/json', ...headers() } })
-                    .then((r) => (r.ok ? r.json() : null)).then((w) => {
-                        const x = w && w.balances && w.balances.balance;
-                        if (!x || !bal.isConnected) { const c = bal.querySelector('.ovse-yai-chip'); if (c) c.remove(); return; }
-                        const n = Number(x.amount) / Math.pow(10, Number(x.scale) || 0);
-                        const c = bal.querySelector('.ovse-yai-chip'); if (c) { c.textContent = Number.isFinite(n) ? `$${n.toFixed(2)}` : ''; c.classList.add('is-money'); }
-                        if (x.purpose) bal.querySelector('.ovse-yai-t small').textContent = String(x.purpose).slice(0, 140);
-                        if (w.money_writes_frozen) bal.querySelector('.ovse-yai-t small').textContent = 'Top-ups are paused for now; your Balance is still here.';
-                    }).catch(() => { const c = bal.querySelector('.ovse-yai-chip'); if (c) c.remove(); });
+                const keysAt = el('div', 'ovse-yai-keys'); pay.append(keysAt);
+                const keyRow = (sec) => row(sec, { glyph: 'key', name: 'Your own AI key', line: setup('keys').line, go: 'open', onClick: () => goSetup(setup('keys')) });
+                keyRow(keysAt);
+                const setText = (r, sel, text) => { const n = r.querySelector(sel); if (n) n.textContent = text; };
+                const setChip = (r, text, tone) => {
+                    let c = r.querySelector('.ovse-yai-chip');
+                    if (!text) { if (c) c.remove(); return; }
+                    if (!c) { c = el('i', 'ovse-yai-chip'); r.insertBefore(c, r.querySelector('.ovse-yai-go')); }
+                    c.className = `ovse-yai-chip${tone ? ` is-${tone}` : ''}`; c.textContent = text;
+                };
+                const showBalance = (x, frozen) => {
+                    if (!x || !bal.isConnected) { setChip(bal, null); return; }
+                    const n = Number(x.amount) / Math.pow(10, Number(x.scale) || 0);
+                    setChip(bal, Number.isFinite(n) ? `$${n.toFixed(2)}` : '', 'money');
+                    if (x.purpose) setText(bal, '.ovse-yai-t small', String(x.purpose).slice(0, 140));
+                    if (frozen) setText(bal, '.ovse-yai-t small', 'Top-ups are paused for now; your Balance is still here.');
+                };
+                const at = atTime, short = shortN;
+                /** 4.297.0 (plan §AD.17): Your AI as it stands, in one read (the Frame's /resources): the free AI left, your keys
+                 *  and who may use them, your Balance. An older Network without it: the Wallet's read for the Balance. */
+                loadResources(true).then((res) => {
+                        if (!free.isConnected) return;
+                        if (res === 'old') {
+                            fetch(`${base}/wallet/api/v1/me/wallet`, { credentials: 'omit', headers: { Accept: 'application/json', ...headers() } })
+                                .then((r) => (r.ok ? r.json() : null)).then((w) => showBalance(w && w.balances && w.balances.balance, w && w.money_writes_frozen)).catch(() => showBalance(null));
+                            return;
+                        }
+                        if (!res) { setChip(bal, null); return; }
+                        showBalance(res.balance);
+                        const a = res.allowance;
+                        if (a && a.unlimited) { setChip(free, 'No cap', 'ok'); setText(free, '.ovse-yai-t small', 'OpenVibe\'s free AI, with no daily cap for you'); }
+                        else if (a && Number(a.tokens) > 0) {
+                            const left = Math.max(0, Number(a.left) || 0), pct = Math.round((left / Number(a.tokens)) * 100);
+                            setChip(free, left > 0 ? `${pct}% left` : 'Used up', left > 0 && pct > 15 ? 'ok' : 'warn');
+                            setText(free, '.ovse-yai-t small', left > 0 ? `${short(left)} of ${short(Number(a.tokens))} tokens left today · back in full at ${at(a.resets_at)}` : `Used up for today · back at ${at(a.resets_at)}`);
+                        }
+                        const keys = Array.isArray(res.keys) ? res.keys : [];
+                        if (!keys.length) return;
+                        const name = keyName;
+                        keysAt.textContent = '';
+                        keys.forEach((k) => {
+                            const ok = keyOk(k);
+                            const may = actorMay(res, k.provider);
+                            // Allowing is OpenVibe.AI's own page (a site session may only read key grants): the provider filled in.
+                            const allow = { id: 'keys', url: `https://ai.openvibe.services/you?allow=actor&provider=${encodeURIComponent(k.provider)}` };
+                            row(keysAt, { glyph: 'key', name: `${name(k.provider)} key`, line: !ok ? 'Yours: it did not answer its last check' : may ? 'Yours: Actor may use it when the free AI runs out' : 'Yours: allow Actor to use it, so it answers when the free AI runs out',
+                                chip: ok ? (may ? 'Ready' : 'Allow') : 'Check it', tone: ok && may ? 'ok' : 'warn', go: 'open', onClick: () => goSetup(may && ok ? setup('keys') : allow) });
+                        });
+                        row(keysAt, { glyph: 'plus', name: 'Add another key', line: 'Anthropic, OpenAI, OpenRouter, Gemini and more', go: 'open', onClick: () => goSetup(setup('keys')) });
+                    }).catch(() => setChip(bal, null));
                 async function topUp() {
                     const W = await need(o, 'ov-wallet.js', 'OpenVibeWallet');
                     if (!document.getElementById('ovse-wallet-css') && typeof o.sibling === 'function') { const l = document.createElement('link'); l.id = 'ovse-wallet-css'; l.rel = 'stylesheet'; l.href = o.sibling('ov-wallet.css'); document.head.append(l); }
@@ -1526,8 +1589,46 @@
             if (open) { paintModes(); paintCtx(); flash(id === 'code' ? 'Your next words go to a coding agent on your computer.' : id === 'chat' ? 'Your next words go to one model: quick, no tools.' : id === 'agent' ? 'Your next words go to your agent: it plans, uses tools and checks.' : 'Your next words go where they fit best.'); }
             else blank();
         }
+        /** Where the next answer goes, as Actor routes it (tasks/engine.js): the free AI while any is left, then a key you
+         *  allowed Actor to use, then a computer of yours that is online; null for a coding run (Codes routes itself) or
+         *  when it is not known. */
+        function roadNow() {
+            const res = resources;
+            if (!res || res === 'old' || !res.allowance) return null;
+            const m = modeNow();
+            if (m === null || m === 'code') return null;
+            const a = res.allowance;
+            if (a.unlimited) return { road: 'free', glyph: 'spark', text: 'Free AI', pct: 1, say: 'The free AI, with no daily cap for you' };
+            const tokens = Number(a.tokens) || 0, left = Math.max(0, Number(a.left) || 0);
+            if (tokens > 0 && left > 0) {
+                const pct = left / tokens;
+                return { road: 'free', glyph: 'spark', text: `${Math.max(1, Math.round(pct * 100))}% free`, pct, say: `The free AI: ${shortN(left)} of ${shortN(tokens)} tokens left today` };
+            }
+            const key = (res.keys || []).find((k) => keyOk(k) && actorMay(res, k.provider));
+            if (key) return { road: 'key', glyph: 'key', text: `${keyName(key.provider)} key`, say: `Your ${keyName(key.provider)} key: the free AI is used up until ${atTime(a.resets_at)}` };
+            const pc = ((options && options.places) || []).find((x) => x.kind === 'machine' && x.online && !x.disabled);
+            if (pc) return { road: 'computer', glyph: 'computer', text: String(pc.name || 'Your computer').slice(0, 24), say: `${pc.name || 'Your computer'}: the free AI is used up until ${atTime(a.resets_at)}` };
+            return { road: 'none', glyph: 'spark', text: `Back ${atTime(a.resets_at)}`, pct: 0, say: `The free AI is used up until ${atTime(a.resets_at)}. Add a key or a computer to keep going` };
+        }
+        function paintRoad() {
+            const r = roadNow();
+            const wasHidden = road.hidden;
+            road.hidden = !r;
+            if (!r) return;
+            road.className = `ovse-road is-${r.road}`;
+            const g = road.querySelector('.ovse-road-ring svg'); if (g) g.innerHTML = G[r.glyph] || G.spark;
+            road.querySelector('span').textContent = r.text;
+            // The ring fills from empty when the chip first shows; afterwards it moves from where it was.
+            const pct = r.pct != null ? String(Math.max(0, Math.min(1, r.pct))) : null;
+            if (pct == null) road.style.removeProperty('--ovse-road-p');
+            else if (wasHidden) { road.style.setProperty('--ovse-road-p', '0'); requestAnimationFrame(() => requestAnimationFrame(() => road.style.setProperty('--ovse-road-p', pct))); }
+            else road.style.setProperty('--ovse-road-p', pct);
+            road.setAttribute('aria-label', `${r.say}. Your AI`);
+            road.title = r.say;
+        }
         function paintCtx() {
             paintModes();
+            if (tokenOf()) loadResources(); paintRoad();
             const r = state.run;
             if (r) {
                 // An open session says how it runs; the chip's choice is for the next new one.
@@ -1940,6 +2041,7 @@
                         if (state.run) state.run = { ...state.run, status: (d && d.status) || 'done', ended_at: state.run.ended_at || new Date().toISOString() };
                         state.stop = null; schedule(); flushQueue(); updateRow(state.run);
                         emit('session.ended', { ref, run: state.run });
+                        loadResources(true);   // what it spent: the road chip says what is left
                         return 'end';
                     }
                     return null;
@@ -2138,7 +2240,8 @@
 .ovse-codes-face svg { width: 22px; height: 22px; }
 .ovse-actor-who:hover { background: color-mix(in srgb, var(--ovse-fg) 6%, transparent); }
 .ovse-actor-t { flex: 1; min-width: 0; display: grid; }
-.ovse-actor-top { display: flex; align-items: baseline; gap: 6px; } .ovse-actor-top i { font-style: normal; font-size: 11.5px; color: var(--ovse-mute); }
+.ovse-actor-top { display: flex; align-items: baseline; gap: 6px; min-width: 0; } .ovse-actor-top b { flex: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovse-actor-top i { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-style: normal; font-size: 11.5px; color: var(--ovse-mute); white-space: nowrap; }
 .ovse-actor-t small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ovse-mute); font-size: 12.5px; }
 .ovse-actor-who.is-working .ovse-actor-t small { color: var(--ovse-acc2); } .ovse-actor-who.is-asks .ovse-actor-t small { color: var(--warning, #f5a524); }
 .ovse-actor-go.is-main { background: var(--ovse-acc); color: var(--on-accent, #fff); }
@@ -2164,6 +2267,7 @@
 .ovse-ai-go { flex: none; width: 16px; height: 16px; transform: rotate(-90deg); color: var(--ovse-mute); }
 .ovse-yai { display: grid; gap: 4px; }
 .ovse-yai-sec { display: grid; gap: 6px; padding: 4px 0 10px; }
+.ovse-yai-keys { display: grid; gap: 6px; }
 .ovse-yai-sec + .ovse-yai-sec { border-top: 1px solid var(--border, rgba(255,255,255,.09)); padding-top: 12px; }
 .ovse-yai-h { display: flex; align-items: center; gap: 8px; margin: 0 2px 2px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
 .ovse-yai-h .ovse-g { width: 16px; height: 16px; }
@@ -2420,7 +2524,7 @@ details.ovse-tool > .ovse-tool-h { cursor: pointer; } details.ovse-tool > .ovse-
 .ovse-starter .ovse-g { color: var(--ovse-acc2); } .ovse-starter span { min-width: 0; }
 
 /* the foot: the plan, the commands, the chip, the box */
-.ovse-foot { position: relative; display: grid; gap: 6px; width: 100%; max-width: 852px; margin: 0 auto; padding: 6px 16px max(10px, env(safe-area-inset-bottom, 0px)); }
+.ovse-foot { position: relative; display: grid; gap: 6px; width: 100%; max-width: 852px; margin: 0 auto; padding: 6px 16px max(10px, env(safe-area-inset-bottom, 0px)); container: ovse-foot / inline-size; }
 .ovse-plan { border: 1px solid var(--ovse-line); border-radius: 14px; background: var(--ovse-card); animation: ovse-in .3s both; }
 .ovse-plan-h { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 6px 12px; cursor: pointer; list-style: none; font-size: 13.5px; }
 .ovse-plan-h > b { flex: none; } .ovse-plan-now { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ovse-dim); }
@@ -2444,6 +2548,26 @@ details.ovse-tool > .ovse-tool-h { cursor: pointer; } details.ovse-tool > .ovse-
 .ovse-ctx .ovse-g { width: 15px; height: 15px; color: var(--ovse-acc2); }
 .ovse-ctx:hover, .ovse-ctx.is-on { color: var(--ovse-fg); border-color: color-mix(in srgb, var(--ovse-acc) 45%, var(--ovse-line)); }
 .ovse-ctx:active { transform: scale(.97); }
+/* The road (4.297.0): where the next answer goes. The ring is the free AI left today; it fills as the read lands. */
+@property --ovse-road-p { syntax: '<number>'; inherits: true; initial-value: 0; }
+.ovse-road { --ovse-road-c: var(--success, #22c55e); display: inline-flex; align-items: center; gap: 7px; flex: none; min-height: 34px; padding: 0 12px 0 5px;
+  border: 1px solid var(--ovse-line); border-radius: 999px; background: var(--ovse-card); color: var(--ovse-dim); font: inherit; font-size: 12.5px; font-weight: 650;
+  font-variant-numeric: tabular-nums; white-space: nowrap; cursor: pointer; transition: color .18s, border-color .18s, transform .12s, --ovse-road-p .9s cubic-bezier(.2,.8,.2,1);
+  animation: ovse-road-in .32s cubic-bezier(.2,.8,.2,1) both; }
+.ovse-road[hidden] { display: none; }
+.ovse-road:hover { color: var(--ovse-fg); border-color: color-mix(in srgb, var(--ovse-road-c) 45%, var(--ovse-line)); }
+.ovse-road:active { transform: scale(.97); }
+.ovse-road-ring { position: relative; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-style: normal; }
+.ovse-road-ring::before { content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(var(--ovse-road-c) calc(var(--ovse-road-p) * 360deg), color-mix(in srgb, var(--ovse-road-c) 18%, transparent) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); }
+.ovse-road-ring svg { position: relative; width: 13px; height: 13px; color: var(--ovse-road-c); }
+.ovse-road.is-key, .ovse-road.is-computer { --ovse-road-c: var(--ovse-acc2, #8ab4ff); --ovse-road-p: 1; }
+.ovse-road.is-none { --ovse-road-c: var(--warning, #f5a524); color: var(--warning, #f5a524); border-color: color-mix(in srgb, var(--warning, #f5a524) 40%, var(--ovse-line)); }
+/* A narrow box (a phone, the menu's panel): the ring alone keeps the row to one line; its label says the rest. */
+@container ovse-foot (max-width: 480px) { .ovse-road { gap: 0; padding: 0 5px; } .ovse-road > span { display: none; } }
+@keyframes ovse-road-in { from { opacity: 0; transform: translateY(calc(4px * var(--ov-move, 1))) scale(.96); } }
+html[data-ov-motion="off"] .ovse-road { animation: none; transition: none; }
 .ovse-cost { flex: none; color: var(--ovse-mute); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ovse-ctxinfo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ovse-mute); font-size: 12.5px; padding-left: 4px; }
 .ovse-plainbox { display: flex; align-items: flex-end; gap: 8px; padding: 6px 6px 6px 14px; border-radius: 22px; border: 1px solid var(--ovse-line); background: var(--ovse-card); }

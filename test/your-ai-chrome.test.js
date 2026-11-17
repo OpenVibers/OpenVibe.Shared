@@ -17,6 +17,7 @@ if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) { console.log('your-
 const root = path.join(__dirname, '..');
 const iso = (s) => new Date(Date.now() - s * 1000).toISOString();
 const SPENT = 'OpenVibe.Exchange HTTP 402: The free AI allowance for usr_01KKT9AC60KM7CRTB3WN1Z8P56 is spent, and the calling service has no budget to cover this run.';
+let withResources = false;
 const runs = [{ ref: 'actor:run_9', kind: 'task', title: 'Find me three cheap GPU rentals', status: 'failed', created_at: iso(300), updated_at: iso(120), preview: SPENT, agent: { id: 'actor', name: 'Actor' } }];
 const page = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>html,body{margin:0;height:100%;background:#0b0f17;color:#e8ecf3;font:15px system-ui}#host{position:fixed;inset:0}</style>
@@ -39,6 +40,9 @@ const server = http.createServer((req, res) => {
     if (p === '/api/frame/choices') return json(res, 200, { groups: [] });
     if (p === '/api/frame/runs') return json(res, 200, { runs, partial: [] });
     if (p === '/api/frame/actor') return json(res, 200, { id: 'agt_1', name: 'Juniper', status: 'idle', now: { cost_today: 0 }, caps: { usd: 1 } });
+    if (p === '/api/frame/resources') return withResources ? json(res, 200, { allowance: { tier: 'standard', unlimited: false, tokens: 50000, used: 12000, left: 38000, resets_at: '2026-11-18T00:00:00.000Z' },
+        keys: [{ provider: 'anthropic', status: 'ok', checked_at: null }, { provider: 'openrouter', status: 'ok', checked_at: null }], key_apps: [{ service: 'actor', providers: ['anthropic'] }],
+        balance: { amount: '500', scale: 2, currency: 'USD', purpose: 'For the AI API, the Exchange and pro products' }, partial: [] }) : json(res, 404, {});
     if (p === '/api/frame/wallet/api/v1/me/wallet') return json(res, 200, { balances: { balance: { amount: '1234', scale: 2, currency: 'USD', label: 'Balance', purpose: 'For the AI API, the Exchange and pro products' } } });
     const m = /^\/api\/frame\/runs\/([^/]+)(\/.*)?$/.exec(p);
     if (m) {
@@ -101,6 +105,27 @@ const SHEET = `(() => { const s = document.querySelector('.ovse-sheet.is-in'); i
         await until(p, "!!document.querySelector('.ovse-setup .ovse-setup-all')");
         await p.evaluate("document.querySelector('.ovse-setup .ovse-setup-all').click()");
         await until(p, SHEET);
+        // 4.297.0: with the Frame's /resources, the free AI left, each key and whether Actor may use it, the Balance.
+        withResources = true;
+        await p.evaluate("document.querySelector('.ovse-sheet .ovse-sheet-h .ovse-ib') && document.querySelector('.ovse-sheet .ovse-sheet-h .ovse-ib').click()");
+        await pause(300);
+        await p.evaluate("window.__s.blank(); document.querySelector('.ovse-menu').click()");
+        await until(p, "!!document.querySelector('.ovse-ai-row .ovse-actor-who')");
+        await p.evaluate("document.querySelector('.ovse-ai-row .ovse-actor-who').click()");
+        const live = await until(p, `(() => { const s = document.querySelector('.ovse-sheet.is-in'); if (!s || !s.querySelector('.ovse-yai-keys .ovse-yai-r:nth-child(3)')) return null;
+            const rows = [...s.querySelectorAll('.ovse-yai-r')].map((r) => [r.querySelector('.ovse-yai-t b').textContent, (r.querySelector('.ovse-yai-chip') || {}).textContent || '']);
+            return { free: rows.find((x) => x[0] === 'Free AI'), balance: rows.find((x) => x[0] === 'Your Balance'), keys: [...s.querySelectorAll('.ovse-yai-keys .ovse-yai-r')].map((r) => [r.querySelector('.ovse-yai-t b').textContent, (r.querySelector('.ovse-yai-chip') || {}).textContent || '', r.querySelector('small').textContent]),
+                freeLine: [...s.querySelectorAll('.ovse-yai-r')].find((r) => r.querySelector('.ovse-yai-t b').textContent === 'Free AI').querySelector('small').textContent }; })()`);
+        assert.deepStrictEqual(live.free, ['Free AI', '76% left']);
+        assert.match(live.freeLine, /^38k of 50k tokens left today · back in full at /);
+        assert.deepStrictEqual(live.balance, ['Your Balance', '$5.00']);
+        assert.deepStrictEqual(live.keys.map((k) => k.slice(0, 2)), [['Anthropic key', 'Ready'], ['OpenRouter key', 'Allow'], ['Add another key', '']]);
+        assert.match(live.keys[1][2], /allow Actor to use it/);
+        // Allow opens OpenVibe.AI's grant page with the provider filled in.
+        await p.evaluate("window.__opened = []; window.open = (u) => { window.__opened.push(String(u)); return {}; }");
+        await p.evaluate("[...document.querySelectorAll('.ovse-sheet.is-in .ovse-yai-keys .ovse-yai-r')][1].click()");
+        const opened = await until(p, "window.__opened.length ? window.__opened[0] : null");
+        assert.match(opened, /^https:\/\/ai\.openvibe\.services\/you\?allow=actor&provider=openrouter/);
         assert.deepStrictEqual(errors, [], 'no page errors');
         console.log('your-ai-chrome: one menu for your agents, coding agents, keys, Balance (top up in place) and computers; the setup card leads to it ok');
     } finally {
