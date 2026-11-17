@@ -1,7 +1,8 @@
 'use strict';
-// "One account. 61 sites." (4.256.0, plan §AA.37) in a real headless Chrome: at 390 px the section never scrolls
-// sideways, this site's group is open with its icons whole, the other seven are fold rows with their counts, and a
-// folded group's icons are drawn by ov-icons.js when it opens. At 1280 px the open group spans the width.
+// "One account. 61 sites." in a real headless Chrome, in Live's design (4.291.0, plan §AD.15; was 4.256.0's folds): at
+// 390 px the page never scrolls sideways, every kind is open as one row of cards that scrolls sideways inside itself,
+// the chips are 44 px to tap, this site is "You are here" and every icon is drawn by ov-icons.js. At 1280 px a kind is
+// a grid of several columns.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -27,30 +28,33 @@ const server = http.createServer((req, res) => {
     try {
         const page = await h.openPage(browser, await browser.newContext(), { width: 390, height: 844 });
         await page.goto(`http://127.0.0.1:${server.address().port}/`, { maxMs: 8000 });
-        assert.equal(await page.evaluate('document.documentElement.scrollWidth'), 390, 'the section never scrolls sideways');
-        const shape = await page.evaluate(`(() => {
+        assert.equal(await page.evaluate('document.documentElement.scrollWidth'), 390, 'the page never scrolls sideways');
+        const shape = await page.evaluate(`new Promise((ok) => { const t0 = Date.now(); (function tick() {
             const groups = [...document.querySelectorAll('.sc-onenet-g')];
-            const open = groups.filter((g) => g.open);
-            const rows = groups.filter((g) => !g.open).map((g) => ({ h: g.querySelector('summary').getBoundingClientRect().height, count: getComputedStyle(g.querySelector('.sc-fold-hint')).display !== 'none' }));
+            const icons = [...document.querySelectorAll('.sc-onenet .ov-appicon')];
+            const drawn = icons.filter((i) => i.querySelector('svg')).length;
+            if (drawn < icons.length && Date.now() - t0 < 4000) return setTimeout(tick, 50);
+            const lists = groups.map((g) => g.querySelector('.sc-onenet-list'));
             const here = document.querySelector('[aria-current="page"]');
-            return { groups: groups.length, open: open.length, openIcons: open[0].querySelectorAll('.ov-appicon svg').length, rows, here: here && here.textContent };
-        })()`);
-        assert.equal(shape.groups, 8, 'eight groups');
-        assert.equal(shape.open, 1, 'one open: this site\'s');
-        assert.equal(shape.openIcons, 7, 'its seven icons drawn');
-        assert.ok(shape.rows.every((r) => r.h >= 44 && r.count), 'every other group is a row to tap, with its count');
+            ok({ groups: groups.length, icons: icons.length, drawn,
+                rows: lists.every((l) => getComputedStyle(l).overflowX === 'auto' && getComputedStyle(l).display === 'flex'),
+                scrolls: lists.filter((l) => l.scrollWidth > l.clientWidth + 4).length,
+                chips: [...document.querySelectorAll('.sc-onenet-jump a')].map((a) => Math.round(a.getBoundingClientRect().height)),
+                here: here && here.textContent });
+        })(); })`);
+        assert.equal(shape.groups, 8, 'eight kinds, every one open');
+        assert.equal(shape.drawn, shape.icons, `every icon drawn (${shape.drawn} of ${shape.icons})`);
+        assert.equal(shape.icons, 61);
+        assert.ok(shape.rows && shape.scrolls >= 6, `each kind a row that scrolls sideways inside itself (${shape.scrolls} of 8 overflow)`);
+        assert.ok(shape.chips.length === 8 && shape.chips.every((h) => h >= 44), `a chip per kind, 44 px to tap (${shape.chips})`);
         assert.ok(/Live/.test(shape.here) && /You are here/.test(shape.here), 'this site is "You are here"');
-        await page.evaluate("document.querySelectorAll('.sc-onenet-g')[5].open = true");
-        const drawn = await page.evaluate(`new Promise((ok) => { const t0 = Date.now(); (function tick() {
-            const done = [...document.querySelectorAll('.sc-onenet-g')[5].querySelectorAll('.ov-appicon')].every((i) => i.querySelector('svg'));
-            if (done || Date.now() - t0 > 4000) ok(done); else setTimeout(tick, 50); })(); })`);
-        assert.ok(drawn, 'a folded group draws its icons when it opens');
         await page.close();
         const wide = await h.openPage(browser, await browser.newContext(), { width: 1280, height: 900 });
         await wide.goto(`http://127.0.0.1:${server.address().port}/`, { maxMs: 8000 });
-        const span = await wide.evaluate(`(() => { const g = document.querySelector('.sc-onenet-g[open]'); const box = document.querySelector('.sc-onenet-groups'); return [Math.round(g.getBoundingClientRect().width), Math.round(box.getBoundingClientRect().width)]; })()`);
-        assert.equal(span[0], span[1], 'the open group spans the width on a computer');
+        const cols = await wide.evaluate("getComputedStyle(document.querySelector('.sc-onenet-list')).gridTemplateColumns.split(' ').length");
+        assert.ok(cols >= 3, `a kind is a grid of cards on a computer (${cols} columns)`);
+        assert.ok(await wide.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), 'no sideways scroll on a computer either');
         await wide.close();
-        console.log('network-sites-chrome: 61 sites, one group open, folds that draw their icons when opened');
+        console.log('network-sites-chrome: 61 sites in Live\'s design: every kind open, sideways rows on a phone, grids on a computer, every icon drawn');
     } finally { await browser.close(); server.close(); }
 })().catch((e) => { console.error(e); server.close(); process.exitCode = 1; });

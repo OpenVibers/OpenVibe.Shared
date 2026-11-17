@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.291.0 — 2026-11-17
+
+- **"One account. 61 sites." looks like Live's on every site** (plan §AD.15: "showcase.network takes Live's version …
+  so every site's 'One account. N sites.' looks like Live's"). `showcase.network()` draws the section Live built on
+  11-07: a deep surface with a slow aurora and twinkling points, the eyebrow with its live dot, the count of sites that
+  motion.js counts up the first time it is seen, a chip per kind in its colour with how many, and every kind open with
+  its glyph, its line and its count: a grid of cards on a wide screen, one row that scrolls sideways on a phone (so
+  nothing hides behind a fold, and the page never scrolls sideways). Each site is a card with its ring icon (a ring of
+  the kind's colour until ov-icons.js draws it) and its line; this site says "You are here". Calm slows the aurora, motion
+  off stills the sky. The section's CSS is in showcase.js (`showcase.css` is generated).
+- docs-status.js runs piped again (#591) and test/piped-scripts.test.js holds every piped script to it.
+
 ## 4.290.0 — 2026-11-16
 
 - **Every glyph meant to be even is now exact** (the owner, 11-16: "regenerate icons that look fucked up like this, even
