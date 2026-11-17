@@ -61,6 +61,10 @@
 .ovp-check { width: 20px; height: 20px; color: var(--accent-light, var(--accent, #60a5fa)); opacity: 0; transform: scale(.6); transition: opacity .15s ease, transform .2s cubic-bezier(.34,1.56,.64,1); }
 .ovp-row[aria-selected="true"] .ovp-check { opacity: 1; transform: none; }
 .ovp-none { padding: 22px 12px; text-align: center; color: var(--text-secondary, #a8b3c4); }
+.ovp-list .ovp-row { content-visibility: auto; contain-intrinsic-size: auto 52px; }
+.ovp-row.is-late { animation: none; }
+.ovp-more { height: 1px; }
+.ovp-wait { display: grid; place-items: center; padding: 28px 12px; }
 @keyframes ovp-row-in { from { opacity: 0; transform: translateY(calc(6px * var(--ov-move, 1))); } }
 html[data-ov-motion="off"] .ovp, html[data-ov-motion="off"] .ovp-veil, html[data-ov-motion="off"] .ovp-row, html[data-ov-motion="off"] .ovp-check { transition: none; animation: none; }
 .ovp-pill { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: 8px; max-width: 100%; min-height: 44px; padding: 0 12px 0 14px; border-radius: 12px; cursor: pointer; color: var(--text-primary, #e8ecf3); background: var(--bg-primary, rgba(0,0,0,.2)); box-shadow: inset 0 0 0 1px var(--border, rgba(148,163,184,.22)); font: inherit; transition: box-shadow .15s ease; }
@@ -87,8 +91,10 @@ select[data-ov-native] { position: absolute !important; width: 1px !important; h
         if (current) current.close();
         styles();
         const multi = !!opts.multi;
-        const sections = Array.isArray(opts.sections) ? opts.sections.filter((s) => s && Array.isArray(s.rows)) : [{ title: '', rows: Array.isArray(opts.rows) ? opts.rows : [] }];
-        const all = sections.flatMap((s) => s.rows);
+        const sectionsOf = (o) => (Array.isArray(o && o.sections) ? o.sections.filter((x) => x && Array.isArray(x.rows))
+            : Array.isArray(o) ? o.filter((x) => x && Array.isArray(x.rows)) : [{ title: '', rows: Array.isArray(o && o.rows) ? o.rows : [] }]);
+        let sections = typeof opts.load === 'function' ? [] : sectionsOf(opts);
+        let all = sections.flatMap((x) => x.rows);
         const chosen = new Set((multi ? (Array.isArray(opts.value) ? opts.value : []) : (opts.value != null ? [opts.value] : [])).map(String));
         const asSheet = opts.sheet != null ? !!opts.sheet : phone();
         const anchor = opts.anchor || null;
@@ -106,22 +112,48 @@ select[data-ov-native] { position: absolute !important; width: 1px !important; h
         if (multi) { done = el('button', 'ovp-done', opts.doneLabel || 'Done'); done.type = 'button'; head.append(done); }
         head.append(x);
         box.append(el('div', 'ovp-grab'), head);
-        const wantSearch = opts.search === true || (opts.search !== false && all.length > 8);
+        const wantSearch = opts.search === true || (opts.search !== false && (all.length > 8 || typeof opts.load === 'function'));
         let input = null;
         if (wantSearch) {
             const find = el('div', 'ovp-find'); find.innerHTML = SVG.find;
             input = el('input'); input.type = 'search'; input.placeholder = opts.searchLabel || 'Search'; input.setAttribute('aria-label', opts.searchLabel || 'Search'); input.autocomplete = 'off'; input.spellcheck = false;
             find.append(input); box.append(find);
         }
+        let closed = false;
         const list = el('div', 'ovp-list'); list.setAttribute('role', 'listbox'); if (multi) list.setAttribute('aria-multiselectable', 'true');
         list.setAttribute('aria-label', opts.title || 'Choices');
         box.append(list);
-        let rowsEls = [];
+        // 4.305.0 (the owner, 11-17: "Picker is very unoptimized … lazy loading, asynchronous, dynamic loading … search …
+        // less intensive"): every row's search text is made once; a query is the rows that hold every word, the name's
+        // own matches first; rows are made 40 at a time as the end of the list comes near (an IntersectionObserver), so a
+        // catalog of hundreds opens as fast as a list of ten; one listener on the list serves every row; typing redraws
+        // at most once a frame; and the list can come later (opts.load), the sheet opening at once with the mark busy.
+        const CHUNK = 40;
+        let index = [];          // { row, si, name, hay } for every row, in section order
+        let matches = [];        // what the query keeps, in the order it is shown
+        let shown = 0;           // how many of matches are drawn
+        let rowsEls = [];        // the drawn rows, matches[0..shown)
+        let lastSec = -1;
+        let query = '';
         let active = -1;
-        const setActive = (i) => {
-            rowsEls.forEach((r, n) => r.classList.toggle('is-active', n === i));
-            active = i;
-            if (rowsEls[i]) { rowsEls[i].scrollIntoView({ block: 'nearest' }); if (input) input.setAttribute('aria-activedescendant', rowsEls[i].id); }
+        let loaded = typeof opts.load !== 'function';   // until then, typing only remembers the words
+        const sentinel = el('div', 'ovp-more'); sentinel.setAttribute('aria-hidden', 'true');
+        const build = () => {
+            index = [];
+            sections.forEach((sec, si) => sec.rows.forEach((row) => index.push({ row, si, name: norm(row.name || row.id),
+                hay: norm(`${row.name || ''} ${row.id || ''} ${row.line || ''} ${row.badge || ''} ${(row.keywords || []).join(' ')}`) })));
+        };
+        const filter = () => {
+            const terms = query.split(/\s+/).filter(Boolean);
+            if (!terms.length) return index;
+            const hit = [];
+            for (const e of index) {
+                if (!terms.every((t) => e.hay.includes(t))) continue;
+                // The whole phrase at the start of the name first, then in it, then the first word, then anywhere.
+                hit.push([e.name.startsWith(query) ? 0 : e.name.includes(query) ? 1 : e.name.startsWith(terms[0]) ? 2 : e.name.includes(terms[0]) ? 3 : 4, e]);
+            }
+            hit.sort((x, y) => x[0] - y[0]);   // stable: section order within each rank
+            return hit.map((x) => x[1]);
         };
         const iconOf = (row) => {
             const ic = el('span', 'ovp-ic');
@@ -130,52 +162,117 @@ select[data-ov-native] { position: absolute !important; width: 1px !important; h
             else ic.textContent = String(row.name || '?').trim().charAt(0).toUpperCase();
             return ic;
         };
-        const pickOne = (row) => {
-            if (!row || row.disabled) return;
-            if (multi) {
-                const k = String(row.id);
-                if (chosen.has(k)) chosen.delete(k); else chosen.add(k);
-                rowsEls.forEach((r) => r.setAttribute('aria-selected', String(chosen.has(r.dataset.id))));
+        const rowEl = (row, i) => {
+            const b = el('button', `ovp-row${i >= 14 ? ' is-late' : ''}`); b.type = 'button'; b.setAttribute('role', 'option');
+            b.dataset.id = String(row.id); b.dataset.i = String(i); b.id = `${titleId}-${i}`;
+            if (i < 14) b.style.setProperty('--i', String(i));
+            b.setAttribute('aria-selected', String(chosen.has(String(row.id))));
+            if (row.disabled) b.setAttribute('aria-disabled', 'true');
+            const t = el('span', 'ovp-t'); t.append(el('b', '', String(row.name || row.id))); if (row.line) t.append(el('small', '', String(row.line)));
+            const end = el('span', 'ovp-end'); if (row.badge) end.append(el('span', 'ovp-badge', String(row.badge))); end.insertAdjacentHTML('beforeend', SVG.check);
+            b.append(iconOf(row), t, end);
+            return b;
+        };
+        const glyphs = (made) => {
+            if (!made.some((b) => b.querySelector('.ovp-ic > i[data-ov-icon]'))) return;
+            if (root.OVGlyphs && typeof root.OVGlyphs.swap === 'function') { made.forEach((b) => { try { root.OVGlyphs.swap(b); } catch { /* glyphs optional */ } }); }
+            // A glyph name the set does not draw (or no glyph script on the page) shows the row's initial, never an empty box.
+            requestAnimationFrame(() => made.forEach((b) => b.querySelectorAll('.ovp-ic > i[data-ov-icon]').forEach((i) => {
+                if (i.querySelector('svg') || i.getBoundingClientRect().width > 4 && getComputedStyle(i, '::before').content !== 'none') return;
+                i.parentNode.textContent = ((b.querySelector('.ovp-t b') || {}).textContent || '').trim().charAt(0).toUpperCase();
+            })));
+        };
+        const more = () => {
+            if (shown >= matches.length) return;
+            const frag = doc.createDocumentFragment();
+            const made = [];
+            const stop = Math.min(matches.length, shown + CHUNK);
+            for (let i = shown; i < stop; i++) {
+                const e = matches[i];
+                if (!query && e.si !== lastSec) { lastSec = e.si; const t = sections[e.si].title; if (t) frag.append(el('p', 'ovp-sec', t)); }
+                const b = rowEl(e.row, i); frag.append(b); made.push(b);
+            }
+            rowsEls = rowsEls.concat(made);
+            shown = stop;
+            list.insertBefore(frag, sentinel);
+            if (shown >= matches.length) sentinel.remove();
+            glyphs(made);
+        };
+        const seen = typeof IntersectionObserver === 'function'
+            ? new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) more(); }, { root: list, rootMargin: '0px 0px 480px 0px' }) : null;
+        const upTo = (i) => { while (i >= shown && shown < matches.length) more(); };
+        const setActive = (i, still) => {
+            if (i < 0 || i >= matches.length) return;
+            upTo(i);
+            if (rowsEls[active]) rowsEls[active].classList.remove('is-active');
+            active = i;
+            const b = rowsEls[i];
+            if (!b) return;
+            b.classList.add('is-active');
+            if (!still) b.scrollIntoView({ block: 'nearest' });
+            if (input) input.setAttribute('aria-activedescendant', b.id);
+        };
+        const paint = () => {
+            matches = filter();
+            shown = 0; rowsEls = []; lastSec = -1; active = -1;
+            list.textContent = '';
+            if (!matches.length) {
+                list.append(el('div', 'ovp-none', query ? `Nothing matches “${input ? input.value : query}”` : (opts.empty || 'Nothing to choose yet')));
                 return;
             }
-            chosen.clear(); chosen.add(String(row.id));
-            rowsEls.forEach((r) => r.setAttribute('aria-selected', String(chosen.has(r.dataset.id))));
+            list.append(sentinel);
+            more();
+            if (shown < matches.length) { if (seen) { seen.disconnect(); seen.observe(sentinel); } else upTo(matches.length - 1); }
+            list.scrollTop = 0;
+        };
+        const pickOne = (row) => {
+            if (!row || row.disabled) return;
+            const k = String(row.id);
+            if (multi) {
+                if (chosen.has(k)) chosen.delete(k); else chosen.add(k);
+                rowsEls.forEach((r) => { if (r.dataset.id === k) r.setAttribute('aria-selected', String(chosen.has(k))); });
+                return;
+            }
+            rowsEls.forEach((r) => { if (r.getAttribute('aria-selected') === 'true' || r.dataset.id === k) r.setAttribute('aria-selected', String(r.dataset.id === k)); });
+            chosen.clear(); chosen.add(k);
             close(true);
             try { if (typeof opts.onPick === 'function') opts.onPick(row); } catch (e) { setTimeout(() => { throw e; }); }
         };
-        const paint = (q) => {
-            const n = norm(q);
-            list.textContent = ''; rowsEls = [];
-            let i = 0;
-            for (const s of sections) {
-                const rows = s.rows.filter((r) => !n || norm(`${r.name} ${r.line || ''} ${r.badge || ''} ${(r.keywords || []).join(' ')}`).includes(n));
-                if (!rows.length) continue;
-                if (s.title) list.append(el('p', 'ovp-sec', s.title));
-                for (const row of rows) {
-                    const b = el('button', 'ovp-row'); b.type = 'button'; b.setAttribute('role', 'option'); b.dataset.id = String(row.id);
-                    b.id = `${titleId}-${i}`; b.style.setProperty('--i', String(Math.min(i, 14)));
-                    b.setAttribute('aria-selected', String(chosen.has(String(row.id))));
-                    if (row.disabled) b.setAttribute('aria-disabled', 'true');
-                    const t = el('span', 'ovp-t'); t.append(el('b', '', String(row.name || row.id))); if (row.line) t.append(el('small', '', String(row.line)));
-                    const end = el('span', 'ovp-end'); if (row.badge) end.append(el('span', 'ovp-badge', String(row.badge))); end.insertAdjacentHTML('beforeend', SVG.check);
-                    b.append(iconOf(row), t, end);
-                    b.addEventListener('click', () => pickOne(row));
-                    b.addEventListener('pointermove', () => setActive(rowsEls.indexOf(b)));
-                    list.append(b); rowsEls.push(b); i++;
-                }
-            }
-            if (!rowsEls.length) list.append(el('div', 'ovp-none', n ? `Nothing matches “${q}”` : (opts.empty || 'Nothing to choose yet')));
-            active = -1;
-            if (root.OVGlyphs && typeof root.OVGlyphs.swap === 'function') { try { root.OVGlyphs.swap(list); } catch { /* glyphs optional */ } }
-            // A glyph name the set does not draw (or no glyph script on the page) shows the row's initial, never an empty box.
-            requestAnimationFrame(() => list.querySelectorAll('.ovp-ic > i[data-ov-icon]').forEach((i) => {
-                if (i.querySelector('svg') || i.getBoundingClientRect().width > 4 && getComputedStyle(i, '::before').content !== 'none') return;
-                const row = i.closest('.ovp-row'); const name = row ? (row.querySelector('.ovp-t b') || {}).textContent || '' : '';
-                i.parentNode.textContent = name.trim().charAt(0).toUpperCase();
-            }));
+        // One listener for every row: a tap picks, a pointer over a row makes it the active one.
+        const rowAt = (t) => { const b = t && t.closest ? t.closest('.ovp-row') : null; return b && list.contains(b) ? b : null; };
+        list.addEventListener('click', (ev) => { const b = rowAt(ev.target); const e = b ? matches[Number(b.dataset.i)] : null; if (e) pickOne(e.row); });
+        list.addEventListener('pointermove', (ev) => { const b = rowAt(ev.target); if (b && Number(b.dataset.i) !== active) setActive(Number(b.dataset.i), true); });
+        const fill = (data) => {
+            sections = sectionsOf(data); all = sections.flatMap((x) => x.rows);
+            loaded = true;
+            build(); paint();
         };
-        paint('');
-        if (input) input.addEventListener('input', () => { paint(input.value); if (rowsEls.length) setActive(0); });
+        if (typeof opts.load === 'function') {
+            const wait = el('div', 'ovp-wait'); wait.setAttribute('role', 'status'); wait.setAttribute('aria-label', 'Loading');
+            const mark = el('span', 'ov-mark'); mark.dataset.size = '36'; mark.dataset.state = 'busy'; wait.append(mark);
+            list.append(wait);
+            if (root.OVMark && typeof root.OVMark.mount === 'function') { try { root.OVMark.mount(mark); } catch { /* the mark is optional */ } }
+            Promise.resolve().then(() => opts.load()).then((data) => { if (!closed) fill(data); },
+                () => { if (!closed) { list.textContent = ''; list.append(el('div', 'ovp-none', opts.loadError || 'These could not be loaded just now')); } });
+        } else {
+            build(); paint();
+        }
+        if (input) {
+            // Typing redraws at most once a frame, and not at all when the words did not change.
+            let frame = 0;
+            input.addEventListener('input', () => {
+                if (frame) return;
+                frame = requestAnimationFrame(() => {
+                    frame = 0;
+                    const q = norm(input.value).trim();
+                    if (q === query) return;
+                    query = q;
+                    if (!loaded) return;
+                    paint();
+                    if (matches.length) setActive(0, true);
+                });
+            });
+        }
         // Where it sits: a sheet from the bottom, or a popover under (or over) its chip, inside the window.
         const place = () => {
             if (asSheet || !anchor || !anchor.getBoundingClientRect) { if (!asSheet) { box.style.left = '50%'; box.style.top = '15vh'; box.style.translate = '-50% 0'; } return; }
@@ -190,19 +287,21 @@ select[data-ov-native] { position: absolute !important; width: 1px !important; h
         if (anchor && anchor.setAttribute) anchor.setAttribute('aria-expanded', 'true');
         place();
         requestAnimationFrame(() => { veil.classList.add('is-in'); box.classList.add('is-in'); });
-        const firstOn = rowsEls.findIndex((r) => r.getAttribute('aria-selected') === 'true');
+        const firstOn = matches.findIndex((e) => chosen.has(String(e.row.id)));
+        if (firstOn >= 0) upTo(firstOn);
         if (input && !phone()) input.focus(); else (rowsEls[firstOn >= 0 ? firstOn : 0] || box).focus();
         // Keys: arrows move, Enter picks, Escape closes, Tab stays inside; typing finds.
         const onKey = (e) => {
             if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
+                if (!matches.length) return;
                 const from = active >= 0 ? active : rowsEls.indexOf(doc.activeElement);
-                const next = Math.max(0, Math.min(rowsEls.length - 1, from + (e.key === 'ArrowDown' ? 1 : -1)));
+                const next = Math.max(0, Math.min(matches.length - 1, from + (e.key === 'ArrowDown' ? 1 : -1)));
                 setActive(next); if (doc.activeElement !== input) rowsEls[next] && rowsEls[next].focus();
                 return;
             }
-            if (e.key === 'Enter' && doc.activeElement === input && active >= 0) { e.preventDefault(); rowsEls[active].click(); return; }
+            if (e.key === 'Enter' && doc.activeElement === input && active >= 0 && matches[active]) { e.preventDefault(); pickOne(matches[active].row); return; }
             if (e.key === 'Tab') {
                 const f = [...box.querySelectorAll('button, input')].filter((n) => !n.disabled && n.offsetParent !== null);
                 if (!f.length) return;
@@ -226,9 +325,9 @@ select[data-ov-native] { position: absolute !important; width: 1px !important; h
         if (done) done.addEventListener('click', () => { const rows = all.filter((r) => chosen.has(String(r.id))); close(true); try { if (typeof opts.onPick === 'function') opts.onPick(rows); } catch (e) { setTimeout(() => { throw e; }); } });
         const onResize = () => { if (!asSheet) place(); };
         root.addEventListener('resize', onResize);
-        let closed = false;
         function close(picked) {
             if (closed) return; closed = true;
+            if (seen) seen.disconnect();
             current = current && current.box === box ? null : current;
             root.removeEventListener('resize', onResize);
             if (anchor && anchor.setAttribute) anchor.setAttribute('aria-expanded', 'false');

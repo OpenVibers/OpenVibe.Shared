@@ -527,11 +527,32 @@
             return options || fallbackOptions;
         };
         let models = null;   // the Frame's /choices?task=agent: { recommended, groups: [{ id, title, rows }] }
-        const loadModels = async () => {
-            if (models) return models;
-            try { const d = await api('/choices?task=agent'); if (d && Array.isArray(d.groups)) models = d; } catch { /* Auto only */ }
-            return models || { groups: [] };
+        // The models a person can pick (4.305.0): asked once, shared by every open of the picker, and kept ten minutes in
+        // this tab's sessionStorage so the next page opens it with no wait; fetched while the page is idle, so the first
+        // open usually has it already. A second ask while one is under way waits for that one.
+        const MODELS_KEY = 'ovse-models-v1';
+        let modelsAsk = null;
+        const loadModels = () => {
+            if (models) return Promise.resolve(models);
+            if (!modelsAsk) {
+                try {
+                    const kept = JSON.parse(sessionStorage.getItem(MODELS_KEY) || 'null');
+                    if (kept && kept.at > Date.now() - 10 * 60_000 && kept.d && Array.isArray(kept.d.groups)) { models = kept.d; return Promise.resolve(models); }
+                } catch { /* no storage here */ }
+                modelsAsk = api('/choices?task=agent').then((d) => {
+                    if (d && Array.isArray(d.groups)) {
+                        models = d;
+                        try { sessionStorage.setItem(MODELS_KEY, JSON.stringify({ at: Date.now(), d })); } catch { /* full or off */ }
+                    }
+                    return models || { groups: [] };
+                }, () => ({ groups: [] })).finally(() => { modelsAsk = null; });
+            }
+            return modelsAsk;
         };
+        try {
+            const soon = window.requestIdleCallback || ((f) => setTimeout(f, 1500));
+            soon(() => { loadModels(); }, { timeout: 4000 });
+        } catch { /* the picker asks when it opens */ }
 
         // ── the frame of the surface ──
         const wrap = el('div', 'ovse');
@@ -1270,7 +1291,34 @@
         }
 
         // ── the thread: steps become blocks (words, a group of tool rows, the files it changed, approvals, helpers) ──
-        const ordered = () => [...state.steps.values()].sort((a, b) => a.seq - b.seq);
+        // 4.305.0 (the owner's phone, 11-17: tool rows read "A step" and the answer showed twice): a tool's result, which
+        // Actor writes as a step of its own, joins its call (the call's row then has what it found), and the same answer
+        // written twice in a row is shown once (the later step's receipt kept).
+        const ordered = () => {
+            const out = [];
+            for (const s of [...state.steps.values()].sort((a, b) => a.seq - b.seq)) {
+                if (s.kind === 'tool' && !s.tool_call && !s.title && s.result != null) {
+                    let at = -1;
+                    for (let k = out.length - 1; k >= 0; k--) {
+                        const c = out[k];
+                        if (c.kind === 'message') break;
+                        if (c.kind === 'tool' && c.tool_call && c.result == null) { at = k; break; }
+                    }
+                    if (at >= 0) {
+                        const c = out[at];
+                        out[at] = { ...c, result: s.result, ended_at: s.ended_at || c.ended_at, status: c.status === 'running' ? 'done' : c.status };
+                        continue;
+                    }
+                }
+                const prev = out[out.length - 1];
+                if (prev && s.kind === 'message' && prev.kind === 'message' && s.from !== 'person' && prev.from !== 'person' && s.text && s.text === prev.text) {
+                    out[out.length - 1] = { ...prev, ...s };
+                    continue;
+                }
+                out.push(s);
+            }
+            return out;
+        };
         function changed() {
             const by = new Map();
             for (const s of ordered()) for (const f of filesOf(s)) {
@@ -1993,16 +2041,19 @@
             } else if (section === 'works') {
                 P.open({ anchor: ctxB, title: 'Works on', search: 'auto', value: pick.works || '', rows: [{ id: '', name: 'Anything', line: 'It works out what you mean: a new site, a repository, a question' }, ...o.works.map((x) => ({ id: String(x.value), name: x.name, line: x.line || '' }))], onPick: (row) => { pick.works = row.id || null; savePick(); } });
             } else if (section === 'model') {
-                const d = await loadModels();
-                const sections = [{ title: '', rows: [{ id: 'auto', name: 'Auto', line: 'The best fit for what you ask, within your budget' }] }];
+                // 4.305.0: the sheet opens at once; the models fill it when they are here (loadModels, usually already).
                 const priced = new Map();   // row id → { price, free }, kept with the pick for the price before it runs
-                for (const g of d.groups || []) {
-                    for (const x of (g.rows || []).slice(0, 800)) priced.set(`${x.source || 'openvibe'}|${x.model}`, { price: x.price && Number.isFinite(x.price.in) ? { in: x.price.in, out: x.price.out } : null, free: !!x.free });
-                    const rows = (g.rows || []).slice(0, 800).map((x) => ({ id: `${x.source || 'openvibe'}|${x.model}`, name: x.name || x.model, line: [x.maker, x.free ? 'Free' : x.price && Number.isFinite(x.price.in) ? `$${x.price.in} / $${x.price.out} per 1M` : ''].filter(Boolean).join(' · '), badge: x.free ? 'Free' : '' }));
-                    if (rows.length) sections.push({ title: g.title || g.id, rows });
-                }
                 const value = pick.model ? `${pick.model.source || 'openvibe'}|${pick.model.id}` : 'auto';
-                P.open({ anchor: ctxB, title: 'Model', search: true, value, sections, onPick: (row) => {
+                P.open({ anchor: ctxB, title: 'Model', search: true, value, searchLabel: 'Search models', load: async () => {
+                    const d = await loadModels();
+                    const sections = [{ title: '', rows: [{ id: 'auto', name: 'Auto', line: 'The best fit for what you ask, within your budget' }] }];
+                    for (const g of d.groups || []) {
+                        for (const x of (g.rows || []).slice(0, 800)) priced.set(`${x.source || 'openvibe'}|${x.model}`, { price: x.price && Number.isFinite(x.price.in) ? { in: x.price.in, out: x.price.out } : null, free: !!x.free });
+                        const rows = (g.rows || []).slice(0, 800).map((x) => ({ id: `${x.source || 'openvibe'}|${x.model}`, name: x.name || x.model, line: [x.maker, x.free ? 'Free' : x.price && Number.isFinite(x.price.in) ? `$${x.price.in} / $${x.price.out} per 1M` : ''].filter(Boolean).join(' · '), badge: x.free ? 'Free' : '' }));
+                        if (rows.length) sections.push({ title: g.title || g.id, rows });
+                    }
+                    return sections;
+                }, onPick: (row) => {
                     if (row.id === 'auto') pick.model = null;
                     else { const [source, ...rest] = String(row.id).split('|'); pick.model = { id: rest.join('|'), source, name: row.name, ...(priced.get(row.id) || {}) }; }
                     savePick();
