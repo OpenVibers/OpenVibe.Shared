@@ -1,5 +1,20 @@
 # Changelog
 
+## 4.293.0 — 2026-11-17
+
+- **Global remembers where you stopped reading** (the owner, 11-17: "remember where you were in the chat last and … save
+  it locally and on the server … it should say new messages … in the middle of the chat wherever you last read so that
+  you can scroll through and read them all, and then that should actually mark these down as you scroll through them
+  … animated effects … smart and fast"). The menu's Chat → Global opens at a **New messages** line just under the last
+  line you read, with a little of what you read above it. New lines are lit with an accent bar and fade to read once they
+  have been on screen a moment (a fast flick past is not reading); the Global count falls as you go (it used to stay at
+  50+ while you read). The mark is kept on this device and on Chat (`GET`/`POST /api/chat/global/read`, OpenVibe.Chat
+  #629), the later of the two wins, so every site and device opens at the same place. A pill above the box says how
+  many lines wait below and takes you there, with a check to mark them all read; a line that comes while you read further
+  up is new and the pill says so; older lines load as you scroll up; after a long absence the next hundred load as you
+  reach the end; the last lines stay in memory, so going back to Global paints at once. Saying something marks Global
+  read. Motion follows Calm and Off. test/dock-global-unread-chrome.test.js.
+
 ## 4.292.0 — 2026-11-17
 
 - **History loads again when a page has been open a while** (the owner, 11-17: "The history tab no longer loads or is
