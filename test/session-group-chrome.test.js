@@ -71,7 +71,7 @@ const server = http.createServer((req, res) => {
             await until(p, "!!document.querySelector('.ovse-group-start')");
             // The group as a run.
             await p.evaluate("window.__s.open('group:g1')");
-            await until(p, "!!document.querySelector('.ovse-group:not([hidden]) .ovse-gm-face')");
+            await until(p, "!!document.querySelector('.ovse-gbar:not([hidden]) .ovse-gm-face')");
             assert.strictEqual(await p.evaluate("document.querySelector('.ovse-group-count').textContent"), '2 people · 3 agents');
             assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovse-gm-stack .ovse-gm-face')].map((x) => x.dataset.handle)"), ['ada', 'bo', 'actor', 'codex', 'codes']);
             // Everyone, with each agent's role: a tap on the faces.

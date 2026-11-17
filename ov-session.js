@@ -596,7 +596,7 @@
         const thread = el('div', 'ovse-thread'); thread.setAttribute('role', 'log'); thread.setAttribute('aria-live', 'polite');
         // Group conversations (4.302.0, plan §AD.19): a group is a run (`group:<id>`) of people and agents; its bar says who
         // is in it (each agent's @handle and the harness it works through), opens the shared space and adds members.
-        const groupBar = el('div', 'ovse-group'); groupBar.hidden = true;
+        const groupBar = el('div', 'ovse-gbar'); groupBar.hidden = true;
         body.append(groupBar, thread);
         const foot = el('div', 'ovse-foot');
         const planBox = el('details', 'ovse-plan'); planBox.hidden = true;
@@ -2598,7 +2598,7 @@ html[data-ov-motion="off"] .ovse-yai-r { animation: none; }
 .ovse-agent-face.is-auto { background: linear-gradient(140deg, var(--ovse-acc), var(--ovse-acc2)); }
 .ovse-agent-face .ovse-g { width: 55%; height: 55%; }
 /* Group conversations (4.302.0, plan §AD.19): the bar, others' words, the @ chips, the sheet. */
-.ovse-group { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--ovse-line, rgba(255,255,255,.08)); }
+.ovse-gbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--ovse-line, rgba(255,255,255,.08)); }
 .ovse-group-faces { display: flex; flex: 1 1 auto; align-items: center; gap: 10px; min-width: 0; min-height: 40px; padding: 0 6px 0 0; border: 0; border-radius: 999px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .ovse-group-faces:hover .ovse-group-count { color: var(--text-primary, #e6edf7); }
 .ovse-gm-stack { display: flex; flex: none; }
