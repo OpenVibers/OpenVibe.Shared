@@ -335,7 +335,9 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             const p = await fresh(390, 780);
             await p.goto(`${base}/page`, { maxMs: 5000 });
             const st = await until(p, STATUS, 'the status');
-            assert.deepStrictEqual([st.tone, st.label], ['waiting', '1 needs you'], 'what needs you comes first');
+            assert.deepStrictEqual([st.tone, st.label, st.text], ['waiting', 'An agent is waiting for your answer: tap to answer', '1'], 'what needs you comes first: the dot carries the number (4.295.0)');
+            // Once, in words, under the button (the owner: "What is this yellow dot trying to indicate?").
+            assert.strictEqual(await until(p, "(document.querySelector('.ovnav-callout') || {}).textContent", 'the bubble'), 'An agent is waiting for your answer');
             await p.evaluate(MENU_BUTTON);
             // 4.266.0 (plan §AD.8): the menu opens on Vibe, the one session surface (ov-session.js), with its sessions
             // showing: your Actor on top, then what needs you first; no Dock panel is lent into it.

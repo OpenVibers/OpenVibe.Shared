@@ -62,7 +62,7 @@ async function until(p, expression, ms = 6000) {
             await p.evaluate('window.mount = OpenVibeDock.mountInto(document.getElementById("host"), {tab:"chats"})');
             await until(p, '!!document.querySelector("#host .ovdk-chat")');
             await p.evaluate('OpenVibeDock.update({state: OpenVibeDock._state().doc.state, counts: {unread: 2, running: 0, waiting: 1}})');
-            assert.deepStrictEqual(await p.evaluate('window.__status[window.__status.length - 1]'), { tone: 'waiting', text: 'Needs you', label: '1 needs you', part: 'agent' }, `${width}px: what the pill said goes to the menu button`);
+            assert.deepStrictEqual(await p.evaluate('window.__status[window.__status.length - 1]'), { tone: 'waiting', text: '1', count: 1, label: 'An agent is waiting for your answer: tap to answer', part: 'agent' }, `${width}px: what the pill said goes to the menu button`);
             await p.evaluate('OpenVibeDock.update({state: OpenVibeDock._state().doc.state, counts: {unread: 2, running: 2, waiting: 0}})');
             assert.strictEqual(await p.evaluate('window.__status[window.__status.length - 1].text'), '2 working', `${width}px: agents working`);
             for (const [tab, marker] of [['chats', '.ovdk-chat'], ['vibe', '.ovdk-vibe-new'], ['agent', '.ovdk-runs-foot']]) {

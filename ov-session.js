@@ -172,6 +172,8 @@
     const isLive = (r) => !!r && ['planning', 'running'].includes(r.status);
     const isEnd = (r) => !!r && ['done', 'failed', 'stopped'].includes(r.status);
     const needsYou = (r) => !!r && r.status === 'waiting' && !!r.waiting && r.waiting.for && r.waiting.for !== 'message';
+    // 4.295.0: an agent's task waiting for your answer (Actor's question). A chat is always your turn; that is not waiting.
+    const asksYou = (r) => !!r && r.status === 'waiting' && r.kind !== 'chat' && !needsYou(r);
     const KIND_GLYPH = { code: 'code', task: 'robot', machine: 'computer', chat: 'chat', ask: 'search', goal: 'made' };
 
     // ── what a tool step did ──
@@ -638,13 +640,23 @@
                 runsBox.append(el('p', 'ovse-note is-err', err.status === 401 ? 'Sign in to see your sessions.' : 'Your sessions did not load. Pull the list again in a moment.'));
             }
         }
+        /** The menu's button said something waits and was tapped (navbar.js, 4.295.0): open it, once. */
+        function openWaiting() {
+            const at = Number(root.__ovNeedsYou) || 0;
+            if (!at || Date.now() - at > 15000 || state.ref) return;
+            const r = state.runs.find((x) => needsYou(x) || asksYou(x));
+            if (!r) return;
+            root.__ovNeedsYou = 0;
+            if (r.action) { if (!wide) setDrawer(true); return; }
+            state.stack = []; open(r.ref || r.id, r); if (!wide) setDrawer(false);
+        }
         function paintRuns() {
             runsBox.textContent = '';
             if (!state.runs.length) { runsBox.append(el('p', 'ovse-note', state.q ? 'Nothing matches.' : 'No sessions yet. Start one with the box.')); return; }
             const today = new Date(); today.setHours(0, 0, 0, 0);
             const groups = [['Needs you', []], ['Working', []], ['Today', []], ['Earlier', []]];
             for (const r of state.runs) {
-                const g = needsYou(r) ? 0 : isLive(r) ? 1 : ms(r.updated_at || r.created_at) >= today.getTime() ? 2 : 3;
+                const g = needsYou(r) || asksYou(r) ? 0 : isLive(r) ? 1 : ms(r.updated_at || r.created_at) >= today.getTime() ? 2 : 3;
                 groups[g][1].push(r);
             }
             let i = 0;
@@ -654,6 +666,7 @@
                 for (const r of rows) runsBox.append(runRow(r, i++));
             }
             if (state.partial.length) runsBox.append(el('p', 'ovse-note', `Some sessions did not load: ${state.partial.slice(0, 3).join(', ')}.`));
+            openWaiting();
         }
         /** 4.266.0: the Action Center's work (Network GET /api/v1/me/actions) that no session here already shows. */
         const SERVICE = { actor: 'Actor', codes: 'Codes', ai: 'OpenVibe AI', run: 'OpenVibe Run', bot: 'OpenVibe.Bot', chat: 'Chat', network: 'OpenVibe' };
@@ -715,12 +728,13 @@
         }
         function runButton(r, i) {
             const ref = r.ref || r.id;
-            const b = el('button', `ovse-row${ref === state.ref ? ' is-on' : ''}${needsYou(r) ? ' is-needs' : ''}${isLive(r) ? ' is-live' : ''}`); b.type = 'button';
+            const b = el('button', `ovse-row${ref === state.ref ? ' is-on' : ''}${needsYou(r) || asksYou(r) ? ' is-needs' : ''}${isLive(r) ? ' is-live' : ''}`); b.type = 'button';
             b.style.setProperty('--i', String(Math.min(i, 12)));
             const t = el('span', 'ovse-row-t');
             const top = el('span', 'ovse-row-top'); top.append(el('b', '', titleOf(r)), el('small', '', ago(r.updated_at || r.created_at)));
             let line = needsYou(r) ? WAITING[r.waiting.for] || 'Needs you' : (r.doing && r.doing.text) || (r.preview && r.preview.text) || r.preview || r.result_summary || (STATUS[r.status] || [''])[0];
             if (isAllowance(line)) line = 'Free AI used up for today: set up your own';
+            else if (asksYou(r)) line = 'Waiting for your answer';
             t.append(top, el('small', 'ovse-row-l', String(line || '').slice(0, 140)));
             b.append(face(r, 's'), t);
             if (isLive(r)) b.append(el('i', 'ovse-pulse'));
@@ -783,6 +797,131 @@
             savePick(); blank(); if (!wide) setDrawer(false);
             setTimeout(() => openCtx(), 260);
         }
+        /** Your agent, edited in place (4.295.0; the owner, 11-17: "you can't even edit these properly, or like edit and
+         *  configure them easily"): its name, its picture (one of yours to wear, or three drawn from a few words in a
+         *  style), Pause or Resume, how it runs and your own setup, and Actor's site for its rules. The Frame relays each
+         *  part (PATCH /actor, GET /actor/pictures, POST /actor/pictures/generate, POST /actor/face). */
+        function agentSheet() {
+            sheet(`${actorName()}, your agent`, (b, { end, title }) => {
+                const json = () => ({ Accept: 'application/json', 'Content-Type': 'application/json', ...headers() });
+                const call = async (path, method, body) => {
+                    const r = await fetch(`${base}${path}`, { method, credentials: 'omit', headers: json(), ...(body ? { body: JSON.stringify(body) } : {}) });
+                    const j = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(j.detail || j.error || j.title || `That did not go through (${r.status})`);
+                    return j;
+                };
+                const note = el('p', 'ovse-ag-note'); note.setAttribute('role', 'status');
+                const fresh = async () => { actorAt = 0; await loadActor(); paintActor(); faceBox.textContent = ''; faceBox.append(actorFace('xl')); title.textContent = `${actorName()}, your agent`; if (!state.run) { paintHead(); } };
+                // Its face and name
+                const top = el('div', 'ovse-ag-top');
+                const faceBox = el('span', 'ovse-ag-face'); faceBox.append(actorFace('xl'));
+                const nameRow = el('div', 'ovse-ag-namerow');
+                const nameIn = el('input', 'ovse-ag-name'); nameIn.type = 'text'; nameIn.maxLength = 80; nameIn.value = actorName(); nameIn.spellcheck = false; nameIn.setAttribute('aria-label', 'Your agent\'s name');
+                const save = btn('ovse-ag-save', 'Save the name', 'check', 'Save'); save.hidden = true;
+                nameIn.addEventListener('input', () => { const v = nameIn.value.trim(); save.hidden = !(v && v !== actorName()); });
+                nameIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); if (!save.hidden) save.click(); } });
+                save.addEventListener('click', async () => {
+                    save.disabled = true; note.textContent = 'Saving…';
+                    try { await call('/actor', 'PATCH', { name: nameIn.value.trim().slice(0, 80) }); await fresh(); save.hidden = true; note.textContent = 'Saved: that is its name everywhere now.'; }
+                    catch (err) { note.textContent = err.message; }
+                    finally { save.disabled = false; }
+                });
+                nameRow.append(nameIn, save);
+                const st = actorState(); const now = (actor && actor.now) || {};
+                const cap = actor && actor.caps && Number(actor.caps.usd) > 0 ? ` of $${Number(actor.caps.usd).toFixed(2)}` : '';
+                const line = el('small', 'ovse-ag-line', [ACTOR_WORD[st], `$${(Number(now.cost_today) || 0).toFixed(2)}${cap} today`].filter(Boolean).join(' · '));
+                const tt = el('div', 'ovse-ag-tt'); tt.append(nameRow, line);
+                top.append(faceBox, tt);
+                b.append(top);
+                // Pause or Resume, and how it runs
+                const acts = el('div', 'ovse-ag-acts');
+                if (actor && actor.id) {
+                    const paused = st === 'paused';
+                    const go = btn('ovse-ag-btn', paused ? `Resume ${actorName()}` : `Pause ${actorName()}`, paused ? 'play' : 'pause', paused ? 'Resume' : 'Pause');
+                    go.addEventListener('click', async () => {
+                        go.disabled = true;
+                        try { await call(`/actor/${paused ? 'resume' : 'pause'}`, 'POST', {}); end(); actorAt = 0; loadActor().then(paintActor); }
+                        catch (err) { note.textContent = err.message; go.disabled = false; }
+                    });
+                    acts.append(go);
+                }
+                const how = btn('ovse-ag-btn is-main', 'How it runs: the model, the way, where and the effort', 'tune', 'How it runs');
+                how.addEventListener('click', () => { end(); setTimeout(() => setupFor('actor'), 240); });
+                acts.append(how);
+                b.append(acts, note);
+                // Its picture: one of yours, or three new ones
+                const pics = el('section', 'ovse-ag-sec'); pics.hidden = true;
+                const row = el('div', 'ovse-ag-pics'); row.setAttribute('role', 'radiogroup'); row.setAttribute('aria-label', 'Your pictures');
+                const draw = el('form', 'ovse-ag-draw'); draw.setAttribute('aria-label', 'Draw new pictures');
+                const words = el('input', 'ovse-ag-words'); words.type = 'text'; words.maxLength = 200; words.placeholder = 'A calm fox in a hoodie'; words.setAttribute('aria-label', 'Describe the picture'); words.enterKeyHint = 'go';
+                const styles = el('div', 'ovse-ag-styles'); styles.setAttribute('role', 'radiogroup'); styles.setAttribute('aria-label', 'Style');
+                const drawGo = btn('ovse-ag-btn is-main', 'Draw three pictures', 'spark', 'Draw three'); drawGo.type = 'submit';
+                draw.append(words, styles, drawGo);
+                pics.append(el('b', 'ovse-ag-h', 'Picture'), row, draw);
+                b.append(pics);
+                let list = [], style = 'openvibe';
+                const worn = () => (actor && actor.avatar && typeof actor.avatar.face === 'string' ? actor.avatar.face : null);
+                const paintPics = () => {
+                    row.textContent = '';
+                    list.slice(0, 8).forEach((pp) => {
+                        const on = pp.id === worn();
+                        const c = el('button', 'ovse-ag-pic'); c.type = 'button'; c.setAttribute('role', 'radio'); c.setAttribute('aria-checked', String(on));
+                        c.setAttribute('aria-label', on ? 'Wearing this picture' : 'Wear this picture');
+                        const i = el('img'); i.src = pp.url; i.alt = ''; i.loading = 'lazy'; i.decoding = 'async'; c.append(i);
+                        c.addEventListener('click', async () => {
+                            if (on) return;
+                            note.textContent = 'Putting it on…';
+                            try { await call('/actor/face', 'POST', { face: pp.id }); await fresh(); paintPics(); note.textContent = ''; }
+                            catch (err) { note.textContent = err.message; }
+                        });
+                        row.append(c);
+                    });
+                    row.hidden = !row.childElementCount;
+                };
+                draw.addEventListener('submit', async (e) => {
+                    e.preventDefault(); if (drawGo.disabled) return;
+                    drawGo.disabled = true; note.textContent = 'Drawing three pictures…';
+                    const mark = root.OVMark && typeof root.OVMark.busy === 'function' ? (() => { try { return root.OVMark.busy(drawGo); } catch { return null; } })() : null;
+                    try {
+                        const j = await call('/actor/pictures/generate', 'POST', { name: actorName(), description: words.value.trim().slice(0, 200) || undefined, style, n: 3 });
+                        const got = (Array.isArray(j.faces) ? j.faces : []).filter((x) => x && httpsUrl(x.url));
+                        list = got.concat(list.filter((x) => !got.some((n) => n.id === x.id)));
+                        paintPics();
+                        note.textContent = `Three new pictures${Number(j.cost_usd) > 0 ? ` · $${Number(j.cost_usd).toFixed(2)}` : ''}: tap one to wear it.`;
+                        if (mark && mark.done) mark.done();
+                    } catch (err) { note.textContent = err.message; if (mark && mark.fail) mark.fail(); }
+                    finally { drawGo.disabled = false; }
+                });
+                fetch(`${base}/actor/pictures`, { credentials: 'omit', headers: { Accept: 'application/json', ...headers() } })
+                    .then((r) => (r.ok ? r.json() : null)).then((j) => {
+                        if (!j || !pics.isConnected) return;
+                        list = Array.isArray(j.faces) ? j.faces.filter((x) => x && httpsUrl(x.url)) : [];
+                        (Array.isArray(j.styles) && j.styles.length ? j.styles : [{ id: 'openvibe', name: 'OpenVibe' }]).slice(0, 6).forEach((s0, k) => {
+                            const c = el('button', 'ovse-ag-style', String(s0.name || s0.id)); c.type = 'button'; c.setAttribute('role', 'radio');
+                            if (k === 0) style = s0.id;
+                            c.setAttribute('aria-checked', String(k === 0));
+                            c.addEventListener('click', () => { style = s0.id; styles.querySelectorAll('[role="radio"]').forEach((x) => x.setAttribute('aria-checked', String(x === c))); });
+                            styles.append(c);
+                        });
+                        paintPics(); pics.hidden = false;
+                    }).catch(() => { /* no relay: its letter stays its face */ });
+                // Your own setup, and Actor's site
+                const own = el('section', 'ovse-ag-sec');
+                own.append(el('b', 'ovse-ag-h', 'Your own setup'));
+                setupOf(options || fallbackOptions).forEach((x) => {
+                    const r0 = btn('ovse-ag-row', `${x.name}: ${x.line}`, setupGlyph(x.id));
+                    const t0 = el('span', 'ovse-ag-rt'); t0.append(el('b', '', x.name), el('small', '', x.line));
+                    r0.append(t0, svg('open', 'ovse-ag-go')); r0.addEventListener('click', () => goSetup(x));
+                    own.append(r0);
+                });
+                [['https://openvibe.actor/you', 'Rules, money and computer', 'key'], ['https://openvibe.actor/', 'What Actor can do', 'spark']].forEach(([href, w, g]) => {
+                    const a = el('a', 'ovse-ag-link'); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.append(svg(g), el('span', '', w), svg('open'));
+                    own.append(a);
+                });
+                b.append(own);
+                setTimeout(() => { try { nameIn.focus({ preventScroll: true }); } catch { /* */ } }, 260);
+            });
+        }
         function goSetup(x) {
             const url = setupUrl(x); if (!url) return;
             emit('setup.open', { id: x.id, url });
@@ -805,8 +944,8 @@
             who.append(actorFace('m'), t);
             who.addEventListener('click', () => { pick.agent = 'actor'; savePick(); blank(); if (!wide) setDrawer(false); });
             actorSlot.append(who);
-            const tune = btn('ovse-ib ovse-actor-set', `Set up ${actorName()}: its model, your own key and where it runs`, 'tune');
-            tune.addEventListener('click', () => setupFor('actor'));
+            const tune = btn('ovse-ib ovse-actor-set', `Edit ${actorName()}: its name, picture, model, your own key and where it runs`, 'tune');
+            tune.addEventListener('click', () => agentSheet());
             actorSlot.append(tune);
             markChosen();
             if (actor.id) {
@@ -1860,6 +1999,43 @@
 .ovse-actor { transition: border-color .2s, box-shadow .2s; }
 .ovse-actor.is-on { border-color: color-mix(in srgb, var(--ovse-acc) 70%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovse-acc) 45%, transparent), 0 10px 24px -18px var(--ovse-acc); }
 .ovse-actor-set .ovse-g { width: 20px; height: 20px; }
+/* 4.295.0: Your agent, edited in place */
+.ovse-ag-top { display: flex; align-items: center; gap: 14px; padding: 6px 2px 4px; }
+.ovse-ag-face { flex: none; }
+.ovse-ag-tt { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.ovse-ag-namerow { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ovse-ag-name { flex: 1; min-width: 0; height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: color-mix(in srgb, var(--text-primary, #ececf1) 4%, transparent);
+  color: inherit; font: inherit; font-size: 17px; font-weight: 750; }
+.ovse-ag-name:focus { outline: none; border-color: var(--accent, #3b82f6); }
+.ovse-ag-line { color: var(--text-muted, #8b8b96); font-size: 12.5px; }
+.ovse-ag-save, .ovse-ag-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border: 1px solid var(--border, rgba(255,255,255,.12)); border-radius: 12px;
+  background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; transition: transform .15s, background .15s; }
+.ovse-ag-save, .ovse-ag-btn.is-main { border-color: transparent; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); }
+.ovse-ag-save:active, .ovse-ag-btn:active { transform: scale(.96); }
+.ovse-ag-save .ovse-g, .ovse-ag-btn .ovse-g { width: 18px; height: 18px; }
+.ovse-ag-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+.ovse-ag-note { min-height: 1.2em; margin: 6px 2px; color: var(--text-secondary, #a8b3c4); font-size: 13px; }
+.ovse-ag-sec { display: grid; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border, rgba(255,255,255,.09)); }
+.ovse-ag-h { font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
+.ovse-ag-pics { display: flex; flex-wrap: wrap; gap: 8px; }
+.ovse-ag-pic { width: 64px; height: 64px; padding: 0; border: 2px solid transparent; border-radius: 18px; overflow: hidden; background: none; cursor: pointer; transition: transform .15s, border-color .15s; }
+.ovse-ag-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ovse-ag-pic[aria-checked="true"] { border-color: var(--accent, #3b82f6); }
+.ovse-ag-pic:active { transform: scale(.95); }
+.ovse-ag-draw { display: grid; gap: 8px; }
+.ovse-ag-words { height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent; color: inherit; font: inherit; }
+.ovse-ag-words:focus { outline: none; border-color: var(--accent, #3b82f6); }
+.ovse-ag-styles { display: flex; flex-wrap: wrap; gap: 6px; }
+.ovse-ag-style { min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent; color: inherit; font: inherit; font-size: 13px; cursor: pointer; }
+.ovse-ag-style[aria-checked="true"] { border-color: var(--accent, #3b82f6); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
+.ovse-ag-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 8px 10px; border: 1px solid var(--border, rgba(255,255,255,.09)); border-radius: 14px; background: transparent;
+  color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ovse-ag-row > .ovse-g:first-child { flex: none; width: 22px; height: 22px; color: var(--accent-light, var(--accent, #3b82f6)); }
+.ovse-ag-rt { flex: 1; min-width: 0; display: grid; gap: 2px; } .ovse-ag-rt small { color: var(--text-muted, #8b8b96); font-size: 12.5px; line-height: 1.35; }
+.ovse-ag-go { flex: none; width: 16px; height: 16px; color: var(--text-muted, #8b8b96); }
+.ovse-ag-link { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 12px; color: inherit; text-decoration: none; }
+.ovse-ag-link .ovse-g { width: 18px; height: 18px; } .ovse-ag-link span { flex: 1; }
+.ovse-ag-link:hover, .ovse-ag-row:hover { background: color-mix(in srgb, var(--text-primary, #ececf1) 5%, transparent); }
 .ovse-agent-face { color: #fff; background: linear-gradient(135deg, color-mix(in srgb, var(--accent, #3b82f6) 85%, #22d3ee), color-mix(in srgb, var(--accent, #3b82f6) 70%, #0f172a)); }
 .ovse-agent-face.is-auto { background: linear-gradient(140deg, var(--ovse-acc), var(--ovse-acc2)); }
 .ovse-agent-face .ovse-g { width: 55%; height: 55%; }

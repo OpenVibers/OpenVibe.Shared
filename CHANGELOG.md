@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.295.0 — 2026-11-17
+
+- **Your agent, edited in place** (the owner, 11-17: "you can't even edit these properly, or like edit and configure
+  them easily"). Your Actor's row in Vibe's sessions has an edit button that opens "<name>, your agent": its name
+  (saved with the Frame's PATCH /actor and shown on the row at once), its picture (one of yours to wear, or three drawn
+  from a few words in a style), Pause or Resume, How it runs, your own setup, and Actor's site for its rules.
+  test/agent-sheet-chrome.test.js.
+- **The menu button's amber dot says what it means** (the owner: "What is this yellow dot trying to indicate? … it's not
+  clear what it's trying to do"). It carries the number of agents waiting for your answer, and once per new wait a
+  bubble under the button says it in words ("An agent is waiting for your answer"; a tap on it opens it). A tap on
+  the button opens what waits itself, not just the list; in the list an agent's task waiting for your answer is first,
+  under Needs you, and says "Waiting for your answer" (a chat that is simply your turn is not waiting).
+  test/needs-you-chrome.test.js; test/dock-chrome.test.js.
+
 ## 4.294.0 — 2026-11-17
 
 - **Vibe shows the agent you picked, and sets it up in place** (the owner's phone, 11-17: "when I choose codes, it brings
