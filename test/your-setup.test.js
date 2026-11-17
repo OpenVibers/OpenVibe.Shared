@@ -12,14 +12,20 @@ const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
 const places = (src) => {
     const m = src.match(/const SETUP = \[([\s\S]*?)\n\s*\];/);
     assert.ok(m, 'a SETUP list');
-    return [...m[1].matchAll(/\{ id: '([a-z]+)', name: '([^']+)', line: '(?:[^'\\]|\\.)*', url: '([^']+)' \}/g)].map((x) => [x[1], x[2], x[3]]);
+    return [...m[1].matchAll(/\{ id: '([a-z]+)', name: '([^']+)', line: '(?:[^'\\]|\\.)*', url: '([^']+)'(?:, back: true)? \}/g)].map((x) => [x[1], x[2], x[3]]);
 };
 const session = read('ov-session.js'), composer = read('ov-composer.js');
 const a = places(session), b = places(composer);
 assert.strictEqual(a.length, 5, `five places (${a.length})`);
 assert.deepStrictEqual(a, b, 'the session and the composer offer the same places');
 assert.ok(a.every(([, , url]) => /^https:\/\/openvibe\.(link|codes|actor|locker)\//.test(url)), 'OpenVibe https pages only');
-assert.deepStrictEqual(a.map((x) => x[0]), ['computer', 'machines', 'harnesses', 'actor', 'keys']);
+// 4.294.0 (the owner, 11-17: "configure their own API keys"): your own AI key first.
+assert.deepStrictEqual(a.map((x) => x[0]), ['keys', 'computer', 'harnesses', 'machines', 'signins']);
+// Your computer comes back to the page it was opened from (openvibe.link/add-computer answers 400 without return_to).
+for (const [name, src] of [['ov-session.js', session], ['ov-composer.js', composer]]) {
+    assert.ok(/id: 'computer'[^\n]*url: 'https:\/\/openvibe\.link\/add-computer', back: true \}/.test(src), `${name}: add-computer is told where to come back`);
+    assert.ok(/searchParams\.set\('return_to'/.test(src), `${name}: return_to set when opened`);
+}
 // Wired: the row at the end of Agent and Runs on in both, and the session's own section.
 for (const [name, src] of [['ov-session.js', session], ['ov-composer.js', composer]]) {
     assert.ok(/name: 'Use your own…'/.test(src), `${name}: the row`);

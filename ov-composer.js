@@ -2154,15 +2154,18 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         // different harnesses and API keys … even if you choose Actor … the shared node, their own computer"): the places
         // that already do each part (ov-session.js keeps the same list); the Frame's options may send their own.
         const SETUP = [
-            { id: 'computer', name: 'Your computer', line: 'Add it with OpenVibe Link: agents, coding agents and models run there, on your keys', url: 'https://openvibe.link/add-computer' },
-            { id: 'machines', name: 'Your computers and shared nodes', line: 'Where your sessions can run, and who else may use them', url: 'https://openvibe.link/machines' },
+            // 4.294.0: the same five places as ov-session.js, your own AI key first; Your computer comes back here.
+            { id: 'keys', name: 'Your own AI key', line: 'Anthropic, OpenAI, OpenRouter, Gemini and more: sealed in OpenVibe.AI, used instead of the free allowance', url: 'https://openvibe.actor/chat/model' },
+            { id: 'computer', name: 'Your computer', line: 'Add it with OpenVibe Link: coding agents and models run there, on your keys', url: 'https://openvibe.link/add-computer', back: true },
             { id: 'harnesses', name: 'Coding agents', line: 'Claude Code, Codex, OpenCode and the rest: installed and signed in where they run', url: 'https://openvibe.codes/setup' },
-            { id: 'actor', name: 'Actor on your setup', line: 'Its model and where it runs: OpenVibe\'s keys, your own key, or your computer', url: 'https://openvibe.actor/chat/model' },
-            { id: 'keys', name: 'Your keys and sign-ins', line: 'Kept sealed in Locker; an agent asks you before it uses one', url: 'https://openvibe.locker/passwords' },
+            { id: 'machines', name: 'Shared nodes and your computers', line: 'Where your sessions can run, and who else may use them', url: 'https://openvibe.link/machines' },
+            { id: 'signins', name: 'Sign-ins for your agents', line: 'Kept sealed in Locker; an agent asks you before it uses one', url: 'https://openvibe.locker/passwords' },
         ];
+        // add-computer answers 400 without the page to come back to.
+        const setupUrl = (x) => { if (!x || !x.url) return null; if (!x.back) return x.url; try { const u = new URL(x.url); u.searchParams.set('return_to', window.location.href); return u.href; } catch { return x.url; } };
         const setupOf = (opts) => { const own = opts && Array.isArray(opts.setup) ? opts.setup.filter((x) => x && x.id && x.name && /^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(String(x.url || ''))) : []; return own.length ? own.slice(0, 12) : SETUP; };
         const SETUP_ROW = { id: '__setup', name: 'Use your own…', line: 'Your computer, coding agents and keys, instead of OpenVibe\'s' };
-        const openSetup = (opts, anchor) => setTimeout(() => pickSheet('Your own setup', setupOf(opts), () => false, (x) => { try { window.open(x.url, '_blank', 'noopener'); } catch { /* a blocked window */ } }, anchor), 230);
+        const openSetup = (opts, anchor) => setTimeout(() => pickSheet('Your own setup', setupOf(opts), () => false, (x) => { const url = setupUrl(x); if (!url) return; try { window.open(url, '_blank', 'noopener'); } catch { /* a blocked window */ } }, anchor), 230);
         agentChip.addEventListener('click', async () => { pickAnchor = agentChip; const opts = await loadRun(); pickSheet('Harness', [...(opts.agents || []), SETUP_ROW], (x) => x.id === runPick.agent, (x) => { if (x.id === SETUP_ROW.id) return openSetup(opts, agentChip); runPick.agent = x.id; if (runPick.where === 'openvibe' && coding(opts)) runPick.where = 'auto'; saveRun(); }); });
         // Coding (Codes or a coding harness) never runs on OpenVibe's own server (the owner, 11-15): its sheet leaves
         // OpenVibe out, and Auto means a shared node or your computer.
