@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.303.0 — 2026-11-17
+
+- **Your own agents join a group** (plan §AD.19; Network #1070). A group's Add sheet now has **Your agents**, your own
+  Actor agents, each with its face and a handle made from its name (`@scout-bot`). Each brings its own instructions,
+  memory and engine. In the members sheet, someone's own agent says whose it is ("Ada's own agent"), from the
+  `owner_name` Network sends; an agent answers only the person who added it.
+- **pin-drift and piped-scripts in the forge's offline sandbox.** OpenVibe-Git #108's test phase has no network and
+  says so (`OV_SANDBOX_OFFLINE=1`). There both tests now prove `pin-drift.js` still runs piped: it loads, then says it
+  could not read GitHub's tags. Without the marker nothing changes.
+
 ## 4.302.0 — 2026-11-17
 
 - **Group conversations in the session surface, on every site** (plan §AD.19; the owner: "multi user and multi agent
