@@ -533,35 +533,57 @@ function related({ id: sid, service, title = 'More on OpenVibe', lede = 'One acc
     const h = `sc-${slug(title)}`;
     return `<section class="sc-sec sc-network"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'spark')}<ul class="sc-net">${list.map((x) => `<li><a href="${esc(withFrom(safeHref(x.href), service))}">${appIcon(x.to, 44)}<span><b>${esc(SERVICE_NAME(x.to) || x.to)}</b><small>${esc(x.what)}</small></span></a></li>`).join('')}</ul></section>`;
 }
+// Each kind's colour, glyph and line (Live's network section, 2026-11-07, which every site now shares).
+const KIND_LOOK = {
+    watch: ['#ef4444', 'live', 'Go live, watch, share pictures and video'],
+    talk: ['#ec4899', 'chat', 'Chat, forums, your account and your people'],
+    play: ['#a855f7', 'game', 'Play in the browser, laugh, collect'],
+    read: ['#f59e0b', 'news', 'News, reports, wikis and answers'],
+    shop: ['#22c55e', 'cart', 'Deals, jobs, markets, homes and money'],
+    tools: ['#06b6d4', 'wrench', 'Free tools, design, domains and hosting'],
+    make: ['#3b82f6', 'wand', 'Agents, sites, bots and code, made with AI'],
+    build: ['#14b8a6', 'code', 'APIs and services to build on'],
+};
+// A kind's glyph, plain, from the glyph set (never a Font Awesome class).
+const kindGlyph = (name, size) => { glyphSet = glyphSet || require('./glyphs'); return glyphSet.svg(name, { size }); };
 function network({ id: sid, service, title = null, lede = null, items, icon: secIcon } = {}) {
     // A caller's own list keeps its own heading and lede (4.256.1: 4.256.0 dropped them, and Shoes, Actor and Connect
     // said "More on OpenVibe" with the default line instead of "Part of OpenVibe" and theirs).
     if (items) return related({ id: sid, service, items, icon: secIcon, ...(title ? { title } : {}), ...(lede ? { lede } : {}) });
     lede = lede || 'Every OpenVibe site opens with the same sign-in, wears your theme and carries your OpenCoins and Vibes.';
     const here = RELATED_ALIAS[String(service || '').toLowerCase()] || String(service || '').toLowerCase();
-    const own = (RELATED_BY_ID.get(here) || {}).group || 'watch';
     const count = RELATED_ALL.length;
-    const heading = title || `One account. ${count} sites.`;
-    const h = `sc-${slug(heading)}`;
-    // A folded group's icon is an empty square of its hue: ov-icons.js fills it (the bar holds its size until then).
-    const later = (to, size) => {
+    const h = `sc-${slug(title || `One account. ${count} sites.`)}`;
+    // 4.291.0 (plan §AD.15): Live's network section, on every site. A deep surface with a slow aurora and twinkling
+    // points, the count of sites (motion.js counts it up the first time it is seen), a chip per kind in its colour
+    // with how many, and every kind open: on a wide screen a grid of cards, on a phone one row that scrolls
+    // sideways, so nothing hides behind a fold. Every site is a real link a crawler reads; this site says "You are
+    // here". The icons are rings of the kind's colour until ov-icons.js draws them (it fills every one on the page).
+    const ring = (to) => {
         const ovi = ovIcons || (ovIcons = require('./ov-icons'));
-        return `<span class="ov-appicon" data-icon="${esc(to)}" data-size="${size}" style="--ova-h:${ovi.hue(to)};--ova-size:${size}px" aria-hidden="true"></span>`;
+        return `<span class="ov-appicon" data-icon="${esc(to)}" data-size="40" style="--ova-h:${ovi.hue(to)};--ova-size:40px" aria-hidden="true"></span>`;
     };
-    const site = (x, open) => {
-        const glyph = open ? appIcon(x.to, 40) : later(x.to, 40);
-        const words = `<span><b>${esc(shortName(x.to))}</b><small>${esc(x.to === here ? 'You are here' : x.what)}</small></span>`;
+    let n = 0;
+    const site = (x) => {
+        const words = `<span class="sc-onenet-txt"><b>${esc(shortName(x.to))}</b><small>${esc(x.to === here ? 'You are here' : x.what)}</small></span>`;
+        const i = n++;
         return x.to === here
-            ? `<li><span class="sc-onenet-here" aria-current="page">${glyph}${words}</span></li>`
-            : `<li><a href="${esc(withFrom(safeHref(x.href), service))}">${glyph}${words}</a></li>`;
+            ? `<li><span class="sc-onenet-site sc-onenet-here" aria-current="page" style="--i:${i}">${ring(x.to)}${words}</span></li>`
+            : `<li><a class="sc-onenet-site" href="${esc(withFrom(safeHref(x.href), service))}" style="--i:${i}">${ring(x.to)}${words}</a></li>`;
     };
-    const groups = Object.keys(GROUPS).map((g) => {
-        const members = RELATED_ALL.filter((x) => x.group === g);
-        const open = g === own;
-        return `<details class="sc-fold sc-onenet-g"${open ? ' open' : ''}><summary><h3>${esc(GROUP_NAMES[g] || g)}</h3><span class="sc-fold-hint">${members.length} sites</span></summary>`
-            + `<ul class="sc-onenet-list">${members.map((x) => site(x, open)).join('')}</ul></details>`;
-    }).join('');
-    return `<section class="sc-sec sc-network sc-onenet"${id(sid)}${labelled(heading, h)}>${head(heading, lede, h, secIcon || 'spark')}`
+    const kinds = Object.keys(GROUPS).map((g) => ({ g, members: RELATED_ALL.filter((x) => x.group === g), look: KIND_LOOK[g] || ['#38bdf8', 'spark', ''] }))
+        .filter((k) => k.members.length);
+    const jump = kinds.map((k) => `<a href="#sc-onenet-g-${esc(k.g)}" style="--g:${k.look[0]}">${kindGlyph(k.look[1], 14)}<span>${esc(GROUP_NAMES[k.g] || k.g)}</span><b>${k.members.length}</b></a>`).join('');
+    const groups = kinds.map((k) => `<div class="sc-onenet-g" id="sc-onenet-g-${esc(k.g)}" role="group" aria-labelledby="sc-onenet-gh-${esc(k.g)}" style="--g:${k.look[0]}">`
+        + `<h3 id="sc-onenet-gh-${esc(k.g)}"><span class="sc-onenet-gi" aria-hidden="true">${kindGlyph(k.look[1], 16)}</span><span>${esc(GROUP_NAMES[k.g] || k.g)}</span><b class="sc-onenet-n">${k.members.length}</b></h3>`
+        + `${k.look[2] ? `<p class="sc-onenet-gline">${esc(k.look[2])}</p>` : ''}<ul class="sc-onenet-list">${k.members.map(site).join('')}</ul></div>`).join('');
+    const heading = title
+        ? `<h2 id="${h}">${esc(title)}</h2>`
+        : `<h2 id="${h}">One account. <span class="sc-onenet-count" data-ov-ticker="${count}">${count}</span> sites.</h2>`;
+    return `<section class="sc-sec sc-network sc-onenet"${id(sid)} aria-labelledby="${h}">`
+        + `<div class="sc-onenet-sky" aria-hidden="true">${'<i></i>'.repeat(12)}</div>`
+        + `<header class="sc-onenet-head"><p class="sc-onenet-eyebrow"><span class="sc-onenet-dot" aria-hidden="true"></span>The OpenVibe network</p>${heading}`
+        + `<p class="sc-onenet-lede">${esc(lede)}</p><nav class="sc-onenet-jump" aria-label="Kinds of OpenVibe sites">${jump}</nav></header>`
         + `<div class="sc-onenet-groups">${groups}</div><div class="sc-net-now" data-ov-now hidden></div>`
         + `<p class="sc-net-all"><a href="https://openvibe.network/sites">Every OpenVibe site, with what each one is <span class="sc-go" aria-hidden="true">${goGlyph()}</span></a></p></section>`;
 }
@@ -886,7 +908,7 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-net-all{margin:12px 0 0;font-weight:700}.sc-net-all a{color:var(--accent-light,#60a5fa);text-decoration:none}
 .sc-net{list-style:none;margin:0;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 /* 4.256.0 (plan §AA.37): One account. 61 sites. */
-.sc-onenet-groups{display:grid;gap:10px;align-items:start;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr))}.sc-onenet-g[open]{grid-column:1/-1}.sc-onenet-g>summary h3{margin:0;font-size:clamp(16px,1.8vw,18px);font-weight:700;color:var(--text-primary,#e6edf7)}.sc-onenet-g .sc-fold-hint{display:inline;font-size:13px}.sc-onenet-list{list-style:none;margin:0;padding:2px 10px 14px;display:grid;gap:4px;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr))}.sc-onenet-list li{min-width:0}.sc-onenet-list a,.sc-onenet-here{display:flex;gap:12px;align-items:center;min-height:56px;padding:8px;border-radius:12px;color:inherit;text-decoration:none;transition:background var(--ov-dur-2,.2s)}.sc-onenet-list a:hover,.sc-onenet-list a:focus-visible{background:color-mix(in srgb,var(--accent,#3b82f6) 10%,transparent);outline:0}.sc-onenet-here{background:color-mix(in srgb,var(--accent,#3b82f6) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent,#3b82f6) 40%,transparent)}.sc-onenet-list li>*>span{min-width:0}.sc-onenet-list b{display:block;font-size:15px;line-height:1.25}.sc-onenet-list small{display:block;color:var(--text-secondary,#96a7c2);font-size:13px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 .sc-net a{display:flex;gap:12px;align-items:center;padding:14px;border-radius:14px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
 .sc-net a:hover,.sc-net a:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-2px);outline:0}
 .sc-net b{display:block;font-size:15px}.sc-net small{display:block;color:var(--text-secondary,#96a7c2);font-size:13px;line-height:1.4}
@@ -918,6 +940,51 @@ html{overflow-x:clip}
 .sc-stat dd{font-size:19px;gap:5px;letter-spacing:-.01em}.sc-stat-ic svg,.sc-stat-ic .ov-icon{width:15px;height:15px}
 .sc-stat dt{font-size:11.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 }
+/* 4.291.0: the network section is Live's (plan §AD.15): a deep surface, a slow aurora, twinkling points, the count, a
+   chip per kind and every kind open (a grid on wide screens, one sideways row on a phone). */
+.sc-onenet{--on-ink:var(--text-primary,#e6edf7);--on-soft:var(--text-secondary,#a8b3c4);--on-mute:var(--text-muted,#7d8aa0);--on-card:color-mix(in srgb,var(--bg-card,#111a2b) 88%,transparent);--on-line:color-mix(in srgb,var(--text-primary,#fff) 9%,transparent);position:relative;isolation:isolate;overflow:hidden;padding:46px clamp(14px,4vw,40px) 34px;border-radius:24px;border:1px solid var(--on-line);background:radial-gradient(120% 80% at 10% 0%,color-mix(in srgb,#3b82f6 22%,transparent),transparent 60%),radial-gradient(90% 70% at 95% 10%,color-mix(in srgb,#a855f7 20%,transparent),transparent 60%),radial-gradient(80% 60% at 50% 110%,color-mix(in srgb,#14b8a6 14%,transparent),transparent 70%),var(--bg-secondary,#0c1322)}
+.sc-onenet::before{content:'';position:absolute;inset:-40% -20% auto;height:120%;z-index:-1;pointer-events:none;background:conic-gradient(from 200deg at 50% 50%,transparent 0 30%,color-mix(in srgb,#38bdf8 22%,transparent) 40%,transparent 52%,color-mix(in srgb,#f472b6 16%,transparent) 64%,transparent 76%);filter:blur(48px);opacity:.7;animation:scOnenetAurora 22s ease-in-out infinite alternate}
+@keyframes scOnenetAurora{from{transform:translate3d(-6%,0,0) rotate(0deg)}to{transform:translate3d(6%,4%,0) rotate(14deg)}}
+.sc-onenet-sky{position:absolute;inset:0;z-index:-1;pointer-events:none}
+.sc-onenet-sky i{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;opacity:0;box-shadow:0 0 8px 1px color-mix(in srgb,#93c5fd 70%,transparent);animation:scOnenetTwinkle 5.5s ease-in-out infinite}
+.sc-onenet-sky i:nth-child(1){left:6%;top:14%;animation-delay:-.4s}.sc-onenet-sky i:nth-child(2){left:18%;top:34%;animation-delay:-1.8s}.sc-onenet-sky i:nth-child(3){left:31%;top:9%;animation-delay:-3.1s}.sc-onenet-sky i:nth-child(4){left:44%;top:26%;animation-delay:-.9s}.sc-onenet-sky i:nth-child(5){left:57%;top:6%;animation-delay:-2.6s}.sc-onenet-sky i:nth-child(6){left:68%;top:31%;animation-delay:-4.2s}.sc-onenet-sky i:nth-child(7){left:79%;top:12%;animation-delay:-1.2s}.sc-onenet-sky i:nth-child(8){left:91%;top:27%;animation-delay:-3.7s}.sc-onenet-sky i:nth-child(9){left:12%;top:58%;animation-delay:-2.2s}.sc-onenet-sky i:nth-child(10){left:86%;top:62%;animation-delay:-.2s}.sc-onenet-sky i:nth-child(11){left:49%;top:84%;animation-delay:-4.8s}.sc-onenet-sky i:nth-child(12){left:72%;top:88%;animation-delay:-1.5s}
+@keyframes scOnenetTwinkle{0%,100%{opacity:0;transform:scale(.6)}45%{opacity:.85;transform:scale(1)}60%{opacity:.35}}
+.sc-onenet-head{max-width:760px;margin:0 auto 26px;text-align:center}
+.sc-onenet-eyebrow{display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;padding:6px 12px;border-radius:999px;border:1px solid var(--on-line);background:color-mix(in srgb,var(--bg-primary,#0a0f1c) 55%,transparent);color:var(--on-soft);font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.sc-onenet-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:scOnenetPing 2.2s ease-out infinite}
+@keyframes scOnenetPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,#22c55e 55%,transparent)}80%,100%{box-shadow:0 0 0 10px transparent}}
+.sc-onenet-head h2{margin:0;color:var(--on-ink);font-size:clamp(1.7rem,4.6vw,2.9rem);line-height:1.08;font-weight:850;letter-spacing:-.035em;text-wrap:balance}
+.sc-onenet-count{display:inline-block;min-width:2ch;font-variant-numeric:tabular-nums;background:linear-gradient(100deg,#38bdf8,#a78bfa 45%,#f472b6 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sc-onenet-lede{max-width:620px;margin:14px auto 0;color:var(--on-soft);font-size:clamp(.95rem,2.2vw,1.06rem);line-height:1.6;text-wrap:pretty}
+.sc-onenet-jump{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:22px}
+.sc-onenet-jump a{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid color-mix(in srgb,var(--g) 34%,transparent);background:color-mix(in srgb,var(--g) 10%,transparent);color:var(--on-ink);font-size:.8rem;font-weight:650;text-decoration:none;transition:background-color var(--ov-dur-2,.15s),transform var(--ov-dur-2,.15s),border-color var(--ov-dur-2,.15s)}
+.sc-onenet-jump a svg{color:var(--g)}
+.sc-onenet-jump a b{padding:1px 7px;border-radius:999px;background:color-mix(in srgb,var(--g) 22%,transparent);font-size:.7rem;font-weight:800}
+.sc-onenet-jump a:hover{background:color-mix(in srgb,var(--g) 18%,transparent);border-color:color-mix(in srgb,var(--g) 60%,transparent);transform:translateY(-1px)}
+.sc-onenet-jump a:focus-visible,.sc-onenet-site:focus-visible{outline:2px solid var(--g,var(--accent,#3b82f6));outline-offset:3px}
+.sc-onenet-groups{display:grid;grid-template-columns:minmax(0,1fr);gap:30px;max-width:1180px;margin:0 auto}
+.sc-onenet-g{min-width:0;scroll-margin-top:84px}
+.sc-onenet-g h3{display:flex;align-items:center;gap:10px;margin:0;color:var(--on-ink);font-size:1.05rem;font-weight:800;letter-spacing:-.01em}
+.sc-onenet-gi{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;color:var(--g);background:color-mix(in srgb,var(--g) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--g) 30%,transparent)}
+.sc-onenet-g h3::after{content:'';flex:1;height:1px;margin-left:4px;background:linear-gradient(90deg,color-mix(in srgb,var(--g) 45%,transparent),transparent)}
+.sc-onenet-n{order:3;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--g) 16%,transparent);color:color-mix(in srgb,var(--g) 68%,var(--on-ink));font-size:.72rem;font-weight:800}
+.sc-onenet-gline{margin:6px 0 12px 40px;color:var(--on-mute);font-size:.82rem}
+.sc-onenet-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,212px),1fr));gap:10px}
+.sc-onenet-list li{min-width:0}
+.sc-onenet-site{--lift:0px;position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;height:100%;box-sizing:border-box;padding:12px 14px;border-radius:16px;text-decoration:none;color:var(--on-ink);background:var(--on-card);border:1px solid var(--on-line);box-shadow:0 1px 0 color-mix(in srgb,#fff 4%,transparent) inset;transform:translateY(var(--lift));transition:transform var(--ov-dur-2,.18s) var(--ov-ease-out,ease),border-color var(--ov-dur-2,.18s),box-shadow var(--ov-dur-2,.18s),background-color var(--ov-dur-2,.18s)}
+.sc-onenet-site::after{content:'';position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;opacity:0;background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--g) 22%,transparent),transparent 55%);transition:opacity var(--ov-dur-2,.18s)}
+@media (hover:hover){a.sc-onenet-site:hover{--lift:-3px;border-color:color-mix(in srgb,var(--g) 55%,transparent);box-shadow:0 12px 28px -14px color-mix(in srgb,var(--g) 70%,transparent)}a.sc-onenet-site:hover::after{opacity:1}}
+.sc-onenet-here{border-color:color-mix(in srgb,var(--g) 55%,transparent);background:color-mix(in srgb,var(--g) 12%,var(--on-card))}
+.sc-onenet-site .ov-appicon:empty{border-radius:50%;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--g) 55%,transparent);background:color-mix(in srgb,var(--g) 10%,transparent)}
+.sc-onenet-txt{display:grid;min-width:0;gap:1px}
+.sc-onenet-txt b{font-size:.95rem;font-weight:750;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-onenet-txt small{color:var(--on-soft);font-size:.8rem;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sc-onenet-here small{color:color-mix(in srgb,var(--g) 68%,var(--on-ink));font-weight:700}
+@media (max-width:640px){.sc-onenet{padding:34px 0 26px;border-radius:20px}.sc-onenet-head{padding:0 16px;margin-bottom:20px}.sc-onenet-jump{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;margin:18px -16px 0;padding:0 16px 2px;scroll-padding-inline:16px}.sc-onenet-jump::-webkit-scrollbar{display:none}.sc-onenet-jump a{flex:none;min-height:44px}.sc-onenet-groups{gap:24px}.sc-onenet-g h3,.sc-onenet-gline{padding:0 16px}.sc-onenet-gline{margin-left:40px}.sc-onenet-list{display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;padding:2px 16px 6px;scroll-padding-inline:16px;gap:10px}.sc-onenet-list::-webkit-scrollbar{display:none}.sc-onenet-list>li{flex:0 0 min(78%,280px);scroll-snap-align:start}.sc-onenet-site{min-height:76px}.sc-onenet .sc-net-now,.sc-onenet .sc-net-all{margin-left:16px;margin-right:16px}}
+html[data-theme-mode="light"] .sc-onenet::before{opacity:.35}
+html[data-ov-motion=off] .sc-onenet::before,html[data-ov-motion=off] .sc-onenet-dot{animation:none}
+html[data-ov-motion=off] .sc-onenet-sky i{animation:none;opacity:.45}
+html[data-ov-motion=reduced] .sc-onenet::before{animation-duration:44s}
 `;
 
 module.exports = { NETWORK_JS, icon, room, hero, features, steps, code, demo, fold, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, parts, pick, PARTS_CSS, cta, jsonLd, faqJsonLd, RELATED, DEFAULT_RELATED, CSS, STYLESHEET: 'showcase.css', esc };
