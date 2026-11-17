@@ -85,6 +85,9 @@
         back: '<path d="M20.8 12H4M10.3 5.7l-6.3 6.3l6.3 6.3"/>',
         more: '<circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/>',
         plus: '<path d="M12 5v14M5 12h14"/>',
+        members: '<circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.6-.2 4.8 1.3 5.5 4.3"/>',
+        image: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4.5 3.5 3 3-2.5 4.5 4"/>',
+        download: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
         x: '<path d="M7 7l10 10M17 7L7 17"/>',
         search: '<circle cx="10.6" cy="10.6" r="7"/><path d="M20.4 20.4l-4.5-4.5"/>',
         spark: '<path d="M10.4 3.6l1.7 4.8L17 10.1l-4.8 1.7L10.4 16.7l-1.7-4.8L3.9 10.1l4.8-1.7ZM17 14.8l0.8 2.1L19.8 17.6l-2.1 0.8L17 20.3l-0.8-2.1L14.3 17.6l2.1-0.8Z"/>',
@@ -591,10 +594,14 @@
         head.append(menuB, backB, faceSlot, who, changesB, moreB);
         const body = el('div', 'ovse-body');
         const thread = el('div', 'ovse-thread'); thread.setAttribute('role', 'log'); thread.setAttribute('aria-live', 'polite');
-        body.append(thread);
+        // Group conversations (4.302.0, plan §AD.19): a group is a run (`group:<id>`) of people and agents; its bar says who
+        // is in it (each agent's @handle and the harness it works through), opens the shared space and adds members.
+        const groupBar = el('div', 'ovse-group'); groupBar.hidden = true;
+        body.append(groupBar, thread);
         const foot = el('div', 'ovse-foot');
         const planBox = el('details', 'ovse-plan'); planBox.hidden = true;
         const slash = el('div', 'ovse-slash'); slash.hidden = true; slash.setAttribute('role', 'listbox');
+        const mentionRow = el('div', 'ovse-mention'); mentionRow.hidden = true; mentionRow.setAttribute('role', 'listbox'); mentionRow.setAttribute('aria-label', 'Who to ask');
         const ctxRow = el('div', 'ovse-ctxrow');
         const ctxB = btn('ovse-ctx', 'How it runs: change it', 'spark', ''); ctxB.setAttribute('aria-haspopup', 'dialog');
         const ctxInfo = el('span', 'ovse-ctxinfo');
@@ -613,7 +620,8 @@
         road.addEventListener('click', () => yourAI());
         ctxRow.append(modes, ctxB, road, ctxCost, ctxInfo);
         const composeSlot = el('div', 'ovse-compose');
-        foot.append(planBox, slash, ctxRow, composeSlot);
+        foot.append(planBox, slash, mentionRow, ctxRow, composeSlot);
+        composeSlot.addEventListener('input', () => { if (groupId()) paintMentions(); else if (!mentionRow.hidden) mentionRow.hidden = true; });
         main.append(head, body, foot);
         wrap.append(drawer, scrim, main);
         host.textContent = ''; host.append(wrap);
@@ -1413,8 +1421,22 @@
         }
         function stepNode(s) {
             const from = s.from || 'agent';
+            if (s.kind === 'message' && from === 'person' && s.author && s.author.you === false) {
+                // Someone else in a group (4.302.0): their name over their words, on the others' side.
+                const n = el('div', 'ovse-say ovse-them'); n.dataset.seq = String(s.seq);
+                n.append(el('small', 'ovse-author', s.author.name || 'Someone'));
+                if (s.text) n.append(words(s.text));
+                attachments(n, s);
+                return n;
+            }
             if (s.kind === 'message' && from === 'person') {
                 const n = el('div', 'ovse-me'); const b = el('div', 'ovse-bubble'); b.append(words(s.text)); n.append(b); attachments(n, s);
+                return n;
+            }
+            if (from === 'agent' && s.status === 'running' && !s.text && s.author && s.author.name) {
+                // An agent of a group at work: its name and the mark's wait, until its words come.
+                const n = el('div', 'ovse-say is-writing ovse-group-working'); n.dataset.seq = String(s.seq);
+                n.append(el('small', 'ovse-author', s.author.name), el('span', 'ovse-typing', 'Working'));
                 return n;
             }
             if (from === 'system' && s.kind === 'message') {
@@ -1498,7 +1520,7 @@
             return d;
         }
         function attachments(n, s) {
-            const list = Array.isArray(s.attachments) ? s.attachments : []; if (!list.length) return;
+            const list = Array.isArray(s.attachments) && s.attachments.length ? s.attachments : Array.isArray(s.files) ? s.files : []; if (!list.length) return;
             const row = el('div', 'ovse-attach');
             list.slice(0, 8).forEach((a) => {
                 const url = httpsUrl(a.url);
@@ -1730,8 +1752,132 @@
             road.setAttribute('aria-label', `${r.say}. Your AI`);
             road.title = r.say;
         }
+        const groupId = () => (state.run && state.run.kind === 'group' ? String(state.run.id || String(state.ref || '').replace(/^group:/, '')) : null);
+        const roleWords = (m) => (m.engine && m.engine.harness ? ` · ${m.engine.harness}` : m.harness ? ` · ${m.harness}` : m.engine && m.engine.kind === 'model' ? ' · one model' : '');
+        function memberFace(m, i = 0) {
+            const dot = el('i', `ovse-gm-face is-${m.kind === 'agent' ? 'agent' : 'person'}`); dot.style.setProperty('--i', String(i));
+            dot.dataset.handle = m.handle || '';
+            if (m.kind === 'agent') dot.append(svg(m.product === 'codes' ? 'code' : 'robot')); else dot.textContent = String(m.name || '?').slice(0, 1).toUpperCase();
+            return dot;
+        }
+        function paintGroup() {
+            const id = groupId();
+            groupBar.hidden = !id;
+            groupBar.textContent = '';
+            if (!id) return;
+            const ms = Array.isArray(state.run.members) ? state.run.members : [];
+            // Faces, overlapped, never a row that scrolls sideways (11-17: the owner's streamers hate those): a tap lists
+            // everyone with each agent's role.
+            const faces = btn('ovse-group-faces', `In this group: ${ms.map((m) => (m.kind === 'agent' ? `@${m.handle}` : m.name)).join(', ')}`, null, '');
+            const stack = el('span', 'ovse-gm-stack');
+            ms.slice(0, 6).forEach((m, i) => stack.append(memberFace(m, i)));
+            if (ms.length > 6) stack.append(el('i', 'ovse-gm-face ovse-gm-more', `+${ms.length - 6}`));
+            const people = ms.filter((m) => m.kind !== 'agent').length, agents = ms.length - people;
+            faces.append(stack, el('span', 'ovse-group-count', `${people} ${people === 1 ? 'person' : 'people'} · ${agents} ${agents === 1 ? 'agent' : 'agents'}`));
+            faces.addEventListener('click', () => groupSheet('members'));
+            const space = btn('ovse-group-b', 'The shared space: every file in this group', 'file', 'Space');
+            space.addEventListener('click', () => groupSheet('space'));
+            const add = btn('ovse-group-b', 'Add a person or an agent', 'plus', 'Add');
+            add.addEventListener('click', () => groupSheet('add'));
+            groupBar.append(faces, space, add);
+        }
+        /** The group's own small sheet over the thread: its shared space, or adding a person or an agent. */
+        async function groupSheet(what) {
+            const id = groupId(); if (!id) return;
+            const old = main.querySelector('.ovse-gsheet'); if (old) old.remove();
+            const sh = el('div', 'ovse-gsheet'); sh.setAttribute('role', 'dialog');
+            const x = btn('ovse-ib', 'Close', 'x'); x.addEventListener('click', () => sh.remove());
+            const head = el('div', 'ovse-gsheet-h'); head.append(el('b', '', what === 'space' ? 'Shared space' : what === 'members' ? 'In this group' : 'Add to the group'), x);
+            sh.append(head);
+            if (what === 'members') {
+                sh.setAttribute('aria-label', 'In this group');
+                const list = el('div', 'ovse-gsheet-list');
+                (state.run.members || []).forEach((m) => {
+                    const row = el('div', 'ovse-gfile ovse-gmember');
+                    const t = el('span');
+                    t.append(el('b', '', m.kind === 'agent' ? `${m.name} · @${m.handle}` : m.name),
+                        el('small', '', m.kind === 'agent' ? `${m.product === 'codes' ? 'Codes' : 'Actor'}${roleWords(m)}${m.lead ? ' · leads' : ''}${m.coder ? ' · takes the code' : ''}` : `@${m.handle}`));
+                    row.append(memberFace(m), t);
+                    list.append(row);
+                });
+                const add = btn('ovse-group-b', 'Add a person or an agent', 'plus', 'Add someone');
+                add.addEventListener('click', () => groupSheet('add'));
+                sh.append(list, add);
+            } else if (what === 'space') {
+                sh.setAttribute('aria-label', 'Shared space');
+                const seen = new Set(); const files = [];
+                for (const st of state.steps.values()) for (const f of (Array.isArray(st.files) ? st.files : [])) { const k = f.id || f.url; if (k && !seen.has(k)) { seen.add(k); files.push({ ...f, by: st.author && st.author.name }); } }
+                if (!files.length) sh.append(el('p', 'ovse-gsheet-empty', 'No files yet. Attach one to a message, or ask an agent to make one: everything lands here.'));
+                const list = el('div', 'ovse-gsheet-list');
+                files.forEach((f) => {
+                    const url = httpsUrl(f.url);
+                    const row = el(url ? 'a' : 'div', 'ovse-gfile'); if (url) { row.href = url; row.target = '_blank'; row.rel = 'noopener'; row.setAttribute('download', f.name || ''); }
+                    const t = el('span'); t.append(el('b', '', f.name || 'A file'), el('small', '', [f.by, f.type].filter(Boolean).join(' · ')));
+                    row.append(svg(/^image\//.test(String(f.type || '')) ? 'image' : 'file'), t, svg('download'));
+                    list.append(row);
+                });
+                sh.append(list);
+            } else {
+                sh.setAttribute('aria-label', 'Add to the group');
+                const note = el('p', 'ovse-gsheet-note'); note.setAttribute('role', 'status');
+                const done = (j) => { if (j && Array.isArray(j.members)) { state.run.members = j.members; paintGroup(); } sh.remove(); };
+                const fail = (err) => { note.textContent = (err && err.message) || 'That did not work.'; };
+                const who = el('form', 'ovse-gsheet-f');
+                const name = el('input', 'ovse-gsheet-in'); name.type = 'text'; name.placeholder = 'Their username'; name.setAttribute('aria-label', 'A person by their username'); name.autocomplete = 'off';
+                const go = btn('ovse-sheet-btn', null, 'plus', 'Add person'); go.type = 'submit';
+                who.append(name, go);
+                who.addEventListener('submit', async (e) => { e.preventDefault(); if (!name.value.trim()) return; try { done(await api(`/groups/${encodeURIComponent(id)}/members`, { method: 'POST', body: JSON.stringify({ username: name.value.trim() }) })); } catch (err) { fail(err); } });
+                sh.append(el('small', 'ovse-gsheet-l', 'A person'), who, el('small', 'ovse-gsheet-l', 'An agent'));
+                const agentsBox = el('div', 'ovse-gsheet-list');
+                sh.append(agentsBox, note);
+                api('/groups/presets').then((j) => {
+                    const have = new Set((state.run.members || []).map((m) => m.handle));
+                    (j.agents || []).filter((a) => !have.has(a.handle)).forEach((a) => {
+                        const b = btn('ovse-gfile', `Add ${a.name}`, a.product === 'codes' ? 'code' : 'robot', '');
+                        const t = el('span'); t.append(el('b', '', `${a.name} · @${a.handle}`), el('small', '', a.line || '')); b.append(t);
+                        b.addEventListener('click', async () => { b.disabled = true; try { done(await api(`/groups/${encodeURIComponent(id)}/members`, { method: 'POST', body: JSON.stringify({ agent: a }) })); } catch (err) { b.disabled = false; fail(err); } });
+                        agentsBox.append(b);
+                    });
+                    if (!agentsBox.childElementCount) agentsBox.append(el('p', 'ovse-gsheet-empty', 'Every agent role is already here.'));
+                }).catch(() => { agentsBox.append(el('p', 'ovse-gsheet-empty', 'The agents could not be listed right now.')); });
+            }
+            main.append(sh);
+        }
+        /** @ in a group's box offers its members (4.302.0): a tap writes the handle. */
+        function paintMentions() {
+            const ta = boxText(); const id = groupId();
+            if (!ta || !id) { mentionRow.hidden = true; return; }
+            const before = ta.value.slice(0, ta.selectionStart || ta.value.length);
+            const m = /(^|\s)@([\w-]*)$/.exec(before);
+            const ms = (state.run.members || []).filter((x) => x.kind === 'agent' || x.handle);
+            const hits = m ? ms.filter((x) => String(x.handle || '').startsWith(m[2].toLowerCase())).slice(0, 8) : [];
+            mentionRow.textContent = '';
+            mentionRow.hidden = !hits.length;
+            hits.forEach((x) => {
+                const b = btn('ovse-mention-b', `Ask ${x.name}`, x.kind === 'agent' ? (x.product === 'codes' ? 'code' : 'robot') : null, `@${x.handle}`);
+                b.setAttribute('role', 'option');
+                b.addEventListener('click', () => {
+                    const pos = before.length - m[2].length - 1;
+                    ta.value = `${ta.value.slice(0, pos)}@${x.handle} ${ta.value.slice(before.length)}`;
+                    ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus();
+                    mentionRow.hidden = true;
+                });
+                mentionRow.append(b);
+            });
+        }
+        let canGroup = null;
+        const groupsAllowed = () => (canGroup !== null ? Promise.resolve(canGroup) : tokenOf() ? api('/groups').then((j) => (canGroup = !!(j && j.can_start))).catch(() => (canGroup = false)) : Promise.resolve(false));
+        async function startGroup(btnEl) {
+            if (btnEl) btnEl.disabled = true;
+            try {
+                const made = await api('/groups', { method: 'POST', body: JSON.stringify({ title: 'A group' }) });
+                open(`group:${made.id}`);
+            } catch (err) { if (btnEl) btnEl.disabled = false; flash((err && err.message) || 'The group did not start.'); }
+        }
+
         function paintCtx() {
             paintModes();
+            paintGroup();
             if (tokenOf()) loadResources(); paintRoad();
             const r = state.run;
             if (r) {
@@ -2234,6 +2380,15 @@
                 : c.kind === 'actor' && c.id === 'actor' ? `${c.name} answers, searches and does things for you. / for commands.` : null;
             hi.append(big, el('b', 'ovse-hello-t', helloT), el('p', 'ovse-hello-l', helloL || o.line || 'Type anything. It answers, searches, makes things and writes code, on the right agent for it. / for commands, @ to pick who works on it.'));
             thread.append(hi, howCard());
+            // Admins and the owner start groups (4.302.0, plan §AD.19): people and agents in one thread.
+            groupsAllowed().then((ok) => {
+                if (!ok || !hi.isConnected) return;
+                const g = btn('ovse-group-start', 'Start a group with people and agents', 'members', '');
+                const t = el('span'); t.append(el('b', '', 'Start a group'), el('small', '', 'People and agents in one thread: Actor, Codes and any harness, with a shared space'));
+                g.append(t);
+                g.addEventListener('click', () => startGroup(g));
+                hi.after(g);
+            });
             if (Array.isArray(o.starters) && o.starters.length) {
                 const st = el('div', 'ovse-starters'); st.setAttribute('role', 'group'); st.setAttribute('aria-label', 'Things to ask');
                 o.starters.slice(0, 6).forEach((x, i) => {
@@ -2442,6 +2597,48 @@ html[data-ov-motion="off"] .ovse-yai-r { animation: none; }
 .ovse-agent-face { color: #fff; background: linear-gradient(135deg, color-mix(in srgb, var(--accent, #3b82f6) 85%, #22d3ee), color-mix(in srgb, var(--accent, #3b82f6) 70%, #0f172a)); }
 .ovse-agent-face.is-auto { background: linear-gradient(140deg, var(--ovse-acc), var(--ovse-acc2)); }
 .ovse-agent-face .ovse-g { width: 55%; height: 55%; }
+/* Group conversations (4.302.0, plan §AD.19): the bar, others' words, the @ chips, the sheet. */
+.ovse-group { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--ovse-line, rgba(255,255,255,.08)); }
+.ovse-group-faces { display: flex; flex: 1 1 auto; align-items: center; gap: 10px; min-width: 0; min-height: 40px; padding: 0 6px 0 0; border: 0; border-radius: 999px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ovse-group-faces:hover .ovse-group-count { color: var(--text-primary, #e6edf7); }
+.ovse-gm-stack { display: flex; flex: none; }
+.ovse-gm-stack .ovse-gm-face { margin-left: -8px; box-shadow: 0 0 0 2px var(--bg-primary, #0b1120); animation: ovse-gm-in .28s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 30ms); }
+.ovse-gm-stack .ovse-gm-face:first-child { margin-left: 0; }
+.ovse-group-count { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary, #a8b3c4); font-size: .82rem; font-weight: 700; }
+.ovse-gm-more { font-size: .68rem; font-weight: 800; background: var(--bg-tertiary, rgba(255,255,255,.1)) !important; color: var(--text-secondary, #a8b3c4) !important; }
+.ovse-gmember { cursor: default; }
+@media (max-width: 520px) { .ovse-group-b { width: 40px; padding: 0; justify-content: center; } .ovse-group-b > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } .ovse-gsheet .ovse-group-b { width: auto; padding: 0 12px; } .ovse-gsheet .ovse-group-b > span { position: static; width: auto; height: auto; clip-path: none; } }
+.ovse-gm { display: inline-flex; flex: none; align-items: center; gap: 6px; max-width: 180px; padding: 3px 10px 3px 3px; border-radius: 999px; background: var(--bg-tertiary, rgba(255,255,255,.06)); font-size: .78rem; font-weight: 700; animation: ovse-gm-in .28s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 30ms); }
+.ovse-gm-face { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); color: var(--text-primary, #e6edf7); font-style: normal; font-size: .72rem; }
+.ovse-gm-face.is-agent { background: linear-gradient(135deg, var(--accent, #3b82f6), color-mix(in srgb, var(--accent, #3b82f6) 60%, #a855f7)); color: #fff; }
+.ovse-gm-face svg { width: 14px; height: 14px; }
+.ovse-gm-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ovse-group-b { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 1px solid var(--ovse-line, rgba(255,255,255,.12)); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; }
+.ovse-group-b svg { width: 16px; height: 16px; }
+.ovse-group-b:hover { background: var(--bg-hover, rgba(255,255,255,.06)); }
+.ovse-them { align-self: flex-start; }
+.ovse-group-working .ovse-typing { color: var(--text-muted, #8a96ad); font-size: .85rem; }
+.ovse-group-start { display: flex; align-items: center; gap: 12px; width: min(100%, 420px); margin: 12px auto 0; padding: 12px 14px; border: 1px dashed color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ovse-group-start > svg { flex: none; width: 22px; height: 22px; color: var(--accent, #3b82f6); }
+.ovse-group-start span, .ovse-gfile span { display: grid; gap: 2px; min-width: 0; }
+.ovse-group-start small, .ovse-gfile small { color: var(--text-muted, #8a96ad); font-size: .78rem; }
+.ovse-mention { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 12px 0; }
+.ovse-mention[hidden] { display: none; }
+.ovse-mention-b { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); color: inherit; font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.ovse-mention-b svg { width: 16px; height: 16px; }
+.ovse-gsheet { position: absolute; z-index: 30; inset: auto 8px 8px 8px; max-height: 70%; overflow-y: auto; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--ovse-line, rgba(255,255,255,.12)); border-radius: 16px; background: var(--bg-secondary, #0f1729); box-shadow: 0 18px 48px rgba(0,0,0,.45); animation: ovse-gm-in .24s cubic-bezier(.2,.8,.2,1) both; }
+.ovse-gsheet-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ovse-gsheet-l { color: var(--text-muted, #8a96ad); font-size: .76rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.ovse-gsheet-f { display: flex; gap: 8px; }
+.ovse-gsheet-in { flex: 1 1 auto; min-width: 0; min-height: 40px; padding: 0 12px; border: 1px solid var(--ovse-line, rgba(255,255,255,.14)); border-radius: 10px; background: var(--bg-tertiary, rgba(255,255,255,.04)); color: inherit; font: inherit; }
+.ovse-gsheet-list { display: grid; gap: 4px; }
+.ovse-gfile { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+.ovse-gfile:hover { background: var(--bg-hover, rgba(255,255,255,.06)); }
+.ovse-gfile > svg { flex: none; width: 20px; height: 20px; }
+.ovse-gfile > svg:last-child { margin-left: auto; color: var(--text-muted, #8a96ad); }
+.ovse-gsheet-empty, .ovse-gsheet-note { margin: 0; color: var(--text-muted, #8a96ad); font-size: .85rem; line-height: 1.45; }
+@keyframes ovse-gm-in { from { opacity: 0; transform: translateY(calc(4px * var(--ov-move, 1))); } }
+html[data-ov-motion=off] .ovse-gm, html[data-ov-motion=off] .ovse-gsheet { animation: none; }
 .ovse-hello-face.is-code { background: linear-gradient(135deg, color-mix(in srgb, var(--accent, #3b82f6) 85%, #22d3ee), color-mix(in srgb, var(--accent, #3b82f6) 70%, #0f172a)); }
 /* How it runs, under a new session's hello */
 .ovse-how { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 2px 4px 14px; }

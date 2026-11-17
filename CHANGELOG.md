@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.302.0 — 2026-11-17
+
+- **Group conversations in the session surface, on every site** (plan §AD.19; the owner: "multi user and multi agent
+  … different actors using different harnesses and also other openvibe users per chat … the same agentic shared
+  universal system across all sites from groups to chats to codes"). A group is a run (`group:<id>`, Network's
+  /api/frame/groups, openvibe-sdk 0.180.0 `agents/group`), so the session lists it, reads its thread and says to it
+  like any run. What is new here:
+  - the group's bar: overlapped faces (people's initials, each agent's glyph), "2 people · 3 agents", a tap lists
+    everyone with each agent's role (Actor or Codes, the harness or engine it works through, who leads and who takes
+    the code); Space lists every file in the group with its download; Add puts a person (by username) or an agent role
+    in;
+  - someone else's words carry their name on the others' side; an agent at work shows its name and waits;
+  - @ in the box offers the group's members; a tap writes the handle (an @mention is who answers);
+  - admins and the owner see "Start a group" on a new session.
+  Never a row that scrolls sideways: on a phone Space and Add are icons with their names for screen readers.
+  test/session-group-chrome.test.js (390 and 1280 px).
+
 ## 4.301.0 — 2026-11-17
 
 - **The road chip says what the Frame says.** Which of your resources takes the next turn is now one order every agent
