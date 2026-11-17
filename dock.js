@@ -116,7 +116,16 @@
             .ovnav-st { position: absolute; top: -4px; right: -6px; z-index: 1; display: inline-flex; align-items: center; justify-content: center; min-width: 10px; height: 18px; padding: 0 6px;
                 box-sizing: border-box; border-radius: 999px; font: normal 750 10.5px/1 var(--font-sans, inherit); font-variant-numeric: tabular-nums; letter-spacing: .01em; white-space: nowrap;
                 --st: var(--accent-strong, var(--accent, #3b82f6)); color: var(--on-accent-strong, var(--on-accent, #fff)); background: var(--st); box-shadow: 0 0 0 2px var(--bg-primary, #0b0f19); pointer-events: none; }
-            [data-ov-status="running"] > .ovnav-st, [data-ov-status="waiting"] > .ovnav-st { width: 10px; min-width: 10px; height: 10px; padding: 0; top: 1px; right: 1px; }
+            [data-ov-status="running"] > .ovnav-st { width: 10px; min-width: 10px; height: 10px; padding: 0; top: 1px; right: 1px; }
+            /* 4.295.0: waiting carries its number (the owner: "What is this yellow dot trying to indicate?"). */
+            [data-ov-status="waiting"] > .ovnav-st { min-width: 18px; height: 18px; padding: 0 5px; top: -5px; right: -5px; color: #2b1a00; }
+            .ovnav-callout { position: fixed; z-index: 2147483000; max-width: min(280px, calc(100vw - 16px)); padding: 9px 13px; border: 0; border-radius: 14px; cursor: pointer;
+                font: 650 13.5px/1.3 var(--font-sans, system-ui, sans-serif); color: #2b1a00; background: var(--warning, #f5a524); box-shadow: 0 12px 28px -12px rgba(0, 0, 0, .6);
+                animation: ovnav-callout-in .32s cubic-bezier(.3, 1.4, .4, 1) both; transition: opacity .25s, transform .25s; }
+            .ovnav-callout::before { content: ""; position: absolute; top: -6px; right: 18px; width: 12px; height: 12px; background: inherit; transform: rotate(45deg); border-radius: 2px; }
+            .ovnav-callout.is-going { opacity: 0; transform: translateY(calc(-4px * var(--ov-move, 1))); }
+            @keyframes ovnav-callout-in { from { opacity: 0; transform: translateY(calc(-6px * var(--ov-move, 1))) scale(.96); } }
+            html[data-ov-motion=off] .ovnav-callout { animation: none; transition: none; }
             [data-ov-status^="timer"] > .ovnav-st { top: auto; bottom: -8px; right: 50%; transform: translateX(50%); height: 15px; padding: 0 5px; font-size: 9.5px; }
             [data-ov-status="waiting"] > .ovnav-st { --st: var(--warning, #f5a524); }
             [data-ov-status="timer-done"] > .ovnav-st { --st: var(--success, #22c55e); color: #052e14; }
@@ -1691,7 +1700,9 @@
         const c = counts(), st = state(), w = c.waiting || 0, r = c.running || 0;
         if (st.timer && !timerMod) withTimer((m) => m.sync());
         const tm = timerMod && !w ? timerMod.pillText() : null;
-        if (w) return { tone: 'waiting', text: 'Needs you', label: `${w} need${w > 1 ? '' : 's'} you`, part: 'agent' };
+        // 4.295.0 (the owner's phone, 11-17: "What is this yellow dot trying to indicate? … it's not clear what it's trying
+        // to do"): the dot carries the number, and says once, in words, what is waiting.
+        if (w) return { tone: 'waiting', text: w > 9 ? '9+' : String(w), count: w, label: `${w === 1 ? 'An agent is' : `${w} agents are`} waiting for your answer: tap to answer`, part: 'agent' };
         if (tm) return { tone: tm.tone, text: tm.text, label: tm.label, part: 'vibe' };
         if (r) return { tone: 'running', text: r > 1 ? `${r} working` : 'Working', label: `${r} working`, part: 'agent' };
         return null;
@@ -1704,18 +1715,39 @@
             if (!s) { if (chip) chip.remove(); b.removeAttribute('data-ov-status'); if (b.dataset.ovLabel) { b.setAttribute('aria-label', b.dataset.ovLabel); b.setAttribute('data-ov-tip', b.dataset.ovTip || b.dataset.ovLabel); } return; }
             // An i, not a span: the old burger draws its spans as lines.
             if (!chip) { chip = document.createElement('i'); chip.className = 'ovnav-st'; chip.setAttribute('aria-hidden', 'true'); b.appendChild(chip); }
-            chip.textContent = /^timer/.test(s.tone) ? (s.tone === 'timer-done' ? 'Done' : s.text) : '';
+            chip.textContent = /^timer/.test(s.tone) ? (s.tone === 'timer-done' ? 'Done' : s.text) : s.tone === 'waiting' ? s.text : '';
             b.setAttribute('data-ov-status', s.tone);
             if (!b.dataset.ovLabel) { b.dataset.ovLabel = b.getAttribute('aria-label') || 'Menu'; b.dataset.ovTip = b.getAttribute('data-ov-tip') || ''; }
             b.setAttribute('aria-label', `${b.dataset.ovLabel}: ${s.label}`);
             b.setAttribute('data-ov-tip', s.label);
         });
     }
+    /** Once per new wait (more waiting than last time, this tab): a bubble under the menu button says it in words; a tap
+     *  on it opens what waits. It leaves by itself after a few seconds. */
+    let saidWaiting = (() => { try { return Number(sessionStorage.getItem('ov-dock-said-waiting')) || 0; } catch { return 0; } })();
+    function sayWaiting(s) {
+        const w = s && s.tone === 'waiting' ? Number(s.count) || 1 : 0;
+        if (w <= saidWaiting) { if (!w) saidWaiting = 0; return; }
+        saidWaiting = w;
+        try { sessionStorage.setItem('ov-dock-said-waiting', String(w)); } catch { /* private mode */ }
+        const b = [...document.querySelectorAll('.openvibe-navbar #openvibe-search-btn, .openvibe-navbar #openvibe-burger.ovnav-orb')].find((x) => x.getBoundingClientRect().width > 0);
+        if (!b) return;
+        const old = document.querySelector('.ovnav-callout'); if (old) old.remove();
+        const r = b.getBoundingClientRect();
+        const tip = document.createElement('button'); tip.type = 'button'; tip.className = 'ovnav-callout'; tip.setAttribute('role', 'status');
+        tip.textContent = w === 1 ? 'An agent is waiting for your answer' : `${w} agents are waiting for your answer`;
+        tip.style.top = `${Math.round(r.bottom + 10)}px`;
+        tip.style.right = `${Math.max(8, Math.round(window.innerWidth - r.right - 4))}px`;
+        tip.addEventListener('click', () => { tip.remove(); try { root.__ovNeedsYou = Date.now(); if (typeof o.openMenu === 'function') o.openMenu('agent'); } catch { /* */ } });
+        document.body.appendChild(tip);
+        setTimeout(() => { tip.classList.add('is-going'); setTimeout(() => tip.remove(), 300); }, 6500);
+    }
     function paintStatus() {
         if (typeof o.status !== 'function') return;
         const s = status();
         try { o.status(s); } catch { /* the bar is optional */ }
         paintBar(s);
+        sayWaiting(s);
     }
     async function read() {
         clearTimeout(readT);
