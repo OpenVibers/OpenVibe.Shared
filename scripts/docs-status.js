@@ -33,8 +33,19 @@ const LIBS = [
     { pkg: 'openvibe-shared', repo: 'OpenVibe.Shared', field: 'shared' },
     { pkg: 'openvibe-publishing', repo: 'OpenVibe.Publishing', field: null },
 ];
-// 4.288.0: pins are read by openvibe-shared/pins (scripts/pins.js), the one reader: codeload or our forge, any case.
-const { parsePin } = require('./pins');
+// Pins are read the way openvibe-shared/pins (scripts/pins.js) reads them: codeload or our forge, any case. This file
+// stays standalone: every repository's CI runs it as `curl …/scripts/docs-status.js | node -`, where requiring pins.js
+// beside it cannot resolve (4.288.0 did, and every CI that checks its docs failed: 2026-11-16/17). So the reader is
+// inline here, the same as openvibe-shared/pins' parsePin (test/piped-scripts.test.js checks the two agree).
+const PIN_LIBRARIES = { 'openvibe-contracts': 'OpenVibe.Contracts', 'openvibe-shared': 'OpenVibe.Shared', 'openvibe-sdk': 'OpenVibe.SDK', 'openvibe-publishing': 'OpenVibe.Publishing' };
+const PIN_RE = /^https:\/\/(?:codeload\.github\.com\/OpenVibers\/(OpenVibe\.[A-Za-z]+)\/tar\.gz\/refs\/tags\/v(\d+\.\d+\.\d+)|git\.openvibe\.codes\/api\/v1\/repos\/openvibers\/(openvibe\.[A-Za-z]+)\/archive\/v(\d+\.\d+\.\d+)\.tar\.gz)$/i;
+function parsePin(spec) {
+    const m = PIN_RE.exec(String(spec == null ? '' : spec).trim());
+    if (!m) return null;
+    const seen = String(m[1] || m[3]).toLowerCase();
+    const library = Object.keys(PIN_LIBRARIES).find((k) => PIN_LIBRARIES[k].toLowerCase() === seen);
+    return library ? { library, repo: PIN_LIBRARIES[library], version: m[2] || m[4], form: m[1] ? 'codeload' : 'forge' } : null;
+}
 const VERSION = /(\d+\.\d+\.\d+)/;
 
 const byPackage = new Map(LIBS.map((l) => [l.pkg, l]));
