@@ -22,6 +22,7 @@ const RESET = '2026-11-18T00:00:00.000Z';
 const day = (left) => ({ tier: 'standard', unlimited: false, tokens: 50000, used: 50000 - left, left, resets_at: RESET });
 const SCENES = {
     free: { allowance: day(38000), keys: [], key_apps: [], balance: null, partial: [] },
+    low: { allowance: day(8900), keys: [], key_apps: [], balance: null, partial: [] },
     key: { allowance: day(0), keys: [{ provider: 'openrouter', status: 'ok' }, { provider: 'anthropic', status: 'ok' }], key_apps: [{ service: 'actor', providers: ['anthropic'] }], balance: null, partial: [] },
     computer: { allowance: day(0), keys: [{ provider: 'openrouter', status: 'ok' }], key_apps: [], balance: null, partial: [] },
     none: { allowance: day(0), keys: [], key_apps: [], balance: null, partial: [] },
@@ -107,6 +108,18 @@ const CHIP = `(() => { const r = document.querySelector('.ovse-road'); if (!r ||
         assert.match(c.label, /Add a key or a computer to keep going/);
         await p.evaluate("document.querySelector('.ovse-road').click()");
         await until(p, "!!document.querySelector('.ovse-sheet.is-in .ovse-yai-r')");
+
+        // 4.300.0: some left, not enough for an agent turn (Actor #575 never starts one): "Chat only" in amber; Chat's one
+        // model would still answer, so Chat mode shows the free AI.
+        await open('low', false);
+        await p.evaluate("document.querySelector('.ovse-mode[data-mode=\"auto\"]').click()");   // the mode is kept across loads
+        c = await until(p, `(() => { const c = ${CHIP}; return c && /is-none/.test(c.cls) ? c : null; })()`);
+        assert.strictEqual(c.text, 'Chat only');
+        assert.match(c.label, /enough for Chat, not for an agent turn/);
+        await p.evaluate("document.querySelector('.ovse-mode[data-mode=\"chat\"]').click()");
+        c = await until(p, `(() => { const c = ${CHIP}; return c && /is-free/.test(c.cls) ? c : null; })()`);
+        assert.strictEqual(c.text, '18% free', 'Chat mode: the free AI');
+        await p.evaluate("document.querySelector('.ovse-mode[data-mode=\"auto\"]').click()");
 
         // A Network without /resources: no chip, no error.
         await open('old');

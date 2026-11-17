@@ -150,6 +150,8 @@
     const atTime = (iso) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'midnight UTC'; };
     const shortN = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(/\.0$/, '')}M` : n >= 1e4 ? `${Math.round(n / 1e3)}k` : n >= 1e3 ? `${(n / 1e3).toFixed(1).replace(/\.0$/, '')}k` : String(n));
     const keyOk = (k) => !k.status || /^(ok|ready|active|valid)$/i.test(k.status);
+    // What an agent turn on the free AI takes, about (Actor's ACTOR_FREE_TURN_TOKENS; 11-17: 11,134 and 10,986 tokens).
+    const TURN_TOKENS = 12000;
     const actorMay = (res, prov) => ((res && res.key_apps) || []).some((x) => x.service === 'actor' && (x.providers || []).some((q) => q === '*' || q === prov));
     // An answer's receipt (4.298.0, agents.step@1 1.3.0): the rungs in the order Actor tries them, a model's readable
     // name from its id ("claude-sonnet-5-5" reads "Claude Sonnet 5.5", "deepseek-chat" reads "DeepSeek Chat").
@@ -1665,9 +1667,10 @@
             if (open) { paintModes(); paintCtx(); flash(id === 'code' ? 'Your next words go to a coding agent on your computer.' : id === 'chat' ? 'Your next words go to one model: quick, no tools.' : id === 'agent' ? 'Your next words go to your agent: it plans, uses tools and checks.' : 'Your next words go where they fit best.'); }
             else blank();
         }
-        /** Where the next answer goes, as Actor routes it (tasks/engine.js): the free AI while any is left, then a key you
-         *  allowed Actor to use, then a computer of yours that is online; null for a coding run (Codes routes itself) or
-         *  when it is not known. */
+        /** Where the next answer goes, as Actor routes it (tasks/engine.js): the free AI while a turn fits in what is
+         *  left (4.300.0, Actor #575: an agent turn takes about 12,000 tokens; Chat's one model, anything left), then a
+         *  key you allowed Actor to use, then a computer of yours that is online; null for a coding run (Codes routes
+         *  itself) or when it is not known. */
         function roadNow() {
             const res = resources;
             if (!res || res === 'old' || !res.allowance) return null;
@@ -1676,14 +1679,18 @@
             const a = res.allowance;
             if (a.unlimited) return { road: 'free', glyph: 'spark', text: 'Free AI', pct: 1, say: 'The free AI, with no daily cap for you' };
             const tokens = Number(a.tokens) || 0, left = Math.max(0, Number(a.left) || 0);
-            if (tokens > 0 && left > 0) {
+            const need = m === 'chat' ? 1 : TURN_TOKENS;
+            if (tokens > 0 && left >= need) {
                 const pct = left / tokens;
                 return { road: 'free', glyph: 'spark', text: `${Math.max(1, Math.round(pct * 100))}% free`, pct, say: `The free AI: ${shortN(left)} of ${shortN(tokens)} tokens left today` };
             }
+            // Some left, not enough for an agent turn: the words say so (Chat's one model would still answer).
+            const why = left > 0 ? `the free AI has ${shortN(left)} tokens left, not enough for an agent turn,` : 'the free AI is used up';
             const key = (res.keys || []).find((k) => keyOk(k) && actorMay(res, k.provider));
-            if (key) return { road: 'key', glyph: 'key', text: `${keyName(key.provider)} key`, say: `Your ${keyName(key.provider)} key: the free AI is used up until ${atTime(a.resets_at)}` };
+            if (key) return { road: 'key', glyph: 'key', text: `${keyName(key.provider)} key`, say: `Your ${keyName(key.provider)} key: ${why} until ${atTime(a.resets_at)}` };
             const pc = ((options && options.places) || []).find((x) => x.kind === 'machine' && x.online && !x.disabled);
-            if (pc) return { road: 'computer', glyph: 'computer', text: String(pc.name || 'Your computer').slice(0, 24), say: `${pc.name || 'Your computer'}: the free AI is used up until ${atTime(a.resets_at)}` };
+            if (pc) return { road: 'computer', glyph: 'computer', text: String(pc.name || 'Your computer').slice(0, 24), say: `${pc.name || 'Your computer'}: ${why} until ${atTime(a.resets_at)}` };
+            if (left > 0) return { road: 'none', glyph: 'spark', text: 'Chat only', pct: tokens ? left / tokens : 0, say: `The free AI has ${shortN(left)} tokens left today: enough for Chat, not for an agent turn. Back in full at ${atTime(a.resets_at)}. Add a key or a computer to keep going` };
             return { road: 'none', glyph: 'spark', text: `Back ${atTime(a.resets_at)}`, pct: 0, say: `The free AI is used up until ${atTime(a.resets_at)}. Add a key or a computer to keep going` };
         }
         function paintRoad() {

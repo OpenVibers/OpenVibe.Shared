@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.300.0 — 2026-11-17
+
+- **The road chip says what Actor will really do.** Actor no longer starts an agent turn on the free AI when what is
+  left cannot cover one (Actor #575: about 12,000 tokens; two probe turns on production spent 22k and answered
+  nothing). The chip follows: in Auto and Agent mode, with less than a turn left, it shows your key, your computer, or
+  amber "Chat only" (enough for Chat's one model, not an agent turn); Chat mode still shows the free AI as long as any is
+  left. test/session-road-chrome.test.js.
+
 ## 4.299.0 — 2026-11-17
 
 - **Your AI keeps your keys and Balance in reach.** Signed in on a phone (11-17), nine coding agents pushed How it's
