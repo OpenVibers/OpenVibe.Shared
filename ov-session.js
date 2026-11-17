@@ -1256,6 +1256,8 @@
             const p = ctxParts();
             const said = [p.agent === 'Auto' ? 'Any agent' : p.agent, p.way, p.model === 'Auto' ? '' : p.model, p.effort, p.where === 'Auto' ? '' : p.where, p.works].filter(Boolean);
             ctxB.querySelector('span').textContent = said.join(' · ');
+            // The chip wears the chosen agent's glyph (Codes' code, Actor's robot, Auto's spark), like its hello.
+            { const k = chosen().kind, g = ctxB.querySelector('svg'); if (g) g.innerHTML = G[k === 'code' ? 'code' : k === 'actor' && pick.agent !== 'auto' ? 'robot' : 'spark'] || G.spark; }
             ctxB.setAttribute('aria-label', `How it runs: ${said.join(', ')}. Change it`);
             ctxB.classList.toggle('is-on', pick.agent !== 'auto' || !!pick.model || pick.where !== 'auto' || !!pick.works || (pick.way && pick.way !== 'auto') || (pick.effort && pick.effort !== 'auto') || !!pick.permission);
             paintCost();
