@@ -610,6 +610,9 @@
         const backB = btn('ovse-ib ovse-up', 'Back to the session it helps', 'back'); backB.hidden = true;
         const faceSlot = el('span', 'ovse-face-slot');
         const who = el('div', 'ovse-who'); const titleN = el('b', 'ovse-title'); const statN = el('small', 'ovse-stat'); who.append(titleN, statN);
+        // 4.306.0: what the session used, in the status line, is a button: the Usage sheet.
+        const useB = el('button', 'ovse-stat-use'); useB.type = 'button'; useB.hidden = true;
+        useB.addEventListener('click', () => usageSheet('session'));
         const changesB = btn('ovse-chg', 'What it changed', 'file'); changesB.append(el('b'), el('span')); changesB.hidden = true;
         const moreB = btn('ovse-ib ovse-more', 'More', 'more'); moreB.setAttribute('aria-haspopup', 'dialog');
         head.append(menuB, backB, faceSlot, who, changesB, moreB);
@@ -1023,6 +1026,215 @@
                 setTimeout(() => { try { nameIn.focus({ preventScroll: true }); } catch { /* */ } }, 260);
             });
         }
+        // ── Usage (4.306.0; the owner, 11-17: "display usage stats and tokens and all that for each harness or API balances
+        // or cost"). What this session, today and the last 30 days used: tokens and dollars by how each was paid and by
+        // model (each answer's receipt here; Actor's /me/usage through the Frame's /usage for the days), then the limits
+        // and balances (the free AI left, the day's limit, your Balance, your keys) and each coding agent's windows on your
+        // computers (the Frame's /resources: what their Links report). ──
+        function sessionUse() {
+            const out = { usd: 0, tokens: 0, tasks: 0, by: {}, models: new Map() };
+            for (const st of state.steps.values()) {
+                const c = st && st.cost && typeof st.cost === 'object' && st.cost.by && typeof st.cost.by === 'object' ? st.cost : null;
+                if (!c) continue;
+                out.tasks += 1; out.usd += Number(c.usd) || 0; out.tokens += Number(c.tokens) || 0;
+                for (const k of RUNGS) {
+                    const x = c.by[k]; if (!x) continue;
+                    const w = out.by[k] || (out.by[k] = { usd: 0, tokens: 0, tasks: 0 });
+                    w.usd += Number(x.usd) || 0; w.tokens += Number(x.tokens) || 0; w.tasks += 1;
+                }
+                const m = st.model && typeof st.model.id === 'string' ? st.model : null;
+                if (m) {
+                    const w = out.models.get(m.id) || { id: m.id, provider: m.provider || null, usd: 0, tokens: 0, tasks: 0 };
+                    w.usd += Number(c.usd) || 0; w.tokens += Number(c.tokens) || 0; w.tasks += 1; out.models.set(m.id, w);
+                }
+            }
+            return { ...out, models: [...out.models.values()].sort((a, b) => b.tokens - a.tokens) };
+        }
+        const moneyWord = (v) => { const usd = Number(v) || 0; return usd <= 0 ? '$0' : usd < 0.01 ? 'under 1¢' : costWords(usd); };
+        /** The status line's words for what a run used: its answers' tokens and what it cost ("68k tokens · under 1¢"). */
+        function useWords(r) {
+            const u = sessionUse();
+            const usd = Math.max(Number(r && r.cost && r.cost.usd) || 0, u.usd);
+            const bits = [];
+            if (u.tokens > 0) bits.push(`${shortN(Math.round(u.tokens))} tokens`);
+            if (usd > 0) bits.push(spent({ usd }));
+            return bits.length ? bits.join(' · ') : spent(r && r.cost);
+        }
+        /** Top up (the Wallet's own sheet, else its page); `close` ends the sheet it was opened from. */
+        async function openWallet(close) {
+            const W = await need(o, 'ov-wallet.js', 'OpenVibeWallet');
+            if (!document.getElementById('ovse-wallet-css') && typeof o.sibling === 'function') { const l = document.createElement('link'); l.id = 'ovse-wallet-css'; l.rel = 'stylesheet'; l.href = o.sibling('ov-wallet.css'); document.head.append(l); }
+            if (!W || typeof W.open !== 'function') { goSetup({ id: 'wallet', url: 'https://openvibe.network/wallet' }); return; }
+            if (typeof close === 'function') close();
+            try { await W.open({ getToken: () => tokenOf(), frameBase: base }); } catch { goSetup({ id: 'wallet', url: 'https://openvibe.network/wallet' }); }
+        }
+        let usageDoc = null, usageAt = 0, usageAsk = null;
+        /** The Frame's /usage (30 days), kept 30 s; 'out' signed out, 'old' a Network without it, null when it failed. */
+        function loadUsage() {
+            if (!tokenOf()) return Promise.resolve('out');
+            if (usageDoc && Date.now() - usageAt < 30000) return Promise.resolve(usageDoc);
+            if (!usageAsk) {
+                usageAsk = fetch(`${base}/usage?days=30`, { credentials: 'omit', headers: { Accept: 'application/json', ...headers() } })
+                    .then((x) => (x.ok ? x.json() : x.status === 404 ? 'old' : x.status === 401 || x.status === 403 ? 'out' : null)).catch(() => null)
+                    .then((x) => { if (x && typeof x === 'object') { usageDoc = x; usageAt = Date.now(); } usageAsk = null; return x; });
+            }
+            return usageAsk;
+        }
+        const RUNG_TONE = { allowance: 'free', key: 'key', machine: 'mine', plan: 'plan', credits: 'bal' };
+        const winName = (n) => { const w = String(n || 'window').replace(/[_-]+/g, (m, at) => (/\d/.test(String(n).charAt(at - 1)) ? '-' : ' ')).trim(); return /window|limit/i.test(w) ? w.charAt(0).toUpperCase() + w.slice(1) : `${w.charAt(0).toUpperCase()}${w.slice(1)} window`; };
+        const whenWord = (iso) => {
+            const t = ms(iso); if (!t) return '';
+            const d = new Date(t);
+            return t - Date.now() < 20 * 3600 * 1000 ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : d.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+        };
+        function usageSheet(first) {
+            sheet('Usage', (b, { end }) => {
+                b.classList.add('ovse-use');
+                const spans = [state.run && ['session', 'This session'], ['today', 'Today'], ['period', '30 days']].filter(Boolean);
+                let on = spans.some(([id]) => id === first) ? first : spans[0][0];
+                let doc = null, docState = 'wait', res, resState = 'wait';
+                const head = (title, glyph) => { const h = el('h3', 'ovse-yai-h'); h.append(svg(glyph), el('span', '', title)); return h; };
+
+                // What it used
+                const tabs = el('div', 'ovse-use-tabs'); tabs.setAttribute('role', 'group'); tabs.setAttribute('aria-label', 'When');
+                const tabB = new Map();
+                spans.forEach(([id, word]) => { const t = el('button', 'ovse-use-tab', word); t.type = 'button'; t.addEventListener('click', () => { on = id; paint(); }); tabB.set(id, t); tabs.append(t); });
+                const big = el('b', 'ovse-use-big'); const unit = el('span', 'ovse-use-unit'); const sub = el('p', 'ovse-use-sub');
+                const top = el('div', 'ovse-use-top'); top.append(big, unit);
+                const hero = el('div', 'ovse-use-hero'); hero.setAttribute('aria-live', 'polite'); hero.append(top, sub);
+                const bar = el('div', 'ovse-use-bar'); bar.setAttribute('role', 'img');
+                const legend = el('div', 'ovse-use-legend');
+                const modelsH = head('Models', 'spark'); const modelsL = el('div', 'ovse-use-models');
+                const what = el('section', 'ovse-yai-sec'); what.append(tabs, hero, bar, legend, modelsH, modelsL);
+                // Limits and balances; coding agents
+                const limL = el('div', 'ovse-use-list');
+                const lim = el('section', 'ovse-yai-sec'); lim.append(head('Limits and balances', 'coin'), limL);
+                const agL = el('div', 'ovse-use-list');
+                const ags = el('section', 'ovse-yai-sec'); ags.append(head('Coding agents', 'term'), agL);
+                b.append(what, lim, ags);
+
+                const dataOf = (id) => (id === 'session' ? sessionUse() : doc && doc[id] ? { ...doc[id], models: Array.isArray(doc.models) ? doc.models : [] } : null);
+                const meter = (share, tone, label) => { const m = el('i', `ovse-use-gauge${tone ? ` is-${tone}` : ''}`); m.style.setProperty('--w', String(Math.max(0, Math.min(1, share)))); m.setAttribute('role', 'img'); m.setAttribute('aria-label', label); return m; };
+                function paint() {
+                    tabB.forEach((t, id) => { t.setAttribute('aria-pressed', String(id === on)); t.classList.toggle('is-on', id === on); });
+                    const d = dataOf(on);
+                    hero.classList.toggle('is-wait', !d && docState === 'wait');
+                    bar.replaceChildren(); legend.replaceChildren(); modelsL.replaceChildren();
+                    if (!d) {
+                        big.textContent = docState === 'wait' ? '…' : '—'; unit.textContent = '';
+                        sub.textContent = docState === 'wait' ? 'Counting…' : docState === 'out' ? 'Sign in to see what you used.' : 'Actor could not say just now: try again in a moment.';
+                        bar.hidden = true; modelsH.hidden = true; return;
+                    }
+                    const tokens = Math.round(Number(d.tokens) || 0), n = Number(d.tasks) || 0;
+                    big.textContent = shortN(tokens); unit.textContent = tokens === 1 ? 'token' : 'tokens';
+                    const secs = on === 'session' && state.run && state.run.cost ? Number(state.run.cost.seconds) || 0 : 0;
+                    const usd = on === 'session' ? Math.max(Number(d.usd) || 0, Number(state.run && state.run.cost && state.run.cost.usd) || 0) : Number(d.usd) || 0;
+                    sub.textContent = [moneyWord(usd), on === 'session' ? `${n} answer${n === 1 ? '' : 's'}` : `${n} task${n === 1 ? '' : 's'}`, secs ? clock(secs) : ''].filter(Boolean).join(' · ');
+                    // How it was paid: one bar, a part per way, as a share of the tokens.
+                    const by = d.by || {};
+                    const ks = RUNGS.filter((k) => by[k] && ((Number(by[k].tokens) || 0) > 0 || (Number(by[k].usd) || 0) > 0 || (Number(by[k].tasks) || 0) > 0));
+                    const total = ks.reduce((t, k) => t + (Number(by[k].tokens) || 0), 0);
+                    bar.hidden = !ks.length;
+                    const said = [];
+                    ks.forEach((k, i) => {
+                        const x = by[k], tk = Number(x.tokens) || 0, u = Number(x.usd) || 0;
+                        const share = total > 0 ? tk / total : 1 / ks.length;
+                        const seg = el('i', `ovse-use-seg is-${RUNG_TONE[k]}`); seg.style.setProperty('--w', String(Math.max(0.03, share))); seg.style.setProperty('--i', String(i));
+                        bar.append(seg);
+                        const words = [tk ? `${shortN(Math.round(tk))} tokens` : '', u > 0 && k !== 'allowance' && k !== 'machine' ? moneyWord(u) : k === 'allowance' || k === 'machine' ? 'free to you' : ''].filter(Boolean).join(' · ');
+                        const r = el('div', 'ovse-use-leg'); r.style.setProperty('--i', String(i));
+                        r.append(el('i', `ovse-use-dot is-${RUNG_TONE[k]}`), svg(RUNG_GLYPH[k] || 'spark'), el('b', '', rungWord(k)), el('span', '', words));
+                        legend.append(r);
+                        said.push(`${rungWord(k)} ${Math.round(share * 100)}%`);
+                    });
+                    bar.setAttribute('aria-label', `How it was paid: ${said.join(', ')}`);
+                    if (!ks.length) legend.append(el('p', 'ovse-note', on === 'session' ? 'Nothing measured yet: each answer says what it took when it ends.' : 'Nothing measured in this time yet.'));
+                    // The models, most tokens first.
+                    const list = (d.models || []).slice(0, 8);
+                    modelsH.hidden = !list.length;
+                    modelsH.querySelector('span').textContent = on === 'today' ? 'Models, last 30 days' : 'Models';
+                    const most = Math.max(1, ...list.map((m) => Number(m.tokens) || 0));
+                    list.forEach((m, i) => {
+                        const r = el('div', 'ovse-use-model'); r.style.setProperty('--i', String(i));
+                        const t = el('span', 'ovse-yai-t'); const k = Number(m.tasks) || 0;
+                        t.append(el('b', '', modelName(m.id) || m.id), el('small', '', [m.provider ? keyName(m.provider) : '', `${k} ${on === 'session' ? 'answer' : 'task'}${k === 1 ? '' : 's'}`].filter(Boolean).join(' · ')));
+                        r.append(t, el('span', 'ovse-use-n', [`${shortN(Math.round(Number(m.tokens) || 0))}`, Number(m.usd) > 0 ? moneyWord(m.usd) : ''].filter(Boolean).join(' · ')), meter((Number(m.tokens) || 0) / most, '', `${Math.round(((Number(m.tokens) || 0) / most) * 100)}% of the most`));
+                        modelsL.append(r);
+                    });
+                }
+                const item = (list, { glyph, name, line, chip = null, tone = '', share = null, shareTone = '', go = null }) => {
+                    const r = el(go ? 'button' : 'div', 'ovse-use-row'); if (go) { r.type = 'button'; r.addEventListener('click', go); }
+                    const tile = el('span', 'ovse-yai-tile'); tile.append(svg(glyph));
+                    const t = el('span', 'ovse-yai-t'); t.append(el('b', '', name), el('small', '', line));
+                    r.append(tile, t);
+                    if (chip) r.append(el('i', `ovse-yai-chip${tone ? ` is-${tone}` : ''}`, chip));
+                    if (share != null) r.append(meter(share, shareTone, `${Math.round(share * 100)}% used`));
+                    list.append(r); return r;
+                };
+                function paintLimits() {
+                    limL.replaceChildren();
+                    const a = res && typeof res === 'object' ? res.allowance : null;
+                    if (a && a.unlimited) item(limL, { glyph: 'spark', name: 'Free AI', line: 'OpenVibe\'s free AI, with no daily cap for you', chip: 'No cap', tone: 'ok' });
+                    else if (a && Number(a.tokens) > 0) {
+                        const all = Number(a.tokens), left = Math.max(0, Number(a.left) || 0);
+                        item(limL, { glyph: 'spark', name: 'Free AI today', line: left > 0 ? `${shortN(left)} of ${shortN(all)} tokens left · back in full at ${atTime(a.resets_at)}` : `Used up · back at ${atTime(a.resets_at)}`,
+                            chip: left > 0 ? `${Math.round((left / all) * 100)}% left` : 'Used up', tone: left / all > 0.15 ? 'ok' : 'warn', share: (all - left) / all, shareTone: left / all > 0.15 ? '' : 'warn' });
+                    }
+                    const cap = doc && doc.limit, today = doc && doc.today;
+                    if (cap && Number(cap.per_day_usd) > 0 && today) {
+                        const used = (Number(today.usd) || 0) / Number(cap.per_day_usd);
+                        item(limL, { glyph: 'clock', name: 'Your day with Actor', line: `${moneyWord(today.usd)} of ${moneyWord(cap.per_day_usd)}${cap.tasks_per_day ? ` · ${today.tasks} of ${cap.tasks_per_day} tasks` : ''} · from midnight UTC`, share: used, shareTone: used >= 0.9 ? 'bad' : used >= 0.7 ? 'warn' : '' });
+                    }
+                    const bl = res && typeof res === 'object' ? res.balance : null;
+                    if (bl) {
+                        const n = Number(bl.amount) / Math.pow(10, Number(bl.scale) || 0);
+                        item(limL, { glyph: 'coin', name: 'Your Balance', line: 'Pays for AI you run on OpenVibe, by the cent · Top up', chip: Number.isFinite(n) ? `$${n.toFixed(2)}` : 'Top up', tone: 'money', go: () => openWallet(end) });
+                    } else if (resState === 'ok') item(limL, { glyph: 'coin', name: 'Your Balance', line: 'Add money to run AI past the free allowance', chip: 'Top up', go: () => openWallet(end) });
+                    (res && typeof res === 'object' && Array.isArray(res.keys) ? res.keys : []).slice(0, 8).forEach((k) => {
+                        const ok = keyOk(k);
+                        item(limL, { glyph: 'key', name: `${keyName(k.provider)} key`, line: ok ? 'Yours: the provider bills you for it, not OpenVibe' : 'It did not answer its last check', chip: ok ? 'Ready' : 'Check it', tone: ok ? 'ok' : 'warn' });
+                    });
+                    if (!limL.children.length) limL.append(el('p', 'ovse-note', resState === 'wait' ? 'Counting…' : 'Your limits could not be read just now.'));
+                }
+                function paintAgents() {
+                    agL.replaceChildren();
+                    const hs = res && typeof res === 'object' && Array.isArray(res.harnesses) ? res.harnesses : null;
+                    if (!hs) { agL.append(el('p', 'ovse-note', resState === 'wait' ? 'Counting…' : 'Your coding agents could not be read just now.')); return; }
+                    if (!hs.length) {
+                        const set = setupOf(options || fallbackOptions).find((x) => x.id === 'harnesses') || SETUP.find((x) => x.id === 'harnesses');
+                        item(agL, { glyph: 'term', name: 'No coding agent reported yet', line: 'Claude Code, Codex and the rest say their limits from your computers through Link', chip: 'Set up', go: set ? () => goSetup(set) : null });
+                        return;
+                    }
+                    hs.forEach((h, i) => {
+                        const card = el('div', 'ovse-use-agent'); card.style.setProperty('--i', String(i));
+                        const wins = Array.isArray(h.windows) ? h.windows : [];
+                        const full = wins.reduce((m, w) => Math.max(m, Number(w.pct) || 0), 0);
+                        const where = (Array.isArray(h.machines) ? h.machines : []).join(', ');
+                        item(card, { glyph: 'term', name: h.name || h.agent, line: [where || 'On your computer', h.signed_in ? '' : 'not signed in'].filter(Boolean).join(' · '),
+                            chip: !h.signed_in ? 'Sign in' : full >= 100 ? 'At its limit' : wins.length ? `${100 - Math.round(full)}% left` : 'Ready', tone: !h.signed_in || full >= 80 ? 'warn' : 'ok' });
+                        wins.forEach((w) => {
+                            const pct = w.pct == null ? null : Math.max(0, Math.min(100, Number(w.pct)));
+                            const r = el('div', 'ovse-use-win');
+                            r.append(el('span', 'ovse-use-wn', winName(w.name)), el('span', 'ovse-use-wv', [pct == null ? '' : `${Math.round(pct)}% used`, w.resets_at ? `resets ${whenWord(w.resets_at)}` : ''].filter(Boolean).join(' · ')));
+                            if (pct != null) r.append(meter(pct / 100, pct >= 90 ? 'bad' : pct >= 70 ? 'warn' : '', `${Math.round(pct)}% used`));
+                            card.append(r);
+                        });
+                        agL.append(card);
+                    });
+                }
+                paint(); paintLimits(); paintAgents();
+                loadUsage().then((x) => {
+                    if (!b.isConnected) return;
+                    if (x && typeof x === 'object') { doc = x; docState = 'ok'; } else docState = x === 'out' ? 'out' : 'bad';
+                    paint(); paintLimits();
+                });
+                loadResources(true).then((x) => {
+                    if (!b.isConnected) return;
+                    res = x; resState = x && typeof x === 'object' ? 'ok' : 'bad';
+                    paintLimits(); paintAgents();
+                });
+            });
+        }
         /**
          * Your AI (4.296.0; the owner, 11-17: "a menu that brings them to set up their agents and their harnesses and their
          * API keys, or to enable billing … buy credits"; plan §AD.17): every road an answer can take, with its state, in
@@ -1085,6 +1297,14 @@
 
                 // How it's paid
                 const pay = section('How it\'s paid', 'coin');
+                // 4.306.0: what you used, today and over 30 days; it opens Usage.
+                const usedR = row(pay, { glyph: 'clock', name: 'What you used', line: 'Tokens and cost: this session, today, 30 days', chip: '…', onClick: later(() => usageSheet(state.run ? 'session' : 'today')) });
+                loadUsage().then((x) => {
+                    if (!usedR.isConnected) return;
+                    if (!x || typeof x !== 'object' || !x.today) { setChip(usedR, null); return; }
+                    setChip(usedR, `${shortN(Math.round(Number(x.today.tokens) || 0))} today`);
+                    setText(usedR, '.ovse-yai-t small', `${moneyWord(x.today.usd)} today · ${shortN(Math.round(Number(x.period.tokens) || 0))} tokens and ${moneyWord(x.period.usd)} over ${x.days} days`);
+                });
                 const free = row(pay, { glyph: 'spark', name: 'Free AI', line: 'OpenVibe\'s free allowance: it comes back every day', chip: 'Daily', onClick: later(() => openCtx('model')) });
                 const bal = row(pay, { glyph: 'coin', name: 'Your Balance', line: 'Pays for AI you run on OpenVibe, by the cent', chip: '…', go: 'plus', onClick: () => topUp() });
                 const keysAt = el('div', 'ovse-yai-keys'); pay.append(keysAt);
@@ -1137,13 +1357,7 @@
                         });
                         row(keysAt, { glyph: 'plus', name: 'Add another key', line: 'Anthropic, OpenAI, OpenRouter, Gemini and more', go: 'open', onClick: () => goSetup(setup('keys')) });
                     }).catch(() => setChip(bal, null));
-                async function topUp() {
-                    const W = await need(o, 'ov-wallet.js', 'OpenVibeWallet');
-                    if (!document.getElementById('ovse-wallet-css') && typeof o.sibling === 'function') { const l = document.createElement('link'); l.id = 'ovse-wallet-css'; l.rel = 'stylesheet'; l.href = o.sibling('ov-wallet.css'); document.head.append(l); }
-                    if (!W || typeof W.open !== 'function') { goSetup({ id: 'wallet', url: 'https://openvibe.network/wallet' }); return; }
-                    end();
-                    try { await W.open({ getToken: () => tokenOf(), frameBase: base }); } catch { goSetup({ id: 'wallet', url: 'https://openvibe.network/wallet' }); }
-                }
+                const topUp = () => openWallet(end);
 
                 // Where it runs
                 const where = section('Where it runs', 'computer');
@@ -1230,13 +1444,16 @@
             titleN.textContent = titleOf(r);
             const [word, tone] = STATUS[r.status] || ['', 'off'];
             statN.className = `ovse-stat is-${tone}`;
-            statN.textContent = '';
-            statN.append(el('i', 'ovse-dot'));
+            // The line's nodes stay (it repaints every second while live, and a button rebuilt under a finger loses the tap).
+            if (!statN.querySelector('.ovse-stat-t')) { statN.textContent = ''; statN.append(el('i', 'ovse-dot'), el('span', 'ovse-stat-t'), el('span', 'ovse-stat-sep', ' · '), useB); }
             const bits = [needsYou(r) ? WAITING[r.waiting.for] || word : word];
             const startT = ms(r.started_at || r.created_at), endT = ms(r.ended_at) || (isEnd(r) ? ms(r.updated_at) : 0);
             if (startT && (isLive(r) || endT)) bits.push(clock(((endT || Date.now()) - startT) / 1000));
-            const c = spent(r.cost); if (c) bits.push(c);
-            statN.append(el('span', '', bits.filter(Boolean).join(' · ')));
+            statN.querySelector('.ovse-stat-t').textContent = bits.filter(Boolean).join(' · ');
+            const c = useWords(r);
+            if (useB.textContent !== c) useB.textContent = c;
+            useB.hidden = !c; statN.querySelector('.ovse-stat-sep').hidden = !c || !statN.querySelector('.ovse-stat-t').textContent;
+            if (c) useB.setAttribute('aria-label', `What it used: ${c}. Open Usage`);
             const n = changed().length;
             changesB.hidden = !n; if (n) { changesB.querySelector('b').textContent = String(n); changesB.querySelector('span').textContent = ` file${n === 1 ? '' : 's'}`; changesB.setAttribute('aria-label', `What it changed: ${n} file${n === 1 ? '' : 's'}`); }
             backB.hidden = !state.stack.length; menuB.hidden = !!state.stack.length;
@@ -1258,6 +1475,7 @@
                     ? { id: 'unshare', name: 'Stop sharing the replay', line: 'The link stops working; sharing again makes a new one', icon: 'link' }
                     : { id: 'share', name: 'Share a replay', line: 'A link anyone can read, step by step, without signing in', icon: 'link' });
             }
+            if (r) rows.push({ id: 'usage', name: 'Usage', line: useWords(r) || 'Tokens, cost, your limits and coding agents', icon: 'coin' });
             rows.push({ id: 'new', name: 'New session', line: 'Start over with an empty box', icon: 'plus' });
             rows.push({ id: 'sessions', name: 'All your sessions', line: 'Search them, pick one up again', icon: 'chat' });
             const P = await need(o, 'ov-picker.js', 'OpenVibePicker');
@@ -1269,6 +1487,7 @@
                 else if (id === 'share') shareReplay();
                 else if (id === 'rename') renameInPlace();
                 else if (id === 'unshare') stopReplay();
+                else if (id === 'usage') usageSheet('session');
                 else if (id === 'new') blank();
                 else if (id === 'sessions') setDrawer(true);
             };
@@ -2636,6 +2855,67 @@
 .ovse-setup-all:active { transform: scale(.97); }
 .ovse-setup-all .ovse-g { width: 18px; height: 18px; }
 html[data-ov-motion="off"] .ovse-yai-r { animation: none; }
+/* 4.306.0: Usage — the status line's button and the sheet (tokens, cost, how it was paid, models, limits, coding agents) */
+.ovse-stat [hidden] { display: none; }
+.ovse-stat-sep { flex: none; opacity: .7; }
+.ovse-stat-use { position: relative; flex: none; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; white-space: nowrap;
+  text-decoration: underline dotted color-mix(in srgb, currentColor 55%, transparent); text-underline-offset: 3px; }
+.ovse-stat-use::after { content: ""; position: absolute; inset: -14px -6px; }
+.ovse-stat-use:hover, .ovse-stat-use:focus-visible { color: var(--text-primary, #e6edf7); }
+.ovse-use { --use-free: var(--accent, #3b82f6); --use-key: var(--warning, #f5a524); --use-mine: var(--success, #22c55e); --use-plan: var(--accent-light, #60a5fa); --use-bal: var(--text-secondary, #a8b3c4);
+  display: grid; gap: 4px; }
+/* A sheet is outside .ovse (on the body), so its border-box rule is not here: a div at width 100% with padding would
+   stick out of the sheet (buttons are border-box already). */
+.ovse-use, .ovse-use *, .ovse-use *::before, .ovse-use *::after { box-sizing: border-box; }
+.ovse-use-tabs { display: flex; gap: 6px; padding: 2px 0 6px; }
+.ovse-use-tab { flex: 1; min-height: 40px; padding: 0 12px; border: 1px solid var(--border, rgba(255,255,255,.09)); border-radius: 999px; background: transparent; color: var(--text-secondary, #a8b3c4);
+  font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: background .18s, color .18s, border-color .18s, transform .15s; }
+.ovse-use-tab.is-on { color: var(--on-accent, #fff); background: var(--accent, #3b82f6); border-color: transparent; box-shadow: 0 8px 18px -12px var(--accent, #3b82f6); }
+.ovse-use-tab:active { transform: scale(.97); }
+.ovse-use-hero { display: grid; gap: 2px; padding: 6px 4px 10px; }
+.ovse-use-top { display: flex; align-items: baseline; gap: 8px; }
+.ovse-use-big { font-size: 40px; line-height: 1.05; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; animation: ovse-in .4s cubic-bezier(.2,.8,.2,1) both; }
+.ovse-use-unit { font-size: 15px; font-weight: 700; color: var(--text-muted, #8b8b96); }
+.ovse-use-sub { margin: 0; font-size: 13.5px; color: var(--text-secondary, #a8b3c4); font-variant-numeric: tabular-nums; }
+.ovse-use-hero.is-wait .ovse-use-big { opacity: .5; animation: ovse-beat 1.4s ease-in-out infinite; }
+.ovse-use-bar { display: flex; gap: 3px; height: 12px; margin: 2px 2px 10px; }
+.ovse-use-seg { flex: var(--w, 1) 1 0; min-width: 6px; border-radius: 999px; background: var(--use-free); transform-origin: left; animation: ovse-use-grow .55s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.ovse-use-seg.is-key, .ovse-use-dot.is-key { background: var(--use-key); }
+.ovse-use-seg.is-mine, .ovse-use-dot.is-mine { background: var(--use-mine); }
+.ovse-use-seg.is-plan, .ovse-use-dot.is-plan { background: var(--use-plan); }
+.ovse-use-seg.is-bal, .ovse-use-dot.is-bal { background: var(--use-bal); }
+@keyframes ovse-use-grow { from { transform: scaleX(0); opacity: .4; } to { transform: none; opacity: 1; } }
+.ovse-use-legend { display: grid; gap: 4px; margin-bottom: 8px; }
+.ovse-use-leg { display: grid; grid-template-columns: 10px 18px auto minmax(0, 1fr); align-items: center; gap: 8px; min-height: 32px; padding: 0 4px; font-size: 13.5px;
+  animation: ovse-in .36s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 40ms); }
+.ovse-use-leg .ovse-g { width: 18px; height: 18px; color: var(--text-muted, #8b8b96); }
+.ovse-use-leg span { min-width: 0; text-align: right; color: var(--text-secondary, #a8b3c4); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovse-use-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--use-free); }
+.ovse-use-models, .ovse-use-list { display: grid; gap: 6px; }
+.ovse-use-model { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; padding: 8px 10px; border-radius: 14px;
+  background: color-mix(in srgb, var(--text-primary, #ececf1) 3%, transparent); animation: ovse-in .36s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 32ms); }
+.ovse-use-model .ovse-use-gauge { grid-column: 1 / -1; }
+.ovse-use-n { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-secondary, #a8b3c4); }
+.ovse-use-gauge { position: relative; display: block; height: 6px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--text-primary, #ececf1) 9%, transparent); }
+.ovse-use-gauge::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--accent, #3b82f6); transform-origin: left; transform: scaleX(var(--w, 0));
+  animation: ovse-use-fill .6s cubic-bezier(.2,.8,.2,1) both; }
+/* A gauge grows to its own scale: the keyframes name only the start, so the end is the rule's scaleX(var(--w)). */
+@keyframes ovse-use-fill { from { transform: scaleX(0); } }
+.ovse-use-gauge.is-warn::after { background: var(--warning, #f5a524); }
+.ovse-use-gauge.is-bad::after { background: var(--danger, #ef4444); }
+.ovse-use-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; width: 100%; min-height: 58px; padding: 8px 10px;
+  border: 1px solid var(--border, rgba(255,255,255,.09)); border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #ececf1) 3%, transparent); color: inherit; font: inherit; text-align: left; }
+.ovse-use-row .ovse-use-gauge { grid-column: 2 / -1; }
+button.ovse-use-row { cursor: pointer; transition: border-color .15s, background .15s, transform .15s; }
+button.ovse-use-row:hover { border-color: color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); }
+button.ovse-use-row:active { transform: scale(.98); }
+.ovse-use-agent { display: grid; gap: 4px; padding-bottom: 4px; animation: ovse-in .36s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 40ms); }
+.ovse-use-win { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 6px 12px 6px 62px; font-size: 13px; }
+.ovse-use-win .ovse-use-gauge { grid-column: 1 / -1; }
+.ovse-use-wn { min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovse-use-wv { color: var(--text-muted, #8b8b96); font-variant-numeric: tabular-nums; }
+html[data-ov-motion="off"] .ovse-use-seg, html[data-ov-motion="off"] .ovse-use-gauge::after, html[data-ov-motion="off"] .ovse-use-big { animation: none; }
+@media (min-width: 720px) { .ovse-use-legend { grid-template-columns: 1fr 1fr; column-gap: 18px; } }
 /* 4.295.0: Your agent, edited in place */
 .ovse-ag-top { display: flex; align-items: center; gap: 14px; padding: 6px 2px 4px; }
 .ovse-ag-face { flex: none; }
