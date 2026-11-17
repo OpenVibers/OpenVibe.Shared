@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.301.0 — 2026-11-17
+
+- **The road chip says what the Frame says.** Which of your resources takes the next turn is now one order every agent
+  surface shares (openvibe-sdk 0.179 `agents/roads`): Actor's engine walks it, and Network's `GET /api/frame/resources`
+  answers it as `road: { agent, chat }` over the same facts and your computers. The chip shows that answer (the free AI
+  left, your key, your computer, "Chat only", or when it is back), so the chip and Actor cannot disagree; its own copy of
+  the order stays only for a Frame that does not send `road` yet. test/session-road-chrome.test.js (the Frame names Tower
+  while the run options list Studio PC: the chip says Tower).
+
 ## 4.300.0 — 2026-11-17
 
 - **The road chip says what Actor will really do.** Actor no longer starts an agent turn on the free AI when what is
