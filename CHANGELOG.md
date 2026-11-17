@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.304.0 — 2026-11-17
+
+- **A day's header goes with its last alert** (the owner's phone, 11-17: "These dates don't clear when you swipe
+  everything away"). In the menu's Unread list, TODAY, YESTERDAY and a weekday stayed over nothing once their alerts
+  were swiped away. Now a header with no alert left under it folds away with the last one. When the whole unread part
+  is cleared, the list says "You're all caught up" above the Earlier line, as a list with nothing unread does on
+  opening. **Clear all** in the Unread list now folds the alerts away like a swipe; before, they stayed, only greyed.
+  Earlier keeps its own days. `test/notifications-days-chrome.test.js` swipes and clears in a real Chrome.
+
 ## 4.303.0 — 2026-11-17
 
 - **Your own agents join a group** (plan §AD.19; Network #1070). A group's Add sheet now has **Your agents**, your own

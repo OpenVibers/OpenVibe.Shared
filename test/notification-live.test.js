@@ -526,7 +526,9 @@ const created = (subject, over = {}) => ({
     // delete all; the owner: "people want to completely delete their notifications … all three"). Measured 34.71.
     // 35.6 KB (4.289.0, 2026-11-16): repeats fold only when they come close together (the owner: "only consolidate if he
     // goes live within like the same minute"); measured 35.24; budgets grow for a feature.
-    assert.ok(size('notification-ui.js') <= 35.6 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 35.6 KB`);
+    // 36.4 KB (4.304.0, 2026-11-17): a day's header goes with its last row, and Clear all folds the unread away (the
+    // owner's phone: "These dates don't clear when you swipe everything away"); measured 35.96; budgets grow for a fix.
+    assert.ok(size('notification-ui.js') <= 36.4 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 36.4 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });
