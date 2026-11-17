@@ -3,7 +3,7 @@
 // configure them easily"). Over a local Frame, in a real headless Chrome at 390 px: the Actor row's edit button opens
 // "Juniper, your agent" with its face and name; a new name saves (PATCH /actor) and shows on the row; its pictures are
 // there to wear (POST /actor/face); three are drawn from a few words in a style (POST /actor/pictures/generate); How it
-// runs opens the picker on Actor; your own setup leads with your own AI key. Nothing off the screen; no page errors.
+// runs opens the picker on Actor; your own setup is one row to Your AI. Nothing off the screen; no page errors.
 const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
@@ -80,7 +80,7 @@ async function until(p, expr, ms = 6000) { const end = Date.now() + ms; while (D
         assert.match(await p.evaluate("document.querySelector('.ovse-ag-note').textContent"), /^Three new pictures · \$0\.03: tap one to wear it\.$/);
 
         // Your own setup leads with your own AI key; How it runs opens the picker on Actor.
-        assert.strictEqual(await p.evaluate("document.querySelector('.ovse-ag-row b').textContent"), 'Your own AI key');
+        assert.strictEqual(await p.evaluate("document.querySelector('.ovse-ag-row b').textContent"), 'Your AI', 'one way to everything you can set up (4.296.0), not a second copy of the list');
         assert.ok(await p.evaluate('document.documentElement.scrollWidth <= 390'), 'nothing off the screen');
         await p.evaluate("[...document.querySelectorAll('.ovse-ag-btn')].find((b) => /How it runs/.test(b.textContent)).click()");
         await until(p, "!document.querySelector('.ovse-sheet') && document.querySelector('.ovse-actor:not(.ovse-codes)').classList.contains('is-on')", 4000);

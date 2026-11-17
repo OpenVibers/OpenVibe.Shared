@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.296.0 — 2026-11-17
+
+- **Your AI: one menu for everything an answer can run on** (the owner, 11-17: "a menu that brings them to set up their
+  agents and their harnesses and their API keys, or to enable billing … buy credits"; plan §AD.17). Vibe's sessions
+  carry "Your AI" under your agents; it opens one sheet: **Who works** (your Actor with today's spend, Codes, every
+  coding agent marked Ready or Set it up; a ready one becomes the new session's), **How it's paid** (the free AI, your
+  Balance with its amount and what it is for as the Wallet says it, Top up in the Wallet in place, your own AI key),
+  **Where it runs** (your computers online or offline, the shared node, add a computer) and **Sign-ins**. The
+  spent-allowance card leads with "Set up your AI"; How it runs' last chip and the agent sheet open it too (the agent
+  sheet no longer repeats the list). test/your-ai-chrome.test.js.
+
 ## 4.295.0 — 2026-11-17
 
 - **Your agent, edited in place** (the owner, 11-17: "you can't even edit these properly, or like edit and configure
