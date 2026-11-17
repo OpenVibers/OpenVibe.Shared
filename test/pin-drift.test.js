@@ -73,6 +73,16 @@ console.log('pin-drift: one copy of openvibe-shared checked');
     const src = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'pin-drift.js'), 'utf8');
     assert.doesNotMatch(src, /require\(['"]\.\.?\//, 'pin-drift.js requires nothing beside it');
     assert.strictEqual(/const PIN_RE = (\/.*\/i);/.exec(src)[1], String(require('../scripts/pins').PIN), 'the same pin reader as openvibe-shared/pins');
-    const out = cp.execFileSync(process.execPath, ['-', path.join(__dirname, '..')], { input: src, encoding: 'utf8' });
+    // In the forge's test sandbox there is no network (OV_SANDBOX_OFFLINE=1, OpenVibe-Git #108): piped, it still has to
+    // load and reach the tag lookup, which then says it could not read tags. GitHub Actions has the network and checks
+    // the whole run.
+    let out;
+    try { out = cp.execFileSync(process.execPath, ['-', path.join(__dirname, '..')], { input: src, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }); } catch (err) {
+        if (process.env.OV_SANDBOX_OFFLINE !== '1') throw err;
+        out = String(err.stdout || '') + String(err.stderr || '');
+        assert.doesNotMatch(out, /Cannot find module/, 'piped, it loads');
+        assert.match(out, /pin-drift: could not read tags/, 'offline, it reaches the tag lookup');
+        out = 'pin-drift: 0 pin(s) (offline)';
+    }
     assert.match(out, /pin-drift: \d+ pin\(s\)/, 'and it runs piped');
 }
