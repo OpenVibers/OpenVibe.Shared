@@ -1,5 +1,25 @@
 # Changelog
 
+## 4.294.0 — 2026-11-17
+
+- **Vibe shows the agent you picked, and sets it up in place** (the owner's phone, 11-17: "when I choose codes, it brings
+  me to a thing that still has the A from actor, and then it says vibe … you can't even edit these properly … the icon
+  is really huge on codes … switching to actor doesn't work"; "make it so users can configure their own API keys, or
+  they can use the coding harness … all the different methods work interconnected, and model selection"). A new
+  session's hello, its head and its words are the chosen agent's: Codes' tile and "What should we build?", Actor's face,
+  a harness by name; the agent's row in the sessions is marked, so switching between Actor and Codes shows. Both rows
+  carry **Set up** (the size of Pause; Codes' oversized link is gone), which opens How it runs on that agent. Under every
+  new session's hello, **How it runs** shows the agent, the model, where it runs (and the effort, for code) and your own
+  setup, each one tap from its picker. Your own setup now leads with your own AI key (sealed in OpenVibe.AI, used
+  instead of the free allowance), and Your computer comes back to the page you were on (openvibe.link/add-computer
+  answered 400 without a return address).
+- **A spent free allowance is a way forward, not an error** (the owner: "should guide the user to set up their
+  different coding agents or the harnesses … or set it up on the shared node or their own computer … rather than just
+  being a lame ass message"). OpenVibe.AI's `ai.allowance_spent` (Exchange's 402) shows "Your free AI is used up for
+  today" with Use your own AI key, Hand it to Codes (your words, waiting in a Codes session), Run on your computer and
+  Pick another model; the raw words fold under What it said, and the session's row says "Free AI used up for today".
+  test/vibe-setup-chrome.test.js.
+
 ## 4.293.0 — 2026-11-17
 
 - **Global remembers where you stopped reading** (the owner, 11-17: "remember where you were in the chat last and … save
