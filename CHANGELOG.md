@@ -9,8 +9,10 @@
   Try again, never the empty state; and the You view is handed the history when it arrives (on History, `render()` only
   filtered the list, so Try again showed nothing until the menu reopened). openvibe.live, which signs people in itself,
   now hands its refreshed token to the bar (OpenVibe.Live #939). test/history-token-chrome.test.js.
-- The notification bell reads the bar's token per request (it kept the one it was started with), so a refreshed token
-  reaches it too.
+- **The bar keeps its own token live** on every site that does not sign people in itself: just after the access token
+  expires it asks its session again (a refused token is what renews it), and a tab that comes back to the front does so
+  at once when its token has lapsed, so History, the feed, the home screen and the bell keep working on a page left
+  open. The bell reads the token per request (it kept the one it was started with). test/navbar-token-refresh.test.js.
 
 ## 4.291.0 — 2026-11-17
 

@@ -2345,6 +2345,38 @@
         document.head.appendChild(script);
     }
 
+    /**
+     * 4.292.0 (the owner, 11-17: "The history tab no longer loads"): an access token lives an hour, and nothing renewed
+     * the bar's copy while a page stayed open, so History, the feed, the home screen and the bell all asked the Network
+     * with a token it refused. Just after the token expires (a refused token is what renews it, resolveSessionUser) the
+     * bar asks its session again; a tab that comes back to the front does so at once when its token has lapsed (a
+     * phone's background tab sleeps its timers). A site that signs people in itself (auth: 'external', Live) renews its
+     * own and hands it over with init().
+     */
+    let _tokenTimer = null;
+    function tokenExpiry(tok) {
+        try {
+            const part = String(tok || '').split('.')[1];
+            const j = part ? JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/'))) : null;
+            return j && Number(j.exp) > 0 ? Number(j.exp) * 1000 : 0;
+        } catch { return 0; }
+    }
+    function planTokenRefresh() {
+        if (typeof document === 'undefined') return;
+        clearTimeout(_tokenTimer);
+        if (_config.auth === 'external' || !_config.user || typeof _config.token !== 'string') return;
+        const exp = tokenExpiry(_config.token);
+        if (!exp) return;
+        _tokenTimer = setTimeout(() => { refreshAuthState(); }, Math.min(Math.max(5000, exp - Date.now() + 2000), 2147483000));
+    }
+    if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState !== 'visible' || _config.auth === 'external' || !_config.user || typeof _config.token !== 'string') return;
+            const exp = tokenExpiry(_config.token);
+            if (exp && exp < Date.now() + 5000) refreshAuthState();
+        });
+    }
+
     function refreshAuthState() {
         if (_authInFlight) return _authInFlight;
         _authInFlight = resolveSessionUser()
@@ -2353,6 +2385,7 @@
                 if (session && session.user) {
                     _config.user = session.user;
                     if (session.token) _config.token = session.token;
+                    planTokenRefresh();
                     render();
                     recordHistory();
                     enableHandoff();
@@ -3150,7 +3183,7 @@
             // auth: 'external' — the site signs people in itself (Live) and tells us with setUser().
             if (_config.auth === 'external') { if (_config.user) { recordHistory(); enableHandoff(); } }
             else if (!_config.user) refreshAuthState();
-            else { recordHistory(); enableHandoff(); }
+            else { recordHistory(); enableHandoff(); planTokenRefresh(); }
             startQuestGuide();
             return el;
         },
