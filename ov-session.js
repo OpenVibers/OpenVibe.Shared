@@ -78,6 +78,7 @@
 
     // ── glyphs (the registry's drawings; 24-unit strokes) ──
     const G = {
+        speaker: '<path d="M4.5 9.5h3l4.5-4v13l-4.5-4h-3z"/><path d="M15.6 9.3a3.9 3.9 0 0 1 0 5.4M18.4 6.7a7.6 7.6 0 0 1 0 10.6"/>',
         list: '<path d="M4 6.5h16M4 12h16M4 17.5h10"/>',
         coin: '<circle cx="12" cy="12" r="8.2"/><path d="M14.7 9.5c-.5-.8-1.5-1.3-2.7-1.3-1.5 0-2.6.8-2.6 1.9 0 2.6 5.3 1.5 5.3 4.1 0 1.1-1.1 2-2.7 2-1.2 0-2.3-.6-2.8-1.5M12 6.6v1.6M12 16.2v1.4"/>',
         tune: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/>',
@@ -615,7 +616,9 @@
         useB.addEventListener('click', () => usageSheet('session'));
         const changesB = btn('ovse-chg', 'What it changed', 'file'); changesB.append(el('b'), el('span')); changesB.hidden = true;
         const moreB = btn('ovse-ib ovse-more', 'More', 'more'); moreB.setAttribute('aria-haspopup', 'dialog');
-        head.append(menuB, backB, faceSlot, who, changesB, moreB);
+        // 4.308.0: reading aloud. The speaker shows while answers are read aloud; it moves while it reads, and a tap stops.
+        const speakB = btn('ovse-ib ovse-speak', 'Read aloud', 'speaker'); speakB.hidden = true;
+        head.append(menuB, backB, faceSlot, who, changesB, speakB, moreB);
         const body = el('div', 'ovse-body');
         const thread = el('div', 'ovse-thread'); thread.setAttribute('role', 'log'); thread.setAttribute('aria-live', 'polite');
         // Group conversations (4.302.0, plan §AD.19): a group is a run (`group:<id>`) of people and agents; its bar says who
@@ -1026,6 +1029,92 @@
                 setTimeout(() => { try { nameIn.focus({ preventScroll: true }); } catch { /* */ } }, 260);
             });
         }
+        // ── Read aloud (4.308.0; the owner, 11-17: "a feature for the sessions and codes and actor and etc where it will read
+        // out it's messages using text to speech if configured"). ov-speak.js reads; the person turns it on, picks this
+        // device's voices (free, nothing leaves it) or OpenVibe's voices (the Frame's /speech, by the character), a voice
+        // and a speed. A session then reads each new answer as it finishes (in a group, who said it first), never the
+        // history it opened with; a tap on the speaker stops it. ──
+        let speaker = null;
+        const speakPrefs = () => { try { return { on: false, engine: 'device', voice: '', rate: 1, ...JSON.parse(localStorage.getItem('ov:speak') || '{}') }; } catch { return { on: false }; } };
+        async function speakNow() {
+            if (speaker) return speaker;
+            const S = await need(o, 'ov-speak.js', 'OpenVibeSpeak');
+            if (!S) return null;
+            S.configure({ base, headers });
+            S.on(({ speaking, error }) => {
+                speakB.classList.toggle('is-speaking', speaking);
+                speakB.setAttribute('aria-label', speaking ? 'Stop reading aloud' : 'Read aloud');
+                speakB.title = speakB.getAttribute('aria-label');
+                if (error) flash(error);
+            });
+            speaker = S;
+            return S;
+        }
+        function paintSpeak() { speakB.hidden = !speakPrefs().on; }
+        speakB.addEventListener('click', () => { if (speaker && speaker.speaking()) speaker.stop(); else speakSheet(); });
+        root.addEventListener('ov-speak-prefs', () => { paintSpeak(); if (!speakPrefs().on && speaker) speaker.stop(); });
+        if (speakPrefs().on) speakNow().then(paintSpeak);
+        /** Read the answers that finished since the session opened, once each. */
+        function speakNew() {
+            if (state.readFrom == null || !speakPrefs().on) return;
+            const fresh = [...state.steps.values()].filter((st) => st && Number(st.seq) > state.readFrom && st.kind === 'message' && st.from !== 'person'
+                && st.status !== 'running' && st.text && !state.spoken.has(st.seq)).sort((x, y) => x.seq - y.seq);
+            if (!fresh.length) return;
+            for (const st of fresh) state.spoken.add(st.seq);
+            speakNow().then((S) => {
+                if (!S) return;
+                for (const st of fresh) S.say(groupWords(st).text || st.text, { who: state.run && state.run.kind === 'group' && st.author && st.author.name ? st.author.name : '' });
+            });
+        }
+        function speakSheet() {
+            sheet('Read aloud', (b) => {
+                b.classList.add('ovse-speaksheet');
+                const sec = (title, glyph) => { const x = el('section', 'ovse-yai-sec'); const h = el('h3', 'ovse-yai-h'); h.append(svg(glyph), el('span', '', title)); x.append(h); b.append(x); return x; };
+                const chips = (list, value, pick) => {
+                    const row = el('div', 'ovse-use-tabs'); row.setAttribute('role', 'group');
+                    list.forEach(([id, word]) => { const t = el('button', 'ovse-use-tab', word); t.type = 'button'; t.setAttribute('aria-pressed', String(id === value)); t.classList.toggle('is-on', id === value); t.addEventListener('click', () => pick(id)); row.append(t); });
+                    return row;
+                };
+                function draw() {
+                    b.textContent = '';
+                    const pr = speakPrefs();
+                    const top = sec('Answers', 'speaker');
+                    const sw = el('button', `ovse-switch${pr.on ? ' is-on' : ''}`); sw.type = 'button'; sw.setAttribute('role', 'switch'); sw.setAttribute('aria-checked', String(pr.on));
+                    const t = el('span', 'ovse-yai-t'); t.append(el('b', '', 'Read new answers aloud'), el('small', '', pr.on ? 'Each new answer is read as it finishes; tap the speaker to stop' : 'Off: answers stay silent'));
+                    const knob = el('i', 'ovse-switch-k');
+                    sw.append(t, knob);
+                    sw.addEventListener('click', async () => { const S = await speakNow(); if (S) S.save({ on: !pr.on }); else flash('Reading aloud did not load'); draw(); });
+                    top.append(sw);
+                    const from = sec('Voice from', 'tune');
+                    from.append(chips([['device', 'This device · free'], ['openvibe', 'OpenVibe voices']], pr.engine, async (id) => { const S = await speakNow(); if (S) S.save({ engine: id, voice: '' }); draw(); }));
+                    from.append(el('small', 'ovse-speak-note', pr.engine === 'openvibe' ? 'Natural voices, paid by the character from your free AI, then your Balance (about $0.002 an answer).' : 'Your browser\'s own voices: free, and the words never leave this device.'));
+                    const vs = sec('Voice', 'members');
+                    const list = el('div', 'ovse-use-list');
+                    vs.append(list);
+                    speakNow().then((S) => {
+                        if (!S || !list.isConnected) return;
+                        const voices = pr.engine === 'openvibe' ? S.VOICES : S.deviceVoices().slice(0, 12);
+                        if (!voices.length) { list.append(el('p', 'ovse-note', pr.engine === 'openvibe' ? 'No voices.' : 'This browser has no voices of its own: choose OpenVibe voices.')); return; }
+                        const current = pr.voice || (voices[0] && voices[0].id);
+                        voices.forEach((v) => {
+                            const r = el('button', `ovse-use-row${v.id === current ? ' is-on' : ''}`); r.type = 'button'; r.setAttribute('aria-pressed', String(v.id === current));
+                            const tile = el('span', 'ovse-yai-tile'); tile.append(svg(v.id === current ? 'check' : 'speaker'));
+                            const tt = el('span', 'ovse-yai-t'); tt.append(el('b', '', v.name), el('small', '', v.line || ''));
+                            r.append(tile, tt);
+                            r.addEventListener('click', () => { S.save({ voice: v.id }); S.stop(); S.say(`Hello. This is ${v.name}.`); draw(); });
+                            list.append(r);
+                        });
+                    });
+                    const sp = sec('Speed', 'clock');
+                    sp.append(chips([[0.8, '0.8×'], [1, '1×'], [1.25, '1.25×'], [1.5, '1.5×']], Number(pr.rate) || 1, async (v) => { const S = await speakNow(); if (S) S.save({ rate: v }); draw(); }));
+                    const tryB = btn('ovse-setup-all', 'Try it', 'play', 'Try it');
+                    tryB.addEventListener('click', async () => { const S = await speakNow(); if (S) { S.stop(); S.say('This is how answers will sound.'); } });
+                    b.append(tryB);
+                }
+                draw();
+            });
+        }
+
         // ── Usage (4.306.0; the owner, 11-17: "display usage stats and tokens and all that for each harness or API balances
         // or cost"). What this session, today and the last 30 days used: tokens and dollars by how each was paid and by
         // model (each answer's receipt here; Actor's /me/usage through the Frame's /usage for the days), then the limits
@@ -1475,6 +1564,7 @@
                     ? { id: 'unshare', name: 'Stop sharing the replay', line: 'The link stops working; sharing again makes a new one', icon: 'link' }
                     : { id: 'share', name: 'Share a replay', line: 'A link anyone can read, step by step, without signing in', icon: 'link' });
             }
+            rows.push({ id: 'speak', name: 'Read aloud', line: speakPrefs().on ? `On · ${speakPrefs().engine === 'openvibe' ? 'OpenVibe voices' : 'this device\'s voice'}` : 'Hear new answers as they finish', icon: 'speaker' });
             if (r) rows.push({ id: 'usage', name: 'Usage', line: useWords(r) || 'Tokens, cost, your limits and coding agents', icon: 'coin' });
             rows.push({ id: 'new', name: 'New session', line: 'Start over with an empty box', icon: 'plus' });
             rows.push({ id: 'sessions', name: 'All your sessions', line: 'Search them, pick one up again', icon: 'chat' });
@@ -1488,6 +1578,7 @@
                 else if (id === 'rename') renameInPlace();
                 else if (id === 'unshare') stopReplay();
                 else if (id === 'usage') usageSheet('session');
+                else if (id === 'speak') speakSheet();
                 else if (id === 'new') blank();
                 else if (id === 'sessions') setDrawer(true);
             };
@@ -1549,6 +1640,7 @@
         function latestPlan() { let p = null; for (const s of ordered()) { const x = planOf(s); if (x) p = x; } return p; }
         function schedule() { if (state.paint) return; state.paint = requestAnimationFrame(() => { state.paint = 0; paint(); }); }
         function paint() {
+            speakNew();
             const nearEnd = body.scrollHeight - body.scrollTop - body.clientHeight < 200;
             // What was open stays open.
             thread.querySelectorAll('details[data-key]').forEach((d) => { if (d.open) state.open.add(d.dataset.key); else state.open.delete(d.dataset.key); });
@@ -2599,7 +2691,7 @@
         async function open(ref, known, how = {}) {
             clearStream();
             const gen = ++state.gen;
-            state.ref = ref; state.run = known || null; state.steps = new Map(); state.queue = []; state.open = new Set(); state.pending = false; state.replay = null;
+            state.ref = ref; state.run = known || null; state.steps = new Map(); state.queue = []; state.open = new Set(); state.pending = false; state.replay = null; state.readFrom = null;
             // The model this session last asked for: a message carries the chip's model only when it changed (plan §AD.8.3).
             state.modelSent = how.modelSent !== undefined ? how.modelSent : (known && known.model && known.model.id) || null;
             // The way the chip shows when a session opens is taken as the one it runs: a later change on the chip is a swap.
@@ -2615,6 +2707,11 @@
                 if (gen !== state.gen) return;
                 state.run = r; state.pending = false;
                 const steps = Array.isArray(page.steps) ? page.steps : [];
+                // Read aloud (4.308.0): only what finishes after this, never the history the session opened with.
+                state.spoken = new Set();
+                // A session started here reads from the person's own message on, so an answer that came before this load is read.
+                state.readFrom = how.said ? steps.filter((x) => x && x.from === 'person').reduce((m, x) => Math.max(m, Number(x.seq) || 0), 0)
+                    : steps.reduce((m, x) => Math.max(m, Number(x && x.seq) || 0), 0);
                 if (steps.some((s) => s.kind === 'message' && s.from === 'person')) state.steps.delete(-1);
                 steps.forEach((s) => { if (Number.isInteger(s.seq)) state.steps.set(s.seq, s); });
                 paint(); paintCtx();
@@ -3141,6 +3238,21 @@ html[data-ov-motion="off"] .ovse-sb-pane, html[data-ov-motion="off"] .ovse-sb-li
 .ovse-me.is-failed .ovse-queued { color: var(--danger, #ef4444); }
 .ovse-say { min-width: 0; overflow-wrap: anywhere; animation: ovse-in .3s cubic-bezier(.2,.8,.2,1) both; }
 .ovse-author { display: block; margin-bottom: 2px; color: var(--ovse-mute); font-size: 12px; font-weight: 600; }
+/* 4.308.0: read aloud — the speaker in the head, and its sheet */
+.ovse-speak.is-speaking { color: var(--ovse-acc2); }
+.ovse-speak.is-speaking .ovse-g { animation: ovse-beat 1.1s ease-in-out infinite; }
+.ovse-speaksheet { display: grid; gap: 4px; }
+.ovse-speaksheet, .ovse-speaksheet * { box-sizing: border-box; }
+.ovse-switch { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 8px 12px; border: 1px solid var(--border, rgba(255,255,255,.09)); border-radius: 16px;
+  background: color-mix(in srgb, var(--text-primary, #ececf1) 3%, transparent); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ovse-switch-k { position: relative; flex: none; width: 46px; height: 28px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #ececf1) 18%, transparent); transition: background .2s; }
+.ovse-switch-k::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--text-primary, #ececf1); transition: transform .22s cubic-bezier(.2,.8,.2,1); }
+.ovse-switch.is-on .ovse-switch-k { background: var(--accent, #3b82f6); }
+.ovse-switch.is-on .ovse-switch-k::after { transform: translateX(18px); background: var(--on-accent, #fff); }
+.ovse-speak-note { display: block; margin: 2px 4px 4px; font-size: 12.5px; color: var(--text-muted, #8b8b96); }
+.ovse-speaksheet .ovse-use-row { cursor: pointer; }
+.ovse-speaksheet .ovse-use-row.is-on { border-color: color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 9%, transparent); }
+html[data-ov-motion="off"] .ovse-speak.is-speaking .ovse-g, html[data-ov-motion="off"] .ovse-switch-k, html[data-ov-motion="off"] .ovse-switch-k::after { animation: none; transition: none; }
 /* 4.307.0: rooms — why an agent spoke, and a reviewer's verdict */
 .ovse-why { margin-left: 6px; font-style: normal; font-weight: 600; color: var(--ovse-mute); opacity: .85; }
 .ovse-why::before { content: "·"; margin-right: 6px; }

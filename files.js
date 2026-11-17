@@ -59,6 +59,7 @@ const BROWSER = Object.freeze([
     'ov-thread.js',         // one conversation UI (L55 C4): the drawer, search, composer, copy, streaming turns; markup from openvibe-shared/thread, drawn with thread.css
     'ov-composer.js',       // shared composer
     'ov-picker.js',         // 4.264.0: OpenVibePicker, the animated picker for every choice (the composer loads it)
+    'ov-speak.js',          // 4.308.0: OpenVibeSpeak, answers read aloud (this device's voices or OpenVibe's; ov-session loads it)
     'ov-session.js',        // 4.265.0: OpenVibeSession, one session surface for every agent (plan §AD.8)
     'ov-run.js',            // 4.224.0: the one run thread (OpenVibeRun), loaded beside the navbar
     'ov-harness.js',        // 4.257.0: the coding-harness layout over ov-run.js (projects, threads, changes): openvibe.codes

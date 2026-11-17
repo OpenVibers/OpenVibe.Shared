@@ -1,5 +1,26 @@
 # Changelog
 
+## 4.308.0 — 2026-11-17
+
+- **Read aloud: a session reads its agents' answers, when you turn it on** (the owner, 11-17: "There should be a
+  feature for the sessions and codes and actor and etc where it will read out it's messages using text to speech if
+  configured").
+  - **`ov-speak.js`, one speaking engine for every site.** Two voices, chosen by the person and kept on this device:
+    - **This device:** the browser's own voices. Free, at once, and the words never leave the device.
+    - **OpenVibe voices:** natural Google voices through the Frame's new `POST /speech` (Network #1083). They are
+      charged by the character to the person's own free AI, then their Balance: about $0.002 an answer. The next
+      piece is fetched while one plays.
+  - **What gets read.** The words are made speakable: no markdown marks, a link is its words, a bare address is "a
+    link", code is "(code)", citation marks go. Pieces are whole sentences of up to about 220 characters (a long
+    utterance stalls in Chrome).
+  - **In sessions (Vibe, Codes, Actor, rooms):**
+    - Turned on, each new answer is read as it finishes; in a room, who said it is read first.
+    - The history a session opened with is never read. A session started here reads from your own message on.
+    - The speaker in the head moves while it reads, and a tap stops it.
+  - **The Read aloud sheet** (the speaker, or the menu's Read aloud) has on/off, where the voice comes from, the
+    voice, the speed (0.8× to 1.5×) and Try it.
+  - `test/session-speak-chrome.test.js` covers all of it at 390 px.
+
 ## 4.307.0 — 2026-11-17
 
 - **Rooms: a group reads as a studio** (plan §AD.25; the owner, 11-17: "have claude code work on the code and
