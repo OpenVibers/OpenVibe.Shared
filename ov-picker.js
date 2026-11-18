@@ -3,7 +3,8 @@
  * "the drop downs … not custom animations"). A sheet from the bottom on a phone, a popover anchored to its chip on a
  * computer; sections, search, an icon and a line per row, a check on the chosen one (or several), keyboard and swipe.
  *
- *   OpenVibePicker.open({ anchor, title, rows | sections, value, multi, search, onPick, onClose }) → { close }
+ *   OpenVibePicker.open({ anchor, title, intro?, rows | sections, value, multi, search, onPick, onClose }) → { close }
+ *     intro: a sentence under the title saying what the choices are (4.311.0).
  *     rows: [{ id, name, line?, icon? (an OpenVibe glyph name), svg? (markup), badge?, disabled?, group? }]
  *     sections: [{ title, rows }]           value: an id, or ids when multi
  *     onPick(row) for one; onPick(rows) for several, when Done is pressed. search: true, false or 'auto' (more than 8).
@@ -34,6 +35,7 @@
 .ovp.is-pop .ovp-grab { display: none; }
 .ovp-head { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 12px 6px 18px; }
 .ovp-title { flex: 1; min-width: 0; margin: 0; font-size: 16px; font-weight: 750; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovp-intro { flex: none; margin: 0 18px 8px; font-size: 13px; line-height: 1.45; color: var(--text-secondary, #a8b3c7); }
 .ovp-x, .ovp-done { all: unset; box-sizing: border-box; display: inline-grid; place-items: center; min-width: 40px; min-height: 40px; border-radius: 999px; cursor: pointer; color: var(--text-secondary, #a8b3c4); }
 .ovp-x:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); color: var(--text-primary, #e8ecf3); }
 .ovp-x svg { width: 20px; height: 20px; }
@@ -112,6 +114,8 @@ select[data-ov-native] { position: absolute !important; width: 1px !important; h
         if (multi) { done = el('button', 'ovp-done', opts.doneLabel || 'Done'); done.type = 'button'; head.append(done); }
         head.append(x);
         box.append(el('div', 'ovp-grab'), head);
+        // 4.311.0: a sentence under the title that says what the choices are (the owner, 11-18: "explain this better").
+        if (opts.intro) box.append(el('p', 'ovp-intro', String(opts.intro)));
         const wantSearch = opts.search === true || (opts.search !== false && (all.length > 8 || typeof opts.load === 'function'));
         let input = null;
         if (wantSearch) {
