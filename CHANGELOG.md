@@ -10,7 +10,9 @@
   - an agent's step that waits for you says *Review and approve* or *Answer it*;
   - a failed task says *See what happened*;
   - a finished one says *See the answer*.
-- Test: `notifications-fold-chrome` adds the repeating operator alert.
+- **The waiting bubble sits under the bar.** *An agent is waiting for your answer* sat over the bar's coins and face
+  on openvibe.bot ("buggy looks"). It now goes under the whole bar, and a bar scrolled out of sight says nothing.
+- Tests: `notifications-fold-chrome` adds the repeating operator alert; `dock-chrome` checks the bubble is under the bar.
 
 ## 4.312.0 — 2026-11-18
 

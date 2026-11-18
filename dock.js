@@ -1797,9 +1797,13 @@
         if (!b) return;
         const old = document.querySelector('.ovnav-callout'); if (old) old.remove();
         const r = b.getBoundingClientRect();
+        // 4.313.0 (the owner's phone on openvibe.bot, 11-18: the bubble over the bar's coins and face, "buggy looks"): it
+        // sits under the whole bar, never on it; a bar scrolled out of sight says nothing.
+        const bar = b.closest('.openvibe-navbar'); const br = bar ? bar.getBoundingClientRect() : r;
+        if (br.bottom <= 0 || r.bottom <= 0) return;
         const tip = document.createElement('button'); tip.type = 'button'; tip.className = 'ovnav-callout'; tip.setAttribute('role', 'status');
         tip.textContent = w === 1 ? 'An agent is waiting for your answer' : `${w} agents are waiting for your answer`;
-        tip.style.top = `${Math.round(r.bottom + 10)}px`;
+        tip.style.top = `${Math.round(Math.max(r.bottom, br.bottom) + 8)}px`;
         tip.style.right = `${Math.max(8, Math.round(window.innerWidth - r.right - 4))}px`;
         tip.addEventListener('click', () => { tip.remove(); try { root.__ovNeedsYou = Date.now(); if (typeof o.openMenu === 'function') o.openMenu('agent'); } catch { /* */ } });
         document.body.appendChild(tip);
