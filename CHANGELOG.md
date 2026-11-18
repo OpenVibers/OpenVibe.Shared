@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.312.0 — 2026-11-18
+
+**The menu's Chat, tidied** (the owner's phone, 11-18).
+- **A name opens its person.** In Global, a press on a name or a face opens a sheet with Profile (openvibe.network/@name),
+  Message, Mention and their channel. Mention puts @name in the box. For someone live, the card's name and face open it,
+  with *Watch*. Before, a press did nothing ("tap don't open user menu").
+- **Shipped updates say what shipped.** *3 updates shipped* shows a line of what (*Faster search · A new menu · …*)
+  before it opens, and *Everything that shipped* once it is open.
+- **The jump to new lines** is a slim bar the width of the list, with its words said (*3 new messages*, *Mark read*),
+  instead of a ↓ ✓ pill on the last card.
+- **Servers:**
+  - the name box shows only after *New server*: a CSS `display` beat `hidden`, so both showed ("dupe");
+  - the foot sits at the pane's bottom, not under a short list ("float down … fixed").
+- **Running for you** says what each run needs (*It asks before it goes on*, *It needs you to take over a step*), and its
+  chip says *Needs you*. It used to read *Your turn* beside *It asks you something*.
+- Tests: `dock-global-people-chrome` (new); `menu-home-screen-chrome` expects *Needs you*.
+
 ## 4.311.0 — 2026-11-18
 
 **Organized, and it explains itself** (the owner's phone, 11-18: "add custom layouts for this, explain this better, make

@@ -272,7 +272,7 @@ const server = http.createServer((req, res) => {
         await s.evaluate(`document.querySelector('.ovs-lead').click(), true`);
         await eventually(async () => assert.match(await s.evaluate(`(document.querySelector('.ovs-youpanel:not([hidden]) .ovh-actor') || {}).textContent || ''`), /^Actor.*Working.*Juniper · Reading job posts/, 'your Actor\'s card is in your sheet'));
         assert.strictEqual(await s.evaluate(`document.querySelector('.ovs-lead').getAttribute('aria-expanded')`), 'true');
-        await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovs-youpanel .ovs-active-row')].map((r) => r.querySelector('b').textContent + ': ' + r.querySelector('.ovs-active-st').textContent)`), ['Book the venue: Your turn', 'Juniper: Working', 'Fix the navbar: Working'], 'your sheet lists what is running'));
+        await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovs-youpanel .ovs-active-row')].map((r) => r.querySelector('b').textContent + ': ' + r.querySelector('.ovs-active-st').textContent)`), ['Book the venue: Needs you', 'Juniper: Working', 'Fix the navbar: Working'], 'your sheet lists what is running'));
         // 4.223.0 (the owner, 11-12: "at the top … the goosely Online bar. Under that is tabs … move the notifications into a
         // tab … put the apps more front facing … the first tab"; "waste of space"; "compact"): your row holds every round
         // button (this site's own first, as icons), one AI notice, then one row of tabs with All and Edit at its end.
