@@ -23,6 +23,31 @@ function safeLinkify(node, value) {
     }
     if (last < raw.length) text(node, raw.slice(last));
 }
+// 4.320.0 (plan §Y.1 A8): the cards Chat read for a message's addresses (its `embeds`), drawn by ov-linkcard.js, loaded
+// from beside this file the first time a message has one. Three at most per message.
+const ovmSelf = typeof document !== 'undefined' && document.currentScript && document.currentScript.src ? document.currentScript.src : '';
+let ovmCardLoad = null;
+function ovmCards(host, embeds) {
+    if (!host || !Array.isArray(embeds) || !embeds.length || typeof document === 'undefined') return;
+    const draw = (M) => { if (M && M.render(host, embeds, { max: 3 }) === 0) host.remove(); };
+    if (window.OVLinkCard) { draw(window.OVLinkCard); return; }
+    if (!ovmCardLoad) {
+        ovmCardLoad = new Promise((resolve) => {
+            let src = '';
+            try { src = new URL('ov-linkcard.js', ovmSelf || `${location.origin}/shared/`).href; } catch { resolve(null); return; }
+            const sc = document.createElement('script'); sc.src = src; sc.async = true;
+            sc.onload = () => resolve(window.OVLinkCard || null);
+            sc.onerror = () => resolve(null);
+            document.head.appendChild(sc);
+        });
+    }
+    ovmCardLoad.then(draw);
+}
+function ovmCardBox(parent, message) {
+    if (!Array.isArray(message.embeds) || !message.embeds.length) return;
+    const box = document.createElement('div'); box.className = 'ovm-cards'; parent.appendChild(box);
+    ovmCards(box, message.embeds);
+}
 function timeValue(message) { let raw = String(message.created_at || message.at || '').replace(' ', 'T'); if (raw && !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw)) raw += 'Z'; const d = new Date(raw); return Number.isNaN(d.getTime()) ? null : d; }
 function safeAvatar(value) { try { const u = new URL(String(value || '')); return u.protocol === 'https:' && !u.port && u.hostname.toLowerCase() === 'openvibe.media' ? u.href : ''; } catch { return ''; } }
 // §Z.3: a person's subject (usr_…), the only key a name effect hangs on. Never invented: what the message carries is what is used.
@@ -136,6 +161,7 @@ function render(root, { messages = [], view = 'room', me = null, now = new Date(
             row.appendChild(author);
             const body = document.createElement('span'); body.className = 'ovm-room-text'; safeLinkify(body, message.message || message.text); row.appendChild(body); root.appendChild(row);
             if (message.edited_at) edited(body, message.edited_at);
+            ovmCardBox(row, message);
             const ids = typeof offer === 'function' ? offer(message, { mine }) : offer;
             if (ids && ids.length) actions(row, ids, { onAction, message, mine });
         } else {
@@ -158,6 +184,7 @@ function render(root, { messages = [], view = 'room', me = null, now = new Date(
             if (/^(?:\p{Extended_Pictographic}|\s)+$/u.test(value) && value.trim()) bubble.classList.add('ovm-emoji-only');
             safeLinkify(content, value); bubble.appendChild(content); body.appendChild(bubble);
             if (message.edited_at) edited(content, message.edited_at);
+            ovmCardBox(body, message);
             const ids = typeof offer === 'function' ? offer(message, { mine }) : offer;
             if (ids && ids.length) actions(bubble, ids, { onAction, message, mine });
             if (!messages[index + 1] || String(messages[index + 1].sender_id || messages[index + 1].user_id || messages[index + 1].from || messages[index + 1].username || '') !== sender || !stamp || !timeValue(messages[index + 1]) || timeValue(messages[index + 1]).getTime() - stamp > 180000) {

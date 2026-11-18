@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.320.0 — 2026-11-18
+
+**Link cards everywhere chat is** (plan §Y.1 A8). OpenVibe.Chat reads the addresses a message carries and sends the
+result to every surface, but only Chat's own page drew it; Live's stream chat and the menu's Chat showed a bare address.
+- **`ov-linkcard.js` (new), `OVLinkCard`:** one card per address: the site (with LIVE, and by whom), the title as the one
+  link (the whole card opens it, in a new tab), a two-line description, and an OpenVibe.Media picture with a play mark
+  for video and live, or words only. Only https addresses and Media pictures; every field is text. `render()` keeps
+  at most three per message and replaces them when drawn again; `onHide` adds a ×. Page tokens with light and dark
+  fallbacks; a short rise that follows `html[data-ov-motion]`. `package.json` `"./linkcard"`.
+- **dock.js (the menu's Chat) and messages.js:** a message's `embeds` go under its words (two in the menu; three in room rows and bubbles),
+  loading `ov-linkcard.js` once (the dock through its revision table, DOCK_REV).
+- Tests: linkcard-chrome (safety, limits, redraw, the ×, 390 px, motion Off, messages.js in both views); dock-chrome (the menu draws the card, loads the module once).
+- Live draws them in stream chat with this (OpenVibe.Live #971, after its pin).
+
 ## 4.319.0 — 2026-11-18
 
 **Light themes get their light colours.** `data-theme` carries the theme's own id (vibe, cloud, daylight …); whether it
