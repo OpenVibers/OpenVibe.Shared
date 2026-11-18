@@ -163,7 +163,8 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 .ovc-v2:is([data-preset=chat], [data-preset=agent]) .ovt-c-row > .ovc-ring { order: 52; flex: none; align-self: center; }
 .ovc-v2:is([data-preset=chat], [data-preset=agent]) .ovt-c-row > .ovt-send { order: 53; flex: none; }
 .ovc-v2.ovt-composer:is([data-preset=chat], [data-preset=agent]) { padding: 6px 6px 6px 8px; border-radius: 24px; }
-.ovc-v2 .ovc-run { display: flex; gap: 6px; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding: 2px 2px 0; }
+/* 4.310.0 (the owner's phone, 11-18: "Anywhere" cut at the box's edge, a scroller with its bar hidden): the chips wrap. */
+.ovc-v2 .ovc-run { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; overflow: visible; padding: 2px 2px 0; }
 .ovc-v2 .ovc-run::-webkit-scrollbar { display: none; }
 .ovc-v2 .ovc-run .ovc-chip { flex: none; }
 .ovc-v2 .ovc-run .ovc-chip-v { max-width: 150px; }
@@ -959,8 +960,14 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 if (!dataUrl) throw new Error('This picture cannot be read here.');
                 const base = String(form.getAttribute('data-ovc-frame') || 'https://openvibe.network').replace(/\/+$/, '');
                 // The person's token when the bar has one (any site); else the Network's own cookie (on the Network).
-                const t = token();
-                const r = await fetch(`${base}/api/frame/caption`, { method: 'POST', credentials: t ? 'omit' : 'include', headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) }, body: JSON.stringify({ image: { data_url: dataUrl } }) });
+                // 4.310.0 (the owner's phone, 11-18: "Failed to fetch" and a 502 from a token the bar had let run out): one
+                // renewal of the bar's token and one more try; a connection that drops says so in words.
+                const send = (t) => fetch(`${base}/api/frame/caption`, { method: 'POST', credentials: t ? 'omit' : 'include', headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) }, body: JSON.stringify({ image: { data_url: dataUrl } }) });
+                const renew = async () => { try { const n = root.OpenVibeNavbar; return n && typeof n.renewToken === 'function' ? await n.renewToken() : null; } catch { return null; } };
+                let r;
+                try { r = await send(token()); }
+                catch { const fresh = await renew(); try { r = await send(fresh || token()); } catch { throw new Error('OpenVibe could not be reached to describe it: check the connection and try again.'); } }
+                if ((r.status === 401 || r.status === 502) && token()) { const fresh = await renew(); if (fresh) { try { r = await send(fresh); } catch { /* the first answer stands */ } } }
                 const j = await r.json().catch(() => ({}));
                 if (r.status === 401) throw new Error('Sign in to caption a picture with AI.');
                 if (!r.ok) throw new Error(j.error || 'The AI could not caption it just now.');
