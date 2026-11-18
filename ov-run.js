@@ -1295,8 +1295,8 @@
 .ovr-pill.is-working { color: var(--accent-light, #60a5fa); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
 .ovr-pill.is-failed { color: #f87171; background: color-mix(in srgb, #ef4444 14%, transparent); }
 .ovr-face { position: relative; flex: none; display: grid; place-items: center; border-radius: 30%; color: hsl(var(--ovr-h, 215) 92% 84%); background: linear-gradient(150deg, hsl(var(--ovr-h, 215) 72% 58% / .4), hsl(var(--ovr-h, 215) 70% 38% / .22)); box-shadow: inset 0 0 0 1px hsl(var(--ovr-h, 215) 70% 64% / .3); }
-:root[data-theme="light"] .ovr-face { color: hsl(var(--ovr-h, 215) 70% 30%); }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .ovr-face { color: hsl(var(--ovr-h, 215) 70% 30%); } }
+:root[data-theme-mode="light"] .ovr-face { color: hsl(var(--ovr-h, 215) 70% 30%); }
+@media (prefers-color-scheme: light) { :root:not([data-theme-mode="dark"]) .ovr-face { color: hsl(var(--ovr-h, 215) 70% 30%); } }
 .ovr-face.is-m { width: 48px; height: 48px; } .ovr-face.is-m > svg { width: 26px; height: 26px; }
 /* 4.238.0 (the owner, 11-13: "waste of space … only a tiny bit of space between"): the list is tight, its rows one
    line of title and time, one of what came back, their face a size down. */

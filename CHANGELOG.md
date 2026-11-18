@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.319.0 — 2026-11-18
+
+**Light themes get their light colours.** `data-theme` carries the theme's own id (vibe, cloud, daylight …); whether it
+is light or dark is `data-theme-mode` (theme-loader.js). 19 rules in 8 files tested `data-theme="light"` or `"dark"`,
+which no theme sets, so on every light theme the menu's site names and icons stayed in their pale dark-theme colours
+(History's "Chat" pale yellow, "Live" pale green on a light page), the selected History tab stayed grey, and the home's,
+the kit's, the messages', the composer's and the run thread's light colours never applied; on a light phone with a
+dark theme, the composer's and the faces' light colours applied wrongly. They test `data-theme-mode` now.
+- Test: theme-mode-selectors fails on any selector on `data-theme="light"` or `"dark"`.
+
 ## 4.318.0 — 2026-11-18
 
 **One face system** (the owner, 11-18, the menu's Vibe beside openvibe.chat/vibe: "These should share the same universal

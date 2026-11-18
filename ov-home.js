@@ -90,7 +90,7 @@
 .ovh-grid .ovh-ic, .ovh-own-apps .ovh-ic, .ovh-recent .ovh-ic, .ovh-card .ovh-ic, .ovh-key .ovh-ic { background: linear-gradient(150deg, hsl(var(--ovh-h, 215) 72% 58% / .34), hsl(var(--ovh-h, 215) 70% 38% / .18)); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 70% 64% / .28), 0 4px 14px hsl(var(--ovh-h, 215) 70% 30% / .18); overflow: hidden; }
 .ovh-ic .ovi-ring, .ovh-ic .ovi-bg, .ovh-ic .ovi-comet, .ovh-ic .ovi-prog { display: none; }
 .ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 90% 82%); color: hsl(var(--ovh-h, 215) 90% 82%); }
-:root[data-theme="light"] .ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 70% 32%); color: hsl(var(--ovh-h, 215) 70% 32%); }
+:root[data-theme-mode="light"] .ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 70% 32%); color: hsl(var(--ovh-h, 215) 70% 32%); }
 .ovh-folder .ovh-ic { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 7%, transparent); grid-template-columns: repeat(2, 22px); grid-auto-rows: 22px; gap: 3px; }
 .ovh-folder .ovh-ic > span { width: 22px; height: 22px; border-radius: 7px; overflow: hidden; background: hsl(var(--ovh-h, 215) 70% 50% / .3); }
 .ovh-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 650; color: var(--text-secondary, #a8b3c4); }
@@ -384,7 +384,7 @@ html[data-ov-motion=off] .ovh-headtools .ovh-edit.is-done { animation: none; }
   background: linear-gradient(150deg, hsl(var(--ovh-h, 215) 72% 58% / .55), hsl(var(--ovh-h, 215) 70% 38% / .35)); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 70% 66% / .3); }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span > .ov-icon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; --ovi-glyph: hsl(var(--ovh-h, 215) 92% 86%); color: hsl(var(--ovh-h, 215) 92% 86%); }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span > .ov-icon svg { position: absolute; left: -23%; top: -23%; width: 146%; height: 146%; margin: 0; transform: none !important; }
-:root[data-theme="light"] .ovh-grid .ovh-folder .ovh-ic > span > .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 70% 28%); color: hsl(var(--ovh-h, 215) 70% 28%); }
+:root[data-theme-mode="light"] .ovh-grid .ovh-folder .ovh-ic > span > .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 70% 28%); color: hsl(var(--ovh-h, 215) 70% 28%); }
 /* Names: two balanced lines, centred, never "…". */
 .ovh-name { white-space: normal; text-overflow: clip; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-align: center; line-height: 1.2; text-wrap: balance; overflow-wrap: normal; word-break: normal; }
 .ovh-grid:not(.ovh-recent) .ovh-name { font-size: 12px; letter-spacing: -.005em; }
@@ -428,7 +428,7 @@ html[data-ov-motion=off] .ovh-ic { transition: none; }
 .ovh-site { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: normal; font-weight: 650; color: hsl(var(--ovh-h, 215) 70% 74%); }
 .ovh-htxt .ovh-site b { display: inline; font-size: inherit; line-height: inherit; font-weight: 650; -webkit-line-clamp: unset; overflow: visible; }   /* History's .ovh-htxt b is a two-line block: not here */
 .ovh-site i { font-style: normal; font-weight: 500; color: var(--text-muted, #8b97ab); }
-:root[data-theme="light"] .ovh-site { color: hsl(var(--ovh-h, 215) 65% 34%); }
+:root[data-theme-mode="light"] .ovh-site { color: hsl(var(--ovh-h, 215) 65% 34%); }
 .ovh-hist-more.is-busy { pointer-events: none; opacity: .65; }
 .ovh-hist-more.is-busy::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 8px; border-radius: 50%; background: currentColor; vertical-align: middle; animation: ovh-hist-wait 1s ease-in-out infinite; }
 @keyframes ovh-hist-wait { 50% { opacity: .2; transform: scale(.6); } }
@@ -471,7 +471,7 @@ html[data-ov-motion=off] .ovh-tabrow .ovh-tab svg { transition: none; }
 .ovh-tabrow .ovh-tab { flex: 1 1 0; min-width: 52px; min-height: 48px; padding: 0 10px; gap: 0; transition: flex-grow .36s cubic-bezier(.3, 1.2, .4, 1), background-color .25s, box-shadow .25s, color .2s; }
 .ovh-tabrow .ovh-tab[aria-selected="true"]:not(.is-new), .ovh-tabrow .ovh-tab.is-was { flex-grow: 2.4; color: var(--text-primary, #e6edf7); background: var(--bg-secondary, #121826);
   box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent), 0 6px 18px -8px color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent); }
-:root[data-theme="light"] .ovh-tabrow .ovh-tab[aria-selected="true"]:not(.is-new), :root[data-theme="light"] .ovh-tabrow .ovh-tab.is-was { background: #fff; }
+:root[data-theme-mode="light"] .ovh-tabrow .ovh-tab[aria-selected="true"]:not(.is-new), :root[data-theme-mode="light"] .ovh-tabrow .ovh-tab.is-was { background: #fff; }
 .ovh-tabrow .ovh-tab .ovh-tab-t { display: block; max-width: 0; margin-left: 0; opacity: 0; font-size: 14.5px; font-weight: 750; transition: max-width .36s cubic-bezier(.3, 1.1, .4, 1), margin-left .36s, opacity .2s; }
 .ovh-tabrow .ovh-tab[aria-selected="true"]:not(.is-new) .ovh-tab-t, .ovh-tabrow .ovh-tab.is-was .ovh-tab-t { max-width: 8em; margin-left: 8px; opacity: 1; }
 .ovh-tab-g { position: relative; flex: none; display: grid; place-items: center; }
