@@ -260,7 +260,6 @@
     // A task waiting for a message asked something (a clarifying question): that still needs the person.
     const yourTurn = (r) => !!r && r.status === 'waiting' && !!r.waiting && r.waiting.for === 'message' && r.kind !== 'task';
     const asksYou = (r) => !!r && r.status === 'waiting' && r.kind !== 'chat' && !needsYou(r) && !yourTurn(r);
-    const KIND_GLYPH = { code: 'code', task: 'robot', machine: 'computer', chat: 'chat', ask: 'search', goal: 'made' };
 
     // ── what a tool step did ──
     const TOOL_KINDS = [
@@ -560,6 +559,18 @@
         return job;
     }
 
+    /** An agent's face (4.318.0): ov-face.js draws it, the one face system openvibe.chat/vibe draws with too (the owner,
+     *  11-18: "These should share the same universal shared system so they both have the faces"). Painted now, or as
+     *  soon as ov-face.js arrives; until then the tile of the agent's colour. */
+    const facesWaiting = [];
+    function faceInto(o, f, spec) {
+        const specOf = (F, x) => (typeof x === 'function' ? x(F) : x);
+        if (root.OVFace) return root.OVFace.paint(f, specOf(root.OVFace, spec));
+        facesWaiting.push([f, spec]);
+        need(o, 'ov-face.js', 'OVFace').then((F) => { if (F) facesWaiting.splice(0).forEach(([g, x]) => F.paint(g, specOf(F, x))); });
+        return f;
+    }
+
     // ── the surface ──
     /**
      * What a link asks the session to start with (4.284.0; the owner, 11-16, on Compare's and Exchange's "Try it in Chat":
@@ -595,6 +606,8 @@
     }
 
     function mount(host, o = {}) {
+        if (!root.OVFace) need(o, 'ov-face.js', 'OVFace');
+        const actorFaces = [];   // faces drawn before your Actor loaded: painted again with its face when it does
         styles();
         const base = String(o.base || 'https://openvibe.network/api/frame').replace(/\/+$/, '');
         const tokenOf = () => (typeof o.token === 'function' ? o.token() : o.token) || '';
@@ -691,7 +704,7 @@
         if (o.codes) {
             const who = el('button', 'ovse-actor-who is-resting'); who.type = 'button';
             who.setAttribute('aria-label', 'Codes, your coding agent: start a coding session');
-            const face = el('span', 'ovse-codes-face'); face.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 8 4.5 12l4 4M15.5 8l4 4-4 4M13.2 5.5l-2.4 13"/></svg>';
+            const face = faceInto(o, el('span', 'ovse-codes-face'), { codes: true });
             const t = el('span', 'ovse-actor-t');
             const top = el('span', 'ovse-actor-top'); top.append(el('b', '', 'Codes'), el('i', '', 'your coding agent'));
             t.append(top, el('small', '', 'On a shared node or your computer · openvibe.codes'));
@@ -856,11 +869,17 @@
         function face(run, size = 'm') {
             const f = el('span', `ovse-face is-${size}`);
             const a = (run && run.agent) || {};
-            const pic = httpsUrl(a.avatar_url);
-            if (pic) { const i = el('img'); i.src = pic; i.alt = ''; i.loading = 'lazy'; f.append(i); return f; }
             f.style.setProperty('--ovse-h', String(Number.isFinite(Number(a.hue)) ? Number(a.hue) : hueOf(a.id || a.name || (run && run.kind))));
-            f.append(svg(G[a.glyph] ? a.glyph : KIND_GLYPH[run && run.kind] || 'spark'));
-            return f;
+            // As on Chat's Vibe: your Actor's sessions wear its face, Codes' its terminal, any other agent its own blob.
+            const spec = (F) => {
+                let mine = false;
+                try { mine = !!o.actor && F.isYours(run, actorName()); } catch { mine = false; }
+                return mine ? { ...F.forActor(actor, actorName()), working: !!(run && run.status === 'running') } : F.forRun(run);
+            };
+            let known = true;
+            try { known = !o.actor || !!actor; } catch { known = false; }
+            if (!known) actorFaces.push([f, spec]);
+            return faceInto(o, f, spec);
         }
         // The search suggests the person's own sessions, never what other people searched (the owner, 11-16: "this should
         // be your session search"); with fewer than two it keeps its placeholder.
@@ -1004,16 +1023,15 @@
             if (actorAt && Date.now() - actorAt < 20000) return actor;
             try { const r = await fetch(`${base}/actor`, { credentials: 'omit', headers: { Accept: 'application/json', ...headers() } }); actor = r.ok ? await r.json() : null; } catch { actor = null; }
             actorAt = Date.now();
+            if (actor) actorFaces.splice(0).forEach(([f, spec]) => { if (f.isConnected) faceInto(o, f, spec); });
             return actor;
         }
         function actorFace(size) {
-            const f = el('span', `ovse-face is-${size} ovse-me-face is-${actorState()}`);
-            const pic = actor && actor.avatar && httpsUrl(actor.avatar.url);
-            if (pic) { const i = el('img'); i.src = pic; i.alt = ''; f.append(i); return f; }
+            const st = actorState();
+            const f = el('span', `ovse-face is-${size} ovse-me-face is-${st}`);
             const hue = actor && actor.avatar && actor.avatar.blob && Number.isInteger(actor.avatar.blob.hue) ? actor.avatar.blob.hue : hueOf(actorName());
             f.style.setProperty('--ovse-h', String(hue));
-            f.append(el('b', 'ovse-face-l', actorName().charAt(0).toUpperCase()));
-            return f;
+            return faceInto(o, f, (F) => ({ ...F.forActor(actor, actorName()), working: st === 'working' }));
         }
         // 4.294.0 (the owner, 11-17: "when I choose codes, it brings me to a thing that still has the A from actor, and then
         // it says vibe … switching to actor doesn't work"): the agent a new session goes to is the one the panel shows,
@@ -1031,8 +1049,9 @@
             const c = chosen();
             if (c.kind === 'actor' && o.actor && actor) return actorFace(size);
             const f = el('span', `ovse-face is-${size} ovse-agent-face is-${c.kind}`);
-            f.append(svg(c.kind === 'auto' ? 'spark' : c.kind === 'actor' ? 'robot' : 'code'));
-            return f;
+            if (c.kind === 'auto') { f.append(svg('spark')); return f; }
+            // Codes and the coding agents it runs wear Codes' terminal; an Actor not loaded yet, its name's blob.
+            return faceInto(o, f, (F) => (c.kind === 'actor' ? F.forActor(null, c.name) : F.codes()));
         }
         function markChosen() {
             const a = pick.agent || 'auto';
@@ -3672,8 +3691,7 @@ html[data-ov-motion=off] .ovse-gm, html[data-ov-motion=off] .ovse-gsheet { anima
 .ovse-setup-raw p { margin: 4px 0 0; overflow-wrap: anywhere; }
 html[data-ov-motion="off"] .ovse-how-c, html[data-ov-motion="off"] .ovse-setup, html[data-ov-motion="off"] .ovse-setup-r { animation: none; }
 .ovse-top:empty { display: none; }
-.ovse-face-l { font-size: 15px; font-weight: 800; }
-.ovse-face.is-xl { width: 60px; height: 60px; border-radius: 22px; } .ovse-face.is-xl .ovse-face-l { font-size: 26px; }
+.ovse-face.is-xl { width: 60px; height: 60px; border-radius: 22px; }
 .ovse-me-face.is-working { box-shadow: 0 0 0 2px var(--ovse-bg), 0 0 0 4px var(--ovse-acc2); animation: ovse-ring 1.8s ease-in-out infinite; }
 @keyframes ovse-ring { 50% { box-shadow: 0 0 0 2px var(--ovse-bg), 0 0 0 4px color-mix(in srgb, var(--ovse-acc2) 35%, transparent); } }
 .ovse-hello-face.is-actor { background: none; box-shadow: none; width: auto; height: auto; }

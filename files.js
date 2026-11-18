@@ -62,6 +62,7 @@ const BROWSER = Object.freeze([
     'ov-stage.js',          // 4.309.0: OpenVibeStage, our product-demo kit (scripted beats, a cursor, a phone scene, Calm/Off, Pause)
     'ov-speak.js',          // 4.308.0: OpenVibeSpeak, answers read aloud (this device's voices or OpenVibe's; ov-session loads it)
     'ov-session.js',        // 4.265.0: OpenVibeSession, one session surface for every agent (plan §AD.8)
+    'ov-face.js',           // 4.318.0: OVFace, an agent's face on every surface (ov-run.js and ov-session.js draw with it)
     'ov-run.js',            // 4.224.0: the one run thread (OpenVibeRun), loaded beside the navbar
     'ov-harness.js',        // 4.257.0: the coding-harness layout over ov-run.js (projects, threads, changes): openvibe.codes
     'ov-metrics.js',        // 4.232.0: the one way to show numbers (tiles, sparklines, bars, percentiles, splits, tables)

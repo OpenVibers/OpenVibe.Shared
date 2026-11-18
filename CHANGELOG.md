@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.318.0 — 2026-11-18
+
+**One face system** (the owner, 11-18, the menu's Vibe beside openvibe.chat/vibe: "These should share the same universal
+shared system so they both have the faces").
+- **`ov-face.js` (OVFace), new.** An agent's face for every surface: its picture; Codes' terminal (prompt and blinking
+  cursor); any other agent a soft blob of its own colour with two eyes, its shape and hue following from the agent, and
+  your Actor in the shape and colour you chose. `paint(el, spec)`, `make`, `forRun`, `forActor`, `codes`, `isCodes`,
+  `isYours`, `hue`, `SHAPES`. Sizes, rings and places stay the caller's; its styles are added once.
+- **ov-run.js** (Chat's Vibe, Codes) draws every face through it; its own copy of the blob, eye and terminal styles is
+  gone. A face asked for before ov-face.js arrives is the agent's colour, filled in when it lands.
+- **ov-session.js** (the menu's sessions): your Actor's card wears its face (no more letter), Codes' card the terminal,
+  and every session row its agent's face (your Actor's sessions its face, Codes' the terminal, another agent its own
+  blob), the same faces Chat draws. Rows drawn before your Actor loads are painted again when it does.
+- Tests: faces-one-system-chrome (the menu and Chat in one page: one Actor, one face; the same agent the same blob;
+  ov-face.js fetched once, its styles added once); run-agents-row-chrome reads the new classes.
+
 ## 4.317.0 — 2026-11-18
 
 **The menu, tidied** (the owner's phone shots, 11-18: "redesign, overhaul, improve, compact, clean it up").
