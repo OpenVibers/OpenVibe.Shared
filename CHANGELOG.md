@@ -23,6 +23,17 @@ The agent conversation, after the owner's phone screenshots of 11-18 (the menu's
 - **Groups.** *Add* is the sheet's primary button (it had looked like a grey native one). An agent of yours that the
   roles already offer (your Actor, @actor) is not listed twice.
 - **Code mode's hello offers coding** ("Fix the failing test in my repository" …), not Actor's errands.
+- **What Actor runs on, in plain sight** (the owner, 11-18: "choose Actor so that it uses an API key … or Claude Code as a
+  harness … make it clear how it's working").
+  - An Actor conversation's box has a chip: *Runs on Auto*, *Runs on DeepSeek Flash (API)*, *Runs on Claude Code on Your
+    computer*.
+  - Its sheet has two halves: **an AI model through its API** (Auto, Actor's agent, one model, Decisions, OpenAI's agent,
+    the open model, and the model itself) and **a coding harness on a machine** (Claude Code, Codex, OpenCode …: ready or
+    to set up, and where it runs).
+  - The choice goes with the next words.
+  - *Code* with no coding agent chosen opens that sheet's harness half, instead of sending the words to no harness at all.
+- **Your turn.** A run whose turn is over, waiting for your next message, says *Your turn* and is not listed under *Needs
+  you* (a group sat there "Waiting for your answer" when nothing was asked).
 - **`ov-composer.js`:**
   - the run chips (Harness, Model, Runs on) wrap inside the box; *Anywhere* had been cut at its edge by a hidden
     scroller;

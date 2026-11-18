@@ -206,13 +206,16 @@
         if (Number.isFinite(usd) && usd > 0) return usd < 0.01 ? 'under 1¢' : `$${usd < 10 ? usd.toFixed(2) : usd.toFixed(0)}`;
         const tk = Number(cost.tokens); return Number.isFinite(tk) && tk > 0 ? `${tk >= 1000 ? `${(tk / 1000).toFixed(tk >= 10000 ? 0 : 1)}k` : tk} tokens` : '';
     };
-    const STATUS = { planning: ['Starting', 'run'], running: ['Working', 'run'], waiting: ['Waiting for you', 'wait'], done: ['Done', 'ok'], failed: ['Did not finish', 'bad'], stopped: ['Stopped', 'off'] };
+    const STATUS = { planning: ['Starting', 'run'], running: ['Working', 'run'], waiting: ['Waiting for you', 'wait'], turn: ['Your turn', 'ok'], done: ['Done', 'ok'], failed: ['Did not finish', 'bad'], stopped: ['Stopped', 'off'] };
     const WAITING = { approval: 'It asks before it goes on', takeover: 'It needs you to take over a step', payment: 'It needs a payment to go on', message: '' };
     const isLive = (r) => !!r && ['planning', 'running'].includes(r.status);
     const isEnd = (r) => !!r && ['done', 'failed', 'stopped'].includes(r.status);
     const needsYou = (r) => !!r && r.status === 'waiting' && !!r.waiting && r.waiting.for && r.waiting.for !== 'message';
     // 4.295.0: an agent's task waiting for your answer (Actor's question). A chat is always your turn; that is not waiting.
-    const asksYou = (r) => !!r && r.status === 'waiting' && r.kind !== 'chat' && !needsYou(r);
+    // 4.311.0 (the owner, 11-18: a group "stuck waiting for you even though it's not waiting"): a run whose turn is over
+    // and waits for the next message is not asking anything; it is the person's turn, nothing more.
+    const yourTurn = (r) => !!r && r.status === 'waiting' && !!r.waiting && r.waiting.for === 'message';
+    const asksYou = (r) => !!r && r.status === 'waiting' && r.kind !== 'chat' && !needsYou(r) && !yourTurn(r);
     const KIND_GLYPH = { code: 'code', task: 'robot', machine: 'computer', chat: 'chat', ask: 'search', goal: 'made' };
 
     // ── what a tool step did ──
@@ -697,7 +700,11 @@
         const road = btn('ovse-road', 'Where your next answer runs', null, ''); road.hidden = true;
         { const ring = el('i', 'ovse-road-ring'); ring.append(svg('spark')); road.append(ring, el('span')); }
         road.addEventListener('click', () => yourAI());
-        ctxRow.append(modes, ctxB, road, ctxCost, ctxInfo);
+        // 4.311.0: what Actor runs on, said and changed in one place (an API model, or a coding harness on a machine).
+        const engineB = btn('ovse-engine', 'What Actor runs on: change it', 'robot', ''); engineB.hidden = true; engineB.setAttribute('aria-haspopup', 'dialog');
+        if (!engineB.querySelector('span')) engineB.append(el('span'));
+        engineB.addEventListener('click', () => engineSheet());
+        ctxRow.append(modes, ctxB, engineB, road, ctxCost, ctxInfo);
         const composeSlot = el('div', 'ovse-compose');
         foot.append(planBox, slash, mentionRow, ctxRow, composeSlot);
         composeSlot.addEventListener('input', () => { if (groupId()) paintMentions(); else if (!mentionRow.hidden) mentionRow.hidden = true; });
@@ -1587,7 +1594,7 @@
             statN.className = `ovse-stat is-${tone}`;
             // The line's nodes stay (it repaints every second while live, and a button rebuilt under a finger loses the tap).
             if (!statN.querySelector('.ovse-stat-t')) { statN.textContent = ''; statN.append(el('i', 'ovse-dot'), el('span', 'ovse-stat-t'), el('span', 'ovse-stat-sep', ' · '), useB); }
-            const bits = [needsYou(r) ? WAITING[r.waiting.for] || word : word];
+            const bits = [needsYou(r) ? WAITING[r.waiting.for] || word : yourTurn(r) ? STATUS.turn[0] : word];
             const startT = ms(r.started_at || r.created_at), endT = ms(r.ended_at) || (isEnd(r) ? ms(r.updated_at) : 0);
             if (startT && (isLive(r) || endT)) bits.push(clock(((endT || Date.now()) - startT) / 1000));
             statN.querySelector('.ovse-stat-t').textContent = bits.filter(Boolean).join(' · ');
@@ -2151,6 +2158,8 @@
         function setMode(id) {
             const open = state.run && String(state.run.ref || '').startsWith('actor:');
             if (id === 'code') {
+                // 4.311.0: which coding agent, and where, said before the words go (11-18: Code ran nowhere and spun).
+                if (open && !pick.harness) { engineSheet('harness'); return; }
                 if (open) pick.way = 'harness';
                 else { pick.agent = 'codes'; pick.way = 'auto'; if (pick.where === 'openvibe') pick.where = 'auto'; }
             } else {
@@ -2432,7 +2441,62 @@
                 onPick: (row) => { const r = RECIPES.find((x) => x.id === row.id); if (r) make(r); } });
         }
 
+        /** The way the next words go, in a person's words: "DeepSeek Flash (API)", "Claude Code on your computer", "Auto". */
+        function engineWords() {
+            const opts = options || fallbackOptions;
+            if (pick.way === 'harness') {
+                const h = (opts.agents || []).find((a) => a && a.kind === 'harness' && a.id === pick.harness);
+                const w = (opts.places || []).find((x) => placeKey(x) === pick.where);
+                return { glyph: 'term', text: `${h ? h.name : 'A coding agent'}${w && pick.where !== 'auto' ? ` on ${w.name}` : ''}`, kind: 'Harness' };
+            }
+            const way = WAYS.find((x) => x.id === (pick.way || 'auto')) || WAYS[0];
+            const model = pick.model ? pick.model.name || pick.model.id : '';
+            if (way.id === 'auto') return { glyph: 'spark', text: model ? `${model} (API)` : 'Auto', kind: 'API' };
+            return { glyph: 'robot', text: `${way.name}${model ? ` · ${model}` : ''}`, kind: 'API' };
+        }
+        function paintEngine() {
+            const r = state.run;
+            const actorRun = r ? String(r.ref || '').startsWith('actor:') && (!r.kind || ['chat', 'task'].includes(r.kind)) : (o.actor && chosen().kind === 'actor');
+            engineB.hidden = !actorRun;
+            if (!actorRun) return;
+            const w = engineWords();
+            engineB.querySelector('span').textContent = `Runs on ${w.text}`;
+            { const g = engineB.querySelector('svg'); if (g) g.innerHTML = G[w.glyph] || G.robot; }
+            engineB.setAttribute('aria-label', `Actor runs on ${w.text}: change it`);
+            engineB.classList.toggle('is-harness', w.kind === 'Harness');
+        }
+        /** One sheet: an AI model through its API (Actor's own agent loop, one model, Decisions …), or a coding harness
+         *  (Claude Code, Codex, OpenCode …) that runs Actor's work on a machine you choose. A change goes with the next words. */
+        async function engineSheet(focus) {
+            const P = await need(o, 'ov-picker.js', 'OpenVibePicker');
+            const harnessSetup = () => (typeof setupOf === 'function' ? setupOf(options || fallbackOptions).find((x) => x.id === 'harnesses') : null) || SETUP.find((x) => x.id === 'harnesses');
+            const opts = options || fallbackOptions;
+            const harnesses = (opts.agents || []).filter((a) => a && a.kind === 'harness');
+            const value = pick.way === 'harness' && pick.harness ? `h:${pick.harness}` : `w:${pick.way || 'auto'}`;
+            const api = WAYS.filter((x) => x.id !== 'harness').map((x) => ({ id: `w:${x.id}`, name: x.name, line: x.line, icon: x.id === 'auto' ? 'spark' : 'robot' }));
+            api.push({ id: 'pick-model', name: pick.model ? `Model: ${pick.model.name || pick.model.id}` : 'Choose the model', line: 'The free AI, your own keys, or a model on your computer', icon: 'spark' });
+            const coding = harnesses.length
+                ? harnesses.map((h) => ({ id: `h:${h.id}`, name: h.name, line: h.available === false ? 'Set it up first: sign in on your computer' : (h.line || 'Runs on your computer or a shared node'), icon: 'term', badge: h.available === false ? 'Set up' : 'Ready' }))
+                : [{ id: 'setup', name: 'Add a coding agent', line: 'Claude Code, Codex, OpenCode … on your computer, through OpenVibe Link', icon: 'term' }];
+            coding.push({ id: 'pick-where', name: 'Where it runs', line: ((opts.places || []).find((x) => placeKey(x) === pick.where) || { name: 'Anywhere it fits' }).name, icon: 'computer' });
+            const sections = [{ title: 'An AI model, through its API', rows: api }, { title: 'A coding harness, on a machine', rows: coding }];
+            if (focus === 'harness') sections.reverse();
+            P.open({ anchor: engineB, title: 'What Actor runs on', search: false, value, sections,
+                onPick: (row) => {
+                    if (row.id === 'pick-model') { openCtx('model'); return; }
+                    if (row.id === 'pick-where') { openCtx('where'); return; }
+                    if (row.id === 'setup') { goSetup(harnessSetup()); return; }
+                    if (row.id.startsWith('h:')) {
+                        const h = harnesses.find((x) => `h:${x.id}` === row.id);
+                        if (h && h.available === false) { goSetup(harnessSetup()); return; }
+                        pick.way = 'harness'; pick.harness = row.id.slice(2);
+                    } else { pick.way = row.id.slice(2); pick.harness = null; }
+                    savePick(); paintModes(); paintEngine();
+                    flash(`Next words: ${engineWords().text}`);
+                } });
+        }
         function paintCtx() {
+            paintEngine();
             paintModes();
             paintGroup();
             if (tokenOf()) loadResources(); paintRoad();
@@ -3619,6 +3683,12 @@ html[data-ov-motion="off"] .ovse-road { animation: none; transition: none; }
 .ovse-mini-b:hover { background: rgba(127,127,127,.14); } .ovse-mini .ovse-g { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .ovse-flash { position: absolute; z-index: 6; left: 50%; bottom: 120px; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 9px 16px; border-radius: 999px; background: var(--text-primary, #e6edf7); color: var(--bg-primary, #0b0f17); font-size: 13.5px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,.3); animation: ovse-pop .26s cubic-bezier(.2,1.3,.4,1) both; transition: opacity .4s; }
 .ovse-flash.is-out { opacity: 0; }
+/* 4.311.0: what Actor runs on, a chip in the box's row. */
+.ovse-engine { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; max-width: 100%; padding: 0 12px; border-radius: 999px; border: 1px solid var(--ovse-line); background: transparent; color: var(--ovse-dim); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; min-width: 0; }
+.ovse-engine span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ovse-engine svg { flex: none; width: 16px; height: 16px; color: var(--ovse-acc2); }
+.ovse-engine.is-harness { border-color: color-mix(in srgb, var(--ovse-acc) 45%, var(--ovse-line)); color: var(--ovse-fg); }
+.ovse-engine:hover, .ovse-engine:focus-visible { color: var(--ovse-fg); border-color: var(--ovse-acc2); }
 /* 4.310.0: the flash is a card in the theme (it was a white pill): a glyph, the words, a link as a button; errors tinted. */
 .ovse-flash { display: flex; align-items: center; gap: 10px; border-radius: 14px; padding: 10px 12px 10px 14px; width: max-content; max-width: min(460px, calc(100% - 32px)); box-sizing: border-box;
   background: color-mix(in srgb, var(--ovse-bg) 82%, var(--ovse-fg) 18%); color: var(--ovse-fg); border: 1px solid var(--ovse-line); font-weight: 550; line-height: 1.4; cursor: pointer;
