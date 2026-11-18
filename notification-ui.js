@@ -422,6 +422,7 @@
             .openvibe-notif-item .title .count { flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 50%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
             .openvibe-notif-item .msg { margin-top: 2px; font-size: 12.5px; color: var(--text-secondary, #b6b6c0); line-height: 1.42; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
             .openvibe-notif-item .meta { font-size: 11.5px; color: var(--text-muted, #8b8b96); margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+            .openvibe-notif-item .meta .since { order: -1; font-weight: 650; }
             .openvibe-notif-item .meta .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .6; }
             .openvibe-notif-item .unread-dot { position: absolute; right: 14px; top: 50%; margin-top: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent, #3b82f6); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
             /* 4.260.0 (the owner, 11-15: "more minimalist … nicer organization … more icons"): unread is a tint and a dot at
@@ -718,6 +719,16 @@
         const acts = (Array.isArray(richOf(n).actions) ? richOf(n).actions : []).filter((a) => a && typeof a.label === 'string' && a.label.trim() && /^https:\/\//.test(String(a.url || ''))).slice(0, 3);
         if (!acts.length) return '';
         return `<div class="ovn-acts">${acts.map((a) => `<button type="button" class="ovn-act${a.style === 'primary' ? ' is-primary' : a.style === 'danger' ? ' is-danger' : ''}" data-row="go" data-url="${esc(a.url)}">${esc(String(a.label).slice(0, 28))}</button>`).join('')}</div>`;
+    }
+    /** 4.313.0 (the owner, 11-18: "enrich"): an agent's step that waits for you gets a button that says what to do, and a
+     *  finished or failed task one that opens it, when the notice has an address and no actions of its own. */
+    function needsHtml(n, p) {
+        if (!p.url || (Array.isArray(richOf(n).actions) && richOf(n).actions.length)) return '';
+        const t = String(n.type || '');
+        const label = t === 'AGENT_NEEDS_YOU' ? ((p.chips || []).includes('Approval') ? 'Review and approve' : (p.chips || []).includes('Question') ? 'Answer it' : 'Open it')
+            : t === 'AGENT_TASK_FAILED' ? 'See what happened' : t === 'AGENT_TASK_DONE' ? 'See the answer' : '';
+        if (!label) return '';
+        return `<div class="ovn-acts"><button type="button" class="ovn-act${t === 'AGENT_NEEDS_YOU' ? ' is-primary' : ''}" data-row="go" data-url="${esc(p.url)}">${esc(label)}</button></div>`;
     }
     function chipsHtml(p, extra = []) {
         const sev = p.severity ? [`<span class="ovn-chip sev" style="--ovn-tone:${TONE[p.tone] || TONE.accent}">${esc(p.severity)}</span>`] : [];
@@ -1424,8 +1435,18 @@
         const groups = [];
         const atOf = (x) => { const d = parseDate(x && x.created_at); return d ? d.getTime() : NaN; };
         const foldWithin = (p) => (/^STREAM_LIVE$|_LIVE$/.test(String(p.type || '')) || p.kind === 'live' ? 2 * 60 * 1000 : 10 * 60 * 1000);
+        const opsRows = new Map();   // 4.313.0: an operator alert's key → its row (the newest), for repeats days apart
         for (const n of v.items) {
             const p = present(n);
+            // The same operator alert firing again ("Disk almost full" today, yesterday and Sunday: three rows, 11-18) is
+            // one row: the newest, with how many times and since when.
+            if (p.kind === 'ops' && opsRows.has(p.key)) {
+                const o = opsRows.get(p.key);
+                o.ids.push(String(n.id)); if (!isRead(n)) o.unread = true; o.first = n;
+                o.chips = [...new Set(o.chips.concat(p.chips))].slice(0, 8);
+                if (!o.cmd && p.command) o.cmd = p.command;
+                continue;
+            }
             const g = groups[groups.length - 1];
             const gap = g ? Math.abs(atOf(g.last) - atOf(n)) : NaN;
             const near = g && (!Number.isFinite(gap) || gap <= foldWithin({ ...p, type: n.type }));   // no date: fold as before
@@ -1434,10 +1455,13 @@
                 g.ids.push(String(n.id)); if (!isRead(n)) g.unread = true;
                 g.chips = [...new Set(g.chips.concat(p.chips))].slice(0, 8);
                 if (!g.cmd && p.command) g.cmd = p.command;
-            } else groups.push({ n, last: n, p, ids: [String(n.id)], unread: !isRead(n), chips: p.chips.slice(), cmd: p.command });
+            } else {
+                groups.push({ n, last: n, first: n, p, ids: [String(n.id)], unread: !isRead(n), chips: p.chips.slice(), cmd: p.command });
+                if (p.kind === 'ops') opsRows.set(p.key, groups[groups.length - 1]);
+            }
         }
         let lastDay = append ? v.lastDay : null;
-        const html = groups.map(({ n, p, ids, unread, chips, cmd }) => {
+        const html = groups.map(({ n, p, ids, unread, chips, cmd, first }) => {
             try {
                 const day = dayLabel(n.created_at);
                 const head = day !== lastDay ? `<div class="openvibe-nv-day">${esc(day)}</div>` : '';
@@ -1456,7 +1480,8 @@
                         ${chipsHtml({ ...p, chips })}
                         ${cmd ? `<button type="button" class="copy" data-row="copy" data-cmd="${esc(cmd)}">Copy fix command</button>` : ''}
                         ${actsHtml(n)}
-                        <div class="meta">${ids.length > 1 ? `<span class="count" title="${ids.length} times">×${ids.length}</span>` : ''}<span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}</div>
+                        ${needsHtml(n, p)}
+                        <div class="meta">${ids.length > 1 ? `<span class="count" title="${ids.length} times">×${ids.length}</span>` : ''}${ids.length > 1 && first && dayLabel(first.created_at) !== dayLabel(n.created_at) ? `<span class="since">since ${esc(dayLabel(first.created_at).toLowerCase())}</span>` : ''}<span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}</div>
                     ${p.url ? `<span class="ovn-go" aria-hidden="true">${svg(ICON.go)}</span>` : ''}
                     <div class="ovn-menu" role="menu" hidden>${unread ? '<button type="button" role="menuitem" data-row="read">' + svg(ICON.read) + '<span>Mark as read</span></button>' : ''}<button type="button" role="menuitem" data-row="dismiss">${svg(ICON.trash)}<span>Remove this notice</span></button><button type="button" role="menuitem" data-row="settings">${svg(ICON.gear)}<span>Notification settings</span></button></div>
                     </div>

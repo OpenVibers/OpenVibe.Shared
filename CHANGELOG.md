@@ -1,5 +1,38 @@
 # Changelog
 
+## 4.313.0 — 2026-11-18
+
+**Alerts enriched, the approval level in the box, answers that stream** (the owner's phone, 11-18, You → Alerts: "Improve, Enrich";
+"make these approvals just built into the chat … adjust the approval methods in the little composer area").
+- **The approval level, a chip in the box's row** (`agents.run@1` 1.5.0 `level`; Actor #608, Network #1096).
+  - An open Actor conversation that can set it shows *Asks first*, *Edits on its own*, *A reviewer approves* or *Full*.
+    On a narrow phone only the glyph shows.
+  - Its sheet has the four. It says what still asks at every level (spending money, a password, deleting, a new
+    recipient), and shows the levels under the agent's own without offering them.
+  - A pick is `PATCH`ed as `{ level }` for the conversation, and the chip follows the answer.
+- **Answers stream.** While an Actor turn runs, its words grow in a bubble where *Working* was, with a caret. They come
+  from Network #1097's `delta { live: true, text }`, and the stored answer replaces the bubble when it comes ("stream
+  response").
+- **Research says where it looked.** A group of web steps (searches, pages read, data fetched) says *Searched 5
+  websites*. The sites show under it as chips (*netcup.com*, *contabo.com*, *lowendtalk.com*, *2 more*): a coloured
+  initial each, since the menu loads no pictures from other sites. This is the owner's "do shit like this".
+- **The phone's Sessions drawer is the whole width.** A dimmed slice of the conversation, with its menu button, showed
+  beside it ("fix"). Its × closes it.
+- **A coding team, from Start a group.** The sheet says what a group is, then offers the three recipes and **Orchestrator**
+  (Codes' Orchestrator on openvibe.codes: one goal split between coding agents, each one's part, then the review).
+  This answers the owner's "team feature … the orchestrator".
+- **An operator alert that keeps firing is one row.** *Disk almost full* fired today, yesterday and Sunday and showed
+  as three rows. It is now the newest row, *×3*, *since Sunday*, wherever its repeats fall. Other repeats still fold only
+  when they come close together.
+- **What to do, as a button.** When the notice has an address and no actions of its own:
+  - an agent's step that waits for you says *Review and approve* or *Answer it*;
+  - a failed task says *See what happened*;
+  - a finished one says *See the answer*.
+- **The waiting bubble sits under the bar.** *An agent is waiting for your answer* sat over the bar's coins and face
+  on openvibe.bot ("buggy looks"). It now goes under the whole bar, and a bar scrolled out of sight says nothing.
+- Tests: `session-level-chrome`, `session-live-chrome` and `session-sites-chrome` (new); `notifications-fold-chrome` adds the repeating operator alert; `dock-chrome` checks
+  the bubble is under the bar.
+
 ## 4.312.0 — 2026-11-18
 
 **The menu's Chat, tidied** (the owner's phone, 11-18).

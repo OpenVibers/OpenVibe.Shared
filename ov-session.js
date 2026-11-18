@@ -213,6 +213,15 @@
             r.readAsDataURL(file);
         } catch { done(null); }
     });
+    // 4.313.0: how much an Actor conversation does on its own (Actor's four levels, plan §12 A-1), in a person's words.
+    const LEVEL_WORDS = {
+        ask: ['Asks first', 'It asks before every step that acts', 'lock'],
+        'auto-edits': ['Edits on its own', 'Edits go ahead; anything else asks first', 'edit'],
+        'approve-for-me': ['A reviewer approves', 'Another AI approves ordinary steps; when unsure, it asks you', 'check'],
+        full: ['Full', 'It acts, then tells you what it did', 'spark'],
+    };
+    const LEVEL_ORDER = ['ask', 'auto-edits', 'approve-for-me', 'full'];
+    const ALWAYS_WORDS = { money: 'spending money', password: 'a password', delete: 'deleting', new_recipient: 'a new recipient' };
     const isAllowance = (t) => /\bai\.allowance_spent\b|free AI allowance[^.]{0,80}\bspent\b|Exchange HTTP 402\b/i.test(String(t || ''));
     const setupOf = (opts) => {
         const own = opts && Array.isArray(opts.setup) ? opts.setup.filter((x) => x && x.id && x.name && /^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(String(x.url || ''))) : [];
@@ -273,6 +282,23 @@
     };
     const inputOf = (s) => (s.tool_call && s.tool_call.input && typeof s.tool_call.input === 'object' ? s.tool_call.input : {});
     const toolWhat = (s) => { const i = inputOf(s); const w = i.path || i.file_path || i.filename || i.command || i.cmd || i.pattern || i.query || i.q || i.url || ''; return String(Array.isArray(w) ? w.join(' ') : w).slice(0, 160); };
+    // 4.313.0: the web a group of steps touched: every site its inputs and results name, in order, at most 40.
+    const WEBISH = /search_web|search_sites|read_page|read_pages|fetch_data|web|fetch|browse|navigate|wikipedia/i;
+    const sitesOf = (steps) => {
+        const out = new Map();
+        const add = (u) => { try { const host = new URL(String(u)).hostname.replace(/^www\./, ''); if (host && /\./.test(host) && !out.has(host)) out.set(host, true); } catch { /* not an address */ } };
+        for (const s of steps) {
+            if (out.size >= 40) break;
+            const i = inputOf(s);
+            if (i.url) add(i.url);
+            if (Array.isArray(i.urls)) i.urls.slice(0, 20).forEach(add);
+            let blob = '';
+            try { blob = typeof s.result === 'string' ? s.result : JSON.stringify(s.result || ''); } catch { blob = ''; }
+            for (const m of `${blob} ${s.text || ''}`.slice(0, 60000).matchAll(/https:\/\/[a-z0-9.-]+\.[a-z]{2,}(?=[/\s"'?#)\]]|$)/gi)) { add(m[0]); if (out.size >= 40) break; }
+        }
+        return [...out.keys()];
+    };
+    const siteHue = (host) => { let h = 0; for (const c of host) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
     /** One line for a tool row: its own title, else what it touched (a path, a command, a query, an address). */
     const toolLine = (s) => {
         if (s.title) return String(s.title);
@@ -738,7 +764,11 @@
         road.addEventListener('click', () => yourAI());
         // 4.311.0: what Actor runs on, said and changed in one place (an API model, or a coding harness on a machine).
         // 4.311.0 (the owner, 11-18: the row wrapped, two chips said the same): one chip, on one line, opens the sheet.
-        ctxRow.append(modes, ctxB, road, ctxCost, ctxInfo);
+        // 4.313.0: the conversation's approval level, beside the chip (an open Actor conversation that can set it).
+        const levelB = btn('ovse-level', 'How much it does on its own: change it', 'lock', ''); levelB.hidden = true; levelB.setAttribute('aria-haspopup', 'dialog');
+        if (!levelB.querySelector('span')) levelB.append(el('span'));
+        levelB.addEventListener('click', () => levelSheet());
+        ctxRow.append(modes, ctxB, levelB, road, ctxCost, ctxInfo);
         const composeSlot = el('div', 'ovse-compose');
         foot.append(planBox, slash, mentionRow, ctxRow, composeSlot);
         composeSlot.addEventListener('input', () => { if (groupId()) paintMentions(); else if (!mentionRow.hidden) mentionRow.hidden = true; });
@@ -1795,6 +1825,12 @@
         }
         function latestPlan() { let p = null; for (const s of ordered()) { const x = planOf(s); if (x) p = x; } return p; }
         function schedule() { if (state.paint) return; state.paint = requestAnimationFrame(() => { state.paint = 0; paint(); }); }
+        /** The answer as it is being written (delta { live }): plain words and a caret, replaced by the stored answer. */
+        function liveNode() {
+            const n = el('div', 'ovse-say ovse-live'); n.setAttribute('aria-live', 'polite'); n.setAttribute('aria-busy', 'true');
+            const w = el('div', 'ovse-words'); w.append(el('p', 'ovse-live-t', state.live)); n.append(w);
+            return n;
+        }
         function paint() {
             speakNew();
             const nearEnd = body.scrollHeight - body.scrollTop - body.clientHeight < 200;
@@ -1844,7 +1880,8 @@
             if (r && Array.isArray(r.outputs) && r.outputs.length) frag.append(outputsCard(r.outputs));
             const lastStep = ordered().slice(-1)[0];
             const writing = lastStep && lastStep.status === 'running' && lastStep.kind === 'message';
-            if ((isLive(r) || state.pending) && !writing) frag.append(working(r));
+            if (state.live && (isLive(r) || state.pending)) frag.append(liveNode());
+            else if ((isLive(r) || state.pending) && !writing) frag.append(working(r));
             for (const q of state.queue) frag.append(q.node);
             thread.textContent = ''; thread.append(frag);
             thread.querySelectorAll('details[data-key]').forEach((d) => { if (state.open.has(d.dataset.key)) d.open = true; });
@@ -1888,9 +1925,20 @@
             const icons = el('span', 'ovse-acts-ic');
             [...count.keys()].slice(0, 5).forEach((k) => icons.append(svg(TOOL_WORDS[k][1])));
             const said = [...count.entries()].map(([k, n]) => { const w = TOOL_WORDS[k]; return k === 'search' ? `${w[0]} ${n === 1 ? 'once' : `${n} times`}` : `${w[0]} ${n} ${n === 1 ? w[2] : w[3]}`; });
-            const text = said.length ? said.join(', ') : 'Worked';
+            // Research says where it looked: "Searched 13 websites", the first sites as chips, the rest counted.
+            const webSteps = steps.filter((s) => WEBISH.test(toolName(s)));
+            const sites = webSteps.length ? sitesOf(webSteps) : [];
+            const allWeb = webSteps.length && webSteps.length === steps.filter((s) => toolKind(s) !== 'plan').length;
+            const text = allWeb && sites.length >= 2 ? `${steps.some((s) => /search/i.test(toolName(s))) ? 'Searched' : 'Read'} ${sites.length} websites` : said.length ? said.join(', ') : 'Worked';
             const words0 = el('span', 'ovse-acts-w', text.charAt(0).toUpperCase() + text.slice(1));
             sm.append(icons, words0);
+            if (sites.length) {
+                const row = el('span', 'ovse-sites');
+                sites.slice(0, 3).forEach((host) => { const c = el('span', 'ovse-site'); const mark = el('i', '', host.charAt(0).toUpperCase()); mark.style.setProperty('--h', String(siteHue(host))); c.append(mark, el('span', '', host)); row.append(c); });
+                if (sites.length > 3) row.append(el('span', 'ovse-site is-more', `${sites.length - 3} more`));
+                row.title = sites.join(', ');
+                sm.append(row);
+            }
             if (running) { sm.append(el('small', 'ovse-acts-now', count.size === 1 ? toolWhat(running) || toolLine(running) : toolLine(running))); d.classList.add('is-running'); }
             else if (failed) sm.append(el('small', 'ovse-acts-bad', `${failed} did not work`));
             sm.append(svg('fold', 'ovse-fold'));
@@ -2501,9 +2549,17 @@
             };
             const P = await need(o, 'ov-picker.js', 'OpenVibePicker');
             if (!P || typeof P.open !== 'function') { make(RECIPES[0]); return; }
+            // 4.313.0 (the owner, 11-18: "the team feature … the orchestrator"): a coding team is Codes' Orchestrator, one
+            // goal split between coding agents, each one's part and the review in one place.
+            const codesBase = String(o.codesUrl || 'https://openvibe.codes').replace(/\/+$/, '');
             P.open({ anchor: btnEl || main, title: 'Start a group', value: 'room',
-                sections: [{ title: '', rows: RECIPES.map((r) => ({ id: r.id, name: r.name, line: r.line, icon: r.icon })) }],
-                onPick: (row) => { const r = RECIPES.find((x) => x.id === row.id); if (r) make(r); } });
+                intro: 'People and agents in one thread. Pick who is in it; you can add anyone later.',
+                sections: [{ title: 'A group here', rows: RECIPES.map((r) => ({ id: r.id, name: r.name, line: r.line, icon: r.icon })) },
+                    { title: 'A coding team', rows: [{ id: 'orchestrator', name: 'Orchestrator', line: 'One goal, split between coding agents: each one\'s part, then the review, on openvibe.codes', svg: svgMarkup('code') }] }],
+                onPick: (row) => {
+                    if (row.id === 'orchestrator') { try { window.open(`${codesBase}/orchestrator`, '_blank', 'noopener'); } catch { /* a blocked window */ } return; }
+                    const r = RECIPES.find((x) => x.id === row.id); if (r) make(r);
+                } });
         }
 
         /** The way the next words go, in a person's words: "DeepSeek Flash (API)", "Claude Code on your computer", "Auto". */
@@ -2521,7 +2577,41 @@
         }
         /** An open conversation with Actor (its turns can change how the next one runs). */
         function actorRunNow() { const r = state.run; return !!r && String(r.ref || '').startsWith('actor:') && (!r.kind || ['chat', 'task'].includes(r.kind)); }
+        function paintLevel() {
+            const lv = actorRunNow() && state.run && state.run.level;
+            levelB.hidden = !(lv && lv.can_set && LEVEL_WORDS[lv.now]);
+            if (levelB.hidden) return;
+            const [word, line, glyph] = LEVEL_WORDS[lv.now];
+            levelB.querySelector('span').textContent = word;
+            { const g = levelB.querySelector('svg'); if (g) g.innerHTML = G[glyph] || G.lock; }
+            levelB.setAttribute('aria-label', `${word}: ${line}. Change it`);
+            levelB.dataset.level = lv.now;
+        }
+        /** The level sheet: the four, the ones under the agent's own shown and not offered, and what asks at every level. */
+        async function levelSheet() {
+            const lv = state.run && state.run.level; if (!lv) return;
+            const P = await need(o, 'ov-picker.js', 'OpenVibePicker');
+            if (!P) { flash('The choices did not load. Try again in a moment.'); return; }
+            const floor = LEVEL_ORDER.indexOf(lv.agent);
+            const rows = LEVEL_ORDER.map((id, i) => ({ id, name: LEVEL_WORDS[id][0], svg: svgMarkup(LEVEL_WORDS[id][2]),
+                line: i < floor ? `Your agent itself is set higher (${LEVEL_WORDS[lv.agent][0]}): change it in its settings` : LEVEL_WORDS[id][1], disabled: i < floor }));
+            const always = (Array.isArray(lv.always_asks) ? lv.always_asks : []).map((x) => ALWAYS_WORDS[x]).filter(Boolean);
+            P.open({ anchor: levelB, title: 'How much it does on its own', search: false, value: lv.now, rows,
+                intro: `For this conversation, from your next message.${always.length ? ` At every level it still asks before ${always.join(', ').replace(/, ([^,]*)$/, ' or $1')}.` : ''}`,
+                onPick: async (row) => {
+                    if (row.disabled || row.id === lv.now) return;
+                    const ref = state.ref;
+                    try {
+                        const run = await api(`/runs/${encodeURIComponent(ref)}`, { method: 'PATCH', body: JSON.stringify({ level: row.id }) });
+                        if (state.ref !== ref) return;
+                        if (run && run.level) state.run = { ...state.run, level: run.level };
+                        paintLevel();
+                        flash(`From your next message: ${LEVEL_WORDS[(run && run.level && run.level.now) || row.id][0]}`);
+                    } catch (err) { flash((err && err.message) || 'The level did not change'); }
+                } });
+        }
         function paintEngine() {
+            paintLevel();
             if (!actorRunNow()) return false;
             const w = engineWords();
             ctxB.hidden = false; ctxInfo.hidden = true; ctxCost.hidden = true;
@@ -2573,6 +2663,7 @@
             paintGroup();
             if (tokenOf()) loadResources(); paintRoad();
             const r = state.run;
+            paintLevel();
             if (r && paintEngine()) return;
             if (r) {
                 // An open session says how it runs; the chip's choice is for the next new one.
@@ -2974,7 +3065,7 @@
         async function open(ref, known, how = {}) {
             clearStream();
             const gen = ++state.gen;
-            state.ref = ref; state.run = known || null; state.steps = new Map(); state.queue = []; state.open = new Set(); state.pending = false; state.replay = null; state.readFrom = null;
+            state.ref = ref; state.run = known || null; state.steps = new Map(); state.queue = []; state.open = new Set(); state.pending = false; state.replay = null; state.readFrom = null; state.live = '';
             // The model this session last asked for: a message carries the chip's model only when it changed (plan §AD.8.3).
             state.modelSent = how.modelSent !== undefined ? how.modelSent : (known && known.model && known.model.id) || null;
             // The way the chip shows when a session opens is taken as the one it runs: a later change on the chip is a swap.
@@ -3018,7 +3109,15 @@
                     if (event === 'step' && d && d.step && Number.isInteger(d.step.seq)) {
                         const s = d.step;
                         if (s.kind === 'message' && s.from === 'person') state.steps.delete(-1);
+                        if (s.kind === 'message' && s.from !== 'person') state.live = '';
                         state.steps.set(s.seq, s); emit('session.step', { ref, step: s }); schedule();
+                    } else if (event === 'delta' && d && d.live) {
+                        // 4.313.0 (the owner, 11-18: "stream response"): the answer's words as the model writes them, in a
+                        // bubble that grows where "Working" was, until the stored answer replaces it.
+                        state.live = `${state.live || ''}${String(d.text || '')}`.slice(-20000);
+                        const n = thread.querySelector('.ovse-live .ovse-live-t');
+                        if (n) { n.textContent = state.live; if (body.scrollHeight - body.scrollTop - body.clientHeight < 200) body.scrollTop = body.scrollHeight; }
+                        else schedule();
                     } else if (event === 'delta' && d && state.steps.has(d.seq)) {
                         const s = state.steps.get(d.seq); state.steps.set(d.seq, { ...s, text: `${s.text || ''}${String(d.text || '')}` });
                         // Words as they come: in place, no repaint of the whole thread.
@@ -3026,6 +3125,7 @@
                         if (n) { const last2 = n.lastElementChild || n; last2.append(document.createTextNode(String(d.text || ''))); if (body.scrollHeight - body.scrollTop - body.clientHeight < 200) body.scrollTop = body.scrollHeight; }
                         else schedule();
                     } else if (event === 'run' && d && d.run) {
+                        if (!['running', 'planning'].includes(d.run.status)) state.live = '';
                         state.run = d.run; schedule(); flushQueue(); updateRow(d.run);
                     } else if (event === 'approval' && d && d.approval) {
                         schedule();
@@ -3124,7 +3224,7 @@
         // ── a new session ──
         function blank() {
             clearStream();
-            state.gen++; state.ref = null; state.run = null; state.steps = new Map(); state.queue = []; state.stack = []; state.pending = false;
+            state.gen++; state.ref = null; state.run = null; state.steps = new Map(); state.live = ''; state.queue = []; state.stack = []; state.pending = false;
             wrap.classList.add('is-blank');
             thread.textContent = '';
             const hi = el('div', 'ovse-hello');
@@ -3217,6 +3317,9 @@
 /* the drawer: over the session on a phone, a column on a computer */
 .ovse-drawer { position: absolute; z-index: 5; inset: 0 auto 0 0; width: min(86%, 340px); display: flex; flex-direction: column; min-height: 0; background: var(--bg-secondary, var(--ovse-bg)); border-right: 1px solid var(--ovse-line); transform: translateX(-104%); transition: transform .28s cubic-bezier(.2,.8,.2,1); padding-top: env(safe-area-inset-top, 0px); }
 .ovse-scrim { position: absolute; z-index: 4; inset: 0; background: rgba(0,0,0,.42); opacity: 0; pointer-events: none; transition: opacity .25s; }
+/* 4.313.0 (the owner's phone, 11-18: a slice of the conversation and its ⋯ beside the drawer, "fix"): on a phone the
+   drawer is the whole width; its × closes it. */
+@media (max-width: 480px) { .ovse:not(.is-wide) .ovse-drawer { width: 100%; border-right: 0; } }
 .ovse.is-drawer .ovse-drawer { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.35); }
 .ovse.is-drawer:not(.is-wide) .ovse-scrim { opacity: 1; pointer-events: auto; }
 .ovse.is-wide { grid-template-columns: 0 minmax(0, 1fr); transition: grid-template-columns .28s cubic-bezier(.2,.8,.2,1); }
@@ -3600,6 +3703,18 @@ html[data-ov-motion="off"] .ovse-receipt-r { animation: none; }
 .ovse-source i { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--ovse-acc) 22%, transparent); color: var(--ovse-acc2); font-style: normal; font-weight: 700; font-size: 11px; }
 .ovse-source span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
 .ovse-attach { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+/* 4.313.0: the sites a group of steps looked at, as chips under its line. */
+.ovse-acts-h { flex-wrap: wrap; }
+.ovse-sites { order: 9; flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px 28px; min-width: 0; }
+.ovse-site { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; max-width: 100%; padding: 0 10px 0 4px; border-radius: 999px; border: 1px solid var(--ovse-line); background: var(--ovse-card); color: var(--ovse-dim); font-size: 12.5px; font-weight: 600; min-width: 0; }
+.ovse-site span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ovse-site i { flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-style: normal; font-size: 11px; font-weight: 800; color: #fff; background: hsl(var(--h, 210) 55% 42%); }
+.ovse-site.is-more { padding: 0 10px; }
+/* 4.313.0: an answer being written, with a caret. */
+.ovse-live .ovse-live-t { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ovse-live .ovse-live-t::after { content: ""; display: inline-block; width: .5em; height: 1.05em; margin-left: 2px; vertical-align: -3px; border-radius: 2px; background: var(--ovse-acc2); opacity: .7; animation: ovse-caret 1s steps(2, start) infinite; }
+@keyframes ovse-caret { to { visibility: hidden; } }
+html[data-ov-motion="off"] .ovse-live .ovse-live-t::after { animation: none; }
 /* 4.311.0: a picture you sent, as a picture. */
 .ovse-thumb-box { display: block; border-radius: 14px; overflow: hidden; border: 1px solid var(--ovse-line); background: var(--ovse-card); max-width: min(260px, 70vw); }
 .ovse-thumb-box .ovse-thumb { display: block; width: 100%; height: auto; max-height: 260px; object-fit: cover; }
@@ -3827,7 +3942,13 @@ html[data-ov-motion="off"] .ovse-road { animation: none; transition: none; }
 @keyframes ovse-spent-in { from { opacity: 0; transform: translateY(calc(12px * var(--ov-move, 1))); } }
 /* 4.311.0: the box's row on one line: the modes, one chip that gives way, the road. */
 .ovse-ctxrow { flex-wrap: nowrap; }
-.ovse-ctxrow > .ovse-modes, .ovse-ctxrow > .ovse-road, .ovse-ctxrow > .ovse-cost { flex: none; }
+.ovse-ctxrow > .ovse-modes, .ovse-ctxrow > .ovse-road, .ovse-ctxrow > .ovse-cost, .ovse-ctxrow > .ovse-level { flex: none; }
+/* 4.313.0: the approval level chip; on a narrow phone only its glyph. */
+.ovse-level { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; min-width: 34px; padding: 0 11px 0 9px; border-radius: 999px; border: 1px solid var(--ovse-line); background: var(--ovse-card); color: var(--ovse-dim); font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer; }
+.ovse-level svg { flex: none; width: 15px; height: 15px; color: var(--ovse-acc2); }
+.ovse-level[data-level="full"] svg, .ovse-level[data-level="approve-for-me"] svg { color: var(--warning, #f5a524); }
+.ovse-level:hover, .ovse-level:focus-visible { color: var(--ovse-fg); border-color: var(--ovse-acc2); }
+@media (max-width: 430px) { .ovse-level { padding: 0; justify-content: center; } .ovse-level span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
 .ovse-ctxrow > .ovse-ctx { flex: 0 1 auto; min-width: 0; }
 .ovse-ctxrow > .ovse-ctxinfo { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 480px) { .ovse-ctxrow > .ovse-cost { display: none; } }
