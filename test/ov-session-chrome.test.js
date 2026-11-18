@@ -207,7 +207,7 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         // The one chip: How it runs → Model → Opus 5.5.
         await p.evaluate("document.querySelector('.ovse-ctx').click()");
         await until(p, "!!document.querySelector('.ovp.is-in .ovp-row')");
-        assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent)"), ['Harness', 'Model', 'Way', 'Runs on', 'Effort', 'Works on', 'Your own setup'], 'the Way (4.281.0: how Actor works it) beside the model; Your own setup last (4.283.0)');
+        assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent)"), ['Harness', 'Model', 'Way', 'Effort', 'Runs on', 'Works on', 'Your own setup'], 'grouped (4.311.0): who, how it thinks, where, your own; Your own setup last (4.283.0)');
         await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row')].find((r) => r.textContent.startsWith('Model')).click()");
         await until(p, "!!document.querySelector('.ovp.is-in .ovp-row[data-id=\"openvibe|anthropic/claude-opus-5-5\"]')");
         await p.evaluate("document.querySelector('.ovp.is-in .ovp-row[data-id=\"openvibe|anthropic/claude-opus-5-5\"]').click()");
@@ -308,8 +308,14 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         await wy.evaluate("document.querySelector('.ovse-ctx').click()");
         await until(wy, "!!document.querySelector('.ovp.is-in .ovp-row')");
         await wy.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row')].find((r) => r.textContent.startsWith('Way')).click()");
-        await until(wy, "!!document.querySelector('.ovp.is-in .ovp-row[data-id=\"decisions\"]')");
-        assert.deepStrictEqual(await wy.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent)"), ['Auto', 'Actor\'s agent', 'One model', 'Decisions', 'OpenAI agent', 'Open model', 'A coding agent', 'Compare the ways']);
+        await until(wy, "!!document.querySelector('.ovp.is-in .ovp-row[data-id=\"w:decisions\"]')");
+        // 4.311.0 (the owner, 11-18: letter tiles, "explain this better"): groups, a drawn glyph on every row, a sentence on top.
+        const way = await wy.evaluate("({ rows: [...document.querySelectorAll('.ovp.is-in .ovp-row b')].map((b) => b.textContent), secs: [...document.querySelectorAll('.ovp.is-in .ovp-sec')].map((x) => x.textContent), drawn: [...document.querySelectorAll('.ovp.is-in .ovp-row')].every((r) => !!r.querySelector('svg')), intro: (document.querySelector('.ovp.is-in .ovp-intro') || {}).textContent })");
+        assert.deepStrictEqual(way.rows.slice(0, 4), ['Auto', 'Actor\'s agent', 'One model', 'Decisions']);
+        assert.ok(way.rows.includes('OpenAI agent') && way.rows.includes('Open model') && way.rows[way.rows.length - 1] === 'Compare the ways', JSON.stringify(way.rows));
+        assert.deepStrictEqual(way.secs, ['Answer with an AI model', 'Other engines', 'Code on a machine', 'Side by side']);
+        assert.ok(way.drawn, 'every row has its glyph, no letter tile');
+        assert.match(way.intro || '', /through its API/);
         // A link that says what to start with (4.284.0; the owner: "Try it in Chat … should auto set"): Compare's and
         // Exchange's ?model= picks that model and One model, ?q= waits in the box, and the address is cleaned.
         const lk = await h.openPage(browser, await browser.newContext(), { width: 390, height: 844 });

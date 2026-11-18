@@ -29,7 +29,9 @@ for (const [name, src] of [['ov-session.js', session], ['ov-composer.js', compos
 // Wired: the row at the end of Agent and Runs on in both, and the session's own section.
 for (const [name, src] of [['ov-session.js', session], ['ov-composer.js', composer]]) {
     assert.ok(/name: 'Use your own…'/.test(src), `${name}: the row`);
-    assert.ok(/'(Agent|Harness)', \[\.\.\.\(opts\.agents \|\| \[\]\)[^\n]*SETUP_ROW\]/.test(src) || /title: '(Agent|Harness)'[^\n]*SETUP_ROW\]/.test(src), `${name}: at the end of Agent`);
+    // 4.311.0: the session's Harness sheet is grouped ("Who works on it"), the row last, under Your own.
+    assert.ok(/'(Agent|Harness)', \[\.\.\.\(opts\.agents \|\| \[\]\)[^\n]*SETUP_ROW\]/.test(src) || /title: '(Agent|Harness)'[^\n]*SETUP_ROW\]/.test(src)
+        || /\{ title: 'Your own', rows: \[\{ \.\.\.SETUP_ROW[^\n]*\] \},\n\s*\]\.filter\(\(x\) => x\.rows\.length\);\n\s*P\.open\(\{ anchor: ctxB, title: 'Who works on it'/.test(src), `${name}: at the end of Agent`);
     assert.ok(/'Runs on'[^\n]*SETUP_ROW\]/.test(src) || /title: 'Runs on'[^\n]*SETUP_ROW\]/.test(src), `${name}: at the end of Runs on`);
     assert.ok(/opts\.setup/.test(src), `${name}: the Frame's own list takes over`);
 }

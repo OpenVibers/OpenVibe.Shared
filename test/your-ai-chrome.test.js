@@ -74,12 +74,13 @@ const SHEET = `(() => { const s = document.querySelector('.ovse-sheet.is-in'); i
         await p.evaluate("document.querySelector('.ovse-ai-row .ovse-actor-who').click()");
         const sh = await until(p, SHEET);
         assert.strictEqual(sh.title, 'Your AI');
-        assert.deepStrictEqual(sh.heads, ['Who works', 'How it\'s paid', 'Where it runs', 'Sign-ins']);
+        // 4.311.0 (the owner, 11-18: "confusing"): your agents apart from the coding agents; your keys beside the sign-ins.
+        assert.deepStrictEqual(sh.heads, ['Your agents', 'Coding agents', 'How it\'s paid', 'Where it runs', 'Keys and sign-ins']);
         assert.deepStrictEqual(sh.rows, [
             ['Juniper', ''], ['Codes', ''], ['Claude Code', 'Ready'], ['Codex', 'Set it up'],
-            ['What you used', ''], ['Free AI', 'Daily'], ['Your Balance', '$12.34'], ['Your own AI key', ''],
+            ['What you used', ''], ['Free AI', 'Daily'], ['Your Balance', '$12.34'],
             ['Studio PC', 'Online'], ['Old laptop', 'Offline'], ['A shared node', ''], ['Add another computer', ''], ['Shared nodes and your computers', ''],
-            ['Sign-ins for your agents', ''],
+            ['Your own AI key', ''], ['Sign-ins for your agents', ''],
         ]);
         assert.strictEqual(sh.balance, 'For the AI API, the Exchange and pro products', 'what Balance is for, as the Wallet says it');
         assert.ok(await p.evaluate('document.documentElement.scrollWidth <= 390'), 'nothing off the screen');

@@ -76,13 +76,14 @@ async function until(p, expr, ms = 8000) { const end = Date.now() + ms; while (D
         });
 
         await check('the chip says what Actor runs on; its sheet has an API half and a harness half; Claude Code takes the next words', async () => {
-            const chip = await until(p, "(() => { const b = document.querySelector('.ovse-engine'); return b && !b.hidden && b.textContent; })()");
+            const chip = await until(p, "(() => { const b = document.querySelector('.ovse-ctx'); return b && !b.hidden && /Runs on/.test(b.textContent) && b.textContent; })()");
             assert.match(chip, /Runs on Auto/);
-            await p.evaluate("document.querySelector('.ovse-engine').click()");
+            await p.evaluate("document.querySelector('.ovse-ctx').click()");
             const secs = await until(p, "document.querySelectorAll('.ovp-sec').length >= 2 && [...document.querySelectorAll('.ovp-sec')].map((x) => x.textContent)");
-            assert.ok(secs.some((x) => /AI model, through its API/.test(x)) && secs.some((x) => /coding harness, on a machine/.test(x)), JSON.stringify(secs));
+            assert.ok(secs.some((x) => /Answer with an AI model/.test(x)) && secs.some((x) => /Code on a machine/.test(x)), JSON.stringify(secs));
+            assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovse-ctxrow > .ovse-engine').length"), 0, 'one chip in the row');
             await p.evaluate("[...document.querySelectorAll('.ovp-row')].find((r) => /Claude Code/.test(r.textContent)).click()");
-            await until(p, "/Runs on Claude Code/.test((document.querySelector('.ovse-engine') || {}).textContent || '')");
+            await until(p, "/Runs on Claude Code/.test((document.querySelector('.ovse-ctx') || {}).textContent || '')");
             await until(p, "!!document.querySelector('.ovse-compose textarea')");
             await p.evaluate(`(() => { const ta = document.querySelector('.ovse-compose textarea'); ta.focus(); ta.value = 'Write the tests'; ta.dispatchEvent(new Event('input', { bubbles: true }));
                 const f = document.querySelector('.ovse-compose form'); if (f) f.requestSubmit(); else ta.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); })()`);
@@ -99,7 +100,7 @@ async function until(p, expr, ms = 8000) { const end = Date.now() + ms; while (D
             await until(p, "!!document.querySelector('.ovse-mode[data-mode=code]')");
             await p.evaluate("document.querySelector('.ovse-mode[data-mode=code]').click()");
             const first = await until(p, "(document.querySelector('.ovp-sec') || {}).textContent");
-            assert.match(first, /coding harness, on a machine/);
+            assert.match(first, /Code on a machine/);
         });
         assert.deepStrictEqual(errors, []);
     } finally {

@@ -59,15 +59,17 @@
         { id: 'read', name: 'Look only', line: 'Reads and answers; changes nothing' },
         { id: 'full', name: 'Full', line: 'Runs commands and changes anything in its workspace' },
     ];
+    // 4.311.0 (the owner, 11-18: the Way sheet's letter tiles, "explain this better … more organized"): each way has its
+    // own glyph and a group: an AI model answers (ai), another engine answers (other), or a coding agent works (code).
     const WAYS = [
-        { id: 'auto', name: 'Auto', line: 'Actor\'s agent, or what fits the question' },
-        { id: 'agent', name: 'Actor\'s agent', line: 'Plans, uses tools, checks its answer' },
-        { id: 'model', name: 'One model', line: 'One answer from the model you picked, no tools: quick and cheap' },
-        { id: 'decisions', name: 'Decisions', line: 'Yes or no, pick one, rate it: with how sure it is' },
-        { id: 'openai-agent', name: 'OpenAI agent', line: 'OpenAI\'s agent with its own web search' },
-        { id: 'open-model', name: 'Open model', line: 'A small model on OpenVibe\'s own server: nothing leaves OpenVibe' },
+        { id: 'auto', name: 'Auto', line: 'Actor picks: its agent for real work, one model for a quick answer', glyph: 'spark', group: 'ai' },
+        { id: 'agent', name: 'Actor\'s agent', line: 'Plans, searches, uses tools, then checks its answer', glyph: 'robot', group: 'ai' },
+        { id: 'model', name: 'One model', line: 'One quick answer from the model you pick: no tools, the cheapest', glyph: 'chat', group: 'ai' },
+        { id: 'decisions', name: 'Decisions', line: 'Yes or no, pick one, rate it: and how sure it is', glyph: 'scale', group: 'ai' },
+        { id: 'openai-agent', name: 'OpenAI agent', line: 'OpenAI\'s own agent, with its web search', glyph: 'globe', group: 'other' },
+        { id: 'open-model', name: 'Open model', line: 'A small model on OpenVibe\'s own server: nothing leaves OpenVibe', glyph: 'lock', group: 'other' },
         // 4.296.0: a coding agent on your computer, through Codes, inside the same conversation (the Code mode).
-        { id: 'harness', name: 'A coding agent', line: 'Claude Code, Codex and the rest on your computer, through Codes' },
+        { id: 'harness', name: 'A coding agent', line: 'Claude Code, Codex and the rest on your computer, through Codes', glyph: 'term', group: 'code' },
     ];
     // 4.296.0 (the owner, 11-17: "the fully modular agentic system … even with the chat mode"; plan §AD.17): one session,
     // its mode on a switch. Chat is one model talking, Agent is your Actor working (plans, tools, a check), Code is a
@@ -102,6 +104,10 @@
         term: '<rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M7 9.5l3 2.5-3 2.5M12.5 15h4.5"/>',
         globe: '<circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2M12 3.4c2.4 2.4 3.6 5.3 3.6 8.6s-1.2 6.2-3.6 8.6c-2.4-2.4-3.6-5.3-3.6-8.6s1.2-6.2 3.6-8.6Z"/>',
         check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+        lock: '<rect x="5" y="10.6" width="14" height="9.4" rx="2.2"/><path d="M8.2 10.6V8a3.8 3.8 0 0 1 7.6 0v2.6"/>',
+        columns: '<rect x="3.4" y="5" width="7.2" height="14" rx="1.8"/><rect x="13.4" y="5" width="7.2" height="14" rx="1.8"/>',
+        scale: '<path d="M12 4.5v15M7 19.5h10M5.5 8h13M5.5 8l-2.6 5.6a2.8 2.8 0 0 0 5.2 0L5.5 8ZM18.5 8l-2.6 5.6a2.8 2.8 0 0 0 5.2 0L18.5 8Z"/>',
+        chev: '<path d="m9.5 6 6 6-6 6"/>',
         child: '<path d="M6 4v8a4 4 0 0 0 4 4h8M14 12l4 4-4 4"/>',
         pr: '<circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M6 8.2v7.6M18 15.8V9a3 3 0 0 0-3-3h-4M13 4l-2 2 2 2"/>',
         open: '<path d="M7 17L17 7M9 7h8v8"/>',
@@ -179,6 +185,34 @@
     const setupUrl = (x) => { if (!x || !x.url) return null; if (!x.back) return x.url; try { const u = new URL(x.url); u.searchParams.set('return_to', root.location.href); return u.href; } catch { return x.url; } };
     const setupGlyph = (id) => ({ keys: 'key', computer: 'computer', harnesses: 'code', machines: 'computer', signins: 'key', actor: 'robot' }[id] || 'link');
     /** The free AI allowance is spent (OpenVibe.AI's ai.allowance_spent, said through Exchange's 402). */
+    /** The free AI is spent, in any of the ways a service says it (Actor's actor.budget.day_spent words included). */
+    const isSpent = (t) => isAllowance(t) || /used today's free allowance|free allowance for today is spent|free AI allowance[^.]*is spent|actor\.budget\.day_spent/i.test(String(t || ''));
+    /** How long until midnight UTC, when the free AI comes back: "4 h 12 min". */
+    const backIn = () => { const now = Date.now(); const d = new Date(now); const next = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1);
+        const min = Math.max(1, Math.round((next - now) / 60000)); const h = Math.floor(min / 60); const m = min % 60; return h ? `${h} h${m ? ` ${m} min` : ''}` : `${m} min`; };
+    const IMAGE_EXT = /\.(jpe?g|png|gif|webp|avif|heic|heif|bmp)$/i;
+    /** A small preview of a picture (at most 480 px, JPEG), as a data: address every page's policy allows. */
+    const previewOf = (file) => new Promise((done) => {
+        try {
+            if (!file || file.size > 25 * 1024 * 1024) return done(null);
+            const r = new FileReader();
+            r.onerror = () => done(null);
+            r.onload = () => {
+                const img = new Image();
+                img.onerror = () => done(null);
+                img.onload = () => {
+                    try {
+                        const k = Math.min(1, 480 / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+                        const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k));
+                        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                        done(c.toDataURL('image/jpeg', 0.82));
+                    } catch { done(null); }
+                };
+                img.src = String(r.result || '');
+            };
+            r.readAsDataURL(file);
+        } catch { done(null); }
+    });
     const isAllowance = (t) => /\bai\.allowance_spent\b|free AI allowance[^.]{0,80}\bspent\b|Exchange HTTP 402\b/i.test(String(t || ''));
     const setupOf = (opts) => {
         const own = opts && Array.isArray(opts.setup) ? opts.setup.filter((x) => x && x.id && x.name && /^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(String(x.url || ''))) : [];
@@ -542,7 +576,8 @@
         const api = async (path, init = {}) => {
             const r = await fetch(`${base}${path}`, { ...init, credentials: 'omit', headers: { Accept: 'application/json', ...(init.body && typeof init.body === 'string' ? { 'Content-Type': 'application/json' } : {}), ...headers(), ...(init.headers || {}) } });
             const j = await r.json().catch(() => ({}));
-            if (!r.ok) { const e = new Error(j.error || j.message || `It did not answer (${r.status})`); e.status = r.status; e.code = j.code; throw e; }
+            // 4.311.0: a problem+json answer says it in `detail` (Actor's day_spent, through any Frame that passes it on).
+            if (!r.ok) { const e = new Error((typeof j.error === 'string' && j.error) || j.detail || j.message || `It did not answer (${r.status})`); e.status = r.status; e.code = j.code; throw e; }
             return j;
         };
         const emit = (type, data) => { if (typeof o.onEvent === 'function') { try { o.onEvent(type, data); } catch { /* the host's */ } } };
@@ -702,10 +737,8 @@
         { const ring = el('i', 'ovse-road-ring'); ring.append(svg('spark')); road.append(ring, el('span')); }
         road.addEventListener('click', () => yourAI());
         // 4.311.0: what Actor runs on, said and changed in one place (an API model, or a coding harness on a machine).
-        const engineB = btn('ovse-engine', 'What Actor runs on: change it', 'robot', ''); engineB.hidden = true; engineB.setAttribute('aria-haspopup', 'dialog');
-        if (!engineB.querySelector('span')) engineB.append(el('span'));
-        engineB.addEventListener('click', () => engineSheet());
-        ctxRow.append(modes, ctxB, engineB, road, ctxCost, ctxInfo);
+        // 4.311.0 (the owner, 11-18: the row wrapped, two chips said the same): one chip, on one line, opens the sheet.
+        ctxRow.append(modes, ctxB, road, ctxCost, ctxInfo);
         const composeSlot = el('div', 'ovse-compose');
         foot.append(planBox, slash, mentionRow, ctxRow, composeSlot);
         composeSlot.addEventListener('input', () => { if (groupId()) paintMentions(); else if (!mentionRow.hidden) mentionRow.hidden = true; });
@@ -881,7 +914,7 @@
                         } else await api(`/runs/${encodeURIComponent(r.ref || r.id)}/approvals/${encodeURIComponent(w.approval)}`, { method: 'POST', body: JSON.stringify({ answer: id }) });
                         say(id === 'approve' ? 'Approved' : 'Declined');
                         emit('session.approval', { ref: r.ref, answer: id });
-                    } catch (err) { [...box.querySelectorAll('button')].forEach((x) => { x.disabled = false; }); box.append(el('p', 'ovse-note is-err', err.message)); }
+                    } catch (err) { [...box.querySelectorAll('button')].forEach((x) => { x.disabled = false; }); errorNote(box, err); }
                 });
                 box.append(b);
             });
@@ -1396,7 +1429,8 @@
                 b.classList.add('ovse-yai');
                 const opts = options || fallbackOptions;
                 let i = 0;
-                const section = (title, glyph) => { const sec = el('section', 'ovse-yai-sec'); const h = el('h3', 'ovse-yai-h'); h.append(svg(glyph), el('span', '', title)); sec.append(h); b.append(sec); return sec; };
+                // 4.311.0 (the owner, 11-18: "confusing"): every section says in a line what it is.
+                const section = (title, glyph, line) => { const sec = el('section', 'ovse-yai-sec'); const h = el('h3', 'ovse-yai-h'); h.append(svg(glyph), el('span', '', title)); sec.append(h); if (line) sec.append(el('p', 'ovse-yai-l', line)); b.append(sec); return sec; };
                 const row = (sec, { face, glyph, name, line, chip = null, tone = '', go = 'fold', onClick }) => {
                     const r = el('button', 'ovse-yai-r'); r.type = 'button'; r.style.setProperty('--i', String(i++));
                     r.setAttribute('aria-label', `${name}: ${line}${chip ? ` (${chip})` : ''}`);
@@ -1412,13 +1446,14 @@
                 const setup = (id) => setupOf(opts).find((x) => x.id === id) || SETUP.find((x) => x.id === id);
 
                 // Who works
-                const who = section('Who works', 'robot');
+                const who = section('Your agents', 'robot', 'They do what you ask. Actor answers and acts with AI models through their APIs; Codes writes code with a coding agent.');
                 if (o.actor) {
                     const st = actorState(); const now = (actor && actor.now) || {};
                     const cap = actor && actor.caps && Number(actor.caps.usd) > 0 ? ` of $${Number(actor.caps.usd).toFixed(2)}` : '';
-                    row(who, { face: actorFace('m'), name: actorName(), line: `Your agent · ${ACTOR_WORD[st]} · $${(Number(now.cost_today) || 0).toFixed(2)}${cap} today`, onClick: later(() => agentSheet()) });
+                    row(who, { face: actorFace('m'), name: actorName(), line: `AI models through their APIs · ${ACTOR_WORD[st]} · $${(Number(now.cost_today) || 0).toFixed(2)}${cap} today`, onClick: later(() => agentSheet()) });
                 }
-                if (o.codes) row(who, { glyph: 'code', name: 'Codes', line: 'Your coding agent, on a shared node or your computer', onClick: later(() => setupFor('codes')) });
+                if (o.codes) row(who, { glyph: 'code', name: 'Codes', line: 'Writes code with a coding agent, on a shared node or your computer', onClick: later(() => setupFor('codes')) });
+                const coders = section('Coding agents', 'term', 'The programs Codes runs to write code, each signed in on the machine it runs on. Ready means it can start now.');
                 // 4.299.0 (Your AI on a phone, 11-17: nine coding agents pushed keys and the Balance far below the fold): the
                 // ready ones first, three shown, the rest one row that unfolds them in place.
                 const harnesses = (opts.agents || []).filter((a) => a && (a.kind === 'harness'));
@@ -1427,13 +1462,13 @@
                 const folded = [];
                 ordered.forEach((a, k) => {
                     const ready = a.available !== false;
-                    const r = row(who, { glyph: 'term', name: a.name, line: a.line || 'A coding agent', chip: ready ? 'Ready' : 'Set it up', tone: ready ? 'ok' : 'warn', go: ready ? 'fold' : 'open',
+                    const r = row(coders, { glyph: 'term', name: a.name, line: a.line || 'A coding agent', chip: ready ? 'Ready' : 'Set it up', tone: ready ? 'ok' : 'warn', go: ready ? 'fold' : 'open',
                         onClick: ready ? later(() => { pick.agent = a.id; if (pick.where === 'openvibe') pick.where = 'auto'; savePick(); blank(); }) : () => goSetup(setup('harnesses')) });
                     if (k >= SHOWN && ordered.length > SHOWN + 1) { r.hidden = true; r.classList.add('ovse-yai-more'); folded.push(r); }
                 });
                 if (folded.length) {
                     const rest = ordered.slice(ordered.length - folded.length);
-                    const more = row(who, { glyph: 'term', name: `${folded.length} more coding agents`, line: rest.map((a) => a.name).join(', '), go: 'fold', onClick: () => {
+                    const more = row(coders, { glyph: 'term', name: `${folded.length} more coding agents`, line: rest.map((a) => a.name).join(', '), go: 'fold', onClick: () => {
                         folded.forEach((r, k) => { r.style.setProperty('--i', String(k)); r.hidden = false; });
                         more.remove();
                         if (folded[0]) folded[0].focus({ preventScroll: true });
@@ -1442,10 +1477,10 @@
                     const g = more.querySelector('.ovse-yai-go'); if (g) g.classList.remove('is-next');
                     more.setAttribute('aria-expanded', 'false');
                 }
-                if (!harnesses.length) row(who, { glyph: 'term', name: 'Coding agents', line: 'Claude Code, Codex, OpenCode and the rest, signed in where they run', go: 'open', onClick: () => goSetup(setup('harnesses')) });
+                if (!harnesses.length) row(coders, { glyph: 'term', name: 'Coding agents', line: 'Claude Code, Codex, OpenCode and the rest, signed in where they run', go: 'open', onClick: () => goSetup(setup('harnesses')) });
 
                 // How it's paid
-                const pay = section('How it\'s paid', 'coin');
+                const pay = section('How it\'s paid', 'coin', 'The free AI comes first; then your Balance, or your own key.');
                 // 4.306.0: what you used, today and over 30 days; it opens Usage.
                 const usedR = row(pay, { glyph: 'clock', name: 'What you used', line: 'Tokens and cost: this session, today, 30 days', chip: '…', onClick: later(() => usageSheet(state.run ? 'session' : 'today')) });
                 loadUsage().then((x) => {
@@ -1509,7 +1544,7 @@
                 const topUp = () => openWallet(end);
 
                 // Where it runs
-                const where = section('Where it runs', 'computer');
+                const where = section('Where it runs', 'computer', 'Your computers (through OpenVibe Link) and OpenVibe\'s shared nodes.');
                 const machines = (opts.places || []).filter((x) => x && x.kind === 'machine');
                 machines.slice(0, 8).forEach((m) => {
                     const on = m.available !== false;
@@ -1522,7 +1557,9 @@
                 row(where, { glyph: 'list', name: 'Shared nodes and your computers', line: setup('machines').line, go: 'open', onClick: () => goSetup(setup('machines')) });
 
                 // Sign-ins
-                const ins = section('Sign-ins', 'key');
+                // 4.311.0 (the owner, 11-18: "Your own AI key" → "Locker", beside the sign-ins): your keys and your sign-ins, together.
+                const ins = section('Keys and sign-ins', 'lock', 'Sealed and used only for you. An agent asks before it uses a sign-in.');
+                ins.append(keysAt);
                 row(ins, { glyph: 'key', name: 'Sign-ins for your agents', line: setup('signins').line, go: 'open', onClick: () => goSetup(setup('signins')) });
                 emit('setup.your-ai', {});
             });
@@ -1666,7 +1703,39 @@
             w = w.replace(/https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?\S*/gi, 'a service');
             return w || 'That did not work.';
         }
+        /** 4.311.0 (the owner's phone, 11-18: the spent allowance as a white bubble over the hello, and as red text under an
+         *  approval, "add custom layouts … improve … add link"): what happened, when it comes back, and the ways to keep
+         *  going now as buttons. `closable` for the floating one. */
+        function spentNote(text, closable) {
+            const n = el('div', 'ovse-spent'); n.setAttribute('role', 'status');
+            const h = el('div', 'ovse-spent-h'); h.append(svg('key'), el('b', '', 'Today\'s free AI is used up'));
+            if (closable) {
+                const x = btn('ovse-spent-x', 'Put it away', 'x');
+                x.addEventListener('click', () => { n.classList.add('is-out'); setTimeout(() => n.remove(), 320); });
+                h.append(x);
+            }
+            n.append(h, el('p', 'ovse-spent-l', `It comes back in ${backIn()}, at midnight UTC. Keep going now on your own key or your own computer: neither counts against it.`));
+            const row = el('div', 'ovse-spent-acts');
+            const opts = options || fallbackOptions;
+            const go = (id) => goSetup(setupOf(opts).find((x) => x.id === id) || SETUP.find((x) => x.id === id));
+            const key = btn('ovse-spent-b is-primary', 'Use your own AI key', 'key', 'Your own key'); key.addEventListener('click', () => go('keys'));
+            const pc = btn('ovse-spent-b', 'Run it on your computer', 'computer', 'Your computer'); pc.addEventListener('click', () => go('computer'));
+            const all = btn('ovse-spent-b is-quiet', 'Every way to keep going', 'tune', 'More ways'); all.addEventListener('click', () => yourAI());
+            row.append(key, pc, all); n.append(row);
+            return n;
+        }
+        /** An error under a control (an approval, a Needs-you row): the spent card, or what failed in plain words. */
+        function errorNote(host, err) {
+            host.querySelectorAll(':scope > .ovse-note.is-err, :scope > .ovse-spent').forEach((x) => x.remove());
+            const words = (err && err.message) || String(err || '');
+            host.append(isSpent(words) ? spentNote(words) : el('p', 'ovse-note is-err', plainError(words)));
+        }
         function flash(words, kind) {
+            if (isSpent(words)) {
+                main.querySelectorAll('.ovse-flash, .ovse-spent.is-float').forEach((x) => x.remove());
+                const c = spentNote(words, true); c.classList.add('is-float'); main.append(c);
+                return;
+            }
             const text = plainError(words);
             const link = /https:\/\/[^\s)]+[^\s).,;:]/.exec(text);
             const bad = kind === 'bad' || /did not|could not|failed|refused|\b4\d\d\b|\b5\d\d\b|used today's free|spent/i.test(text);
@@ -1988,7 +2057,15 @@
             const row = el('div', 'ovse-attach');
             list.slice(0, 8).forEach((a) => {
                 const url = httpsUrl(a.url);
-                if ((a.kind === 'image' || /^image\//.test(String(a.type || a.mime || ''))) && url) { const i = el('img', 'ovse-thumb'); i.src = url; i.alt = a.alt || a.name || ''; i.loading = 'lazy'; row.append(i); }
+                // A picture by its kind, its type or its name; drawn from the service's copy, else from the preview made here.
+                const picture = a.kind === 'image' || /^image\//.test(String(a.type || a.mime || '')) || IMAGE_EXT.test(String(a.name || ''));
+                const src = url || (typeof a.preview === 'string' && /^data:image\/(png|jpeg|gif|webp)/.test(a.preview) ? a.preview : null);
+                if (picture && src) {
+                    const box = el(url ? 'a' : 'span', 'ovse-thumb-box'); if (url) { box.href = url; box.target = '_blank'; box.rel = 'noopener'; }
+                    const i = el('img', 'ovse-thumb'); i.src = src; i.alt = a.alt || a.name || ''; i.loading = 'lazy'; i.decoding = 'async';
+                    i.addEventListener('error', () => { box.replaceWith(Object.assign(el('span', 'ovse-chip'), {}).appendChild(document.createTextNode(a.name || 'A picture')).parentNode); }, { once: true });
+                    box.append(i); row.append(box);
+                }
                 else { const c = el(url ? 'a' : 'span', 'ovse-chip'); if (url) { c.href = url; c.target = '_blank'; c.rel = 'noopener'; } c.append(svg('file'), el('span', '', a.name || a.kind || 'A file')); row.append(c); }
             });
             n.append(row);
@@ -2010,25 +2087,12 @@
                         state.steps.set(s.seq, { ...s, result: { ...r, answer: op.id, answer_label: op.label } });
                         emit('session.approval', { ref: state.ref, step: s.seq, answer: op.id });
                         schedule();
-                    } catch (err) { [...row.children].forEach((x) => { x.disabled = false; }); n.append(el('p', 'ovse-note is-err', err.message)); }
+                    } catch (err) { [...row.children].forEach((x) => { x.disabled = false; }); errorNote(n, err); }
                 });
                 row.append(b);
             });
             n.append(row);
             return n;
-        }
-        function allowanceCard(s) {
-            const text = String(s.text || '');
-            const c = el('div', 'ovse-ask is-need ovse-allow'); c.dataset.seq = String(s.seq);
-            const h = el('div', 'ovse-ask-h'); h.append(svg('spark'), el('b', '', 'Today\'s free AI is used up'));
-            const back = /midnight UTC/i.test(text) ? 'It comes back at midnight UTC.' : 'It comes back tomorrow.';
-            c.append(h, el('p', 'ovse-allow-l', `${back} To keep going now, run it on your own key or your own computer: neither counts against the free AI.`));
-            const row = el('div', 'ovse-ask-acts');
-            const keyUrl = (/https:\/\/[^\s)]+\/(?:chat\/model|you|keys?)\b[^\s).,;:]*/.exec(text) || [])[0] || 'https://ai.openvibe.services/you';
-            const key = el('a', 'ovse-b is-primary', 'Add your own key'); key.href = keyUrl; key.target = '_blank'; key.rel = 'noopener';
-            const pc = el('a', 'ovse-b', 'Use your computer'); pc.href = 'https://openvibe.link/machines'; pc.target = '_blank'; pc.rel = 'noopener';
-            row.append(key, pc); c.append(row);
-            return c;
         }
         function needCard(r) {
             const c = el('div', 'ovse-ask is-need');
@@ -2453,55 +2517,63 @@
             const way = WAYS.find((x) => x.id === (pick.way || 'auto')) || WAYS[0];
             const model = pick.model ? pick.model.name || pick.model.id : '';
             if (way.id === 'auto') return { glyph: 'spark', text: model ? `${model} (API)` : 'Auto', kind: 'API' };
-            return { glyph: 'robot', text: `${way.name}${model ? ` · ${model}` : ''}`, kind: 'API' };
+            return { glyph: way.glyph || 'robot', text: `${way.name}${model ? ` · ${model}` : ''}`, kind: 'API' };
         }
+        /** An open conversation with Actor (its turns can change how the next one runs). */
+        function actorRunNow() { const r = state.run; return !!r && String(r.ref || '').startsWith('actor:') && (!r.kind || ['chat', 'task'].includes(r.kind)); }
         function paintEngine() {
-            const r = state.run;
-            const actorRun = r ? String(r.ref || '').startsWith('actor:') && (!r.kind || ['chat', 'task'].includes(r.kind)) : (o.actor && chosen().kind === 'actor');
-            engineB.hidden = !actorRun;
-            if (!actorRun) return;
+            if (!actorRunNow()) return false;
             const w = engineWords();
-            engineB.querySelector('span').textContent = `Runs on ${w.text}`;
-            { const g = engineB.querySelector('svg'); if (g) g.innerHTML = G[w.glyph] || G.robot; }
-            engineB.setAttribute('aria-label', `Actor runs on ${w.text}: change it`);
-            engineB.classList.toggle('is-harness', w.kind === 'Harness');
+            ctxB.hidden = false; ctxInfo.hidden = true; ctxCost.hidden = true;
+            ctxB.querySelector('span').textContent = `Runs on ${w.text}`;
+            { const g = ctxB.querySelector('svg'); if (g) g.innerHTML = G[w.glyph] || G.robot; }
+            ctxB.setAttribute('aria-label', `Actor runs on ${w.text}: change it`);
+            ctxB.classList.toggle('is-on', w.kind === 'Harness' || (pick.way && pick.way !== 'auto') || !!pick.model);
+            return true;
         }
         /** One sheet: an AI model through its API (Actor's own agent loop, one model, Decisions …), or a coding harness
          *  (Claude Code, Codex, OpenCode …) that runs Actor's work on a machine you choose. A change goes with the next words. */
         async function engineSheet(focus) {
             const P = await need(o, 'ov-picker.js', 'OpenVibePicker');
-            const harnessSetup = () => (typeof setupOf === 'function' ? setupOf(options || fallbackOptions).find((x) => x.id === 'harnesses') : null) || SETUP.find((x) => x.id === 'harnesses');
+            if (!P) { flash('The choices did not load. Try again in a moment.'); return; }
+            const harnessSetup = () => setupOf(options || fallbackOptions).find((x) => x.id === 'harnesses') || SETUP.find((x) => x.id === 'harnesses');
             const opts = options || fallbackOptions;
             const harnesses = (opts.agents || []).filter((a) => a && a.kind === 'harness');
             const value = pick.way === 'harness' && pick.harness ? `h:${pick.harness}` : `w:${pick.way || 'auto'}`;
-            const api = WAYS.filter((x) => x.id !== 'harness').map((x) => ({ id: `w:${x.id}`, name: x.name, line: x.line, icon: x.id === 'auto' ? 'spark' : 'robot' }));
-            api.push({ id: 'pick-model', name: pick.model ? `Model: ${pick.model.name || pick.model.id}` : 'Choose the model', line: 'The free AI, your own keys, or a model on your computer', icon: 'spark' });
+            const rowOf = (x) => ({ id: `w:${x.id}`, name: x.name, line: x.line, svg: svgMarkup(x.glyph || 'robot') });
+            const ai = WAYS.filter((x) => x.group === 'ai').map(rowOf);
+            ai.push({ id: 'pick-model', name: pick.model ? `Model: ${pick.model.name || pick.model.id}` : 'Choose the model', line: 'The free AI, your own keys, or a model on your computer', svg: svgMarkup('model') });
+            const other = WAYS.filter((x) => x.group === 'other').map(rowOf);
             const coding = harnesses.length
-                ? harnesses.map((h) => ({ id: `h:${h.id}`, name: h.name, line: h.available === false ? 'Set it up first: sign in on your computer' : (h.line || 'Runs on your computer or a shared node'), icon: 'term', badge: h.available === false ? 'Set up' : 'Ready' }))
-                : [{ id: 'setup', name: 'Add a coding agent', line: 'Claude Code, Codex, OpenCode … on your computer, through OpenVibe Link', icon: 'term' }];
-            coding.push({ id: 'pick-where', name: 'Where it runs', line: ((opts.places || []).find((x) => placeKey(x) === pick.where) || { name: 'Anywhere it fits' }).name, icon: 'computer' });
-            const sections = [{ title: 'An AI model, through its API', rows: api }, { title: 'A coding harness, on a machine', rows: coding }];
-            if (focus === 'harness') sections.reverse();
-            P.open({ anchor: engineB, title: 'What Actor runs on', search: false, value, sections,
+                ? harnesses.map((h) => ({ id: `h:${h.id}`, name: h.name, line: h.available === false ? 'Set it up first: sign in on your computer' : (h.line || 'Runs on your computer or a shared node'), svg: svgMarkup('term'), badge: h.available === false ? 'Set up' : 'Ready' }))
+                : [{ id: 'setup', name: 'Add a coding agent', line: 'Claude Code, Codex, OpenCode … on your computer, through OpenVibe Link', svg: svgMarkup('term') }];
+            coding.push({ id: 'pick-where', name: 'Where it runs', line: ((opts.places || []).find((x) => placeKey(x) === pick.where) || { name: 'Anywhere it fits' }).name, svg: svgMarkup('computer') });
+            const side = [{ id: 'compare', name: 'Compare the ways', line: 'One question, several ways side by side, each answer graded', svg: svgMarkup('columns') }];
+            let sections = [{ title: 'Answer with an AI model', rows: ai }, { title: 'Other engines', rows: other }, { title: 'Code on a machine', rows: coding }, { title: 'Side by side', rows: side }];
+            if (focus === 'harness') sections = [sections[2], sections[0], sections[1], sections[3]];
+            const actorBase = String(o.actorUrl || 'https://openvibe.actor').replace(/\/+$/, '');
+            P.open({ anchor: ctxB, title: 'How Actor works', intro: 'A model answers through its API, in seconds. A coding agent works in a repository on a machine you choose. Your choice goes with your next message.',
+                search: false, value, sections,
                 onPick: (row) => {
-                    if (row.id === 'pick-model') { openCtx('model'); return; }
-                    if (row.id === 'pick-where') { openCtx('where'); return; }
+                    if (row.id === 'compare') { try { window.open(`${actorBase}/compare`, '_blank', 'noopener'); } catch { /* a blocked window */ } return; }
+                    if (row.id === 'pick-model') { setTimeout(() => openCtx('model'), 230); return; }
+                    if (row.id === 'pick-where') { setTimeout(() => openCtx('where'), 230); return; }
                     if (row.id === 'setup') { goSetup(harnessSetup()); return; }
                     if (row.id.startsWith('h:')) {
                         const h = harnesses.find((x) => `h:${x.id}` === row.id);
                         if (h && h.available === false) { goSetup(harnessSetup()); return; }
                         pick.way = 'harness'; pick.harness = row.id.slice(2);
                     } else { pick.way = row.id.slice(2); pick.harness = null; }
-                    savePick(); paintModes(); paintEngine();
-                    flash(`Next words: ${engineWords().text}`);
+                    savePick(); paintCtx();
+                    flash(`Your next message: ${engineWords().text}`);
                 } });
         }
         function paintCtx() {
-            paintEngine();
             paintModes();
             paintGroup();
             if (tokenOf()) loadResources(); paintRoad();
             const r = state.run;
+            if (r && paintEngine()) return;
             if (r) {
                 // An open session says how it runs; the chip's choice is for the next new one.
                 const bits = [r.agent && (r.agent.name || r.agent.harness), r.model && (r.model.name || r.model.id), r.where && (r.where.name || ({ openvibe: 'OpenVibe', machine: 'your computer', runner: 'a runner', 'this-computer': 'this computer' })[r.where.kind || r.where]), r.target && r.target.repo ? String(r.target.repo).replace(/^https:\/\/github\.com\//, '') : ''].filter(Boolean);
@@ -2554,16 +2626,36 @@
                 ];
                 if (Array.isArray(o.works) && o.works.length) rows.push({ id: 'works', name: 'Works on', line: p.works || 'Anything: it works out what you mean', glyph: 'repo' });
                 rows.push({ id: 'setup', name: 'Your own setup', line: 'Your computer, coding agents and keys, instead of OpenVibe\'s', glyph: 'key' });
-                P.open({ anchor: ctxB, title: 'How it runs', rows: rows.map((x) => ({ id: x.id, name: x.name, line: x.line, svg: svgMarkup(x.glyph) })), search: false, onPick: (row) => then(() => openCtx(row.id)) });
+                // 4.311.0 (the owner, 11-18: "explain this better … more organized"): the same rows in four groups, and one
+                // sentence on what they are.
+                const GROUPS = [['Who works on it', ['agent']], ['How it thinks', ['way', 'model', 'effort']], ['Where it runs', ['where', 'permission', 'works']], ['Your own AI', ['setup']]];
+                const sections = GROUPS.map(([title, ids]) => ({ title, rows: rows.filter((x) => ids.includes(x.id)).map((x) => ({ id: x.id, name: x.name, line: x.line, svg: svgMarkup(x.glyph) })) })).filter((x) => x.rows.length);
+                const who = p.agent === 'Auto' ? 'whichever agent fits what you ask' : p.agent;
+                P.open({ anchor: ctxB, title: 'How it runs', intro: `Your next message goes to ${who}. Change any part: it applies from your next message.`, sections, search: false, onPick: (row) => then(() => openCtx(row.id)) });
                 return;
             }
+            if (section === 'way') { engineSheet(); return; }
             if (section === 'setup') {
                 P.open({ anchor: ctxB, title: 'Your own setup', search: false, rows: setupOf(opts).map((x) => ({ id: x.id, name: x.name, line: x.line || '', svg: svgMarkup(setupGlyph(x.id) || 'computer') })),
                     onPick: (row) => { const x = setupOf(opts).find((y) => y.id === row.id); goSetup(x); } });
                 return;
             }
             if (section === 'agent') {
-                P.open({ anchor: ctxB, title: 'Harness', search: 'auto', value: pick.agent, rows: [...(opts.agents || []).map((a) => ({ id: a.id, name: a.name, line: a.line || '', disabled: a.available === false })), SETUP_ROW], onPick: (row) => {
+                // 4.311.0 (the owner, 11-18: "confused … API or harness"): Auto; your agents, each saying how it works (Actor
+                // through AI models' APIs, Codes through a coding agent); the coding agents themselves; your own.
+                const all = opts.agents || [];
+                const tileOf = (a) => (a.kind === 'auto' ? 'spark' : a.kind === 'actor' ? 'robot' : a.kind === 'codes' ? 'code' : a.kind === 'harness' ? 'term' : 'robot');
+                const lineOf = (a) => (a.kind === 'actor' ? 'Answers, searches and does things, with AI models through their APIs' : a.kind === 'codes' ? 'Writes and changes code, with the best coding agent for it' : a.line || '');
+                const rowOf = (a) => ({ id: a.id, name: a.name, line: lineOf(a), svg: svgMarkup(tileOf(a)), disabled: a.available === false, badge: a.kind === 'harness' ? (a.available === false ? 'Set up' : 'Ready') : '' });
+                const sections = [
+                    { title: '', rows: all.filter((a) => a.kind === 'auto').map(rowOf) },
+                    { title: 'Your agents', rows: all.filter((a) => a.kind === 'actor' || a.kind === 'codes').map(rowOf) },
+                    { title: 'Coding agents (harnesses)', rows: all.filter((a) => a.kind === 'harness').map(rowOf) },
+                    { title: 'Others', rows: all.filter((a) => !['auto', 'actor', 'codes', 'harness'].includes(a.kind)).map(rowOf) },
+                    { title: 'Your own', rows: [{ ...SETUP_ROW, svg: svgMarkup('key') }] },
+                ].filter((x) => x.rows.length);
+                P.open({ anchor: ctxB, title: 'Who works on it', intro: 'An agent does the work. Actor uses AI models through their APIs. A coding agent (a harness: Claude Code, Codex …) works in a repository on a machine, run by Codes.',
+                    search: 'auto', value: pick.agent, sections, onPick: (row) => {
                     if (row.id === SETUP_ROW.id) { then(() => openCtx('setup')); return; } pick.agent = row.id; if (pick.where === 'openvibe' && coding(opts)) pick.where = 'auto'; savePick(); } });
             } else if (section === 'where') {
                 const places = coding(opts) ? (opts.places || []).filter((x) => x.kind !== 'openvibe').map((x) => (x.kind === 'auto' ? { ...x, line: 'A shared node or your own computer' } : x)) : (opts.places || []);
@@ -2592,21 +2684,26 @@
                 const value = pick.model ? `${pick.model.source || 'openvibe'}|${pick.model.id}` : 'auto';
                 P.open({ anchor: ctxB, title: 'Model', search: true, value, searchLabel: 'Search models', load: async () => {
                     const d = await loadModels();
-                    const sections = [{ title: '', rows: [{ id: 'auto', name: 'Auto', line: 'The best fit for what you ask, within your budget' }] }];
+                    const sections = [{ title: '', rows: [{ id: 'auto', name: 'Auto', line: 'The best fit for what you ask, within your budget', svg: svgMarkup('spark') }] }];
                     for (const g of d.groups || []) {
                         for (const x of (g.rows || []).slice(0, 800)) priced.set(`${x.source || 'openvibe'}|${x.model}`, { price: x.price && Number.isFinite(x.price.in) ? { in: x.price.in, out: x.price.out } : null, free: !!x.free });
-                        const rows = (g.rows || []).slice(0, 800).map((x) => ({ id: `${x.source || 'openvibe'}|${x.model}`, name: x.name || x.model, line: [x.maker, x.free ? 'Free' : x.price && Number.isFinite(x.price.in) ? `$${x.price.in} / $${x.price.out} per 1M` : ''].filter(Boolean).join(' · '), badge: x.free ? 'Free' : '' }));
+                        // 4.311.0 (the owner, 11-18: letter tiles, "Your computers … link how"): each group's own glyph, and a
+                        // first row that says how your computers' models reach here.
+                        const glyph = g.id === 'machines' ? 'computer' : g.id === 'keys' ? 'key' : g.id === 'plans' ? 'coin' : 'model';
+                        const rows = (g.rows || []).slice(0, 800).map((x) => ({ id: `${x.source || 'openvibe'}|${x.model}`, name: x.name || x.model, line: [x.maker && x.maker !== x.model ? x.maker : '', x.free ? 'Free' : x.price && Number.isFinite(x.price.in) ? `$${x.price.in} / $${x.price.out} per 1M` : ''].filter(Boolean).join(' · '), badge: x.free ? 'Free' : '', svg: svgMarkup(glyph) }));
+                        if (rows.length && g.id === 'machines') rows.unshift({ id: '__how-machines', name: 'How these get here', line: 'Your computers run them through OpenVibe Link: free, private, on your own machine. Add or manage computers', svg: svgMarkup('link') });
                         if (rows.length) sections.push({ title: g.title || g.id, rows });
                     }
                     return sections;
                 }, onPick: (row) => {
+                    if (row.id === '__how-machines') { const x = setupOf(opts).find((y) => y.id === 'computer') || SETUP.find((y) => y.id === 'computer'); if (x) goSetup(x); return; }
                     if (row.id === 'auto') pick.model = null;
                     else { const [source, ...rest] = String(row.id).split('|'); pick.model = { id: rest.join('|'), source, name: row.name, ...(priced.get(row.id) || {}) }; }
                     savePick();
                 } });
             }
         }
-        ctxB.addEventListener('click', () => openCtx());
+        ctxB.addEventListener('click', () => (actorRunNow() ? engineSheet() : openCtx()));
         loadOptions().then(paintCtx);
 
         // ── the box ──
@@ -2757,7 +2854,10 @@
             const gen = ++state.gen; clearStream();
             state.ref = null; state.run = null; state.steps = new Map(); state.queue = []; state.pending = true; state.open = new Set();
             wrap.classList.remove('is-blank');
-            state.steps.set(0, { seq: 0, kind: 'message', from: 'person', text, attachments: (files || []).map((f) => ({ name: f.name, kind: /^image\//.test(f.type) ? 'image' : 'file' })) });
+            const echoed = (files || []).map((f) => ({ name: f.name, kind: /^image\//.test(f.type) || IMAGE_EXT.test(f.name || '') ? 'image' : 'file' }));
+            state.steps.set(0, { seq: 0, kind: 'message', from: 'person', text, attachments: echoed });
+            // 4.311.0: a picture you sent shows as the picture (a small preview made here) until the service's copy is in.
+            (files || []).forEach((f, k) => { if (echoed[k].kind === 'image') previewOf(f).then((src) => { if (!src) return; echoed[k].preview = src; if (state.gen >= gen) paint(); }); });
             paint(); paintCtx();
             let run;
             try {
@@ -2774,7 +2874,7 @@
             state.pending = false;
             if (gen !== state.gen) return true;
             emit('session.started', { ref: run.ref || run.id, run });
-            open(run.ref || run.id, run, { said: text, modelSent: pick.model ? pick.model.id : null });
+            open(run.ref || run.id, run, { said: text, saidFiles: echoed, modelSent: pick.model ? pick.model.id : null });
             loadRuns();
             return true;
         }
@@ -2880,7 +2980,7 @@
             // The way the chip shows when a session opens is taken as the one it runs: a later change on the chip is a swap.
             state.waySent = `${pick.way || 'auto'}|${(wayBody() && wayBody().model) || ''}`;
             wrap.classList.remove('is-blank');
-            if (how.said) { state.steps.set(-1, { seq: -1, kind: 'message', from: 'person', text: how.said }); state.pending = true; }
+            if (how.said) { state.steps.set(-1, { seq: -1, kind: 'message', from: 'person', text: how.said, ...(how.saidFiles && how.saidFiles.length ? { attachments: how.saidFiles } : {}) }); state.pending = true; }
             paint(); paintCtx();
             [...runsBox.querySelectorAll('.ovse-row')].forEach((b) => b.classList.remove('is-on'));
             composer('Say the next thing');
@@ -2947,25 +3047,39 @@
         /** How a new session runs, in plain sight (4.294.0; the owner: "you can't even edit these properly, or like edit
          *  and configure them easily"): who, the model, where, and your own setup, each one tap from its picker. */
         function howCard() {
-            const box = el('div', 'ovse-how'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'How it runs');
+            // 4.311.0 (the owner, 11-18: "explain this better … I'm so confused"): one card, a row per choice, each with what
+            // it means in a line; a tap changes it.
+            const box = el('div', 'ovse-how is-list'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'How your next message runs');
+            const opts = options || fallbackOptions;
             const p = ctxParts();
-            const code = coding(options || fallbackOptions);
-            const chips = [
-                ['agent', code ? 'Coding agent' : 'Agent', p.agent, 'robot'],
-                ['model', 'Model', p.model, 'model'],
-                ['where', 'Runs on', p.where, 'computer'],
-                ...(code ? [['effort', 'Effort', p.effort ? p.effort.replace(/ effort$/, '') : 'Auto', 'think']] : []),
+            const code = coding(opts);
+            const agent = (opts.agents || []).find((x) => x.id === pick.agent);
+            const place = (opts.places || []).find((x) => placeKey(x) === pick.where);
+            const way = WAYS.find((x) => x.id === pick.way) || WAYS[0];
+            const m = pick.model;
+            const price = m && m.price && Number.isFinite(Number(m.price.in)) ? (2000 * Number(m.price.in) + 800 * Number(m.price.out)) / 1e6 : null;
+            const whoLine = pick.agent === 'auto' ? 'Actor answers and does things; coding work goes to Codes'
+                : code ? ((agent && agent.line) || 'A coding agent: it works in a repository and shows what it changed')
+                    : (chosen().kind === 'actor' ? way.line : (agent && agent.line) || '');
+            const rows = [
+                ['agent', code ? 'Coding agent' : 'Who answers', p.agent === 'Auto' ? 'Auto' : p.agent, whoLine, code ? 'code' : chosen().kind === 'actor' ? 'robot' : 'spark'],
+                ['model', 'Thinks with', p.model, !m ? 'The best model for what you ask, inside your free AI' : m.free || price === 0 ? 'Free to use' : price != null ? `About ${costWords(price)} a message` : 'Your choice of model', 'model'],
+                ['where', 'Runs on', p.where === 'Auto' ? 'Auto' : p.where, pick.where === 'auto' || !place ? (code ? 'A shared node, or your own computer when it is on' : 'Wherever it fits: OpenVibe, a shared node or your computer') : (place.line || ''), 'computer'],
+                ...(code ? [['effort', 'Effort', p.effort ? p.effort.replace(/ effort$/, '') : 'Auto', (EFFORTS.find((x) => x.id === (pick.effort || 'auto')) || EFFORTS[0]).line || '', 'think']] : []),
             ];
-            chips.forEach(([id, label, value, glyph], i) => {
-                const b = btn('ovse-how-c', `${label}: ${value}. Change it`, glyph);
+            box.append(el('p', 'ovse-how-h', 'How your next message runs'));
+            const row = ([id, label, value, line, glyph], i, own) => {
+                const b = btn(`ovse-how-c${own ? ' is-own' : ''}`, `${label}: ${value || 'Auto'}. Change it`);
                 b.style.setProperty('--i', String(i));
+                const tile = el('span', 'ovse-how-i'); tile.append(svg(glyph));
                 const t = el('span', 'ovse-how-t'); t.append(el('small', '', label), el('b', '', value || 'Auto'));
-                b.append(t); b.addEventListener('click', () => openCtx(id));
-                box.append(b);
-            });
-            const own = btn('ovse-how-c is-own', 'Your AI: keys, Balance, computers and coding agents', 'tune');
-            const t = el('span', 'ovse-how-t'); t.append(el('small', '', 'Your AI'), el('b', '', 'Keys · Balance · computers'));
-            own.append(t); own.style.setProperty('--i', String(chips.length)); own.addEventListener('click', () => yourAI());
+                if (line) t.append(el('span', 'ovse-how-l', line));
+                b.append(tile, t, svg('chev', 'ovse-how-go'));
+                return b;
+            };
+            rows.forEach((x, i) => { const b = row(x, i); b.addEventListener('click', () => openCtx(x[0])); box.append(b); });
+            const own = row(['own', 'Your AI', 'Keys · Balance · computers', 'Use your own keys, Balance or computer instead of the free AI', 'tune'], rows.length, true);
+            own.addEventListener('click', () => yourAI());
             box.append(own);
             // Drawn at once from what is known; once, when the Frame's choices first arrive, again with their names.
             if (!options) loadOptions().then(() => { if (box.isConnected && options) box.replaceWith(howCard()); }).catch(() => {});
@@ -3066,6 +3180,10 @@
         if (o.actor) loadActor().then(paintActor);
         if (wide && !collapsed) loadRuns();
         need(o, 'ov-picker.js', 'OpenVibePicker');
+        // 4.311.0 (the owner, 11-18: the Model sheet "slow to open the 1st time"): when the session has drawn and the page is
+        // idle, the picker's script and the models are fetched, so the first sheet opens at once.
+        { const idle = window.requestIdleCallback || ((f) => setTimeout(f, 1500));
+            idle(() => { need(o, 'ov-picker.js', 'OpenVibePicker').catch(() => {}); if (tokenOf()) loadModels().catch(() => {}); }, { timeout: 5000 }); }
         return {
             open: (ref) => { state.stack = []; return open(ref); }, blank, prefill, refresh: () => { loadRuns(); if (o.actor) { actorAt = 0; loadActor().then(paintActor); } },
             start: (text, files, choice) => start(String(text || ''), Array.isArray(files) ? files : undefined, choice), list: () => setDrawer(true),
@@ -3176,6 +3294,7 @@
 .ovse-yai-sec + .ovse-yai-sec { border-top: 1px solid var(--border, rgba(255,255,255,.09)); padding-top: 12px; }
 .ovse-yai-h { display: flex; align-items: center; gap: 8px; margin: 0 2px 2px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
 .ovse-yai-h .ovse-g { width: 16px; height: 16px; }
+.ovse-yai-l { margin: -2px 2px 4px; font-size: 12.5px; line-height: 1.4; color: var(--text-muted, #8b8b9e); }
 .ovse-yai-r { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 8px 10px; border: 1px solid var(--border, rgba(255,255,255,.09)); border-radius: 16px;
   background: color-mix(in srgb, var(--text-primary, #ececf1) 3%, transparent); color: inherit; font: inherit; text-align: left; cursor: pointer;
   transition: border-color .15s, background .15s, transform .15s; animation: ovse-in .36s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 32ms); }
@@ -3481,6 +3600,9 @@ html[data-ov-motion="off"] .ovse-receipt-r { animation: none; }
 .ovse-source i { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--ovse-acc) 22%, transparent); color: var(--ovse-acc2); font-style: normal; font-weight: 700; font-size: 11px; }
 .ovse-source span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
 .ovse-attach { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+/* 4.311.0: a picture you sent, as a picture. */
+.ovse-thumb-box { display: block; border-radius: 14px; overflow: hidden; border: 1px solid var(--ovse-line); background: var(--ovse-card); max-width: min(260px, 70vw); }
+.ovse-thumb-box .ovse-thumb { display: block; width: 100%; height: auto; max-height: 260px; object-fit: cover; }
 .ovse-thumb { width: 120px; height: 90px; object-fit: cover; border-radius: 12px; border: 1px solid var(--ovse-line); }
 .ovse-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 10px; background: var(--ovse-card); border: 1px solid var(--ovse-line); color: var(--ovse-dim); font-size: 12.5px; text-decoration: none; }
 .ovse-chip .ovse-g { width: 14px; height: 14px; }
@@ -3684,12 +3806,45 @@ html[data-ov-motion="off"] .ovse-road { animation: none; transition: none; }
 .ovse-mini-b:hover { background: rgba(127,127,127,.14); } .ovse-mini .ovse-g { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .ovse-flash { position: absolute; z-index: 6; left: 50%; bottom: 120px; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 9px 16px; border-radius: 999px; background: var(--text-primary, #e6edf7); color: var(--bg-primary, #0b0f17); font-size: 13.5px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,.3); animation: ovse-pop .26s cubic-bezier(.2,1.3,.4,1) both; transition: opacity .4s; }
 .ovse-flash.is-out { opacity: 0; }
-/* 4.311.0: what Actor runs on, a chip in the box's row. */
-.ovse-engine { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; max-width: 100%; padding: 0 12px; border-radius: 999px; border: 1px solid var(--ovse-line); background: transparent; color: var(--ovse-dim); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; min-width: 0; }
-.ovse-engine span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.ovse-engine svg { flex: none; width: 16px; height: 16px; color: var(--ovse-acc2); }
-.ovse-engine.is-harness { border-color: color-mix(in srgb, var(--ovse-acc) 45%, var(--ovse-line)); color: var(--ovse-fg); }
-.ovse-engine:hover, .ovse-engine:focus-visible { color: var(--ovse-fg); border-color: var(--ovse-acc2); }
+/* 4.311.0: the spent free AI, one card (in a thread, under an approval, or floating over the box). */
+.ovse-spent { display: grid; gap: 8px; margin-top: 10px; padding: 12px 14px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--warning, #f5a524) 45%, var(--ovse-line)); background: color-mix(in srgb, var(--ovse-bg) 88%, var(--warning, #f5a524) 12%); color: var(--ovse-fg); text-align: left; }
+.ovse-spent-h { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ovse-spent-h b { flex: 1; min-width: 0; font-size: 14.5px; }
+.ovse-spent-h > .ovse-g { flex: none; width: 18px; height: 18px; color: var(--warning, #f5a524); }
+.ovse-spent-x { flex: none; display: inline-grid; place-items: center; width: 36px; height: 36px; margin: -6px -8px -6px 0; border: 0; border-radius: 999px; background: transparent; color: var(--ovse-mute); cursor: pointer; }
+.ovse-spent-x .ovse-g { width: 16px; height: 16px; }
+.ovse-spent-l { margin: 0; color: var(--ovse-dim); font-size: 13px; line-height: 1.45; }
+.ovse-spent-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.ovse-spent-b { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--ovse-line); background: var(--ovse-card); color: var(--ovse-fg); font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer; transition: transform .12s ease, border-color .15s ease; }
+.ovse-spent-b .ovse-g { width: 16px; height: 16px; color: var(--ovse-acc2); }
+.ovse-spent-b.is-primary { background: var(--ovse-acc); border-color: transparent; color: var(--on-accent, #fff); }
+.ovse-spent-b.is-primary .ovse-g { color: currentColor; }
+.ovse-spent-b.is-quiet { background: transparent; }
+.ovse-spent-b:hover { border-color: color-mix(in srgb, var(--ovse-acc) 60%, transparent); }
+.ovse-spent-b:active { transform: scale(calc(1 - .03 * var(--ov-move, 1))); }
+.ovse-spent.is-float { position: absolute; z-index: 7; left: 16px; right: 16px; bottom: 120px; margin: 0 auto; max-width: 460px; box-shadow: 0 18px 40px -18px rgba(0,0,0,.55); animation: ovse-spent-in .28s cubic-bezier(.2,.8,.2,1); }
+.ovse-spent.is-out { opacity: 0; transform: translateY(calc(8px * var(--ov-move, 1))); transition: opacity .25s ease, transform .25s ease; }
+@keyframes ovse-spent-in { from { opacity: 0; transform: translateY(calc(12px * var(--ov-move, 1))); } }
+/* 4.311.0: the box's row on one line: the modes, one chip that gives way, the road. */
+.ovse-ctxrow { flex-wrap: nowrap; }
+.ovse-ctxrow > .ovse-modes, .ovse-ctxrow > .ovse-road, .ovse-ctxrow > .ovse-cost { flex: none; }
+.ovse-ctxrow > .ovse-ctx { flex: 0 1 auto; min-width: 0; }
+.ovse-ctxrow > .ovse-ctxinfo { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 480px) { .ovse-ctxrow > .ovse-cost { display: none; } }
+/* 4.311.0: the hello's card, a row per choice with what it means. */
+.ovse-how.is-list { display: grid; gap: 0; width: min(520px, 100%); box-sizing: border-box; margin: 4px auto 14px; padding: 4px 4px 6px; border: 1px solid var(--ovse-line); border-radius: 18px; background: var(--ovse-card); justify-content: stretch; }
+.ovse-how-h { margin: 8px 12px 4px; font-size: 11.5px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--ovse-mute); text-align: left; }
+.ovse-how.is-list .ovse-how-c { display: grid; grid-template-columns: 36px minmax(0, 1fr) 16px; align-items: center; gap: 12px; width: 100%; max-width: none; min-height: 62px; padding: 8px 10px; border: 0; border-radius: 14px; background: transparent; text-align: left; }
+.ovse-how.is-list .ovse-how-c { position: relative; }
+.ovse-how.is-list .ovse-how-c + .ovse-how-c::before { content: ""; position: absolute; top: 0; left: 58px; right: 12px; height: 1px; background: color-mix(in srgb, var(--ovse-line) 80%, transparent); }
+.ovse-how.is-list .ovse-how-c:hover { background: color-mix(in srgb, var(--ovse-acc) 7%, transparent); }
+.ovse-how-i { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: color-mix(in srgb, var(--ovse-acc) 15%, transparent); color: var(--ovse-acc2); }
+.ovse-how.is-list .ovse-how-i .ovse-g { width: 20px; height: 20px; }
+.ovse-how.is-list .ovse-how-t { display: grid; gap: 1px; min-width: 0; }
+.ovse-how.is-list .ovse-how-t b { max-width: none; font-size: 14.5px; }
+.ovse-how-l { font-size: 12.5px; line-height: 1.35; color: var(--ovse-mute); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ovse-how.is-list .ovse-how-go { width: 16px; height: 16px; color: var(--ovse-mute); }
+.ovse-how.is-list .ovse-how-c.is-own .ovse-how-i { background: transparent; border: 1px dashed var(--ovse-line); }
 /* 4.310.0: the flash is a card in the theme (it was a white pill): a glyph, the words, a link as a button; errors tinted. */
 .ovse-flash { display: flex; align-items: center; gap: 10px; border-radius: 14px; padding: 10px 12px 10px 14px; width: max-content; max-width: min(460px, calc(100% - 32px)); box-sizing: border-box;
   background: color-mix(in srgb, var(--ovse-bg) 82%, var(--ovse-fg) 18%); color: var(--ovse-fg); border: 1px solid var(--ovse-line); font-weight: 550; line-height: 1.4; cursor: pointer;
@@ -3709,7 +3864,7 @@ html[data-ov-motion="off"] .ovse-road { animation: none; transition: none; }
 @keyframes ovse-caret { 50% { opacity: 0; } }
 @keyframes ovse-float { 50% { transform: translateY(calc(-4px * var(--ov-move, 1))); } }
 .ovse-flash { animation-name: ovse-flash-in; } @keyframes ovse-flash-in { from { opacity: 0; transform: translate(-50%, 10px); } }
-html[data-ov-motion="off"] .ovse *, html[data-ov-motion="off"] .ovse-sheet, html[data-ov-motion="off"] .ovse-veil, html[data-ov-motion="off"] .ovse-flash { animation: none !important; transition: none !important; }
+html[data-ov-motion="off"] .ovse *, html[data-ov-motion="off"] .ovse-sheet, html[data-ov-motion="off"] .ovse-veil, html[data-ov-motion="off"] .ovse-flash, html[data-ov-motion="off"] .ovse-spent { animation: none !important; transition: none !important; }
 .ovse-chg b { font-weight: 700; color: var(--ovse-fg); } .ovse-chg span { margin-left: -4px; }
 @media (max-width: 899px) { .ovse-chg span { display: none; } .ovse-chg { padding: 0 10px; } }
 `;

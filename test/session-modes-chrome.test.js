@@ -86,7 +86,7 @@ const typeAndSend = async (p, words) => {
         // 4.311.0 (11-18: Code sent the words to no harness and spun): with no coding agent chosen, Code opens the sheet on
         // its harness half instead of guessing (test/session-engine-chrome.test.js picks one and sends).
         await p.evaluate("document.querySelector('.ovse-mode[data-mode=code]').click()");
-        assert.match(await until(p, "(document.querySelector('.ovp-sec') || {}).textContent"), /coding harness, on a machine/);
+        assert.match(await until(p, "(document.querySelector('.ovp-sec') || {}).textContent"), /Code on a machine/);
         await p.evaluate("(document.querySelector('.ovp-x') || { click() {} }).click()");
 
         // A Codes session hides the switch.
