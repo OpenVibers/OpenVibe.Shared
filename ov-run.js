@@ -375,7 +375,7 @@
             const f = el('span', `ovr-face is-${size} ovr-me is-${now}`);
             const drawn = agent && agent.avatar && agent.avatar.blob && Number.isInteger(agent.avatar.blob.hue) ? agent.avatar.blob : null;
             f.style.setProperty('--ovr-h', String(drawn ? drawn.hue : hueOf(agentName())));
-            return faceInto(f, (F) => ({ ...F.forActor(agent, agentName()), working: now === 'working' }));
+            return faceInto(f, (F) => ({ ...F.forActor(agent, agentName()), working: now === 'working', state: now }));
         }
         async function loadAgent() {
             if (!o.agent || !tokenOf()) return null;
@@ -1547,12 +1547,7 @@ a.ovr-row { color: inherit; text-decoration: none; }
 .ovr-agent-go:active { transform: scale(.9); }
 .ovr-agent-go:disabled { opacity: .5; }
 .ovr-face.ovr-me { position: relative; }
-.ovr-face.ovr-me::after { content: ""; position: absolute; right: -1px; bottom: -1px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--bg-secondary, #121826); background: #64748b; }
-.ovr-face.ovr-me.is-resting::after { background: #22c55e; }
-.ovr-face.ovr-me.is-working::after { background: var(--accent, #3b82f6); animation: ovr-pulse 1.2s ease-in-out infinite; }
-.ovr-face.ovr-me.is-asks::after { background: #f59e0b; }
 .ovr-face.ovr-me.is-working { animation: ovr-breathe 2.2s ease-in-out infinite; }
-.ovr-face.ovr-me.is-paused { filter: saturate(.4); opacity: .8; }
 .ovr-typing { align-self: flex-start; display: inline-flex; gap: 5px; padding: 12px 14px; margin: 2px 0 6px; border-radius: 18px 18px 18px 6px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); animation: ovr-rise .25s ease both; }
 .ovr-typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--text-secondary, #a8b3c4); animation: ovr-dot 1.1s ease-in-out infinite; }
 .ovr-typing i:nth-child(2) { animation-delay: .15s; } .ovr-typing i:nth-child(3) { animation-delay: .3s; }

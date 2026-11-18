@@ -55,7 +55,8 @@ const server = http.createServer((req, res) => {
     const read = (sel) => `(() => { const f = ${sel}; if (!f || !f.classList.contains('ovf')) return null;
         return { kind: f.classList.contains('ovf-coder') ? 'coder' : f.classList.contains('ovf-blob') ? 'blob' : f.classList.contains('ovf-pic') ? 'pic' : '?',
             shape: f.dataset.shape || '', hue: f.style.getPropertyValue('--ovf-h').trim(), eyes: f.querySelectorAll(':scope > .ovf-eye').length,
-            prompt: !!f.querySelector('.ovf-coder-prompt'), letter: !!f.querySelector('.ovse-face-l') }; })()`;
+            prompt: !!f.querySelector('.ovf-coder-prompt'), letter: !!f.querySelector('.ovse-face-l'), state: f.dataset.state || '',
+            dot: getComputedStyle(f, '::after').backgroundColor }; })()`;
     const got = (p, sel, what) => until(p, `(() => { const x = ${read(sel)}; return x ? JSON.stringify(x) : null; })()`, what).then(JSON.parse);
     const rowFace = (box, rowSel, titleSel, title) => `[...document.querySelectorAll('${box} ${rowSel}')].map((r) => [r, r.querySelector('${titleSel}')]).filter(([, t]) => t && t.textContent.trim() === ${JSON.stringify(title)}).map(([r]) => r.querySelector('.ovf'))[0]`;
     try {
@@ -74,6 +75,8 @@ const server = http.createServer((req, res) => {
         const chatActor = await got(p, "document.querySelector('#chat .ovr-people .ovr-person .ovr-face')", 'your Actor\'s face on Chat');
         const chatCodes = await got(p, "document.querySelectorAll('#chat .ovr-people .ovr-person')[1].querySelector('.ovr-face')", 'Codes\' face on Chat');
         assert.deepStrictEqual([chatActor.kind, chatActor.shape, chatActor.hue], [menuActor.kind, menuActor.shape, menuActor.hue], 'one Actor, one face');
+        assert.deepStrictEqual([menuActor.state, chatActor.state, menuActor.dot], ['resting', 'resting', chatActor.dot], 'the same ready dot on both: ' + menuActor.dot);
+        assert.strictEqual(menuActor.dot, 'rgb(34, 197, 94)', 'green: ready');
         assert.deepStrictEqual(chatCodes.kind, 'coder');
 
         // The sessions list loads when its drawer opens (half a wide page is a narrow surface).

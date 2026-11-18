@@ -16,10 +16,12 @@
  *   OVFace.codes()            Codes' spec
  *   OVFace.isCodes(run), OVFace.isYours(run, actorName), OVFace.hue(key), OVFace.SHAPES
  *
- *   spec: { pic?: https URL, codes?: true, key?: string, hue?: 0-359, shape?: one of SHAPES, working?, needs? }
+ *   spec: { pic?: https URL, codes?: true, key?: string, hue?: 0-359, shape?: one of SHAPES, working?, needs?,
+ *           state?: 'resting' | 'working' | 'asks' | 'paused' }   (your Actor: its dot, green ready, blue at work, amber
+ *                                                                 when it asks you something, grey and faded paused)
  *
- * The element gets `ovf` and one of `ovf-pic` / `ovf-coder` / `ovf-blob`, `--ovf-h`, `data-shape`, and `ovf-working` /
- * `ovf-needs`; what it draws carries `ovf-part`, so painting again replaces it and leaves the caller's badges alone.
+ * The element gets `ovf` and one of `ovf-pic` / `ovf-coder` / `ovf-blob`, `--ovf-h`, `data-shape`, `data-state`, and
+ * `ovf-working` / `ovf-needs`; what it draws carries `ovf-part`, so painting again replaces it and leaves the caller's badges alone.
  * Motion follows html[data-ov-motion]: Calm keeps the blink, Off stops the blink, the glance and the cursor.
  */
 (function (root) {
@@ -29,6 +31,7 @@
     /** The colour an agent gets from its id or name: the same function ov-run.js and ov-session.js used. */
     const hue = (id) => { let x = 7; for (const c of String(id || 'ov')) x = (x * 31 + c.codePointAt(0)) % 360; return x; };
     const httpsUrl = (v) => { try { const u = new URL(String(v)); return u.protocol === 'https:' ? u.href : ''; } catch { return ''; } };
+    const STATES = ['resting', 'working', 'asks', 'paused'];
     const shapeOf = (key) => SHAPES[Math.abs(hue(String(key || 'agent')) * 7) % SHAPES.length];
 
     /** The agents every person has: a run of Codes, or any code run with no agent name, is Codes'. */
@@ -96,6 +99,7 @@
         }
         f.classList.toggle('ovf-working', !!s.working);
         f.classList.toggle('ovf-needs', !!s.needs);
+        if (STATES.includes(s.state)) f.dataset.state = s.state; else delete f.dataset.state;
         return f;
     }
     function make(spec, cls) { const f = document.createElement('span'); if (cls) f.className = cls; return paint(f, spec); }
@@ -121,11 +125,18 @@
 .ovf-coder-svg .ovf-coder-cursor { fill: rgba(255, 255, 255, .95); stroke: none; animation: ovf-cursor 1.1s steps(1, end) infinite; }
 .ovf-coder.ovf-working .ovf-coder-cursor { animation-duration: .5s; }
 .ovf-coder.ovf-working .ovf-coder-prompt { animation: ovf-type 1.2s ease-in-out infinite; }
+.ovf[data-state] { overflow: visible !important; }
+.ovf[data-state]::after { content: ""; position: absolute; right: -1px; bottom: -1px; width: clamp(7px, 23%, 11px); aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--bg-secondary, #121826); background: #64748b; }
+.ovf[data-state="resting"]::after { background: #22c55e; }
+.ovf[data-state="working"]::after { background: var(--accent, #3b82f6); animation: ovf-pulse 1.2s ease-in-out infinite; }
+.ovf[data-state="asks"]::after { background: #f59e0b; }
+.ovf[data-state="paused"] { filter: saturate(.4); opacity: .8; }
+@keyframes ovf-pulse { 50% { transform: scale(1.25); opacity: .7; } }
 @keyframes ovf-blink { 0%, 94%, 100% { transform: rotate(12deg) scaleY(1); } 96% { transform: rotate(12deg) scaleY(.15); } }
 @keyframes ovf-look { 0%, 100% { translate: 0 0; } 50% { translate: 2px 0; } }
 @keyframes ovf-cursor { 0%, 55% { opacity: 1; } 56%, 100% { opacity: .08; } }
 @keyframes ovf-type { 50% { transform: translateX(1.5px); } }
-html[data-ov-motion="off"] .ovf-blob > .ovf-eye, html[data-ov-motion="off"] .ovf-coder-cursor, html[data-ov-motion="off"] .ovf-coder-prompt { animation: none; }
+html[data-ov-motion="off"] .ovf-blob > .ovf-eye, html[data-ov-motion="off"] .ovf-coder-cursor, html[data-ov-motion="off"] .ovf-coder-prompt, html[data-ov-motion="off"] .ovf[data-state]::after { animation: none; }
 `;
     function css() {
         if (typeof document === 'undefined' || document.getElementById('ov-face-css')) return;

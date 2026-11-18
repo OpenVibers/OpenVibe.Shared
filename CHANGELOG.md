@@ -8,6 +8,8 @@ shared system so they both have the faces").
   cursor); any other agent a soft blob of its own colour with two eyes, its shape and hue following from the agent, and
   your Actor in the shape and colour you chose. `paint(el, spec)`, `make`, `forRun`, `forActor`, `codes`, `isCodes`,
   `isYours`, `hue`, `SHAPES`. Sizes, rings and places stay the caller's; its styles are added once.
+  Your Actor's status dot is the face's too (`state`): green ready, blue and pulsing at work, amber when it asks you
+  something, faded when paused; the menu shows it as Chat does.
 - **ov-run.js** (Chat's Vibe, Codes) draws every face through it; its own copy of the blob, eye and terminal styles is
   gone. A face asked for before ov-face.js arrives is the agent's colour, filled in when it lands.
 - **ov-session.js** (the menu's sessions): your Actor's card wears its face (no more letter), Codes' card the terminal,

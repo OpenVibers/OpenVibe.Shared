@@ -874,7 +874,8 @@
             const spec = (F) => {
                 let mine = false;
                 try { mine = !!o.actor && F.isYours(run, actorName()); } catch { mine = false; }
-                return mine ? { ...F.forActor(actor, actorName()), working: !!(run && run.status === 'running') } : F.forRun(run);
+                const busy = !!(run && run.status === 'running');
+                return mine ? { ...F.forActor(actor, actorName()), working: busy, state: busy ? 'working' : actorState() } : F.forRun(run);
             };
             let known = true;
             try { known = !o.actor || !!actor; } catch { known = false; }
@@ -1031,7 +1032,7 @@
             const f = el('span', `ovse-face is-${size} ovse-me-face is-${st}`);
             const hue = actor && actor.avatar && actor.avatar.blob && Number.isInteger(actor.avatar.blob.hue) ? actor.avatar.blob.hue : hueOf(actorName());
             f.style.setProperty('--ovse-h', String(hue));
-            return faceInto(o, f, (F) => ({ ...F.forActor(actor, actorName()), working: st === 'working' }));
+            return faceInto(o, f, (F) => ({ ...F.forActor(actor, actorName()), working: st === 'working', state: st }));
         }
         // 4.294.0 (the owner, 11-17: "when I choose codes, it brings me to a thing that still has the A from actor, and then
         // it says vibe … switching to actor doesn't work"): the agent a new session goes to is the one the panel shows,
