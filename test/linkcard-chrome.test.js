@@ -18,9 +18,18 @@ const PAGE = `<!doctype html><html lang="en" data-theme-mode="dark"><head><meta 
 <body style="margin:0;padding:16px;background:#0b0f19;color:#e6edf7;font:14px system-ui"><ul id="chat" style="list-style:none;margin:0;padding:0">
 <li id="m1"><b>ana</b> look at this</li><li id="m2"><b>bo</b> and these</li></ul>
 <script src="/ov-linkcard.js"></script></body></html>`;
+// The menu's Chat (messages.js): it loads ov-linkcard.js from beside itself the first time a message has cards.
+const MENU = `<!doctype html><html lang="en" data-theme-mode="dark"><head><meta charset="utf-8"><title>Menu chat</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"></head>
+<body style="margin:0;padding:16px;background:#0b0f19;color:#e6edf7;font:14px system-ui"><ul id="room"></ul><ul id="dm"></ul>
+<script src="/shared/messages.js?v=test"></script></body></html>`;
+let linkcardLoads = 0;
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     if (u.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(PAGE); }
+    if (u.pathname === '/menu') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(MENU); }
+    if (u.pathname === '/shared/messages.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, 'messages.js'))); }
+    if (u.pathname === '/shared/ov-linkcard.js') { linkcardLoads++; res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, 'ov-linkcard.js'))); }
     if (u.pathname === '/ov-linkcard.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, 'ov-linkcard.js'))); }
     res.writeHead(404); return res.end();
 });
@@ -88,7 +97,26 @@ const server = http.createServer((req, res) => {
         // Motion Off: no entrance animation.
         const off = await p.evaluate(`(() => { document.documentElement.setAttribute('data-ov-motion', 'off'); const c = window.OVLinkCard.make({ url: 'https://example.com/z', title: 'Still' }); document.body.appendChild(c); return getComputedStyle(c).animationName; })()`);
         assert.strictEqual(off, 'none');
-        console.log(`linkcard-chrome: https and Media only, text only, 3 per message, replaced on redraw, × calls back, ${list.doc} px wide, motion Off still`);
+        // The menu's Chat: a room row and a bubble each get their cards under the words; the module is loaded once.
+        const m = await h.openPage(browser, await browser.newContext(), { width: 390, height: 800 });
+        await m.goto(`${base}/menu`, { maxMs: 6000 });
+        await m.evaluate(`(() => {
+            const card = (i) => ({ url: 'https://example.com/' + i, title: 'Card ' + i, site_name: 'Example' });
+            window.OVMessages.render(document.getElementById('room'), { view: 'room', messages: [{ id: 1, user_id: 2, username: 'ana', message: 'see https://example.com/1', created_at: '2026-11-18T22:00:00Z', embeds: [card(1), card(2), card(3), card(4)] }, { id: 2, user_id: 3, username: 'bo', message: 'no link', created_at: '2026-11-18T22:01:00Z' }] });
+            window.OVMessages.render(document.getElementById('dm'), { view: 'bubbles', me: 2, messages: [{ id: 3, sender_id: 2, message: 'mine https://example.com/5', created_at: '2026-11-18T22:02:00Z', embeds: [card(5)] }] });
+            return 1;
+        })()`);
+        const menu = await h.eventually(async () => {
+            const x = await m.evaluate(`(() => ({ room: document.querySelectorAll('#room .ovm-room')[0].querySelectorAll('.ovm-cards > .ovlc').length,
+                plain: document.querySelectorAll('#room .ovm-room')[1].querySelectorAll('.ovm-cards').length,
+                dm: document.querySelectorAll('#dm .ovm-group-body > .ovm-cards > .ovlc').length, doc: document.documentElement.scrollWidth }))()`);
+            assert.ok(x.room === 3 && x.dm === 1, `the menu's Chat draws the cards (${JSON.stringify(x)})`);
+            return x;
+        }, { timeout: 6000 });
+        assert.strictEqual(menu.plain, 0, 'a message with no address gets no card box');
+        assert.strictEqual(menu.doc, 390);
+        assert.strictEqual(linkcardLoads, 1, 'ov-linkcard.js is loaded once, from beside messages.js');
+        console.log(`linkcard-chrome: the menu's Chat draws them in rooms and bubbles; https and Media only, text only, 3 per message, replaced on redraw, × calls back, ${list.doc} px wide, motion Off still`);
     } finally {
         await browser.close();
         server.close();

@@ -192,7 +192,9 @@ const server = http.createServer((req, res) => {
             // tries a script link, a picture from elsewhere and a script button, which draws as plain text only.
             const card = { kind: 'video', url: 'https://openvibe.video/v/42', title: 'The studio tour', line: '12:04 · Kai Moreno', image: 'https://openvibe.media/t/abc?w=320', action: { label: 'Watch together', href: 'https://openvibe.party/new?media=https%3A%2F%2Fopenvibe.video%2Fv%2F42' } };
             const bad = { kind: 'video', url: 'javascript:alert(1)', title: '<img src=x>', line: 'x', image: 'https://evil.example/p.png', action: { label: 'Go', href: 'javascript:alert(2)' } };
-            const all = [{ id: 101, username: 'kai', display_name: 'Kai Moreno', message: 'see the shots?', card, created_at: iso(240e3) }, { id: 102, username: 'ada', display_name: 'Ada', message: '<b>on it</b>', card: bad, created_at: iso(120e3) }]
+            const all = [{ id: 101, username: 'kai', display_name: 'Kai Moreno', message: 'see the shots?', card, created_at: iso(240e3),
+                // 4.320.0 (plan §Y.1 A8): what Chat read for another address the message carries (ov-linkcard.js).
+                embeds: [{ url: 'https://example.com/shots', title: 'The shots, all forty', site_name: 'Example', kind: 'link' }, { url: 'javascript:alert(3)', title: 'No' }] }, { id: 102, username: 'ada', display_name: 'Ada', message: '<b>on it</b>', card: bad, created_at: iso(120e3) }]
                 .concat(said.map((m, i) => ({ id: 901 + i, username: 'ada', display_name: 'Ada', message: m, created_at: iso(0),
                     // 4.267.0: what Chat keeps of the files (rooms/attachments.js publicReference): a picture and a file.
                     attachments: (saidFiles[i] || []).map((id, k) => (k === 0 ? { id, kind: 'image', name: 'shot.png', media_type: 'image/png', size: 1200, url: `https://openvibe.media/a/${id}`, width: 4, height: 3 } : { id, kind: 'file', name: 'notes.txt', media_type: 'text/plain', size: 2048, url: `https://openvibe.media/a/${id}` })) })));
@@ -414,6 +416,9 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             assert.deepStrictEqual(cards[0], ['A', 'The studio tour', 'https://openvibe.video/v/42', 'https://openvibe.media/t/abc?w=320', 'Watch together https://openvibe.party/new?media=https%3A%2F%2Fopenvibe.video%2Fv%2F42'], 'a card: its picture, its title as a link, its one move');
             assert.deepStrictEqual(cards[1], ['B', '<img src=x>', null, null, null], 'a card is data: no script link, no picture from elsewhere, no script button, the title as text');
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelectorAll('script[src*=\"dock-card.js\"]').length"), 1, 'dock-card.js is loaded once, when a card first shows'));
+            const links = await until(p, "(() => { const c = [...document.querySelectorAll('.ovdk .ovdk-msg .ovdk-links .ovlc')]; return c.length ? c.map((x) => [x.querySelector('.ovlc-title').textContent, x.querySelector('.ovlc-title').href]) : null; })()", 'the link card');
+            assert.deepStrictEqual(links, [['The shots, all forty', 'https://example.com/shots']], 'the menu draws Chat\'s link card (a javascript: address draws none)');
+            assert.strictEqual(await p.evaluate("document.querySelectorAll('script[src*=\"ov-linkcard.js\"]').length"), 1, 'ov-linkcard.js is loaded once');
             await until(p, "!!document.querySelector('.ovdk .ovdk-edit')", 'the edit action');
             // 4.220.0: Edit is a pencil at the bubble's corner, hidden until hover, focus or a tap (rule 138); the box is
             // the editor (no browser prompt), and "edited" is one quiet word inside the bubble.

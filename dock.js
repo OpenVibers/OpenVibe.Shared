@@ -93,7 +93,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'ov-chat-cards.js': '2d6bf2953db7', 'ov-tabs.js': '0e8a449da361', 'dock-vibe.js': '952971b94969', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
+    const DOCK_REV = { 'ov-chat-cards.js': '2d6bf2953db7', 'ov-tabs.js': '0e8a449da361', 'dock-vibe.js': '952971b94969', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5', 'ov-linkcard.js': '935e1b334710' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -423,6 +423,7 @@
             .ovdk-text { padding: 8px 12px; border-radius: 16px; font-size: 14px; line-height: 1.42; white-space: pre-wrap; overflow-wrap: anywhere;
                 background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); }
             .ovdk-msg.is-mine .ovdk-text { color: var(--on-accent-strong, var(--on-accent, #fff)); background: var(--accent-strong, var(--accent, #3472d8)); }
+            .ovdk-links { display: grid; gap: 4px; width: min(100%, 340px); min-width: 0; }
             .ovdk-send { flex: none; display: flex; align-items: flex-end; gap: 8px; margin: 8px 10px 10px; padding: 4px 4px 4px 12px; border-radius: 16px;
                 border: 1px solid var(--border-light, var(--border, rgba(255,255,255,.14))); background: var(--bg-primary, #12141b); }
             .ovdk-send:focus-within { border-color: var(--accent, #3b82f6); }
@@ -1574,6 +1575,12 @@
         }
         // A known OpenVibe link's card (Chat's link cards): dock-card.js draws it, loaded the first time one shows.
         if (m.card) load('dock-card.js', () => !!root.OpenVibeDockCard).then((ok) => { const c = ok && root.OpenVibeDockCard(m.card, h); if (c) li.append(c); });
+        // 4.320.0 (plan §Y.1 A8): the cards Chat read for any other address the message carries (ov-linkcard.js), two at most.
+        if (Array.isArray(m.embeds) && m.embeds.length) load('ov-linkcard.js', () => !!root.OVLinkCard).then((ok) => {
+            if (!ok) return;
+            const box = h('div', 'ovdk-links');
+            if (root.OVLinkCard.render(box, m.embeds, { max: 2 })) li.append(box);
+        });
         li.title = new Date(m.created_at).toLocaleString();
         return li;
     }
