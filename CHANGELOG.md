@@ -2,7 +2,14 @@
 
 ## 4.313.0 — 2026-11-18
 
-**Alerts, enriched** (the owner's phone, 11-18, You → Alerts: "Improve, Enrich").
+**Alerts enriched, and the approval level in the box** (the owner's phone, 11-18, You → Alerts: "Improve, Enrich";
+"make these approvals just built into the chat … adjust the approval methods in the little composer area").
+- **The approval level, a chip in the box's row** (`agents.run@1` 1.5.0 `level`; Actor #608, Network #1096).
+  - An open Actor conversation that can set it shows *Asks first*, *Edits on its own*, *A reviewer approves* or *Full*.
+    On a narrow phone only the glyph shows.
+  - Its sheet has the four. It says what still asks at every level (spending money, a password, deleting, a new
+    recipient), and shows the levels under the agent's own without offering them.
+  - A pick is `PATCH`ed as `{ level }` for the conversation, and the chip follows the answer.
 - **An operator alert that keeps firing is one row.** *Disk almost full* fired today, yesterday and Sunday and showed
   as three rows. It is now the newest row, *×3*, *since Sunday*, wherever its repeats fall. Other repeats still fold only
   when they come close together.
@@ -12,7 +19,8 @@
   - a finished one says *See the answer*.
 - **The waiting bubble sits under the bar.** *An agent is waiting for your answer* sat over the bar's coins and face
   on openvibe.bot ("buggy looks"). It now goes under the whole bar, and a bar scrolled out of sight says nothing.
-- Tests: `notifications-fold-chrome` adds the repeating operator alert; `dock-chrome` checks the bubble is under the bar.
+- Tests: `session-level-chrome` (new); `notifications-fold-chrome` adds the repeating operator alert; `dock-chrome` checks
+  the bubble is under the bar.
 
 ## 4.312.0 — 2026-11-18
 
