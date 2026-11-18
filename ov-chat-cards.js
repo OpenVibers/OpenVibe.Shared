@@ -99,6 +99,7 @@
             + '.ovcc-go:focus-visible{outline:2px solid var(--ev);outline-offset:2px}'
             + '.ovcc details{min-width:0}.ovcc summary{display:flex;align-items:baseline;gap:.35em;cursor:pointer;list-style:none;color:var(--text-primary,#e6edf7);font-weight:750}.ovcc summary::-webkit-details-marker{display:none}'
             + '.ovcc summary::after{content:"";margin-left:auto;width:8px;height:8px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg);opacity:.6;transition:transform .2s}'
+            + '.ovcc summary{flex-wrap:wrap}.ovcc-pv{flex-basis:100%;order:3;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;font-size:.84rem;color:var(--text-secondary,#a8b3c4)}.ovcc details[open] .ovcc-pv{display:none}.ovcc-more{display:inline-flex;align-items:center;min-height:36px;margin-top:2px;font-size:.84rem;font-weight:650;color:var(--accent,#3b82f6);text-decoration:none}'
             + '.ovcc details[open] summary::after{transform:rotate(-135deg)}.ovcc ul{margin:6px 0 2px;padding:0 0 0 18px;font-size:.84rem;color:var(--text-secondary,#a8b3c4)}.ovcc li{margin:2px 0}'
             + '.ovcc-wh{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-muted,#7d8aa0);margin:0 2px 6px}.ovcc-wh b{color:var(--text-secondary,#a8b3c4)}'
             + '.ovcc iframe{display:block;width:100%;border:0;border-radius:10px;background:var(--bg-primary,#0b1220)}'
@@ -147,8 +148,12 @@
             ic.innerHTML = SVG.rocket;
             const d = h('details'); const sum = h('summary');
             sum.append(h('span', 'ovcc-n', `${c.count} update${c.count === 1 ? '' : 's'} shipped`)); if (time) sum.append(h('span', 'ovcc-t', time));
+            // 4.312.0 (the owner's phone, 11-18: an empty "3 updates shipped" bar, "improve"): what shipped, in one line, before
+            // it opens; open, every one and the changelog.
+            const pv = h('span', 'ovcc-pv', c.items.slice(0, 3).join(' · ')); sum.append(pv);
             const ul = h('ul'); c.items.forEach((x) => ul.append(h('li', '', x)));
-            d.append(sum, ul); body.append(d);
+            const all = h('a', 'ovcc-more', 'Everything that shipped'); all.href = 'https://openvibe.blog/changelog'; all.target = '_blank'; all.rel = 'noopener';
+            d.append(sum, ul, all); body.append(d);
             card.append(ic, body);
             card.__ovcc = c;
             return card;
@@ -177,6 +182,7 @@
             p.count += c.count; p.items = p.items.concat(c.items).slice(0, 80);
             const n = prev.querySelector('.ovcc-n'); if (n) n.textContent = `${p.count} update${p.count === 1 ? '' : 's'} shipped`;
             const ul = prev.querySelector('ul'); if (ul) c.items.forEach((x) => ul.append(h('li', '', x)));
+            const pv = prev.querySelector('.ovcc-pv'); if (pv) pv.textContent = p.items.slice(0, 3).join(' · ');
             prev.dataset.ovccAt = String(t);
             return true;
         }

@@ -93,7 +93,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'ov-chat-cards.js': '43cbb5c8c9d6', 'ov-tabs.js': '0e8a449da361', 'dock-vibe.js': '3580235c68e5', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
+    const DOCK_REV = { 'ov-chat-cards.js': '2d6bf2953db7', 'ov-tabs.js': '0e8a449da361', 'dock-vibe.js': '3580235c68e5', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -252,6 +252,11 @@
             .ovdk-gl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
             .ovdk-gl-row { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 10px; padding: 6px 8px; border-radius: 12px; }
             .ovdk-gl-row .ovdk-av { width: 32px; height: 32px; }
+            /* 4.312.0: a name or a face that opens its person's sheet. */
+            .ovdk-person { cursor: pointer; border-radius: 8px; }
+            .ovdk-person:hover { text-decoration: underline; text-underline-offset: 3px; }
+            .ovdk-person:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+            .ovdk-av.ovdk-person:hover { text-decoration: none; filter: brightness(1.12); }
             .ovdk-gl-b { display: grid; min-width: 0; gap: 1px; }
             .ovdk-gl-h { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
             .ovdk-gl-h b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
@@ -314,6 +319,16 @@
                 border-top-color: var(--accent, #3b82f6); animation: ovdk-older-spin .8s linear infinite; }
             @keyframes ovdk-older-spin { to { transform: rotate(360deg); } }
             .ovdk-gl-jump { position: sticky; bottom: 64px; z-index: 3; height: 0; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+            /* 4.312.0 (the owner's phone, 11-18: the down-and-check pill sat on the last card, "improve"): a slim bar the width of the
+               list, its words said ("3 new messages", "Mark read"), glass over what scrolls under it. */
+            .ovdk-gl-jump .ovdk-gl-jump-c { width: calc(100% - 16px); justify-content: space-between; border-radius: 14px; color: var(--text-primary, #e8ecf3);
+                background: color-mix(in srgb, var(--bg-secondary, #111827) 78%, var(--accent, #3b82f6) 22%); border: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent);
+                -webkit-backdrop-filter: blur(12px) saturate(1.2); backdrop-filter: blur(12px) saturate(1.2); box-shadow: 0 14px 30px -16px rgba(0, 0, 0, .6); }
+            .ovdk-gl-jump .ovdk-gl-jump-go { flex: 1; min-width: 0; }
+            .ovdk-gl-jump .ovdk-gl-jump-go .ovdk-i { color: var(--accent, #3b82f6); }
+            .ovdk-gl-jump .ovdk-gl-jump-read { border-left: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); color: var(--text-secondary, #a8b3c4); }
+            .ovdk-gl-jump .ovdk-gl-jump-n:empty::before { content: "New messages"; }
+            .ovdk-gl-jump button:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); }
             .ovdk-gl-jump-c { pointer-events: auto; display: inline-flex; align-items: stretch; margin-bottom: 8px; border-radius: 999px; overflow: hidden; color: #fff;
                 background: var(--accent, #3b82f6); box-shadow: 0 12px 26px -12px color-mix(in srgb, var(--accent, #3b82f6) 85%, transparent), inset 0 1px 0 rgba(255, 255, 255, .22);
                 animation: ovdk-jump-in .34s cubic-bezier(.3, 1.4, .4, 1) both; }
@@ -353,6 +368,14 @@
             .ovdk-fab:active { transform: scale(.95); }
             @keyframes ovdk-fab-in { from { opacity: 0; transform: scale(.6) translateY(calc(10px * var(--ov-move, 1))); } }
             .ovdk-sv-new.is-float { margin: 6px 4px 0; }
+            /* 4.312.0 (the owner's phone, 11-18: the name box and New server both showing, "dupe"; the foot under a short list,
+               "float down … fixed"): the box shows only once New server is pressed, and the foot sits at the pane's bottom. */
+            .ovdk-sv-new[hidden], .ovdk-sv-new.is-float[hidden] { display: none !important; }
+            .ovdk-pane.ovdk-sv { display: flex; flex-direction: column; min-height: 100%; box-sizing: border-box; }
+            .ovdk-pane.ovdk-sv > .ovdk-sv-foot { margin-top: auto; }
+            .ovdk-sv-new.is-float { order: 0; margin: 10px 4px 0; }
+            .ovdk-pane.ovdk-sv > .ovdk-sv-new.is-float:not([hidden]) { margin-top: auto; }
+            .ovdk-pane.ovdk-sv > .ovdk-sv-new.is-float:not([hidden]) ~ .ovdk-sv-foot { margin-top: 0; }
             .ovdk-sv-new.is-rising { animation: ovdk-rise .26s cubic-bezier(.2, .8, .2, 1) both; }
             @keyframes ovdk-rise { from { opacity: 0; transform: translateY(calc(12px * var(--ov-move, 1))); } }
             html[data-ov-motion=off] .ovdk-fab, html[data-ov-motion=off] .ovdk-sv-new.is-rising { animation: none; }
@@ -1025,7 +1048,7 @@
         const jumpN = h('span', 'ovdk-gl-jump-n', '');
         jumpGo.append(icon(G.down), jumpN);
         const jumpRead = h('button', 'ovdk-gl-jump-read'); jumpRead.type = 'button'; jumpRead.append(icon(G.check));
-        jumpRead.setAttribute('aria-label', 'Mark all as read'); jumpRead.title = 'Mark all as read';
+        jumpRead.setAttribute('aria-label', 'Mark all as read'); jumpRead.title = 'Mark all as read'; jumpRead.append(h('span', 'ovdk-gl-jump-w', 'Mark read'));
         pill.append(jumpGo, jumpRead); jump.append(pill);
         const say = h('form', 'ovdk-gl-say');
         const field = h('input'); field.type = 'text'; field.maxLength = 500; field.placeholder = 'Say something to everyone'; field.setAttribute('aria-label', 'Message to Global chat'); field.autocomplete = 'off'; field.enterKeyHint = 'send';
@@ -1047,6 +1070,40 @@
         const mine = (m) => !!me() && String(m.username || '') === me();
         const byId = (a, b2) => Number(a.id) - Number(b2.id) || String(a.timestamp || '').localeCompare(String(b2.timestamp || ''));
 
+        /** 4.312.0 (the owner's phone, 11-18: "tap don't open user menu"): a press on a name or a face opens the person's
+         *  sheet: their profile, a message, a mention in the box, their channel (Watch when they are live). */
+        async function personSheet(who, anchor) {
+            const u = String((who && who.username) || '');
+            if (!/^[A-Za-z0-9_.-]{1,40}$/.test(u)) return;
+            const name = String(who.display_name || u).slice(0, 40);
+            const P = root.OpenVibePicker || await new Promise((ok) => { const sc2 = document.createElement('script'); sc2.src = sibling('ov-picker.js'); sc2.onload = () => ok(root.OpenVibePicker || null); sc2.onerror = () => ok(null); document.head.append(sc2); });
+            const profile = `https://openvibe.network/@${encodeURIComponent(u)}`;
+            if (!P) { window.open(profile, '_blank', 'noopener'); return; }
+            const self = !!me() && u === me();
+            const rows = [
+                { id: 'profile', name: self ? 'Your profile' : 'Profile', line: `openvibe.network/@${u}`, svg: svg(G.people) },
+                ...(!self && me() ? [{ id: 'message', name: 'Message', line: `A conversation with ${name}`, svg: svg(G.chat) }] : []),
+                ...(!self ? [{ id: 'mention', name: 'Mention', line: `Put @${u} in your message`, svg: svg(G.pencil) }] : []),
+                who.live && who.url ? { id: 'watch', name: 'Watch', line: `${name} is live now`, svg: svg(G.vibe) } : { id: 'channel', name: 'Channel', line: `openvibe.live/${u}`, svg: svg(G.globe) },
+            ];
+            P.open({ anchor, title: name, intro: `@${u}`, search: false, rows, onPick: (row) => {
+                if (row.id === 'profile') window.open(profile, '_blank', 'noopener');
+                else if (row.id === 'channel') window.open(`https://openvibe.live/${encodeURIComponent(u)}`, '_blank', 'noopener');
+                else if (row.id === 'watch') window.open(who.url, '_blank', 'noopener');
+                else if (row.id === 'message') talkTo({ username: u }, { network: true });
+                else if (row.id === 'mention') { const at = `@${u} `; if (!field.value.includes(at)) field.value = `${at}${field.value}`; field.focus(); try { field.setSelectionRange(field.value.length, field.value.length); } catch { /* not a text field */ } }
+            } });
+        }
+        /** A name or a face that opens its person's sheet, by press or by Enter. */
+        const asPerson = (node, who) => {
+            if (!node || !who || !who.username) return node;
+            node.classList.add('ovdk-person'); node.setAttribute('role', 'button'); node.tabIndex = 0;
+            node.setAttribute('aria-label', `${who.display_name || who.username}: profile, message, mention`);
+            const go = (e) => { e.preventDefault(); e.stopPropagation(); personSheet(who, node); };
+            node.addEventListener('click', go);
+            node.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') go(e); });
+            return node;
+        };
         function rowOf(m) {
             // An event (someone went live, a Rundown episode, a run of deploys, a widget) is a card, as on Live (4.284.0,
             // ov-chat-cards.js; the owner: Global "is missing all the styles that exist when you're out").
@@ -1054,9 +1111,9 @@
             if (card) return C.render(card);
             const li = h('li', 'ovdk-gl-row');
             const who = { username: m.username, display_name: m.display_name, avatar_url: m.avatar_url };
-            const head = h('span', 'ovdk-gl-h'); head.append(setSubject(h('b', '', String(m.display_name || m.username || 'Someone').slice(0, 40)), who), h('time', '', when(m.timestamp)));
+            const head = h('span', 'ovdk-gl-h'); head.append(asPerson(setSubject(h('b', '', String(m.display_name || m.username || 'Someone').slice(0, 40)), who), who), h('time', '', when(m.timestamp)));
             const body = h('span', 'ovdk-gl-b'); body.append(head, h('span', 'ovdk-gl-t', String(m.message).replace(/\s+/g, ' ').slice(0, 500)));
-            li.append(avatar(who, false), body);
+            li.append(asPerson(avatar(who, false), who), body);
             return li;
         }
         /** The last lines, kept for the next time Global opens in this page (it paints from them at once). */
@@ -1089,7 +1146,10 @@
                 const C = root.OVChatCards; const card = C && C.of(m);
                 let el;
                 if (card && C.fold(list.lastElementChild, card)) el = list.lastElementChild;
-                else { el = card ? C.render(card) : rowOf(m); list.append(el); }
+                else {
+                    el = card ? C.render(card) : rowOf(m); list.append(el);
+                    if (card && card.kind === 'live') { const w = { username: card.name, live: true, url: card.url }; asPerson(el.querySelector('.ovcc-l b'), w); asPerson(el.querySelector('.ovcc-ic'), w); }
+                }
                 el.dataset.id = String(m.id);
                 track(el, m);
                 lastId = Math.max(lastId, Number(m.id) || 0);

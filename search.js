@@ -1871,7 +1871,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             const ag = r.agent || {};
             out.push({ key: `run:${r.ref || r.id}`, kind: 'run', ref: r.ref || r.id, name: r.title || ag.name || { chat: 'Chat', task: 'Task', code: 'Code', ask: 'Answer' }[r.kind] || 'Run', state: needs ? 'asks' : 'working',
                 pic: /^https:\/\//.test(String(ag.avatar_url || '')) ? ag.avatar_url : '', hue: Number.isInteger(ag.hue) ? ag.hue : faceHue(ag.id || r.kind), glyph: KIND_SVG[r.kind] ? r.kind : 'spark',
-                line: needs ? 'Your turn' : (r.doing && r.doing.text) || (r.status === 'planning' ? 'Starting' : 'Working') });
+                // 4.312.0 (the owner's phone, 11-18: "It asks you something" beside "Your turn"): what it needs, in words.
+                line: needs ? ({ approval: 'It asks before it goes on', takeover: 'It needs you to take over a step', payment: 'It needs funds to go on' }[r.waiting.for] || 'It needs you') : (r.doing && r.doing.text) || (r.status === 'planning' ? 'Starting' : 'Working') });
         }
         out.sort((x, y) => (y.state === 'asks') - (x.state === 'asks'));
         activeList = out; activeAt = Date.now();
@@ -1938,7 +1939,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             const n = document.createElement('b'); n.textContent = it.name;
             const l = document.createElement('small'); l.textContent = it.line;
             t.append(n, l);
-            const st = document.createElement('i'); st.className = `ovs-active-st is-${it.state}`; st.textContent = it.state === 'asks' ? 'Your turn' : 'Working';
+            const st = document.createElement('i'); st.className = `ovs-active-st is-${it.state}`; st.textContent = it.state === 'asks' ? 'Needs you' : 'Working';
             b.append(stackFace(it, 'ovs-active-f'), t, st);
             b.setAttribute('aria-label', `${it.name}: ${it.state === 'asks' ? 'waiting for you' : 'working'}. Open it`);
             b.addEventListener('click', () => {
