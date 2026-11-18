@@ -3336,6 +3336,11 @@
 .ovse :focus-visible { outline: 2px solid var(--ovse-acc2); outline-offset: 2px; }
 
 /* the drawer: over the session on a phone, a column on a computer */
+/* 4.315.0 (the owner's phone, 11-18, "Can't scroll!!"): the drawer scrolls as one. Only the list under Actor, Codes, Your
+   AI and the running card scrolled, and on a short screen those rows filled the drawer, so a drag on them moved
+   nothing; the head (Sessions, New, x) stays at the top. */
+.ovse-drawer { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.ovse-drawer > * { flex-shrink: 0; }
 .ovse-drawer { position: absolute; z-index: 5; inset: 0 auto 0 0; width: min(86%, 340px); display: flex; flex-direction: column; min-height: 0; background: var(--bg-secondary, var(--ovse-bg)); border-right: 1px solid var(--ovse-line); transform: translateX(-104%); transition: transform .28s cubic-bezier(.2,.8,.2,1); padding-top: env(safe-area-inset-top, 0px); }
 .ovse-scrim { position: absolute; z-index: 4; inset: 0; background: rgba(0,0,0,.42); opacity: 0; pointer-events: none; transition: opacity .25s; }
 /* 4.313.0 (the owner's phone, 11-18: a slice of the conversation and its ⋯ beside the drawer, "fix"): on a phone the
@@ -3345,11 +3350,11 @@
 .ovse.is-drawer:not(.is-wide) .ovse-scrim { opacity: 1; pointer-events: auto; }
 .ovse.is-wide { grid-template-columns: 0 minmax(0, 1fr); transition: grid-template-columns .28s cubic-bezier(.2,.8,.2,1); }
 .ovse.is-wide.is-drawer { grid-template-columns: 300px minmax(0, 1fr); }
-.ovse.is-wide .ovse-drawer { position: relative; inset: auto; width: auto; grid-row: 1; grid-column: 1; overflow: hidden; box-shadow: none; transform: none; opacity: 0; transition: opacity .2s; }
+.ovse.is-wide .ovse-drawer { position: relative; inset: auto; width: auto; grid-row: 1; grid-column: 1; overflow-x: hidden; overflow-y: auto; box-shadow: none; transform: none; opacity: 0; transition: opacity .2s; }
 .ovse.is-wide.is-drawer .ovse-drawer { opacity: 1; }
 .ovse.is-wide .ovse-scrim, .ovse.is-wide .ovse-dclose { display: none; }
 .ovse.is-wide .ovse-main { grid-column: 2; }
-.ovse-dhead { display: flex; align-items: center; gap: 8px; padding: 10px 10px 6px 16px; }
+.ovse-dhead { display: flex; align-items: center; gap: 8px; padding: 10px 10px 6px 16px; position: sticky; top: 0; z-index: 2; background: var(--bg-secondary, var(--ovse-bg)); }
 .ovse-dhead > b { flex: 1; font-size: 17px; }
 .ovse-new { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px 0 10px; border: 0; border-radius: 999px; background: var(--ovse-acc); color: var(--on-accent, #fff) !important; font-weight: 600; cursor: pointer; transition: transform .15s, filter .15s; }
 .ovse-new:hover { filter: brightness(1.08); } .ovse-new:active { transform: scale(.96); }
@@ -3363,7 +3368,7 @@
 .ovse .ovse-find input::placeholder { color: var(--ovse-mute); opacity: 1; }
 .ovse .ovse-find input::-webkit-search-decoration, .ovse .ovse-find input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
 .ovse-find:focus-within { background: var(--ovse-card); border-color: color-mix(in srgb, var(--ovse-acc) 55%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovse-acc) 18%, transparent); color: var(--ovse-dim); }
-.ovse-runs { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 8px 16px; }
+.ovse-runs { padding: 0 8px 16px; }
 .ovse-group { margin: 12px 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ovse-mute); }
 .ovse-row { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 8px 10px; border: 0; border-radius: 14px; background: transparent; text-align: left; cursor: pointer; animation: ovse-in .32s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 22ms); transition: background .15s; }
 .ovse-row:hover { background: color-mix(in srgb, var(--ovse-fg) 6%, transparent); }
