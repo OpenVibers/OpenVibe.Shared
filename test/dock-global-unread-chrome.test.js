@@ -83,6 +83,10 @@ const unreadCount = `document.querySelectorAll('.ovdk-gl-list > .is-unread').len
 
         await p.evaluate("document.querySelector('.ovdk-seg[data-seg=global]').click()");
         await until(p, "!!document.querySelector('.ovdk-gl-new')");
+        // The list scrolls to the line a frame or two after it is drawn (macOS CI read it first: "841 of 718"): wait for
+        // the scroll to settle there, then measure.
+        await until(p, `(() => { const d = document.querySelector('.ovdk-gl-new'), sc = document.querySelector('.ovdk-scroll'); if (!d || !sc) return false;
+            const top = d.getBoundingClientRect().top - sc.getBoundingClientRect().top; return top >= 0 && top < sc.clientHeight * 0.45; })()`).catch(() => {});
         const opened = await p.evaluate(`(() => { const d = document.querySelector('.ovdk-gl-new'), sc = document.querySelector('.ovdk-scroll');
             const prev = d.previousElementSibling, next = d.nextElementSibling, top = d.getBoundingClientRect().top - sc.getBoundingClientRect().top;
             return { prev: prev && prev.dataset.id, next: next && next.dataset.id, label: d.textContent, top, h: sc.clientHeight, first: document.querySelector('.ovdk-gl-list > [data-id]').dataset.id,
