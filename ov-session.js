@@ -720,7 +720,28 @@
             who.addEventListener('click', () => yourAI());
             aiSlot.append(who);
         }
-        drawer.append(dHead, actorSlot, codesSlot, aiSlot, topSlot, find, runsBox);
+        // 4.317.0 (the owner's phone, 11-18: Actor, Codes and Your AI filled the screen above the sessions, "make it
+        // collapse"): your agents fold into one row of three, face and name, each doing what its card does; the chevron
+        // opens the full cards (settings, pause, today's spend) and the choice is kept on this device.
+        const agents = el('div', 'ovse-agents');
+        const foldB = btn('ovse-ib ovse-agents-fold', 'Show your agents in full', 'fold');
+        let agentsOpen = false;
+        try { agentsOpen = localStorage.getItem('ovse-agents-open') === '1'; } catch { /* private mode: folded */ }
+        const paintAgents = () => {
+            agents.classList.toggle('is-folded', !agentsOpen);
+            foldB.setAttribute('aria-expanded', String(agentsOpen));
+            const label = agentsOpen ? 'Fold your agents into one row' : 'Show your agents in full';
+            foldB.setAttribute('aria-label', label); foldB.title = label;
+        };
+        foldB.addEventListener('click', () => {
+            agentsOpen = !agentsOpen;
+            try { localStorage.setItem('ovse-agents-open', agentsOpen ? '1' : '0'); } catch { /* */ }
+            agents.classList.add('is-turning'); setTimeout(() => agents.classList.remove('is-turning'), 320);
+            paintAgents();
+        });
+        agents.append(actorSlot, codesSlot, aiSlot, foldB);
+        paintAgents();
+        drawer.append(dHead, agents, topSlot, find, runsBox);
 
         const main = el('section', 'ovse-main');
         const head = el('header', 'ovse-head');
@@ -3368,8 +3389,32 @@
 .ovse .ovse-find input::placeholder { color: var(--ovse-mute); opacity: 1; }
 .ovse .ovse-find input::-webkit-search-decoration, .ovse .ovse-find input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
 .ovse-find:focus-within { background: var(--ovse-card); border-color: color-mix(in srgb, var(--ovse-acc) 55%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovse-acc) 18%, transparent); color: var(--ovse-dim); }
-.ovse-runs { padding: 0 8px 16px; }
-.ovse-group { margin: 12px 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ovse-mute); }
+.ovse-runs { padding: 0 6px 12px; }
+.ovse-group { margin: 10px 10px 2px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ovse-mute); }
+/* 4.317.0 (the owner's phone, 11-18: "reduce spacing, padding"): a session row is one tight line of words under its title. */
+.ovse-runs .ovse-row { min-height: 50px; padding: 6px 10px; gap: 10px; }
+.ovse-runs .ovse-row .ovse-face.is-m { width: 36px; height: 36px; }
+/* Your agents (4.317.0): folded, one row of three, face and name; open, the full cards; the chevron turns between them. */
+.ovse-agents { display: grid; gap: 6px; margin: 2px 10px 8px; }
+.ovse-agents > .ovse-actor { margin: 0; }
+.ovse-agents > .ovse-agents-fold { justify-self: end; width: 36px; height: 28px; min-height: 28px; border-radius: 10px; color: var(--ovse-mute); }
+.ovse-agents-fold svg { transform: rotate(180deg); transition: transform .28s cubic-bezier(.2, .9, .25, 1.15); }
+.ovse-agents.is-folded { display: flex; align-items: stretch; }
+.ovse-agents.is-folded > .ovse-actor:not([hidden]) { flex: 1 1 0; min-width: 0; padding: 3px; border-radius: 14px; }
+.ovse-agents.is-folded > .ovse-actor > :not(.ovse-actor-who) { display: none; }
+.ovse-agents.is-folded .ovse-actor-who { gap: 7px; padding: 4px; }
+.ovse-agents.is-folded .ovse-actor-top i, .ovse-agents.is-folded .ovse-actor-t small, .ovse-agents.is-folded .ovse-ai-go { display: none; }
+.ovse-agents.is-folded .ovse-actor-top b { font-size: 13.5px; }
+.ovse-agents.is-folded .ovse-face, .ovse-agents.is-folded .ovse-codes-face, .ovse-agents.is-folded .ovse-ai-face { width: 30px; height: 30px; border-radius: 9px; }
+.ovse-agents.is-folded .ovse-codes-face svg, .ovse-agents.is-folded .ovse-ai-face svg { width: 17px; height: 17px; }
+.ovse-agents.is-folded .ovse-actor-who.is-working .ovse-actor-top b { color: var(--ovse-acc2); }
+.ovse-agents.is-folded .ovse-actor-who.is-asks .ovse-actor-top b { color: var(--warning, #f5a524); }
+.ovse-agents.is-folded > .ovse-agents-fold { flex: none; align-self: center; width: 32px; height: 40px; min-height: 40px; }
+.ovse-agents.is-folded .ovse-agents-fold svg { transform: none; }
+.ovse-agents.is-turning > .ovse-actor { animation: ovse-agents-in .3s cubic-bezier(.2, .8, .2, 1) both; }
+.ovse-agents.is-turning > .ovse-actor:nth-child(2) { animation-delay: 30ms; } .ovse-agents.is-turning > .ovse-actor:nth-child(3) { animation-delay: 60ms; }
+@keyframes ovse-agents-in { from { opacity: .4; transform: translateY(calc(-4px * var(--ov-move, 1))) scale(.98); } }
+html[data-ov-motion=off] .ovse-agents.is-turning > .ovse-actor, html[data-ov-motion=off] .ovse-agents-fold svg { animation: none; transition: none; }
 .ovse-row { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 8px 10px; border: 0; border-radius: 14px; background: transparent; text-align: left; cursor: pointer; animation: ovse-in .32s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 22ms); transition: background .15s; }
 .ovse-row:hover { background: color-mix(in srgb, var(--ovse-fg) 6%, transparent); }
 .ovse-row.is-on { background: color-mix(in srgb, var(--ovse-acc) 16%, transparent); }

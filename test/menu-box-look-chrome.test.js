@@ -58,7 +58,7 @@ const LOOK = `(() => {
     const ghost = [...ovs.querySelectorAll('.ovt-ghost')].find((x) => !x.hidden && x.offsetParent && x.previousElementSibling === input);
     const ib = input.getBoundingClientRect(); const ic = getComputedStyle(input);
     const start = Math.round(ib.left + parseFloat(ic.paddingLeft) + parseFloat(ic.borderLeftWidth));   // where typing starts
-    const place = ovs.querySelector('.ovs-place'); const pc = place ? getComputedStyle(place) : null;
+    const place = ovs.querySelector('a.ovs-ctx'); const pc = place ? getComputedStyle(place) : null;
     const disc = pc ? (pc.backgroundColor !== 'rgba(0, 0, 0, 0)' && pc.backgroundColor !== 'transparent') || pc.borderTopWidth !== '0px' : false;
     if (ghost) {
         const term = ghost.querySelector('.ovt-term'); const c = getComputedStyle(ghost); const rg = document.createRange(); rg.selectNodeContents(term || ghost);
@@ -91,7 +91,7 @@ const LOOK = `(() => {
         // The steady state, as a person sees it once the menu has settled: the line sits where typing starts. A line left
         // behind where its box was measured mid-animation never gets there (4.286.0: ov-trending re-places after one).
         await until(p, `(() => { const l = ${LOOK}; return l && l.kind === 'line' && Math.abs(l.x - l.start) <= 1; })()`, 4000);
-        await until(p, "!document.querySelector('.ovs.is-open .ovs-place.is-turn')", 4000);
+        await until(p, "!document.querySelector('.ovs.is-open a.ovs-ctx.is-hint')", 4000);
         const vibe = await p.evaluate(LOOK);
         assert.strictEqual(vibe.kind, 'line');
         // The line is as wide as the box's typing room (Chrome 157 counts an input's padding out of clientWidth: it was 30 px
@@ -120,7 +120,7 @@ const LOOK = `(() => {
             await wait(1200);
             // The open button turns with the place, tinted for a moment (0.9 s): measured once that is over (a slow
             // runner, GitHub's macOS, measured mid-turn and saw the tint as a disc).
-            await until(p, "!document.querySelector('.ovs.is-open .ovs-place.is-turn')", 4000);
+            await until(p, "!document.querySelector('.ovs.is-open a.ovs-ctx.is-hint')", 4000);
             seen.push(await p.evaluate(LOOK));
         }
         for (const s of seen) {

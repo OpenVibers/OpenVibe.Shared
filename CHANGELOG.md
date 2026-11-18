@@ -1,5 +1,30 @@
 # Changelog
 
+## 4.317.0 — 2026-11-18
+
+**The menu, tidied** (the owner's phone shots, 11-18: "redesign, overhaul, improve, compact, clean it up").
+- **Vibe: your agents fold into one row.** Actor, Codes and Your AI filled the screen above the sessions ("improve & make
+  it collapse"). They are one row of three, face and name, each doing what its card did; the chevron opens the full cards
+  (settings, pause, today's spend) and the choice is kept on this device. Session rows are tighter (50 px, 36 px faces).
+- **A long suggestion slides to show its end** ("Deep dive the be…", "animate to see full"): the box's trending line rests,
+  slides to its end, and only then makes way for the next (ov-trending.js); a long placeholder does the same. Calm slides
+  slower; Off keeps the ellipsis.
+- **The place's sign is its link** (the ↗ at the box's end: "move/combine into the left icon, hover changes it, add
+  animation and effects"): the sign at the box's start opens the place's own site; a hover, a focus or a press turns it
+  into the arrow, and a new place plays the turn once so a phone learns it opens. You's home has its sign (the person).
+- **Alerts: one search, a slimmer top.** The inbox's own "Search notifications" field showed under the box (a later rule
+  of the inbox outranked the menu's): the menu leaves that row out, and the box searches the alerts. Unread is a slim pill
+  on the bar beside the count, Clear all and Inbox ("make a bit more compact"). The agents' filter says **AI**. An
+  operator alert says its severity as the first word of its meta line, its dot beating while it fails, with a hairline of
+  its tone, instead of a WARNING chip ("update improve"). The agents' link is one line.
+- **History goes on, and stays still** ("as you scroll everything fades in flashing", "not infinite scroll"): the next
+  rows are appended and only they come in (each "more" redrew every row, so all of them faded in again); a row drawn
+  again stays still; and past the first 60 places, the next page of the account's history (Network's cursor) comes as
+  you scroll, to the end. A row is one line of title with its time at the right, and its site under it in its colour
+  ("barcode.Tools · 6 h ago": "improve formatting" — now "Barcode · Tools").
+- Tests: `test/menu-polish-1118-chrome.test.js` (new), `menu-place-link-chrome` and `menu-box-look-chrome` (the link is the
+  sign), `notification-faces` (the AI label).
+
 ## 4.316.0 — 2026-11-18
 
 **Vibe opens at once, and Global's pill clears** (the owner's phone, 11-18: "Opening Vibe…", "loads insanely slow";

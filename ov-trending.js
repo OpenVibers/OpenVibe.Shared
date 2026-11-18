@@ -101,6 +101,13 @@
             + '@keyframes ovt-shine{from{background-position:100% 0}to{background-position:0 0}}'
             + '.ovt-tab{opacity:.8}'
             + 'html[data-ov-motion="off"] .ovt-line{transition:none}html[data-ov-motion="off"] .ovt-term{animation:none;-webkit-text-fill-color:currentColor;background:none}'
+            // 4.317.0 (the owner's phone, 11-18: "Deep dive the be…", "animate to see full"): a line longer than its box rests,
+            // slides to show its end, rests, and only then makes way for the next (fitLine); Off keeps the ellipsis.
+            + '.ovt-run{display:inline-block;white-space:nowrap}'
+            + '.ovt-line.is-long{text-overflow:clip;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent)}'
+            + '.ovt-line.is-long .ovt-run{animation:ovt-slide var(--ovt-sd,4s) cubic-bezier(.45,0,.55,1) .35s infinite alternate both}'
+            + '@keyframes ovt-slide{0%,22%{transform:translateX(0)}78%,100%{transform:translateX(var(--ovt-x,0))}}'
+            + 'html[data-ov-motion="off"] .ovt-line.is-long{text-overflow:ellipsis;-webkit-mask-image:none;mask-image:none}html[data-ov-motion="off"] .ovt-line.is-long .ovt-run{display:inline;animation:none}'
             + '.ovt-chips{position:fixed;z-index:9000;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px;box-sizing:border-box;border-radius:14px;'
             + 'background:var(--ovk-panel,var(--panel,Canvas));color:var(--ovk-text,var(--text,CanvasText));border:1px solid var(--ovk-line,var(--line,rgba(127,127,127,.3)));'
             + 'box-shadow:0 12px 32px rgba(0,0,0,.28);transform-origin:top center;animation:ovt-pop .22s cubic-bezier(.2,.8,.2,1) both}'
@@ -298,13 +305,31 @@
 
     function fill(line, item, b) {
         line.textContent = '';
+        line.classList.remove('is-long');
+        const run = document.createElement('span');
+        run.className = 'ovt-run';
         const pre = document.createElement('span');
         pre.className = 'ovt-pre';
         pre.textContent = item.pre != null ? item.pre : b.prefix;
         const t = document.createElement('span');
         t.className = 'ovt-term';
         t.textContent = item.query;
-        line.append(pre, t);
+        run.append(pre, t);
+        line.append(run);
+        requestAnimationFrame(() => fitLine(line, b));
+    }
+    /** A line wider than its box slides (4.317.0): to its end and back, at a reading pace, and the box keeps it until one
+     *  pass is over (b.hold), so the next line never cuts it short. */
+    function fitLine(line, b) {
+        if (!line.isConnected || b.line !== line) return;
+        const run = line.firstElementChild;
+        const over = run ? Math.ceil(run.getBoundingClientRect().width - line.clientWidth) : 0;
+        if (over <= 4 || motion() === 'off') { line.classList.remove('is-long'); b.hold = 0; return; }
+        const pass = Math.min(14, Math.max(3.2, (over / 42) / 0.56)) * (motion() === 'calm' ? 1.4 : 1);
+        line.style.setProperty('--ovt-x', `${-(over + 6)}px`);
+        line.style.setProperty('--ovt-sd', `${pass.toFixed(2)}s`);
+        line.classList.add('is-long');
+        b.hold = Date.now() + Math.round((pass + 0.35) * 1000);
     }
 
     /** The box's context changed (its page says so, or its placeholder did): its list is read again from the start. */
@@ -323,6 +348,7 @@
             // it was on … put it into the list so you can click it"): its page lists it (current()).
             if (!input.isConnected) { detach(input); return; }
             if (b.ghost.hidden || input.value || document.activeElement === input) return;
+            if (b.hold && Date.now() < b.hold) return;   // a long line finishes its pass first (4.317.0)
             const items = itemsOf(b);
             if (items.length < 2) return;
             place(input, b);   // each turn starts from where the box is now

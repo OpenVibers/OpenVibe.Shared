@@ -415,6 +415,24 @@ html[data-ov-motion=off] .ovh-ic { transition: none; }
 .ovh-hrow:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
 @media (hover: hover) and (pointer: fine) { .ovh-hrow:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); transform: translateY(-1px); } }
 .ovh-hist-more[hidden] { display: none; }
+/* 4.317.0: a row drawn again (a pick while editing, the history arriving) stays still; only rows added as you scroll come in. */
+.ovh-hrow.is-seen { animation: none; }
+/* 4.317.0: a History row is one tight line of title with its time at the right, and its site under it in its colour. */
+.ovh-hist .ovh-hrow { min-height: 60px; padding: 8px 12px; gap: 12px; border-radius: 14px; }
+.ovh-hist .ovh-hrow .ovh-ic { width: 42px; height: 42px; border-radius: 13px; }
+.ovh-hist .ovh-htxt { flex: 1; gap: 2px; }
+.ovh-htop { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.ovh-htxt .ovh-htop b { flex: 1; min-width: 0; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-line-clamp: unset; font-size: 14.5px; }
+.ovh-htxt small.ovh-when { flex: none; display: block; font-size: 12px; color: var(--text-muted, #8b97ab); font-variant-numeric: tabular-nums; }
+.ovh-htxt small.ovh-hmeta { min-width: 0; }
+.ovh-site { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: normal; font-weight: 650; color: hsl(var(--ovh-h, 215) 70% 74%); }
+.ovh-site b { font-weight: 650; }
+.ovh-site i { font-style: normal; font-weight: 500; color: var(--text-muted, #8b97ab); }
+:root[data-theme="light"] .ovh-site { color: hsl(var(--ovh-h, 215) 65% 34%); }
+.ovh-hist-more.is-busy { pointer-events: none; opacity: .65; }
+.ovh-hist-more.is-busy::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 8px; border-radius: 50%; background: currentColor; vertical-align: middle; animation: ovh-hist-wait 1s ease-in-out infinite; }
+@keyframes ovh-hist-wait { 50% { opacity: .2; transform: scale(.6); } }
+html[data-ov-motion=off] .ovh-hist-more.is-busy::after { animation: none; }
 @keyframes ovh-rise { from { opacity: 0; transform: translateY(8px); } }
 @keyframes ovh-rise-calm { from { opacity: 0; } }
 html[data-ov-motion=reduced] .ovh-hrow { animation-name: ovh-rise-calm; animation-delay: 0s; }
@@ -842,7 +860,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         el.setAttribute('data-sec', 'home');
         // 4.223.0: You is three tabs (Apps first); the one a person chose stays for this tab of the browser.
         let keptTab = null; try { keptTab = sessionStorage.getItem('ovh-you-tab'); } catch { /* */ }
-        const state = { view: 'home', edit: false, folder: null, filter: '', drag: null, suppress: 0, hedit: false, hsel: new Set(), hfilter: '', nedit: false, tab: o.startTab || (['apps', 'notifications', 'recent'].includes(keptTab) ? keptTab : 'apps') };
+        const state = { view: 'home', edit: false, folder: null, filter: '', drag: null, suppress: 0, hedit: false, hsel: new Set(), hseen: new Set(), hfilter: '', nedit: false, tab: o.startTab || (['apps', 'notifications', 'recent'].includes(keptTab) ? keptTab : 'apps') };
         let L = layoutOf(o);
         const save = () => { const keep = { home: L.home.slice(0, HOME_MAX), folders: L.folders.map((f) => ({ id: f.id, name: f.name, apps: f.apps.slice(0, 400) })) }; writeLocal(keep); pushRemote(o, keep); L.arranged = true; };
         const icons = () => { if (typeof o.mountIcons === 'function') { try { o.mountIcons(el); } catch { /* optional */ } } };
@@ -971,39 +989,84 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             };
             const list = h('div', 'ovh-hist-list'); list.setAttribute('role', 'list'); list.setAttribute('aria-label', 'Where you were');
             const more = h('button', 'ovh-all ovh-hist-more', 'Show more'); more.type = 'button';
-            let shown = 12;
-            const draw = () => {
-                list.textContent = '';
-                let last = '';
-                if (!items.length) { list.append(h('p', 'ovh-hint', `Nothing in your history matches “${state.hfilter.trim().slice(0, 60)}”.`)); more.hidden = true; return; }
-                items.slice(0, shown).forEach((x, i) => {
-                    const d = dayOf(x.at);
-                    if (d !== last) { last = d; list.append(h('div', 'ovh-hist-day', d)); }
-                    const live = x.tag === 'Live';
-                    const picking = state.hedit && x.id != null;
-                    const c = h(picking ? 'button' : 'a', `ovh-hrow${live ? ' is-live' : ''}${picking ? ' is-pick' : ''}${picking && state.hsel.has(String(x.id)) ? ' is-on' : ''}`);
-                    if (picking) {
-                        c.type = 'button'; c.setAttribute('role', 'checkbox'); c.setAttribute('aria-checked', String(state.hsel.has(String(x.id))));
-                        c.addEventListener('click', () => { const k = String(x.id); if (state.hsel.has(k)) state.hsel.delete(k); else state.hsel.add(k); draw(); paintBar(); });
-                        c.append(h('span', 'ovh-check'));
-                    } else c.href = safe(x.url);
-                    if (!picking) c.setAttribute('role', 'listitem');
-                    c.style.setProperty('--i', String(i % 12));
-                    const ic = h('span', 'ovh-ic'); ic.style.setProperty('--ovh-h', String(hueOf(x.site || 'ov'))); ic.append(siteIcon(x.site || 'ov', 44));
-                    const t = h('span', 'ovh-htxt');
-                    t.append(h('b', '', x.title));
-                    const meta = h('small');
-                    if (live) meta.append(h('span', 'ovh-live', 'LIVE'));
-                    const pre = String(x.metaPre || '').replace(/^Live now(?: · )?/, '');
-                    const when = h('span', '', [pre, ago(x.at)].filter(Boolean).join(' · ') || x.meta || '');
-                    if (x.at) { when.dataset.at = x.at; when.dataset.pre = pre; }   // search.js keeps the times current
-                    meta.append(when); t.append(meta);
-                    c.append(ic, t);
-                    list.append(c);
-                });
-                more.hidden = shown >= items.length;
+            // 4.317.0 (the owner's phone, 11-18: "as you scroll everything fades in flashing", "not infinite scroll"): the
+            // next rows are appended, and only they come in; a row drawn again (a pick, the history arriving) stays still; and
+            // past what was loaded, the next page of the account's history comes by itself (o.moreBack).
+            let shown = 0, lastDay = '', fetching = false;
+            let ended = typeof o.moreBack !== 'function' || !!words;
+            /** A site's name as a row says it: "Design"; a sub-site ("barcode.Tools") as "Barcode · Tools", the part you were
+             *  on first and its home quieter. An em, so a row's only plain spans are its times. */
+            const siteWords = (label) => {
+                const w = h('em', 'ovh-site');
+                const m = /^([a-z0-9][a-z0-9-]{0,40})\.([A-Za-z][A-Za-z0-9]{1,30})$/.exec(String(label).trim());
+                if (m) { w.append(h('b', '', m[1].charAt(0).toUpperCase() + m[1].slice(1).replace(/-/g, ' ')), h('i', '', ` · ${m[2]}`)); w.title = String(label); }
+                else w.textContent = String(label);
+                return w;
             };
-            more.addEventListener('click', () => { shown += 12; draw(); icons(); });
+            const rowOf = (x, i) => {
+                const live = x.tag === 'Live';
+                const picking = state.hedit && x.id != null;
+                const c = h(picking ? 'button' : 'a', `ovh-hrow${live ? ' is-live' : ''}${picking ? ' is-pick' : ''}${picking && state.hsel.has(String(x.id)) ? ' is-on' : ''}`);
+                if (picking) {
+                    c.type = 'button'; c.setAttribute('role', 'checkbox'); c.setAttribute('aria-checked', String(state.hsel.has(String(x.id))));
+                    c.addEventListener('click', () => { const k = String(x.id); if (state.hsel.has(k)) state.hsel.delete(k); else state.hsel.add(k); draw(true); paintBar(); });
+                    c.append(h('span', 'ovh-check'));
+                } else c.href = safe(x.url);
+                if (!picking) c.setAttribute('role', 'listitem');
+                c.style.setProperty('--i', String(i % 12));
+                // A row this view has shown already stays still when it is drawn again (the history arriving, a repaint).
+                if (state.hseen.has(x.url)) c.classList.add('is-seen'); else state.hseen.add(x.url);
+                c.style.setProperty('--ovh-h', String(hueOf(x.site || 'ov')));
+                const ic = h('span', 'ovh-ic'); ic.style.setProperty('--ovh-h', String(hueOf(x.site || 'ov'))); ic.append(siteIcon(x.site || 'ov', 44));
+                // 4.317.0 (the owner's phone, 11-18, "barcode.Tools · 6 h ago": "improve formatting"): the title and, at its
+                // right, when (as Sessions' rows); under it the site in its own colour, a sub-site as "Barcode · Tools".
+                const t = h('span', 'ovh-htxt');
+                const top = h('span', 'ovh-htop');
+                const name = h('b', '', x.title); name.title = x.title;
+                const whenBox = h('small', 'ovh-when');
+                const when = h('span', '', ago(x.at) || '');
+                if (x.at) { when.dataset.at = x.at; when.dataset.pre = ''; }   // search.js keeps the times current
+                whenBox.append(when);
+                top.append(name, whenBox);
+                const meta = h('small', 'ovh-hmeta');
+                if (live) meta.append(h('span', 'ovh-live', 'LIVE'));
+                const pre = String(x.metaPre || '').replace(/^Live now(?: · )?/, '') || (x.at ? '' : String(x.meta || ''));
+                if (pre) meta.append(siteWords(pre));
+                t.append(top, meta);
+                c.append(ic, t);
+                return c;
+            };
+            const append = (to) => {
+                for (let i = shown; i < to; i++) {
+                    const x = items[i];
+                    const d = dayOf(x.at);
+                    if (d !== lastDay) { lastDay = d; list.append(h('div', 'ovh-hist-day', d)); }
+                    list.append(rowOf(x, i - shown));
+                }
+                shown = Math.max(shown, to);
+            };
+            const draw = (still) => {
+                const keep = still ? shown : 12;
+                list.textContent = ''; lastDay = ''; shown = 0;
+                if (!items.length) { list.append(h('p', 'ovh-hint', `Nothing in your history matches “${state.hfilter.trim().slice(0, 60)}”.`)); more.hidden = true; return; }
+                append(Math.min(items.length, keep));
+                more.hidden = shown >= items.length && ended;
+            };
+            const showMore = async () => {
+                if (shown < items.length) { append(Math.min(items.length, shown + 12)); icons(); }
+                else if (!ended && !fetching) {
+                    fetching = true; more.classList.add('is-busy');
+                    let got = [];
+                    try { got = (await o.moreBack()) || []; } catch { got = []; }
+                    fetching = false; more.classList.remove('is-busy');
+                    const known = new Set(items.map((x) => x.url));
+                    const fresh = got.filter((x) => x && safe(x.url) && !known.has(x.url));
+                    if (!fresh.length || (got && got.end)) ended = true;
+                    if (fresh.length) { (o.back = o.back || []).push(...fresh); items.push(...fresh); append(Math.min(items.length, shown + 12)); icons(); }
+                }
+                more.hidden = shown >= items.length && ended;
+            };
+            more.addEventListener('click', showMore);
             autoPress(more);
             // Editing: a bar at the foot of the list says how many are picked, picks them all, and forgets them.
             const bar = h('div', 'ovh-hbar'); bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', 'Your history');
@@ -1021,7 +1084,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             pickAll.addEventListener('click', () => {
                 const ids = items.filter((x) => x.id != null).map((x) => String(x.id));
                 if (ids.every((k) => state.hsel.has(k))) ids.forEach((k) => state.hsel.delete(k)); else ids.forEach((k) => state.hsel.add(k));
-                draw(); paintBar();
+                draw(true); paintBar();
             });
             forget.addEventListener('click', async () => {
                 const ids = [...state.hsel];
@@ -1036,12 +1099,12 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
                 setTimeout(() => paint(), gone.length ? 260 : 0);
             });
             bar.append(count, pickAll, forget);
-            draw();
+            draw(false);
             paintBar();
             const head = sec('Where you were', 'history');
             const full = h('a', 'ovh-link', 'Full history'); full.href = 'https://openvibe.my/history'; head.append(full);
             wrap.append(head, list, more, bar);
-            histDraw = () => { draw(); paintBar(); icons(); };
+            histDraw = () => { draw(true); paintBar(); icons(); };
             return wrap;
         }
 

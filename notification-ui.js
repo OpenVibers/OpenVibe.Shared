@@ -50,7 +50,7 @@
     };
     const SERVICE_LABELS = {
         live: 'Live', tools: 'Tools', games: 'Games', media: 'Media', network: 'Network', host: 'Host', deals: 'Deals', coupons: 'Coupons', trade: 'Trade', chat: 'Chat',
-        actor: 'Agents', watch: 'Watch', connect: 'Connect', link: 'Link', community: 'Community', billing: 'Wallet', blog: 'Blog', design: 'Design', ai: 'AI', events: 'Events',
+        actor: 'AI', watch: 'Watch', connect: 'Connect', link: 'Link', community: 'Community', billing: 'Wallet', blog: 'Blog', design: 'Design', ai: 'AI', events: 'Events',
     };
 
     // Line glyphs (24×24, stroked like the open-loop mark): one per kind of notice.
@@ -89,7 +89,8 @@
     // 4.286.0 (the owner, 11-16: an agent's notice under both "Deals & alerts" and Agents: "it should just be deals … make
     // it actually filter this … categorize it in a way that makes cohesive sense"): one home each (Network decides, first
     // claim wins), People for what people do (mentions, replies, messages, follows, shares), Deals for deals. Ids unchanged.
-    const TABS = [['all', 'All'], ['mentions', 'People'], ['agents', 'Agents'], ['live', 'Live'], ['alerts', 'Deals'], ['system', 'System']];
+    // 4.317.0 (the owner's phone, 11-18: "shorten to AI"): the agents' tab says AI.
+    const TABS = [['all', 'All'], ['mentions', 'People'], ['agents', 'AI'], ['live', 'Live'], ['alerts', 'Deals'], ['system', 'System']];
     // 4.260.0 (the owner, 11-15: "more minimalist … use more icons"): each tab says what it holds with its glyph too.
     const TAB_GLYPH = { all: 'bell', mentions: 'people', live: 'live', alerts: 'tag', system: 'pulse', agents: 'agent' };
     const TAB_EMPTY = {
@@ -424,6 +425,18 @@
             .openvibe-notif-item .meta { font-size: 11.5px; color: var(--text-muted, #8b8b96); margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
             .openvibe-notif-item .meta .since { order: -1; font-weight: 650; }
             .openvibe-notif-item .meta .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .6; }
+            /* 4.317.0: an operator alert: its glyph on a tile of its tone, a hairline of that tone around a failing one,
+               and its severity as the first word of the meta line (the dot beats while it fails; Off holds it still). */
+            .openvibe-notif-item .meta .sev, .openvibe-notif-item .meta .sev-dot { order: -2; }
+            .openvibe-notif-item .meta .sev { display: inline-flex; align-items: center; gap: 6px; font-weight: 750; color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 72%, var(--text-primary, #ececf1)); }
+            .openvibe-notif-item .meta .sev::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--ovn-tone, var(--accent, #3b82f6)); }
+            .openvibe-notif-item .meta .sev.is-firing::before { animation: ovn-sev-beat 1.8s ease-in-out infinite; }
+            @keyframes ovn-sev-beat { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ovn-tone, #f59e0b) 55%, transparent); } 60% { box-shadow: 0 0 0 calc(5px * var(--ov-move, 1)) transparent; } }
+            html[data-ov-motion=off] .openvibe-notif-item .meta .sev.is-firing::before { animation: none; }
+            .openvibe-notif-item.is-ops .ovn-glyph { border-radius: 14px; background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
+            .openvibe-notif-item.is-ops .ovn-glyph svg { width: 24px; height: 24px; }
+            .openvibe-notif-item.is-ops:not(.is-resolved) .ovn-row { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovn-tone, #f59e0b) 30%, transparent); }
+            .openvibe-notif-item.is-ops .ovn-chip { font-size: 11px; padding: 3px 8px; }
             .openvibe-notif-item .unread-dot { position: absolute; right: 14px; top: 50%; margin-top: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent, #3b82f6); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
             /* 4.260.0 (the owner, 11-15: "more minimalist … nicer organization … more icons"): unread is a tint and a dot at
                the right, not a bar down the side. */
@@ -519,6 +532,22 @@
             .openvibe-nv:not(.openvibe-notif-dock) .ovn-unread-w, .openvibe-notif-inbox .ovn-unread-w { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
             .ovn-tabs-wrap { position: relative; flex: 1 1 0; min-width: 0; order: 0; display: flex; }
             .ovn-tabs-wrap > .openvibe-nv-tabs { flex: 1 1 auto; min-width: 0; }
+            /* 4.317.0 (the owner's phone, 11-18: "make a bit more compact"): Unread is a slim pill on the bar, beside the count,
+               Clear all and Inbox, its word showing; the bar sits close under the tabs; the agents' link is one line. */
+            .openvibe-notif-dock .openvibe-nv-bar .openvibe-nv-unread { order: 0; flex: none; width: auto !important; height: 34px !important; min-height: 34px; padding: 0 11px 0 9px !important; gap: 7px !important;
+                display: inline-flex !important; align-items: center; justify-content: center; border-radius: 999px !important; border: 0; font: inherit; font-size: 12.5px !important; font-weight: 700;
+                color: var(--text-secondary, #b6b6c0); background: transparent; box-shadow: inset 0 0 0 1px var(--border, rgba(148, 163, 184, .22)) !important; opacity: 1 !important; cursor: pointer; transition: background-color .15s, box-shadow .15s, color .15s; }
+            .openvibe-notif-dock .openvibe-nv-bar .openvibe-nv-unread .ovn-dot { margin: 0 !important; width: 8px !important; height: 8px !important; }
+            .openvibe-notif-dock .openvibe-nv-bar .openvibe-nv-unread .ovn-unread-w { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+            .openvibe-notif-dock .openvibe-nv-bar .openvibe-nv-unread[aria-pressed="true"] { color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent) !important; }
+            .openvibe-notif-dock .openvibe-nv-bar .openvibe-nv-unread:hover { color: var(--text-primary, #ececf1); }
+            .openvibe-notif-dock .openvibe-nv-bar { gap: 2px; min-height: 40px; padding: 0 0 4px; border-top: 0; }
+            @media (pointer: coarse) { .openvibe-notif-dock .openvibe-nv-bar .openvibe-nv-unread { height: 40px !important; } }
+            @media (max-width: 400px) { .openvibe-notif-dock .openvibe-nv-bar .ovn-bar-b { padding: 0 8px; } .openvibe-notif-dock .openvibe-nv-bar [data-role="status"] { font-size: 11.5px; } }
+            .ovn-ac-link { padding: 8px 12px; gap: 9px; align-items: baseline; flex-wrap: nowrap; white-space: nowrap; }
+            .ovn-ac-link svg { align-self: center; }
+            .ovn-ac-link span { flex: none; }
+            .ovn-ac-link small { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 600; color: var(--text-muted, #8b8b96); }
             .openvibe-nv-tabs.is-back.is-more { -webkit-mask-image: linear-gradient(90deg, transparent 34px, #000 64px, #000 calc(100% - 64px), transparent calc(100% - 34px)); mask-image: linear-gradient(90deg, transparent 34px, #000 64px, #000 calc(100% - 64px), transparent calc(100% - 34px)); }
             .openvibe-nv-tabs.is-back:not(.is-more) { -webkit-mask-image: linear-gradient(90deg, transparent 34px, #000 64px); mask-image: linear-gradient(90deg, transparent 34px, #000 64px); }
             .ovn-tabs-go { position: absolute; top: 50%; z-index: 2; display: grid; place-items: center; width: 30px; height: 30px; margin-top: -15px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
@@ -730,8 +759,16 @@
         if (!label) return '';
         return `<div class="ovn-acts"><button type="button" class="ovn-act${t === 'AGENT_NEEDS_YOU' ? ' is-primary' : ''}" data-row="go" data-url="${esc(p.url)}">${esc(label)}</button></div>`;
     }
+    /** 4.317.0 (the owner's phone, 11-18: the WARNING chip on "Developer path missed", "update, improve"): an operator
+     *  alert's severity leads its meta line as one word in its tone, the dot beating while it still fails. */
+    function opsSev(p) {
+        if (!p || p.kind !== 'ops' || !p.severity) return '';
+        const word = cap(String(p.severity).toLowerCase());
+        return `<span class="sev${p.severity === 'resolved' ? '' : ' is-firing'}">${esc(word)}</span><span class="dot sev-dot"></span>`;
+    }
     function chipsHtml(p, extra = []) {
-        const sev = p.severity ? [`<span class="ovn-chip sev" style="--ovn-tone:${TONE[p.tone] || TONE.accent}">${esc(p.severity)}</span>`] : [];
+        // 4.317.0: an operator alert says its severity in its meta line (opsSev), not as a shouted chip.
+        const sev = p.severity && p.kind !== 'ops' ? [`<span class="ovn-chip sev" style="--ovn-tone:${TONE[p.tone] || TONE.accent}">${esc(p.severity)}</span>`] : [];
         const rest = (p.chips || []).concat(extra);
         // 4.260.0 (minimal): the severity and three more; the rest are counted, and named in the title.
         const shown = rest.slice(0, 3).map(c => `<span class="ovn-chip">${esc(c)}</span>`);
@@ -1143,6 +1180,10 @@
         // what is unread; Unread off shows everything. The choice is kept for the next opening.
         let unreadFirst = true; try { unreadFirst = localStorage.getItem('ovn-unread') !== '0'; } catch { /* */ }
         const v = { root, mode, tab: 'all', unread: unreadFirst, q: '', items: [], offset: 0, hasMore: false, loading: false, seq: 0, ids: new Set() };
+        // 4.317.0 (the owner's phone, 11-18, the menu's Alerts: "make a bit more compact"): in the dock, Unread sits on the
+        // slim bar beside the count, Clear all and Inbox, so the search row is the search alone (and the menu, whose own box
+        // searches the alerts, leaves that row out).
+        const unreadHtml = `<button type="button" class="openvibe-nv-unread" aria-pressed="${v.unread ? 'true' : 'false'}" aria-label="Unread only" title="Show only unread notices"><span class="ovn-dot" aria-hidden="true"></span><span class="ovn-unread-w">Unread</span></button>`;
         root.innerHTML = `
             <div class="openvibe-nv-head">
                 <h3>Notifications <span class="count zero">0</span></h3>
@@ -1157,12 +1198,12 @@
             <div class="openvibe-nv-tools">
                 <div class="openvibe-nv-find">
                     <div class="openvibe-nv-search">${svg(ICON.search)}<input type="search" placeholder="Search notifications" aria-label="Search notifications" autocomplete="off" spellcheck="false"><button type="button" class="clear" aria-label="Clear search">&times;</button></div>
-                    <button type="button" class="openvibe-nv-unread" aria-pressed="${v.unread ? 'true' : 'false'}" aria-label="Unread only" title="Show only unread notices"><span class="ovn-dot" aria-hidden="true"></span><span class="ovn-unread-w">Unread</span></button>
+                    ${mode === 'dock' ? '' : unreadHtml}
                 </div>
                 <div class="ovn-tabs-wrap"><div class="openvibe-nv-tabs" role="tablist" aria-label="Notifications">
                     ${TABS.map(([id, label]) => `<button type="button" role="tab" data-tab="${id}" aria-selected="${id === 'all'}" tabindex="${id === 'all' ? '0' : '-1'}"><svg class="ovn-tab-ic" viewBox="0 0 24 24" aria-hidden="true">${GLYPH[TAB_GLYPH[id]] || GLYPH.bell}</svg>${esc(label)}<span class="n" data-n="${id}"></span></button>`).join('')}
                 </div><button type="button" class="ovn-tabs-go is-l" aria-label="Earlier tabs" hidden>${svg(ICON.go)}</button><button type="button" class="ovn-tabs-go is-r" aria-label="More tabs" hidden>${svg(ICON.go)}</button></div>
-                ${mode === 'dock' ? `<div class="openvibe-nv-bar"><span data-role="status"></span><button type="button" class="ovn-bar-b" data-act="read-all-foot" title="Mark every notification read">${svg(ICON.checkAll)}<span>Clear all</span></button><a class="ovn-bar-b is-go" href="${esc(inboxUrl())}" title="Open the full inbox">${svg(ICON.open)}<span>Inbox</span></a></div>` : ''}
+                ${mode === 'dock' ? `<div class="openvibe-nv-bar"><span data-role="status"></span>${unreadHtml}<button type="button" class="ovn-bar-b" data-act="read-all-foot" title="Mark every notification read">${svg(ICON.checkAll)}<span>Clear all</span></button><a class="ovn-bar-b is-go" href="${esc(inboxUrl())}" title="Open the full inbox">${svg(ICON.open)}<span>Inbox</span></a></div>` : ''}
             </div>
             <div class="openvibe-nv-list" data-role="list" role="tabpanel" aria-label="All"></div>
             ${mode === 'panel' ? `<div class="openvibe-nv-foot"><span data-role="status"></span><a href="${esc(inboxUrl())}">Full inbox${svg(ICON.go)}</a></div>` : mode === 'dock' ? '' : '<div class="openvibe-nv-foot"><span data-role="status"></span></div>'}`;
@@ -1469,7 +1510,7 @@
                 const when = esc(timeAgo(n.created_at));
                 const label = p.label ? `<span class="dot"></span><span>${esc(p.label)}</span>` : '';
                 const thumb = p.kind === 'ops' ? null : thumbOf(n);
-                return `${head}<div class="openvibe-notif-item ${unread ? 'unread' : ''}" data-id="${esc(n.id)}" data-ids="${esc(ids.join(','))}" style="--ovn-tone:${TONE[p.tone] || TONE.accent}">
+                return `${head}<div class="openvibe-notif-item ${unread ? 'unread' : ''}${p.kind === 'ops' ? ` is-ops${p.severity === 'resolved' ? ' is-resolved' : ''}` : ''}" data-id="${esc(n.id)}" data-ids="${esc(ids.join(','))}" style="--ovn-tone:${TONE[p.tone] || TONE.accent}">
                     <div class="ovn-under" aria-hidden="true"><span class="read">${svg(ICON.read)}Clear</span><span class="clear">Clear${svg(ICON.read)}</span></div>
                     <div class="ovn-row${thumb ? ' has-thumb' : ''}" tabindex="0">
                     ${unread ? '<span class="ovn-sr">Unread. </span>' : ''}
@@ -1481,7 +1522,7 @@
                         ${cmd ? `<button type="button" class="copy" data-row="copy" data-cmd="${esc(cmd)}">Copy fix command</button>` : ''}
                         ${actsHtml(n)}
                         ${needsHtml(n, p)}
-                        <div class="meta">${ids.length > 1 ? `<span class="count" title="${ids.length} times">×${ids.length}</span>` : ''}${ids.length > 1 && first && dayLabel(first.created_at) !== dayLabel(n.created_at) ? `<span class="since">since ${esc(dayLabel(first.created_at).toLowerCase())}</span>` : ''}<span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}</div>
+                        <div class="meta">${opsSev(p)}${ids.length > 1 ? `<span class="count" title="${ids.length} times">×${ids.length}</span>` : ''}${ids.length > 1 && first && dayLabel(first.created_at) !== dayLabel(n.created_at) ? `<span class="since">since ${esc(dayLabel(first.created_at).toLowerCase())}</span>` : ''}<span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}</div>
                     ${p.url ? `<span class="ovn-go" aria-hidden="true">${svg(ICON.go)}</span>` : ''}
                     <div class="ovn-menu" role="menu" hidden>${unread ? '<button type="button" role="menuitem" data-row="read">' + svg(ICON.read) + '<span>Mark as read</span></button>' : ''}<button type="button" role="menuitem" data-row="dismiss">${svg(ICON.trash)}<span>Remove this notice</span></button><button type="button" role="menuitem" data-row="settings">${svg(ICON.gear)}<span>Notification settings</span></button></div>
                     </div>
@@ -1491,13 +1532,13 @@
             } catch { return ''; }
         }).join('');
         v.lastDay = lastDay;
-        if (!append) list.innerHTML = v.tab === 'agents' ? `<button type="button" class="ovn-ac-link" data-act="ac">${svg(GLYPH.spark)}<span>Everything your agents are doing: running, waiting for you, done</span></button>` : '';
+        if (!append) list.innerHTML = v.tab === 'agents' ? `<button type="button" class="ovn-ac-link" data-act="ac">${svg(GLYPH.spark)}<span>Everything your agents are doing</span><small>running · waiting · done</small></button>` : '';
         if (!v.items.length && !append && earlierNext(view || v)) {
             list.insertAdjacentHTML('beforeend', `<p class="ovn-caught">${svg(ICON.read)}<span>You're all caught up</span></p><div class="openvibe-nv-more"><span class="spinner"></span></div>`);
             Promise.resolve().then(() => loadMore(view || v));   // right after the first page's load settles
         } else if (!v.items.length) {
             const [t0, s0] = TAB_EMPTY[v.tab] || TAB_EMPTY.all;
-            const acLink = v.tab === 'agents' ? `<button type="button" class="ovn-ac-link" data-act="ac">${svg(GLYPH.spark)}<span>Everything your agents are doing: running, waiting for you, done</span></button>` : '';
+            const acLink = v.tab === 'agents' ? `<button type="button" class="ovn-ac-link" data-act="ac">${svg(GLYPH.spark)}<span>Everything your agents are doing</span><small>running · waiting · done</small></button>` : '';
             const title = v.q ? 'Nothing matches that search' : (v.unread ? 'You\'re all caught up' : t0);
             const sub = v.q ? 'Try other words.' : (v.unread ? 'Nothing unread here.' : s0);
             list.innerHTML = `${acLink}<div class="openvibe-nv-empty"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON.empty}</svg><b>${esc(title)}</b>${esc(sub)}</div>`;

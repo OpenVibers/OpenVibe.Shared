@@ -204,6 +204,33 @@
         if (s && s.token && s.token !== ctx.token) { ctx.token = s.token; return true; }
         return false;
     }
+    /** A history page's places (not its searches), as the menu keeps them. */
+    const placesOf = (j) => (j.items || []).filter((h) => h.type !== 'search').map((h) => ({ id: h.id != null ? String(h.id) : null, title: String(h.title || '').slice(0, 160), url: safeUrl(h.url), site: h.service_label || siteOf(h.url), service: h.service, at: utcOf(h.updated_at) })).filter((h) => h.url && h.title);
+    /**
+     * History's next page (4.317.0; the owner, 11-18: "not infinite scroll"): the places after the last one kept, from the
+     * account (GET /api/history?cursor=), added to the menu's copy; → the new rows as History draws them ([] at the end).
+     */
+    let historyMore = null;
+    function moreHistory() {
+        if (historyMore) return historyMore;
+        if (!signedIn() || !mine || !mine.cursor) return Promise.resolve([]);
+        historyMore = (async () => {
+            const read = () => fetch(historyApi(`?limit=40&cursor=${encodeURIComponent(mine.cursor)}`), { headers: { Authorization: `Bearer ${ctx.token}` }, credentials: 'omit' });
+            let r = await read();
+            if (r.status === 401 && await freshToken()) r = await read();
+            if (!r.ok) return [];
+            const j = await r.json();
+            const known = new Set(mine.items.map((x) => x.url));
+            const fresh = placesOf(j).filter((x) => { if (known.has(x.url)) return false; known.add(x.url); return true; });
+            mine.items.push(...fresh);
+            mine.cursor = typeof j.next_cursor === 'string' ? j.next_cursor : null;
+            try { sessionStorage.setItem(historyKey(), JSON.stringify({ at: Date.now(), data: mine })); } catch { /* */ }
+            const rows = fresh.map(backRow);
+            rows.end = !mine.cursor;   // the account's history has no page after this one
+            return rows;
+        })().catch(() => []).finally(() => { historyMore = null; });
+        return historyMore;
+    }
     async function loadHistory() {
         if (!signedIn()) return null;
         const key = historyKey();
@@ -222,7 +249,9 @@
             const sj = s && s.ok ? await s.json().catch(() => null) : null;
             const data = {
                 searches: ((sj && sj.items) || []).filter((h) => h && h.type === 'search').map((h) => String(h.title || '').replace(/\s+/g, ' ').trim().slice(0, 200)).filter(Boolean).slice(0, 8),
-                items: (j.items || []).filter((h) => h.type !== 'search').map((h) => ({ id: h.id != null ? String(h.id) : null, title: String(h.title || '').slice(0, 160), url: safeUrl(h.url), site: h.service_label || siteOf(h.url), service: h.service, at: utcOf(h.updated_at) })).filter((h) => h.url && h.title),
+                items: placesOf(j),
+                // 4.317.0: the account's next page (Network's next_cursor), for History's own scroll.
+                cursor: typeof j.next_cursor === 'string' ? j.next_cursor : null,
                 services: (j.services || []).map((s) => ({ service: String(s.service || ''), count: Number(s.count) || 0 })),
             };
             try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data })); } catch { /* */ }
@@ -304,6 +333,18 @@
 .ovs-ic.ovs-face { overflow: hidden; }
 .ovs-ic.ovs-face img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
 .ovs-input::placeholder { font: inherit; letter-spacing: inherit; color: color-mix(in srgb, currentColor 62%, transparent); opacity: 1; }
+/* 4.317.0: a placeholder longer than the box slides to show its end (fitPlaceholder). */
+.ovs-ph { position: absolute; top: 0; bottom: 0; z-index: 0; display: none; align-items: center; overflow: hidden; pointer-events: none; white-space: pre;
+  font: inherit; font-size: 17px; letter-spacing: normal; color: color-mix(in srgb, currentColor 62%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6px, #000 calc(100% - 18px), transparent); mask-image: linear-gradient(90deg, transparent 0, #000 6px, #000 calc(100% - 18px), transparent); }
+.ovs-field.has-ph-slide .ovs-input::placeholder { color: transparent; }
+.ovs-field.has-ph-slide .ovs-input:placeholder-shown ~ .ovs-ph { display: flex; }
+.ovs-ph-t { display: inline-block; padding-left: 0; will-change: transform; }
+.ovs-ph-t.is-go { animation: ovs-ph-slide var(--ovs-ph-dur, 8s) cubic-bezier(.45, 0, .55, 1) .9s infinite; }
+@keyframes ovs-ph-slide { 0%, 22% { transform: translateX(0); } 50%, 70% { transform: translateX(var(--ovs-ph-x, 0)); } 96%, 100% { transform: translateX(0); } }
+html[data-ov-motion=reduced] .ovs-ph-t.is-go { animation-duration: calc(var(--ovs-ph-dur, 8s) * 1.6); }
+html[data-ov-motion=off] .ovs-field.has-ph-slide .ovs-input::placeholder { color: color-mix(in srgb, currentColor 62%, transparent); }
+html[data-ov-motion=off] .ovs-field.has-ph-slide .ovs-input:placeholder-shown ~ .ovs-ph { display: none; }
 .ovs-input::-webkit-search-cancel-button { -webkit-appearance: none; }
 .ovs-ghost { position: absolute; inset: 0; display: flex; align-items: center; white-space: pre; overflow: hidden; pointer-events: none; color: var(--text-muted, #93a0b4); opacity: .75; }
 .ovs-ghost b { color: transparent; font-weight: inherit; }
@@ -489,11 +530,27 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
 .ovs-ctx-i.is-in { opacity: 0; transform: scale(.35) rotate(calc(-70deg * var(--ov-move, 1))); }
 .ovs-ctx-i.is-out { opacity: 0; transform: scale(.35) rotate(calc(70deg * var(--ov-move, 1))); }
 .ovs-field.has-ctx .ovs-input, .ovs-field.has-ctx .ovs-ghost { padding-left: 30px; }
+/* 4.317.0: the sign is the place's link: a hover, a focus or a press turns it into the arrow (Calm moves less; Off swaps). */
+a.ovs-ctx { pointer-events: auto; cursor: pointer; text-decoration: none; border-radius: 50%; transition: background-color .2s ease; }
+a.ovs-ctx::after { content: ""; position: absolute; inset: -10px -8px; }
+a.ovs-ctx.is-off { pointer-events: none; cursor: default; }
+a.ovs-ctx.is-off::after { display: none; }
+.ovs-ctx-go { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transform: scale(.4) rotate(calc(-45deg * var(--ov-move, 1)));
+  transition: transform .32s cubic-bezier(.2, .9, .25, 1.2), opacity .2s ease; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-ctx-go svg { width: 18px; height: 18px; }
+a.ovs-ctx:not(.is-off):is(:hover, :focus-visible, :active, .is-hint) .ovs-ctx-go { opacity: 1; transform: none; }
+a.ovs-ctx:not(.is-off):is(:hover, :focus-visible, :active, .is-hint) .ovs-ctx-i:not(.is-out):not(.is-in) { opacity: 0; transform: scale(.4) rotate(calc(45deg * var(--ov-move, 1))); }
+a.ovs-ctx:not(.is-off):is(:hover, :focus-visible) { background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
+a.ovs-ctx:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 5px; }
+a.ovs-ctx:not(.is-off):active { transform: translateY(-50%) scale(.88); }
+html[data-ov-motion=off] .ovs-ctx-go, html[data-ov-motion=off] a.ovs-ctx { transition: none; }
 html[data-ov-motion=off] .ovs-ctx-i { transition: none; }
-/* In the menu the box is the inbox's search (4.284.0): its own field stays hidden there, Unread sits at the end of the tabs. */
-.ovs .openvibe-notif-dock .openvibe-nv-search { display: none !important; }
-.ovs .openvibe-notif-dock .openvibe-nv-find { order: 1 !important; flex: none !important; }
-.ovs .openvibe-notif-dock .openvibe-nv-tabs, .ovs .openvibe-notif-dock .ovn-tabs-wrap { flex: 1 1 0 !important; min-width: 0; }
+/* In the menu the box is the inbox's search (4.284.0). 4.317.0 (the owner's phone, 11-18: the second "Search notifications"
+   field under the box, "type search" up there): the inbox's search row is left out whole (its field alone lost to a later,
+   stronger rule of the inbox's own and showed); Unread is on the inbox's slim bar; the tabs have their row. */
+.ovs .openvibe-notif-dock .openvibe-nv-find { display: none !important; }
+.ovs .openvibe-notif-dock .openvibe-nv-tools { row-gap: 2px; padding-top: 4px !important; }
+.ovs .openvibe-notif-dock .openvibe-nv-tabs, .ovs .openvibe-notif-dock .ovn-tabs-wrap { flex: 1 0 100% !important; min-width: 0; }
 .ovs-act { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
 /* The place's own site, on every tab (4.284.0): a new place's link first wears that tab's glyph, then turns into the arrow,
    and a ring goes round it once, so a person sees the link changed with the tab. Calm moves less; Off shows the arrow. */
@@ -887,11 +944,12 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         el.setAttribute('role', 'dialog');
         el.setAttribute('aria-modal', 'true');
         el.setAttribute('aria-label', 'Search and every OpenVibe site');
-        el.innerHTML = `<div class="ovs-panel"><div class="ovs-bar"><button type="button" class="ovs-lead" tabindex="-1" aria-hidden="true">${ICON.search}</button><div class="ovs-field"><span class="ovs-ghost" aria-hidden="true"></span><input class="ovs-input" type="search" data-ov-trending="own" role="combobox" aria-autocomplete="both" aria-expanded="true" aria-controls="ovs-list" autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="100"></div><div class="ovs-tools"><button type="button" class="ovs-tool ovs-mic" aria-label="Speak your search" data-ov-tip="Speak" hidden>${ICON.mic}</button><button type="button" class="ovs-tool ovs-attach" aria-label="Ask Vibe about a picture or a file" data-ov-tip="Attach" hidden>${ICON.plus}</button><button type="button" class="ovs-tool ovs-send" aria-label="Ask Vibe" data-ov-tip="Ask Vibe" hidden>${ICON.send}</button><input class="ovs-file" type="file" multiple hidden accept="image/*,video/*,audio/*,.pdf,.txt,.md,.csv,.json,.zip"></div><div class="ovs-acts"></div><button type="button" class="ovs-x" aria-label="Close the menu" title="Close (Esc)">${ICON.close}<span>Close</span></button></div>`
+        el.innerHTML = `<div class="ovs-panel"><div class="ovs-bar"><button type="button" class="ovs-lead" tabindex="-1" aria-hidden="true">${ICON.search}</button><div class="ovs-field"><span class="ovs-ghost" aria-hidden="true"></span><input class="ovs-input" type="search" data-ov-trending="own" role="combobox" aria-autocomplete="both" aria-expanded="true" aria-controls="ovs-list" autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="100"><span class="ovs-ph" aria-hidden="true"><span class="ovs-ph-t"></span></span></div><div class="ovs-tools"><button type="button" class="ovs-tool ovs-mic" aria-label="Speak your search" data-ov-tip="Speak" hidden>${ICON.mic}</button><button type="button" class="ovs-tool ovs-attach" aria-label="Ask Vibe about a picture or a file" data-ov-tip="Attach" hidden>${ICON.plus}</button><button type="button" class="ovs-tool ovs-send" aria-label="Ask Vibe" data-ov-tip="Ask Vibe" hidden>${ICON.send}</button><input class="ovs-file" type="file" multiple hidden accept="image/*,video/*,audio/*,.pdf,.txt,.md,.csv,.json,.zip"></div><div class="ovs-acts"></div><button type="button" class="ovs-x" aria-label="Close the menu" title="Close (Esc)">${ICON.close}<span>Close</span></button></div>`
             + '<div class="ovs-youpanel" role="region" aria-label="You and your Actor" hidden></div><div class="ovs-tabs ovs-starttabs" hidden></div>'
             + `<div class="ovs-tabs ovs-rtabs" role="tablist" aria-label="Results from" hidden>${RTABS.map(([id, label]) => `<button type="button" class="ovs-tab" role="tab" data-rtab="${id}" aria-selected="false">${label}</button>`).join('')}</div>`
             + '<ul class="ovs-list" id="ovs-list" role="listbox"></ul><div class="ovs-foot" aria-hidden="true"><span><kbd>' + ICON.up + '</kbd><kbd>' + ICON.down + '</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Tab</kbd> complete</span><span><kbd>Esc</kbd> close</span></div></div>';
         input = el.querySelector('.ovs-input');
+        watchPlaceholder();
         ghost = el.querySelector('.ovs-ghost');
         listEl = el.querySelector('.ovs-list');
         doorEl = document.createElement('div'); doorEl.className = 'ovs-door'; doorEl.hidden = true;
@@ -1695,6 +1753,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     // icon. If you hit vibe … chat with Vibe"). Searching OpenVibe is the box's own kind and has no mark (your picture
     // leads it); every other place has one, and the mark turns as you move.
     const CTX_SVG = {
+        you: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.5-3.5 4.3-5.5 7.5-5.5s6 2 7.5 5.5"/></svg>',
         grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg>',
         bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15Z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>',
         clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/><path d="M12 8v4.5l3 1.8"/></svg>',
@@ -1712,24 +1771,94 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             if (youTab === 'recent') return 'clock';
             const ha = homeViews.home && homeViews.home.api;
             if (ha && ha.view === 'drawer') return 'grid';
-            return '';
+            // 4.317.0: You's home wears its own sign, the person, which is also its link to OpenVibe.my.
+            return 'you';
         }
         const m = modes[modes.length - 1];
         if (tab === 'here' && m && m.icon) return `mode:${m.id}`;
         return '';
     }
-    let ctxShown = null;
+    /**
+     * 4.317.0 (the owner's phone, 11-18: "Deep dive the be…", "animate to see full"): a placeholder longer than the box is
+     * drawn beside it and slides to show its end, rests, and slides back; the box's own placeholder is then transparent.
+     * Re-measured when the words change (the trending line rotates them) and when the box changes size. Calm slides more
+     * slowly; Off shows the start with an ellipsis, as before.
+     */
+    let phCanvas = null;
+    function fitPlaceholder() {
+        const ph = el && el.querySelector('.ovs-ph');
+        const t = ph && ph.firstElementChild;
+        if (!t || !input) return;
+        const field = ph.parentElement;
+        const text = input.placeholder || '';
+        const cs = getComputedStyle(input);
+        const padL = parseFloat(cs.paddingLeft) || 0, padR = parseFloat(cs.paddingRight) || 0;
+        const room = input.clientWidth - padL - padR;
+        let width = 0;
+        try { phCanvas = phCanvas || document.createElement('canvas'); const g = phCanvas.getContext('2d'); g.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; width = g.measureText(text).width; } catch { width = 0; }
+        const over = Math.ceil(width - room + 2);
+        if (!text || room <= 0 || over <= 4) { field.classList.remove('has-ph-slide'); t.textContent = ''; t.classList.remove('is-go'); return; }
+        ph.style.left = `${input.offsetLeft + padL}px`; ph.style.width = `${room}px`;
+        if (t.textContent !== text || t.style.getPropertyValue('--ovs-ph-x') !== `${-over}px`) {
+            t.classList.remove('is-go'); void t.offsetWidth;
+            t.textContent = text;
+            t.style.setProperty('--ovs-ph-x', `${-over}px`);
+            t.style.setProperty('--ovs-ph-dur', `${Math.max(7, 4 + (over / 26) * 2).toFixed(1)}s`);
+            t.classList.add('is-go');
+        }
+        field.classList.add('has-ph-slide');
+    }
+    let phWatch = null;
+    function watchPlaceholder() {
+        if (phWatch || !input) return;
+        let raf = 0;
+        const soon = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; fitPlaceholder(); }); };
+        phWatch = new MutationObserver(soon);
+        phWatch.observe(input, { attributes: true, attributeFilter: ['placeholder', 'class'] });
+        if (typeof ResizeObserver === 'function') new ResizeObserver(soon).observe(input);
+        try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(soon); } catch { /* */ }
+        soon();
+    }
+    let ctxShown = null, ctxPlace = null, ctxHint = 0;
+    /**
+     * 4.317.0 (the owner's phone, 11-18: the ↗ at the box's end, "move/combine into the left icon, hover changes it, add
+     * animation and effects"): the place's sign at the box's start IS the link to the place's own site. A hover, a focus or
+     * a press turns it into the arrow; a new place plays the turn once, so a phone (no hover) learns it opens.
+     */
+    function placeOnCtx(c) {
+        const key = placeKey();
+        // Only a sign that shows carries the link (no invisible spot over the words).
+        const p = c.parentElement && c.parentElement.classList.contains('has-ctx') ? PLACE[key] : null;
+        if (p) {
+            c.href = p[0]; c.target = '_blank'; c.rel = 'noopener'; c.setAttribute('aria-label', p[1]); c.title = p[1];
+            c.removeAttribute('aria-hidden'); c.removeAttribute('tabindex'); c.classList.remove('is-off');
+        } else {
+            c.removeAttribute('href'); c.removeAttribute('title'); c.removeAttribute('aria-label');
+            c.setAttribute('aria-hidden', 'true'); c.setAttribute('tabindex', '-1'); c.classList.add('is-off');
+        }
+        if (p && ctxPlace !== key) {
+            clearTimeout(ctxHint); c.classList.remove('is-hint'); void c.offsetWidth;
+            c.classList.add('is-hint'); ctxHint = setTimeout(() => c.classList.remove('is-hint'), 1300);
+        }
+        ctxPlace = p ? key : null;
+    }
     function paintCtx() {
         const f = el && el.querySelector('.ovs-field');
         if (!f) return;
         const k = ctxKey();
-        if (k === ctxShown) return;
         let c = f.querySelector('.ovs-ctx');
-        if (!c) { c = document.createElement('span'); c.className = 'ovs-ctx'; c.setAttribute('aria-hidden', 'true'); f.insertBefore(c, f.firstChild); }
+        if (!c) {
+            c = document.createElement('a'); c.className = 'ovs-ctx is-off'; c.setAttribute('aria-hidden', 'true'); c.setAttribute('tabindex', '-1');
+            const go = document.createElement('span'); go.className = 'ovs-ctx-go'; go.setAttribute('aria-hidden', 'true'); go.innerHTML = ARROW;
+            c.appendChild(go);
+            c.addEventListener('click', (e) => { if (!c.getAttribute('href')) e.preventDefault(); e.stopPropagation(); });
+            f.insertBefore(c, f.firstChild);
+        }
+        if (k === ctxShown) { placeOnCtx(c); return; }
         const m = k.startsWith('mode:') ? modes[modes.length - 1] : null;
         const svg = m ? m.icon : CTX_SVG[k];
         f.classList.toggle('has-ctx', !!svg);
-        const prev = c.lastElementChild;
+        const prev = c.querySelector('.ovs-ctx-i:not(.is-out)');
         if (prev) { prev.classList.add('is-out'); setTimeout(() => prev.remove(), 420); }
         if (svg) {
             const next = document.createElement('span'); next.className = 'ovs-ctx-i is-in'; next.innerHTML = svg;
@@ -1738,6 +1867,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         }
         c.dataset.ctx = k;
         ctxShown = k;
+        placeOnCtx(c);
         try { if (root.OVTrending && input) root.OVTrending.update(input); } catch { /* the line moves with the box */ }
     }
     /**
@@ -2034,29 +2164,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.8h6.3v6.3M20.2 3.8l-9.4 9.4M18.2 14.2v4.3a1.7 1.7 0 0 1-1.7 1.7H5.5a1.7 1.7 0 0 1-1.7-1.7v-11a1.7 1.7 0 0 1 1.7-1.7h4.3"/></svg>';
     let placeShown = '';
     function placeLink() {
-        const key = placeKey();
-        const p = PLACE[key];
-        if (!p || !actsEl) return;
-        const a = document.createElement('a'); a.className = 'ovs-act ovs-place'; a.target = '_blank'; a.rel = 'noopener';
-        a.href = p[0]; a.setAttribute('aria-label', p[1]); a.title = p[1];
-        const to = document.createElement('span'); to.className = 'ovs-place-to'; to.innerHTML = ARROW;
-        a.appendChild(to);
-        // A new place: its tab's own glyph first, then the arrow (the old link is gone; this one is new).
-        if (placeShown !== key) {
-            // A part of You turns from the box's own sign for it (the bell, the clock, the grid); a tab from its tab's glyph.
-            const partSvg = key.startsWith('you:') ? CTX_SVG[ctxKey()] : null;
-            const glyph = partSvg ? { innerHTML: partSvg } : tabsEl && tabsEl.querySelector(`.ovs-tab[data-tab="${key}"] .ovs-tab-ic`);
-            if (glyph) {
-                const from = document.createElement('span'); from.className = 'ovs-place-from'; from.setAttribute('aria-hidden', 'true');
-                from.innerHTML = glyph.innerHTML;
-                from.querySelectorAll('.ovs-tab-on, b, i').forEach((x) => x.remove());
-                a.insertBefore(from, to);
-                a.classList.add('is-turn');
-                a.addEventListener('animationend', (e) => { if (e.target === a) { a.classList.remove('is-turn'); from.remove(); } });
-            }
-            placeShown = key;
-        }
-        actsEl.appendChild(a);
+        // 4.317.0: the place's link is the sign at the box's start (placeOnCtx); none is drawn at its end any more.
+        if (el) { const c = el.querySelector('.ovs-ctx'); if (c) placeOnCtx(c); }
     }
 
     function mirrorActs() {
@@ -2672,6 +2781,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             // You's Notifications tab: the whole list with Mark all read, mounted once; the count rides on the tab.
             // History's Edit (4.284.0): forget the picked places on the account; → the ids it forgot.
             forget: signedIn() ? forgetHistory : null,
+            // 4.317.0: History's own scroll asks for the next page of the account's places.
+            moreBack: signedIn() && mine && mine.cursor ? moreHistory : null,
             // 4.292.0: History says when the person's history could not be read, and offers to read it again.
             historyError: signedIn() && !mine && historyFailed,
             reloadHistory: () => loadHistory().then((h) => { if (h && el && el.classList.contains('is-open')) { mine = h; historyArrived(); } return !!h; }),
