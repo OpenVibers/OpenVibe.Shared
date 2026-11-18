@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.315.0 — 2026-11-18
+
+**The sessions drawer scrolls on a phone** (the owner's phone, 11-18: "Can't scroll!!" in the menu's Vibe tab).
+- Only the list of sessions scrolled. Above it, Actor, Codes, Your AI and a running card filled a short screen, so a drag
+  on them moved nothing and the list was a thin strip at the bottom. The drawer now scrolls as one, and its head (Sessions,
+  New, ×) stays at the top. The same on a computer's sessions column.
+- `test/ov-session-drawer-scroll-chrome.test.js`: at 360 × 570, scrolling from over Actor reaches the last session (it
+  failed on 4.314.0: the last session stayed at 1741 px in a 570 px panel).
+
 ## 4.314.0 — 2026-11-18
 
 **Code mode says what would run it** (plan §AD.28 item 4; §AD.17 left "Codes' own runs on the same ladder").
