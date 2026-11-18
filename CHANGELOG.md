@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.321.0 — 2026-11-18
+
+**One link card on the server too** (plan §AD.30 item 3). OpenVibe.Chat draws a message's cards on the server (with a hide
+form that works without JavaScript); with this it draws the same card Live's stream chat and the menu draw.
+- **`OVLinkCard.html(embed, { hideAction, hideLabel })`:** the card as HTML, for a server (no document; `require('openvibe-shared/linkcard')`):
+  make()'s markup and rules, every field escaped, https and OpenVibe.Media only, `''` otherwise; `hideAction` (a
+  same-site path only) adds the × as a form post.
+- **`ov-linkcard.css`** (`openvibe-shared/linkcard.css`, served at /shared/ov-linkcard.css): the same stylesheet the script
+  injects, for pages that draw cards before (or without) the script. `OVLinkCard.CSS` is the string.
+- **`OVLinkCard.watch(root)`:** a server-drawn card whose picture does not load keeps its words; it runs on load.
+- Tests: linkcard-css (the file equals the injected CSS; html()'s escaping and rules), linkcard-chrome (html() draws
+  make()'s card; watch() drops a broken picture).
+
 ## 4.320.0 — 2026-11-18
 
 **Link cards everywhere chat is** (plan §Y.1 A8). OpenVibe.Chat reads the addresses a message carries and sends the

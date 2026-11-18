@@ -123,6 +123,7 @@ const STYLES = Object.freeze([
     'ov-locker.css',        // ov-locker.js's look: the locked card, the locker sheets, the recovery kit (docs/locker.md)
     'ov-wallet.css',
     'ov-ai-choice.css',     // the model chip and its choice sheet (ov-ai-choice.js)
+    'ov-linkcard.css',      // 4.321.0: OVLinkCard's look, for a page that draws link cards on the server (OVLinkCard.html)
     'ov-share.css',         // ov-share.js's look: the sheet, the recipient's offer banner, the not-on-the-list gate (docs/share.md)
     'ov-upload.css',        // picker, queue and ov-progress states
     'messages.css',         // the room and bubble views' look
