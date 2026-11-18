@@ -205,6 +205,21 @@ html[data-ov-motion=off] .ov-player-spinner,html[data-ov-motion=off] .ov-player-
     position: absolute; left: 50%; top: 50%; z-index: 2; transform: translate(-50%, -50%);
     padding: 10px 14px; border-radius: 10px; background: rgba(0, 0, 0, 0.8); font-weight: 500;
 }
+/* 4.317.0: a failed video is a card over the picture (sign, words, Try again); the big play button stands down. */
+.ov-player.is-error .ov-player-big { opacity: 0; pointer-events: none; }
+.ov-player.is-error .ov-player-message { z-index: 5; box-sizing: border-box; display: grid; justify-items: center; gap: 8px; width: min(78%, 300px); padding: 16px 18px; border-radius: 16px; text-align: center;
+    background: rgba(8, 11, 18, 0.86); box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.08); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    animation: ov-player-err-in .32s cubic-bezier(.2, .9, .25, 1.15) both; }
+.ov-player-err-sign { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: #fbbf24; background: rgba(251, 191, 36, 0.14); }
+.ov-player-err-sign svg { width: 22px; height: 22px; }
+.ov-player-err-t { font-size: 14px; font-weight: 600; line-height: 1.35; }
+.ov-player-again { min-height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--ovp-accent); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: transform .15s ease, filter .15s ease; }
+.ov-player-again:hover { filter: brightness(1.1); }
+.ov-player-again:active { transform: scale(.95); }
+.ov-player-again:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@keyframes ov-player-err-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px * var(--ov-move, 1))) scale(.97); } }
+html[data-ov-motion=off] .ov-player.is-error .ov-player-message { animation: none; }
 
 /* Captions sit above the bar while it shows. */
 .ov-player .ov-player-video::cue { background: rgba(0, 0, 0, 0.72); color: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }

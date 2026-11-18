@@ -29,7 +29,7 @@ const done = N.present({ type: 'AGENT_TASK_DONE', service: 'actor', category: 's
 assert.equal(done.message, 'Research this and write a short report for a team, with the links of your sources: moss');
 assert.equal(done.glyph, 'agent');
 assert.equal(done.tone, 'ok');
-assert.equal(done.label, 'Agents');
+assert.equal(done.label, 'AI');   // 4.317.0: the agents' label says AI
 const done2 = N.present({ type: 'AGENT_TASK_DONE', service: 'actor', category: 'service', title: 'Your task is done', message: 'Done: x', rich_content: { task_id: 'tsk_2' } });
 assert.notEqual(done.key, done2.key, 'two tasks never fold into one row');
 assert.equal(N.present({ type: 'AGENT_TASK_DONE', service: 'actor', message: 'Done: old words', rich_content: { task_id: 'tsk_3', task_title: 'Plan the trip' } }).message, 'Plan the trip');
