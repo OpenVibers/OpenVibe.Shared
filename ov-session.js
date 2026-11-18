@@ -214,7 +214,8 @@
     // 4.295.0: an agent's task waiting for your answer (Actor's question). A chat is always your turn; that is not waiting.
     // 4.311.0 (the owner, 11-18: a group "stuck waiting for you even though it's not waiting"): a run whose turn is over
     // and waits for the next message is not asking anything; it is the person's turn, nothing more.
-    const yourTurn = (r) => !!r && r.status === 'waiting' && !!r.waiting && r.waiting.for === 'message';
+    // A task waiting for a message asked something (a clarifying question): that still needs the person.
+    const yourTurn = (r) => !!r && r.status === 'waiting' && !!r.waiting && r.waiting.for === 'message' && r.kind !== 'task';
     const asksYou = (r) => !!r && r.status === 'waiting' && r.kind !== 'chat' && !needsYou(r) && !yourTurn(r);
     const KIND_GLYPH = { code: 'code', task: 'robot', machine: 'computer', chat: 'chat', ask: 'search', goal: 'made' };
 
