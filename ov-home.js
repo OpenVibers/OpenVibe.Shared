@@ -426,7 +426,7 @@ html[data-ov-motion=off] .ovh-ic { transition: none; }
 .ovh-htxt small.ovh-when { flex: none; display: block; font-size: 12px; color: var(--text-muted, #8b97ab); font-variant-numeric: tabular-nums; }
 .ovh-htxt small.ovh-hmeta { min-width: 0; }
 .ovh-site { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: normal; font-weight: 650; color: hsl(var(--ovh-h, 215) 70% 74%); }
-.ovh-site b { font-weight: 650; }
+.ovh-htxt .ovh-site b { display: inline; font-size: inherit; line-height: inherit; font-weight: 650; -webkit-line-clamp: unset; overflow: visible; }   /* History's .ovh-htxt b is a two-line block: not here */
 .ovh-site i { font-style: normal; font-weight: 500; color: var(--text-muted, #8b97ab); }
 :root[data-theme="light"] .ovh-site { color: hsl(var(--ovh-h, 215) 65% 34%); }
 .ovh-hist-more.is-busy { pointer-events: none; opacity: .65; }
