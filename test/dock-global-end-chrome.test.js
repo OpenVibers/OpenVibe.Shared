@@ -87,7 +87,8 @@ const unreadCount = `document.querySelectorAll('.ovdk-gl-list > .is-unread').len
         // A flick straight to the end: the lines passed on the way were never on screen long enough to count, and before
         // 4.316.0 they stayed new (the owner: the pill does not "clear on scroll"). At the end, all of it is read.
         await p.evaluate("const sc = document.querySelector('.ovdk-scroll'); sc.scrollTop = sc.scrollHeight;");
-        await until(p, `${unreadCount} === 0 && !document.querySelector('.ovdk-seg[data-seg=global] .ovdk-seg-n:not(.is-gone)')`, 5000);
+        // 12 s, not 5: GitHub's macOS runner took 16 s for this file and timed out here (11-18, red on main twice).
+        await until(p, `${unreadCount} === 0 && !document.querySelector('.ovdk-seg[data-seg=global] .ovdk-seg-n:not(.is-gone)')`, 12000);
         await until(p, "(() => { const j = document.querySelector('.ovdk-gl-jump'); return !j || j.hidden; })()", 2000);
         await h.eventually(async () => assert.strictEqual(Math.max(...posted), 60, `Chat hears the newest line (${posted})`));
         assert.deepStrictEqual(errors, [], 'no page errors');
