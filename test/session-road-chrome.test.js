@@ -30,7 +30,13 @@ const SCENES = {
     // the Frame names Tower while the run options list Studio PC.
     frame: { allowance: day(0), keys: [], key_apps: [], balance: null, partial: [], road: {
         agent: { road: 'computer', need: 12000, machine: { id: 'dev_tower', name: 'Tower' }, say: 'Tower answers: the free allowance is used up today.', ladder: [] },
-        chat: { road: 'none', need: 1, chat_only: false, say: 'OpenVibe\'s free AI is used up for today. Add your own AI key or your computer to keep going.', ladder: [] } } },
+        chat: { road: 'none', need: 1, chat_only: false, say: 'OpenVibe\'s free AI is used up for today. Add your own AI key or your computer to keep going.', ladder: [] },
+        // 4.314.0 (plan §AD.28 item 4): Code mode's next task, on the coding order.
+        code: { road: 'plan', need: 40000, harness: 'claude-code', harness_name: 'Claude Code', plan: 'Anthropic', machine: { id: 'dev_tower', name: 'Tower' }, say: 'Claude Code runs it on Tower, on your Anthropic plan.', ladder: [] } } },
+    codeNone: { allowance: day(0), keys: [], key_apps: [], balance: null, partial: [], road: {
+        agent: { road: 'none', need: 12000, chat_only: false, say: 'Nothing can answer.', ladder: [] },
+        chat: { road: 'none', need: 1, chat_only: false, say: 'Nothing can answer.', ladder: [] },
+        code: { road: 'none', need: 40000, say: 'Nothing can run this coding work right now: sign a coding agent in with your plan on your computer, add your own AI key, or wait for the free AI to come back.', ladder: [] } } },
 };
 let scene = 'free', machineOnline = true, resourceReads = 0;
 const page = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -134,6 +140,16 @@ const CHIP = `(() => { const r = document.querySelector('.ovse-road'); if (!r ||
         await p.evaluate("document.querySelector('.ovse-mode[data-mode=\"chat\"]').click()");
         c = await until(p, `(() => { const c = ${CHIP}; return c && /is-none/.test(c.cls) ? c : null; })()`);
         assert.match(c.text, /^Back /, 'Chat mode reads the Frame\'s chat road');
+        // 4.314.0: Code mode says what would run the coding task: the coding agent signed in with your plan, and where.
+        await p.evaluate("document.querySelector('.ovse-mode[data-mode=\"code\"]').click()");
+        c = await until(p, `(() => { const c = ${CHIP}; return c && c.text === 'Claude Code' ? c : null; })()`);
+        assert.match(c.cls, /is-computer/);
+        assert.strictEqual(c.label, 'Claude Code runs it on Tower, on your Anthropic plan. Your AI');
+        assert.strictEqual(c.w, 390, 'nothing off the screen');
+        await open('codeNone');
+        c = await until(p, `(() => { const c = ${CHIP}; return c && c.text === 'No coding agent' ? c : null; })()`);
+        assert.match(c.cls, /is-none/);
+        assert.match(c.label, /^Nothing can run this coding work right now/);
         await p.evaluate("document.querySelector('.ovse-mode[data-mode=\"auto\"]').click()");
 
         // A Network without /resources: no chip, no error.
