@@ -84,7 +84,8 @@ const server = http.createServer((req, res) => {
         await ssr.close();
         // A light theme draws the glyph dark.
         const darkGlyph = a.glyph;
-        await page.evaluate(`document.documentElement.setAttribute('data-theme', 'light'), true`);
+        // The theme loader marks a light theme with data-theme-mode (data-theme is the theme's own id, e.g. cloud).
+        await page.evaluate(`document.documentElement.setAttribute('data-theme', 'cloud'), document.documentElement.setAttribute('data-theme-mode', 'light'), true`);
         await wait(50);
         assert.notEqual((await look('#a')).glyph, darkGlyph, 'the glyph changes with the theme');
         await page.close();
