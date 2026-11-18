@@ -1,5 +1,24 @@
 # Changelog
 
+## 4.309.0 — 2026-11-18
+
+- **`ov-stage.js`, OpenVibe's own product-demo kit** (plan §AD.25; the owner sent Stageshow on 11-17). A feature card
+  plays a short scripted demo of the real interface, in vanilla JS with no library.
+  - **`OpenVibeStage.mount(el, { beats, phone, label, loop })`**, or `data-ov-stage` in markup. The scene is `el`'s
+    markup at its design size (960×540 by default), scaled to fit.
+  - **Beats:** a cursor moves to an element, clicks it (classes change after the press), types into it, and sets,
+    shows or hides parts.
+  - **On a phone** (under 520 px) the compact scene in `<template data-ov-stage-phone>` plays with its own beats:
+    designed twice, never just shrunk.
+  - **Motion follows `data-ov-motion`:** Off shows the poster frame (every beat applied at once, still, with no cursor),
+    and Calm plays slower with no press bounce. It changes live.
+  - **It plays only on screen and while the page is shown,** and a Pause button (44 px, top right) stops it, as WCAG
+    2.2.2 asks of moving content.
+  - **The stage is one labelled picture** (`role="img"`, the label given). The scene inside is hidden from screen
+    readers and cannot take focus.
+  - `test/stage-chrome.test.js` covers the beats, the phone scene with no sideways scroll, Pause, Off, Calm and
+    `destroy()`.
+
 ## 4.308.0 — 2026-11-17
 
 - **Read aloud: a session reads its agents' answers, when you turn it on** (the owner, 11-17: "There should be a
