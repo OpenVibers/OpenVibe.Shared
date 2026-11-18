@@ -182,6 +182,9 @@
     // before ov-face.js arrives is a tile of the agent's colour, filled in when it lands. ──
     const facesWaiting = [];
     let faceSibling = null, faceAsked = false;
+    // A host that names no sibling() gets ov-face.js from beside this file (where ov-run.js itself was loaded from).
+    const SELF_SRC = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
+    const besideSelf = (file) => (SELF_SRC && /\/ov-run\.js(?:[?#].*)?$/.test(SELF_SRC) ? SELF_SRC.replace(/ov-run\.js(?:[?#].*)?$/, file) : '');
     const specOf = (F, spec) => (typeof spec === 'function' ? spec(F) : spec);
     function faceInto(f, spec) {
         const F = root.OVFace;
@@ -191,12 +194,14 @@
         return f;
     }
     function askFace() {
-        if (faceAsked || typeof faceSibling !== 'function' || typeof document === 'undefined') return;
+        if (faceAsked || typeof document === 'undefined') return;
+        const src = typeof faceSibling === 'function' ? faceSibling('ov-face.js') : besideSelf('ov-face.js');
+        if (!src) return;
         faceAsked = true;
         const done = () => { const F = root.OVFace; if (F) facesWaiting.splice(0).forEach(([f, spec]) => F.paint(f, specOf(F, spec))); };
         if (root.OVFace) { done(); return; }
         let sc = document.getElementById('ov-face-script') || document.querySelector('script[src*="/ov-face.js"]');
-        if (!sc) { sc = document.createElement('script'); sc.id = 'ov-face-script'; sc.async = true; sc.src = faceSibling('ov-face.js'); document.head.appendChild(sc); }
+        if (!sc) { sc = document.createElement('script'); sc.id = 'ov-face-script'; sc.async = true; sc.src = src; document.head.appendChild(sc); }
         sc.addEventListener('load', done, { once: true });
     }
     /** A run's agent's face; what it is doing as a small badge. */
@@ -289,7 +294,8 @@
     const FILTER_IDS = FILTERS.map(([id]) => id);
 
     function mount(host, o = {}) {
-        if (typeof o.sibling === 'function' && !faceSibling) { faceSibling = o.sibling; askFace(); }
+        if (typeof o.sibling === 'function' && !faceSibling) faceSibling = o.sibling;
+        askFace();
         styles();
         const base = String(o.base || 'https://openvibe.network/api/frame').replace(/\/+$/, '');
         const tokenOf = () => (typeof o.token === 'function' ? o.token() : o.token) || '';
