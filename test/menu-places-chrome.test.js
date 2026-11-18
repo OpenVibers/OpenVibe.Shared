@@ -114,7 +114,7 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 await page.evaluate(OPEN(true));
                 await until(`!!document.querySelector('.ovs-starttabs [data-dock="vibe"]')`);
                 await page.evaluate(`window.log = []; document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`);
-                await eventually(async () => assert.deepEqual(await page.evaluate(`({ sw: !!document.querySelector('.ovs-vibe-switch, .ovs-vibe-sw'), session: !!document.querySelector('.ovs-door-host .runstub'), open: (document.querySelector('.ovs-acts a.ovs-act') || {}).href || null })`), { sw: false, session: true, open: 'https://openvibe.actor/chat' }, `${name}: one surface, no switch; its ↗ to openvibe.actor`));
+                await eventually(async () => assert.deepEqual(await page.evaluate(`({ sw: !!document.querySelector('.ovs-vibe-switch, .ovs-vibe-sw'), session: !!document.querySelector('.ovs-door-host .runstub'), open: (document.querySelector('.ovs-field a.ovs-ctx[href]') || {}).href || null })`), { sw: false, session: true, open: 'https://openvibe.actor/chat' }, `${name}: one surface, no switch; its sign links to openvibe.actor`));
                 await page.evaluate('OpenVibeSearch.close()');
                 await until(`!document.querySelector('.ovs.is-open')`);
                 // A place asked for by name (the Dock's open({ tab: 'code' }), the composer's timer): Vibe with its sessions open.

@@ -716,10 +716,30 @@
         video.addEventListener('volumechange', paintVolume);
         video.addEventListener('ratechange', paintSpeed);
         video.addEventListener('waiting', () => root.classList.add('is-waiting'));
-        video.addEventListener('playing', () => { root.classList.remove('is-waiting'); message.textContent = ''; if (playedFrom == null) playedFrom = video.currentTime || 0; paintPlay(); });
+        video.addEventListener('playing', () => { root.classList.remove('is-waiting', 'is-error'); message.textContent = ''; if (playedFrom == null) playedFrom = video.currentTime || 0; paintPlay(); });
         video.addEventListener('seeked', () => { stopDescriptionSpeech(); describedText = null; adLine.textContent = ''; if (!soundKnown) playedFrom = video.currentTime || 0; });
         video.addEventListener('canplay', () => root.classList.remove('is-waiting'));
-        video.addEventListener('error', () => { root.classList.remove('is-waiting'); message.textContent = 'This video could not be played.'; });
+        // 4.317.0 (the owner's phone, 11-18: "This video could not be played" printed across the play button, "improve"):
+        // a failed video is a card of its own over the picture: the sign, what happened in plain words (offline, or the
+        // file), and Try again, which loads the source again. The big play button stands down while it shows.
+        video.addEventListener('error', () => {
+            root.classList.remove('is-waiting');
+            root.classList.add('is-error');
+            message.textContent = '';
+            const sign = el('span', 'ov-player-err-sign', { 'aria-hidden': 'true' });
+            sign.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></svg>';
+            const words = el('span', 'ov-player-err-t');
+            words.textContent = navigator.onLine === false ? 'You are offline. It plays again when you are back.' : 'This video could not be played.';
+            const again = el('button', 'ov-player-again', { type: 'button' });
+            again.textContent = 'Try again';
+            again.addEventListener('click', (e) => {
+                e.stopPropagation();
+                root.classList.remove('is-error');
+                message.textContent = '';
+                try { video.load(); const pr = video.play(); if (pr && pr.catch) pr.catch(() => {}); } catch { /* the error fires again */ }
+            });
+            message.append(sign, words, again);
+        });
         if (video.textTracks && video.textTracks.addEventListener) {
             const onTracks = () => { paintCaptions(); paintDescriptions(); };
             video.textTracks.addEventListener('addtrack', onTracks);

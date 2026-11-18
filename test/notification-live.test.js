@@ -528,7 +528,9 @@ const created = (subject, over = {}) => ({
     // goes live within like the same minute"); measured 35.24; budgets grow for a feature.
     // 36.4 KB (4.304.0, 2026-11-17): a day's header goes with its last row, and Clear all folds the unread away (the
     // owner's phone: "These dates don't clear when you swipe everything away"); measured 35.96; budgets grow for a fix.
-    assert.ok(size('notification-ui.js') <= 36.4 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 36.4 KB`);
+    // 37.6 KB (4.317.0, 2026-11-18): Unread on the slim bar, an operator alert's severity in its meta line, the AI label
+    // (the owner's phone: "make a bit more compact", "update improve"); measured 37.18; budgets grow for a feature.
+    assert.ok(size('notification-ui.js') <= 37.6 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 37.6 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

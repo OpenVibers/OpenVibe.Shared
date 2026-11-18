@@ -22,8 +22,13 @@
   again stays still; and past the first 60 places, the next page of the account's history (Network's cursor) comes as
   you scroll, to the end. A row is one line of title with its time at the right, and its site under it in its colour
   ("barcode.Tools · 6 h ago": "improve formatting" — now "Barcode · Tools").
-- Tests: `test/menu-polish-1118-chrome.test.js` (new), `menu-place-link-chrome` and `menu-box-look-chrome` (the link is the
-  sign), `notification-faces` (the AI label).
+- **A video that cannot be played says so in a card** ("This video could not be played" was printed across the play
+  button, "improve"): the play button stands down; the card has its sign, plain words (offline, or the file) and Try
+  again, which loads the source again (player.js, player.css).
+- Tests: `test/menu-polish-1118-chrome.test.js` and `test/player-error-chrome.test.js` (new), `menu-place-link-chrome`,
+  `menu-box-look-chrome` and `menu-places-chrome` (the link is the sign), `notifications-search-row-chrome` (Unread on the
+  bar), `dock-chrome` (Actor's full card a tap away), `notification-faces` (the AI label); notification-ui.js budget
+  36.4 → 37.6 KB.
 
 ## 4.316.0 — 2026-11-18
 

@@ -582,6 +582,9 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await until(p, "document.querySelector('.ovs.is-open [data-dock=\"vibe\"]') && document.querySelector('.ovs [data-dock=\"vibe\"]').getAttribute('aria-selected') === 'true'", 'the menu on Vibe');
             await until(p, "!!document.querySelector('.ovs-door-host .ovse-hello-face.is-actor .ovse-face')", 'your Actor greets a new session');
             await p.evaluate("document.querySelector('.ovs-door-host .ovse-menu').click()");
+            // 4.317.0: your agents fold into one row; the chevron opens the full cards (state, spend, Pause).
+            await until(p, "!!document.querySelector('.ovs-door-host .ovse-agents-fold')", 'your agents, folded');
+            await p.evaluate("(() => { const f = document.querySelector('.ovs-door-host .ovse-agents-fold'); if (f.getAttribute('aria-expanded') !== 'true') f.click(); return 1; })()");
             const me = await until(p, "(() => { const a = document.querySelector('.ovs-door-host .ovse-actor:not([hidden])'); return a && /today/.test(a.innerText) ? { text: a.innerText.replace(/\\s+/g, ' '), name: (a.querySelector('.ovse-actor-top b') || {}).textContent, go: (a.querySelector('.ovse-actor-go') || { getAttribute() { return null; } }).getAttribute('aria-label') } : null; })()", 'its card');
             assert.strictEqual(me.name, 'Juniper', 'its name');
             assert.match(me.text, /Ready · \$0\.12 of \$1\.00 today/, 'its state and today\'s spend');
