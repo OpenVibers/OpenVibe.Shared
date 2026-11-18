@@ -58,6 +58,7 @@
 .ovp-t { display: grid; min-width: 0; gap: 1px; }
 .ovp-t b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
 .ovp-t small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+.ovp.is-wrap .ovp-t small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; }
 .ovp-end { display: flex; align-items: center; gap: 8px; }
 .ovp-badge { padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); }
 .ovp-check { width: 20px; height: 20px; color: var(--accent-light, var(--accent, #60a5fa)); opacity: 0; transform: scale(.6); transition: opacity .15s ease, transform .2s cubic-bezier(.34,1.56,.64,1); }
@@ -116,6 +117,8 @@ select[data-ov-native] { position: absolute !important; width: 1px !important; h
         box.append(el('div', 'ovp-grab'), head);
         // 4.311.0: a sentence under the title that says what the choices are (the owner, 11-18: "explain this better").
         if (opts.intro) box.append(el('p', 'ovp-intro', String(opts.intro)));
+        // A sheet that explains (it has an intro) lets each row's line take two lines instead of cutting it.
+        if (opts.intro || opts.wrap) box.classList.add('is-wrap');
         const wantSearch = opts.search === true || (opts.search !== false && (all.length > 8 || typeof opts.load === 'function'));
         let input = null;
         if (wantSearch) {

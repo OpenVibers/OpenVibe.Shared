@@ -190,6 +190,29 @@
     /** How long until midnight UTC, when the free AI comes back: "4 h 12 min". */
     const backIn = () => { const now = Date.now(); const d = new Date(now); const next = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1);
         const min = Math.max(1, Math.round((next - now) / 60000)); const h = Math.floor(min / 60); const m = min % 60; return h ? `${h} h${m ? ` ${m} min` : ''}` : `${m} min`; };
+    const IMAGE_EXT = /\.(jpe?g|png|gif|webp|avif|heic|heif|bmp)$/i;
+    /** A small preview of a picture (at most 480 px, JPEG), as a data: address every page's policy allows. */
+    const previewOf = (file) => new Promise((done) => {
+        try {
+            if (!file || file.size > 25 * 1024 * 1024) return done(null);
+            const r = new FileReader();
+            r.onerror = () => done(null);
+            r.onload = () => {
+                const img = new Image();
+                img.onerror = () => done(null);
+                img.onload = () => {
+                    try {
+                        const k = Math.min(1, 480 / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+                        const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k));
+                        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                        done(c.toDataURL('image/jpeg', 0.82));
+                    } catch { done(null); }
+                };
+                img.src = String(r.result || '');
+            };
+            r.readAsDataURL(file);
+        } catch { done(null); }
+    });
     const isAllowance = (t) => /\bai\.allowance_spent\b|free AI allowance[^.]{0,80}\bspent\b|Exchange HTTP 402\b/i.test(String(t || ''));
     const setupOf = (opts) => {
         const own = opts && Array.isArray(opts.setup) ? opts.setup.filter((x) => x && x.id && x.name && /^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(String(x.url || ''))) : [];
@@ -553,7 +576,8 @@
         const api = async (path, init = {}) => {
             const r = await fetch(`${base}${path}`, { ...init, credentials: 'omit', headers: { Accept: 'application/json', ...(init.body && typeof init.body === 'string' ? { 'Content-Type': 'application/json' } : {}), ...headers(), ...(init.headers || {}) } });
             const j = await r.json().catch(() => ({}));
-            if (!r.ok) { const e = new Error(j.error || j.message || `It did not answer (${r.status})`); e.status = r.status; e.code = j.code; throw e; }
+            // 4.311.0: a problem+json answer says it in `detail` (Actor's day_spent, through any Frame that passes it on).
+            if (!r.ok) { const e = new Error((typeof j.error === 'string' && j.error) || j.detail || j.message || `It did not answer (${r.status})`); e.status = r.status; e.code = j.code; throw e; }
             return j;
         };
         const emit = (type, data) => { if (typeof o.onEvent === 'function') { try { o.onEvent(type, data); } catch { /* the host's */ } } };
@@ -1405,7 +1429,8 @@
                 b.classList.add('ovse-yai');
                 const opts = options || fallbackOptions;
                 let i = 0;
-                const section = (title, glyph) => { const sec = el('section', 'ovse-yai-sec'); const h = el('h3', 'ovse-yai-h'); h.append(svg(glyph), el('span', '', title)); sec.append(h); b.append(sec); return sec; };
+                // 4.311.0 (the owner, 11-18: "confusing"): every section says in a line what it is.
+                const section = (title, glyph, line) => { const sec = el('section', 'ovse-yai-sec'); const h = el('h3', 'ovse-yai-h'); h.append(svg(glyph), el('span', '', title)); sec.append(h); if (line) sec.append(el('p', 'ovse-yai-l', line)); b.append(sec); return sec; };
                 const row = (sec, { face, glyph, name, line, chip = null, tone = '', go = 'fold', onClick }) => {
                     const r = el('button', 'ovse-yai-r'); r.type = 'button'; r.style.setProperty('--i', String(i++));
                     r.setAttribute('aria-label', `${name}: ${line}${chip ? ` (${chip})` : ''}`);
@@ -1421,13 +1446,14 @@
                 const setup = (id) => setupOf(opts).find((x) => x.id === id) || SETUP.find((x) => x.id === id);
 
                 // Who works
-                const who = section('Who works', 'robot');
+                const who = section('Your agents', 'robot', 'They do what you ask. Actor answers and acts with AI models through their APIs; Codes writes code with a coding agent.');
                 if (o.actor) {
                     const st = actorState(); const now = (actor && actor.now) || {};
                     const cap = actor && actor.caps && Number(actor.caps.usd) > 0 ? ` of $${Number(actor.caps.usd).toFixed(2)}` : '';
-                    row(who, { face: actorFace('m'), name: actorName(), line: `Your agent · ${ACTOR_WORD[st]} · $${(Number(now.cost_today) || 0).toFixed(2)}${cap} today`, onClick: later(() => agentSheet()) });
+                    row(who, { face: actorFace('m'), name: actorName(), line: `AI models through their APIs · ${ACTOR_WORD[st]} · $${(Number(now.cost_today) || 0).toFixed(2)}${cap} today`, onClick: later(() => agentSheet()) });
                 }
-                if (o.codes) row(who, { glyph: 'code', name: 'Codes', line: 'Your coding agent, on a shared node or your computer', onClick: later(() => setupFor('codes')) });
+                if (o.codes) row(who, { glyph: 'code', name: 'Codes', line: 'Writes code with a coding agent, on a shared node or your computer', onClick: later(() => setupFor('codes')) });
+                const coders = section('Coding agents', 'term', 'The programs Codes runs to write code, each signed in on the machine it runs on. Ready means it can start now.');
                 // 4.299.0 (Your AI on a phone, 11-17: nine coding agents pushed keys and the Balance far below the fold): the
                 // ready ones first, three shown, the rest one row that unfolds them in place.
                 const harnesses = (opts.agents || []).filter((a) => a && (a.kind === 'harness'));
@@ -1436,13 +1462,13 @@
                 const folded = [];
                 ordered.forEach((a, k) => {
                     const ready = a.available !== false;
-                    const r = row(who, { glyph: 'term', name: a.name, line: a.line || 'A coding agent', chip: ready ? 'Ready' : 'Set it up', tone: ready ? 'ok' : 'warn', go: ready ? 'fold' : 'open',
+                    const r = row(coders, { glyph: 'term', name: a.name, line: a.line || 'A coding agent', chip: ready ? 'Ready' : 'Set it up', tone: ready ? 'ok' : 'warn', go: ready ? 'fold' : 'open',
                         onClick: ready ? later(() => { pick.agent = a.id; if (pick.where === 'openvibe') pick.where = 'auto'; savePick(); blank(); }) : () => goSetup(setup('harnesses')) });
                     if (k >= SHOWN && ordered.length > SHOWN + 1) { r.hidden = true; r.classList.add('ovse-yai-more'); folded.push(r); }
                 });
                 if (folded.length) {
                     const rest = ordered.slice(ordered.length - folded.length);
-                    const more = row(who, { glyph: 'term', name: `${folded.length} more coding agents`, line: rest.map((a) => a.name).join(', '), go: 'fold', onClick: () => {
+                    const more = row(coders, { glyph: 'term', name: `${folded.length} more coding agents`, line: rest.map((a) => a.name).join(', '), go: 'fold', onClick: () => {
                         folded.forEach((r, k) => { r.style.setProperty('--i', String(k)); r.hidden = false; });
                         more.remove();
                         if (folded[0]) folded[0].focus({ preventScroll: true });
@@ -1451,10 +1477,10 @@
                     const g = more.querySelector('.ovse-yai-go'); if (g) g.classList.remove('is-next');
                     more.setAttribute('aria-expanded', 'false');
                 }
-                if (!harnesses.length) row(who, { glyph: 'term', name: 'Coding agents', line: 'Claude Code, Codex, OpenCode and the rest, signed in where they run', go: 'open', onClick: () => goSetup(setup('harnesses')) });
+                if (!harnesses.length) row(coders, { glyph: 'term', name: 'Coding agents', line: 'Claude Code, Codex, OpenCode and the rest, signed in where they run', go: 'open', onClick: () => goSetup(setup('harnesses')) });
 
                 // How it's paid
-                const pay = section('How it\'s paid', 'coin');
+                const pay = section('How it\'s paid', 'coin', 'The free AI comes first; then your Balance, or your own key.');
                 // 4.306.0: what you used, today and over 30 days; it opens Usage.
                 const usedR = row(pay, { glyph: 'clock', name: 'What you used', line: 'Tokens and cost: this session, today, 30 days', chip: '…', onClick: later(() => usageSheet(state.run ? 'session' : 'today')) });
                 loadUsage().then((x) => {
@@ -1518,7 +1544,7 @@
                 const topUp = () => openWallet(end);
 
                 // Where it runs
-                const where = section('Where it runs', 'computer');
+                const where = section('Where it runs', 'computer', 'Your computers (through OpenVibe Link) and OpenVibe\'s shared nodes.');
                 const machines = (opts.places || []).filter((x) => x && x.kind === 'machine');
                 machines.slice(0, 8).forEach((m) => {
                     const on = m.available !== false;
@@ -1531,7 +1557,9 @@
                 row(where, { glyph: 'list', name: 'Shared nodes and your computers', line: setup('machines').line, go: 'open', onClick: () => goSetup(setup('machines')) });
 
                 // Sign-ins
-                const ins = section('Sign-ins', 'key');
+                // 4.311.0 (the owner, 11-18: "Your own AI key" → "Locker", beside the sign-ins): your keys and your sign-ins, together.
+                const ins = section('Keys and sign-ins', 'lock', 'Sealed and used only for you. An agent asks before it uses a sign-in.');
+                ins.append(keysAt);
                 row(ins, { glyph: 'key', name: 'Sign-ins for your agents', line: setup('signins').line, go: 'open', onClick: () => goSetup(setup('signins')) });
                 emit('setup.your-ai', {});
             });
@@ -2029,7 +2057,15 @@
             const row = el('div', 'ovse-attach');
             list.slice(0, 8).forEach((a) => {
                 const url = httpsUrl(a.url);
-                if ((a.kind === 'image' || /^image\//.test(String(a.type || a.mime || ''))) && url) { const i = el('img', 'ovse-thumb'); i.src = url; i.alt = a.alt || a.name || ''; i.loading = 'lazy'; row.append(i); }
+                // A picture by its kind, its type or its name; drawn from the service's copy, else from the preview made here.
+                const picture = a.kind === 'image' || /^image\//.test(String(a.type || a.mime || '')) || IMAGE_EXT.test(String(a.name || ''));
+                const src = url || (typeof a.preview === 'string' && /^data:image\/(png|jpeg|gif|webp)/.test(a.preview) ? a.preview : null);
+                if (picture && src) {
+                    const box = el(url ? 'a' : 'span', 'ovse-thumb-box'); if (url) { box.href = url; box.target = '_blank'; box.rel = 'noopener'; }
+                    const i = el('img', 'ovse-thumb'); i.src = src; i.alt = a.alt || a.name || ''; i.loading = 'lazy'; i.decoding = 'async';
+                    i.addEventListener('error', () => { box.replaceWith(Object.assign(el('span', 'ovse-chip'), {}).appendChild(document.createTextNode(a.name || 'A picture')).parentNode); }, { once: true });
+                    box.append(i); row.append(box);
+                }
                 else { const c = el(url ? 'a' : 'span', 'ovse-chip'); if (url) { c.href = url; c.target = '_blank'; c.rel = 'noopener'; } c.append(svg('file'), el('span', '', a.name || a.kind || 'A file')); row.append(c); }
             });
             n.append(row);
@@ -2605,7 +2641,21 @@
                 return;
             }
             if (section === 'agent') {
-                P.open({ anchor: ctxB, title: 'Harness', search: 'auto', value: pick.agent, rows: [...(opts.agents || []).map((a) => ({ id: a.id, name: a.name, line: a.line || '', disabled: a.available === false })), SETUP_ROW], onPick: (row) => {
+                // 4.311.0 (the owner, 11-18: "confused … API or harness"): Auto; your agents, each saying how it works (Actor
+                // through AI models' APIs, Codes through a coding agent); the coding agents themselves; your own.
+                const all = opts.agents || [];
+                const tileOf = (a) => (a.kind === 'auto' ? 'spark' : a.kind === 'actor' ? 'robot' : a.kind === 'codes' ? 'code' : a.kind === 'harness' ? 'term' : 'robot');
+                const lineOf = (a) => (a.kind === 'actor' ? 'Answers, searches and does things, with AI models through their APIs' : a.kind === 'codes' ? 'Writes and changes code, with the best coding agent for it' : a.line || '');
+                const rowOf = (a) => ({ id: a.id, name: a.name, line: lineOf(a), svg: svgMarkup(tileOf(a)), disabled: a.available === false, badge: a.kind === 'harness' ? (a.available === false ? 'Set up' : 'Ready') : '' });
+                const sections = [
+                    { title: '', rows: all.filter((a) => a.kind === 'auto').map(rowOf) },
+                    { title: 'Your agents', rows: all.filter((a) => a.kind === 'actor' || a.kind === 'codes').map(rowOf) },
+                    { title: 'Coding agents (harnesses)', rows: all.filter((a) => a.kind === 'harness').map(rowOf) },
+                    { title: 'Others', rows: all.filter((a) => !['auto', 'actor', 'codes', 'harness'].includes(a.kind)).map(rowOf) },
+                    { title: 'Your own', rows: [{ ...SETUP_ROW, svg: svgMarkup('key') }] },
+                ].filter((x) => x.rows.length);
+                P.open({ anchor: ctxB, title: 'Who works on it', intro: 'An agent does the work. Actor uses AI models through their APIs. A coding agent (a harness: Claude Code, Codex …) works in a repository on a machine, run by Codes.',
+                    search: 'auto', value: pick.agent, sections, onPick: (row) => {
                     if (row.id === SETUP_ROW.id) { then(() => openCtx('setup')); return; } pick.agent = row.id; if (pick.where === 'openvibe' && coding(opts)) pick.where = 'auto'; savePick(); } });
             } else if (section === 'where') {
                 const places = coding(opts) ? (opts.places || []).filter((x) => x.kind !== 'openvibe').map((x) => (x.kind === 'auto' ? { ...x, line: 'A shared node or your own computer' } : x)) : (opts.places || []);
@@ -2634,14 +2684,19 @@
                 const value = pick.model ? `${pick.model.source || 'openvibe'}|${pick.model.id}` : 'auto';
                 P.open({ anchor: ctxB, title: 'Model', search: true, value, searchLabel: 'Search models', load: async () => {
                     const d = await loadModels();
-                    const sections = [{ title: '', rows: [{ id: 'auto', name: 'Auto', line: 'The best fit for what you ask, within your budget' }] }];
+                    const sections = [{ title: '', rows: [{ id: 'auto', name: 'Auto', line: 'The best fit for what you ask, within your budget', svg: svgMarkup('spark') }] }];
                     for (const g of d.groups || []) {
                         for (const x of (g.rows || []).slice(0, 800)) priced.set(`${x.source || 'openvibe'}|${x.model}`, { price: x.price && Number.isFinite(x.price.in) ? { in: x.price.in, out: x.price.out } : null, free: !!x.free });
-                        const rows = (g.rows || []).slice(0, 800).map((x) => ({ id: `${x.source || 'openvibe'}|${x.model}`, name: x.name || x.model, line: [x.maker, x.free ? 'Free' : x.price && Number.isFinite(x.price.in) ? `$${x.price.in} / $${x.price.out} per 1M` : ''].filter(Boolean).join(' · '), badge: x.free ? 'Free' : '' }));
+                        // 4.311.0 (the owner, 11-18: letter tiles, "Your computers … link how"): each group's own glyph, and a
+                        // first row that says how your computers' models reach here.
+                        const glyph = g.id === 'machines' ? 'computer' : g.id === 'keys' ? 'key' : g.id === 'plans' ? 'coin' : 'model';
+                        const rows = (g.rows || []).slice(0, 800).map((x) => ({ id: `${x.source || 'openvibe'}|${x.model}`, name: x.name || x.model, line: [x.maker && x.maker !== x.model ? x.maker : '', x.free ? 'Free' : x.price && Number.isFinite(x.price.in) ? `$${x.price.in} / $${x.price.out} per 1M` : ''].filter(Boolean).join(' · '), badge: x.free ? 'Free' : '', svg: svgMarkup(glyph) }));
+                        if (rows.length && g.id === 'machines') rows.unshift({ id: '__how-machines', name: 'How these get here', line: 'Your computers run them through OpenVibe Link: free, private, on your own machine. Add or manage computers', svg: svgMarkup('link') });
                         if (rows.length) sections.push({ title: g.title || g.id, rows });
                     }
                     return sections;
                 }, onPick: (row) => {
+                    if (row.id === '__how-machines') { const x = setupOf(opts).find((y) => y.id === 'computer') || SETUP.find((y) => y.id === 'computer'); if (x) goSetup(x); return; }
                     if (row.id === 'auto') pick.model = null;
                     else { const [source, ...rest] = String(row.id).split('|'); pick.model = { id: rest.join('|'), source, name: row.name, ...(priced.get(row.id) || {}) }; }
                     savePick();
@@ -2799,7 +2854,10 @@
             const gen = ++state.gen; clearStream();
             state.ref = null; state.run = null; state.steps = new Map(); state.queue = []; state.pending = true; state.open = new Set();
             wrap.classList.remove('is-blank');
-            state.steps.set(0, { seq: 0, kind: 'message', from: 'person', text, attachments: (files || []).map((f) => ({ name: f.name, kind: /^image\//.test(f.type) ? 'image' : 'file' })) });
+            const echoed = (files || []).map((f) => ({ name: f.name, kind: /^image\//.test(f.type) || IMAGE_EXT.test(f.name || '') ? 'image' : 'file' }));
+            state.steps.set(0, { seq: 0, kind: 'message', from: 'person', text, attachments: echoed });
+            // 4.311.0: a picture you sent shows as the picture (a small preview made here) until the service's copy is in.
+            (files || []).forEach((f, k) => { if (echoed[k].kind === 'image') previewOf(f).then((src) => { if (!src) return; echoed[k].preview = src; if (state.gen >= gen) paint(); }); });
             paint(); paintCtx();
             let run;
             try {
@@ -2816,7 +2874,7 @@
             state.pending = false;
             if (gen !== state.gen) return true;
             emit('session.started', { ref: run.ref || run.id, run });
-            open(run.ref || run.id, run, { said: text, modelSent: pick.model ? pick.model.id : null });
+            open(run.ref || run.id, run, { said: text, saidFiles: echoed, modelSent: pick.model ? pick.model.id : null });
             loadRuns();
             return true;
         }
@@ -2922,7 +2980,7 @@
             // The way the chip shows when a session opens is taken as the one it runs: a later change on the chip is a swap.
             state.waySent = `${pick.way || 'auto'}|${(wayBody() && wayBody().model) || ''}`;
             wrap.classList.remove('is-blank');
-            if (how.said) { state.steps.set(-1, { seq: -1, kind: 'message', from: 'person', text: how.said }); state.pending = true; }
+            if (how.said) { state.steps.set(-1, { seq: -1, kind: 'message', from: 'person', text: how.said, ...(how.saidFiles && how.saidFiles.length ? { attachments: how.saidFiles } : {}) }); state.pending = true; }
             paint(); paintCtx();
             [...runsBox.querySelectorAll('.ovse-row')].forEach((b) => b.classList.remove('is-on'));
             composer('Say the next thing');
@@ -3122,6 +3180,10 @@
         if (o.actor) loadActor().then(paintActor);
         if (wide && !collapsed) loadRuns();
         need(o, 'ov-picker.js', 'OpenVibePicker');
+        // 4.311.0 (the owner, 11-18: the Model sheet "slow to open the 1st time"): when the session has drawn and the page is
+        // idle, the picker's script and the models are fetched, so the first sheet opens at once.
+        { const idle = window.requestIdleCallback || ((f) => setTimeout(f, 1500));
+            idle(() => { need(o, 'ov-picker.js', 'OpenVibePicker').catch(() => {}); if (tokenOf()) loadModels().catch(() => {}); }, { timeout: 5000 }); }
         return {
             open: (ref) => { state.stack = []; return open(ref); }, blank, prefill, refresh: () => { loadRuns(); if (o.actor) { actorAt = 0; loadActor().then(paintActor); } },
             start: (text, files, choice) => start(String(text || ''), Array.isArray(files) ? files : undefined, choice), list: () => setDrawer(true),
@@ -3232,6 +3294,7 @@
 .ovse-yai-sec + .ovse-yai-sec { border-top: 1px solid var(--border, rgba(255,255,255,.09)); padding-top: 12px; }
 .ovse-yai-h { display: flex; align-items: center; gap: 8px; margin: 0 2px 2px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
 .ovse-yai-h .ovse-g { width: 16px; height: 16px; }
+.ovse-yai-l { margin: -2px 2px 4px; font-size: 12.5px; line-height: 1.4; color: var(--text-muted, #8b8b9e); }
 .ovse-yai-r { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 8px 10px; border: 1px solid var(--border, rgba(255,255,255,.09)); border-radius: 16px;
   background: color-mix(in srgb, var(--text-primary, #ececf1) 3%, transparent); color: inherit; font: inherit; text-align: left; cursor: pointer;
   transition: border-color .15s, background .15s, transform .15s; animation: ovse-in .36s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 32ms); }
@@ -3537,6 +3600,9 @@ html[data-ov-motion="off"] .ovse-receipt-r { animation: none; }
 .ovse-source i { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--ovse-acc) 22%, transparent); color: var(--ovse-acc2); font-style: normal; font-weight: 700; font-size: 11px; }
 .ovse-source span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
 .ovse-attach { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+/* 4.311.0: a picture you sent, as a picture. */
+.ovse-thumb-box { display: block; border-radius: 14px; overflow: hidden; border: 1px solid var(--ovse-line); background: var(--ovse-card); max-width: min(260px, 70vw); }
+.ovse-thumb-box .ovse-thumb { display: block; width: 100%; height: auto; max-height: 260px; object-fit: cover; }
 .ovse-thumb { width: 120px; height: 90px; object-fit: cover; border-radius: 12px; border: 1px solid var(--ovse-line); }
 .ovse-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 10px; background: var(--ovse-card); border: 1px solid var(--ovse-line); color: var(--ovse-dim); font-size: 12.5px; text-decoration: none; }
 .ovse-chip .ovse-g { width: 14px; height: 14px; }
@@ -3769,7 +3835,8 @@ html[data-ov-motion="off"] .ovse-road { animation: none; transition: none; }
 .ovse-how.is-list { display: grid; gap: 0; width: min(520px, 100%); box-sizing: border-box; margin: 4px auto 14px; padding: 4px 4px 6px; border: 1px solid var(--ovse-line); border-radius: 18px; background: var(--ovse-card); justify-content: stretch; }
 .ovse-how-h { margin: 8px 12px 4px; font-size: 11.5px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--ovse-mute); text-align: left; }
 .ovse-how.is-list .ovse-how-c { display: grid; grid-template-columns: 36px minmax(0, 1fr) 16px; align-items: center; gap: 12px; width: 100%; max-width: none; min-height: 62px; padding: 8px 10px; border: 0; border-radius: 14px; background: transparent; text-align: left; }
-.ovse-how.is-list .ovse-how-c + .ovse-how-c { box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ovse-line) 70%, transparent); }
+.ovse-how.is-list .ovse-how-c { position: relative; }
+.ovse-how.is-list .ovse-how-c + .ovse-how-c::before { content: ""; position: absolute; top: 0; left: 58px; right: 12px; height: 1px; background: color-mix(in srgb, var(--ovse-line) 80%, transparent); }
 .ovse-how.is-list .ovse-how-c:hover { background: color-mix(in srgb, var(--ovse-acc) 7%, transparent); }
 .ovse-how-i { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: color-mix(in srgb, var(--ovse-acc) 15%, transparent); color: var(--ovse-acc2); }
 .ovse-how.is-list .ovse-how-i .ovse-g { width: 20px; height: 20px; }

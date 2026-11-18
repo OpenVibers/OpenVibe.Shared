@@ -1,5 +1,43 @@
 # Changelog
 
+## 4.311.0 — 2026-11-18
+
+**Organized, and it explains itself** (the owner's phone, 11-18: "add custom layouts for this, explain this better, make
+this more organized … I'm so confused … more user friendly and intuitive … work in harmony across sites").
+
+- **The spent free AI is one card everywhere.** Before, it was a white bubble over the hello, raw red text under an
+  approval, and red text in a *Needs you* row. Now it is a card in the theme:
+  - what happened, and when it comes back (*in 4 h 12 min, at midnight UTC*);
+  - three buttons: *Your own key*, *Your computer*, *More ways*.
+  A problem+json answer's `detail` is read too, so the words are the service's own.
+- **The Way sheet, organized** (it was letter tiles, A A O D O O A C).
+  - Four groups: *Answer with an AI model*, *Other engines*, *Code on a machine*, *Side by side*.
+  - A drawn glyph on every row: a scale for Decisions, a lock for the open model, columns for Compare.
+  - A sentence on top says how a model and a coding agent differ.
+- **How it runs, grouped:** *Who works on it*, *How it thinks*, *Where it runs*, *Your own AI*, with a sentence on top.
+- **Who works on it** (the Harness sheet: "confused … API or harness") has four groups: Auto; *Your agents*, where Actor
+  is "with AI models through their APIs" and Codes "with the best coding agent for it"; *Coding agents (harnesses)*,
+  each Ready or Set up; *Your own*.
+- **The Model sheet:**
+  - each group's glyph instead of the maker's letter;
+  - *Your computers* opens with **How these get here** (through OpenVibe Link: free, private, on your own machine),
+    which leads to adding a computer;
+  - the sheet's script and the models load while the page is idle, so the first open is not slow.
+- **Your AI:**
+  - *Your agents* (Actor, Codes) and *Coding agents* are now separate sections;
+  - each section says in a line what it is;
+  - your keys sit with the sign-ins in **Keys and sign-ins**.
+- **One chip, on one line.** The box's row is the modes, one chip and the road, and it no longer wraps. On an open
+  Actor conversation the chip itself says *Runs on …* and opens How Actor works: the second chip is gone.
+- **The hello explains.** The chips became a card, *How your next message runs*. Each row (who answers, what it thinks
+  with, where it runs, your own AI) says in a line what it means, and a tap changes it.
+- **Pictures show as pictures.** A sent picture keeps a small preview until the service's copy is in, where before it
+  showed only its name. The box's thumbnail is read again from the file when a page's policy refuses `blob:` pictures
+  (a broken image on openvibe.bot).
+- **The picker:** `intro`, a sentence under the title. A sheet with one lets its rows' lines take two lines.
+- Tests: `session-organized-chrome` (new), and `ov-session-chrome`, `session-engine-chrome`, `session-modes-chrome` and
+  `your-ai-chrome` follow the new groups.
+
 ## 4.310.0 — 2026-11-18
 
 The agent conversation, after the owner's phone screenshots of 11-18 (the menu's Vibe tab and openvibe.actor/chat).

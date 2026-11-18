@@ -588,7 +588,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     const mods = [];
     // 4.202.0: your settings open in the one window (ov-window.js: a sheet on a phone, swiped down to close), loaded
     // from beside this file; without it, a plain <dialog>.
-    const COMPOSER_REV = { 'ov-window.js': '55f98e14ef27', 'ov-capture.js': '6bdc48bfd415', 'ov-picker.js': 'b4966634da4c' };
+    const COMPOSER_REV = { 'ov-window.js': '55f98e14ef27', 'ov-capture.js': '6bdc48bfd415', 'ov-picker.js': '46abf4b33048' };
     const selfSrc = (document.currentScript && document.currentScript.src) || '';
     function needWindow() {
         return new Promise((ok) => {
@@ -928,6 +928,14 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 + (kind === 'image' && !f.pasted && captionOn() ? `<button type="button" class="ovc-file-ai${f.captioning ? ' is-busy' : ''}" data-ovc-caption aria-label="${f.captioning ? 'Writing a caption…' : 'Caption it with AI'}" title="${f.captioning ? 'Writing a caption…' : 'Caption it with AI'}"${f.captioning ? ' aria-busy="true"' : ''}>${svg(IC.spark)}</button>` : '')
                 + `<button type="button" class="ovc-file-x" data-ovc-x aria-label="Remove">${svg(IC.x)}</button>`;
             chip.querySelector('.ovc-file-n').textContent = f.pasted ? 'Pasted text' : f.file.name || 'File';
+            // 4.311.0 (the owner's phone, 11-18: a broken picture in the chip): a page whose policy refuses blob: pictures gets
+            // the same thumbnail read from the file as a data: address.
+            { const th = chip.querySelector('img.ovc-file-th');
+                if (th && !f.dataThumb) th.addEventListener('error', () => {
+                    if (f.dataThumb || !f.file || f.file.size > 25 * 1024 * 1024) return;
+                    const r = new FileReader(); r.onload = () => { f.dataThumb = String(r.result || ''); if (th.isConnected) th.src = f.dataThumb; }; r.readAsDataURL(f.file);
+                }, { once: true });
+                else if (th && f.dataThumb) th.src = f.dataThumb; }
             // 4.247.0 (§Z.9): a video says its length beside its size once the browser has read it.
             const length = f.duration > 0 ? `${Math.floor(f.duration / 60)}:${String(Math.round(f.duration % 60)).padStart(2, '0')} · ` : '';
             chip.querySelector('.ovc-file-s').textContent = f.error || (f.pasted ? `${f.lines} lines · ${size(f.file.size)}` : f.progress != null && f.progress < 1 ? `${Math.round(f.progress * 100)}%` : length + size(f.file.size));
