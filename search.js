@@ -3071,6 +3071,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         drainCards();
         syncFeeds();
         el.classList.add('is-open');
+        // 4.316.0: Vibe is one press away once the menu is open; its script is read now (from the cache the navbar warmed),
+        // a moment after the menu settles, so pressing Vibe draws at once instead of "Opening Vibe…".
+        if (ctx.token && !root.OpenVibeSession) setTimeout(() => { if (el && el.classList.contains('is-open')) sessionLib().catch(() => {}); }, 350);
         tickAgo();
         actorAt = 0; activeAt = 0; toggleYou(false); syncTools(); paintLead();
         // Back closes the menu first (the owner, 11-07: pressing Back on a phone left the page instead): opening adds one
