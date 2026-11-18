@@ -282,6 +282,23 @@
     };
     const inputOf = (s) => (s.tool_call && s.tool_call.input && typeof s.tool_call.input === 'object' ? s.tool_call.input : {});
     const toolWhat = (s) => { const i = inputOf(s); const w = i.path || i.file_path || i.filename || i.command || i.cmd || i.pattern || i.query || i.q || i.url || ''; return String(Array.isArray(w) ? w.join(' ') : w).slice(0, 160); };
+    // 4.313.0: the web a group of steps touched: every site its inputs and results name, in order, at most 40.
+    const WEBISH = /search_web|search_sites|read_page|read_pages|fetch_data|web|fetch|browse|navigate|wikipedia/i;
+    const sitesOf = (steps) => {
+        const out = new Map();
+        const add = (u) => { try { const host = new URL(String(u)).hostname.replace(/^www\./, ''); if (host && /\./.test(host) && !out.has(host)) out.set(host, true); } catch { /* not an address */ } };
+        for (const s of steps) {
+            if (out.size >= 40) break;
+            const i = inputOf(s);
+            if (i.url) add(i.url);
+            if (Array.isArray(i.urls)) i.urls.slice(0, 20).forEach(add);
+            let blob = '';
+            try { blob = typeof s.result === 'string' ? s.result : JSON.stringify(s.result || ''); } catch { blob = ''; }
+            for (const m of `${blob} ${s.text || ''}`.slice(0, 60000).matchAll(/https:\/\/[a-z0-9.-]+\.[a-z]{2,}(?=[/\s"'?#)\]]|$)/gi)) { add(m[0]); if (out.size >= 40) break; }
+        }
+        return [...out.keys()];
+    };
+    const siteHue = (host) => { let h = 0; for (const c of host) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
     /** One line for a tool row: its own title, else what it touched (a path, a command, a query, an address). */
     const toolLine = (s) => {
         if (s.title) return String(s.title);
@@ -1908,9 +1925,20 @@
             const icons = el('span', 'ovse-acts-ic');
             [...count.keys()].slice(0, 5).forEach((k) => icons.append(svg(TOOL_WORDS[k][1])));
             const said = [...count.entries()].map(([k, n]) => { const w = TOOL_WORDS[k]; return k === 'search' ? `${w[0]} ${n === 1 ? 'once' : `${n} times`}` : `${w[0]} ${n} ${n === 1 ? w[2] : w[3]}`; });
-            const text = said.length ? said.join(', ') : 'Worked';
+            // Research says where it looked: "Searched 13 websites", the first sites as chips, the rest counted.
+            const webSteps = steps.filter((s) => WEBISH.test(toolName(s)));
+            const sites = webSteps.length ? sitesOf(webSteps) : [];
+            const allWeb = webSteps.length && webSteps.length === steps.filter((s) => toolKind(s) !== 'plan').length;
+            const text = allWeb && sites.length >= 2 ? `${steps.some((s) => /search/i.test(toolName(s))) ? 'Searched' : 'Read'} ${sites.length} websites` : said.length ? said.join(', ') : 'Worked';
             const words0 = el('span', 'ovse-acts-w', text.charAt(0).toUpperCase() + text.slice(1));
             sm.append(icons, words0);
+            if (sites.length) {
+                const row = el('span', 'ovse-sites');
+                sites.slice(0, 3).forEach((host) => { const c = el('span', 'ovse-site'); const mark = el('i', '', host.charAt(0).toUpperCase()); mark.style.setProperty('--h', String(siteHue(host))); c.append(mark, el('span', '', host)); row.append(c); });
+                if (sites.length > 3) row.append(el('span', 'ovse-site is-more', `${sites.length - 3} more`));
+                row.title = sites.join(', ');
+                sm.append(row);
+            }
             if (running) { sm.append(el('small', 'ovse-acts-now', count.size === 1 ? toolWhat(running) || toolLine(running) : toolLine(running))); d.classList.add('is-running'); }
             else if (failed) sm.append(el('small', 'ovse-acts-bad', `${failed} did not work`));
             sm.append(svg('fold', 'ovse-fold'));
@@ -3664,6 +3692,13 @@ html[data-ov-motion="off"] .ovse-receipt-r { animation: none; }
 .ovse-source i { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--ovse-acc) 22%, transparent); color: var(--ovse-acc2); font-style: normal; font-weight: 700; font-size: 11px; }
 .ovse-source span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
 .ovse-attach { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+/* 4.313.0: the sites a group of steps looked at, as chips under its line. */
+.ovse-acts-h { flex-wrap: wrap; }
+.ovse-sites { order: 9; flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px 28px; min-width: 0; }
+.ovse-site { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; max-width: 100%; padding: 0 10px 0 4px; border-radius: 999px; border: 1px solid var(--ovse-line); background: var(--ovse-card); color: var(--ovse-dim); font-size: 12.5px; font-weight: 600; min-width: 0; }
+.ovse-site span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ovse-site i { flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-style: normal; font-size: 11px; font-weight: 800; color: #fff; background: hsl(var(--h, 210) 55% 42%); }
+.ovse-site.is-more { padding: 0 10px; }
 /* 4.313.0: an answer being written, with a caret. */
 .ovse-live .ovse-live-t { white-space: pre-wrap; overflow-wrap: anywhere; }
 .ovse-live .ovse-live-t::after { content: ""; display: inline-block; width: .5em; height: 1.05em; margin-left: 2px; vertical-align: -3px; border-radius: 2px; background: var(--ovse-acc2); opacity: .7; animation: ovse-caret 1s steps(2, start) infinite; }

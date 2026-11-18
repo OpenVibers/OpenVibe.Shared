@@ -13,6 +13,9 @@
 - **Answers stream.** While an Actor turn runs, its words grow in a bubble where *Working* was, with a caret. They come
   from Network #1097's `delta { live: true, text }`, and the stored answer replaces the bubble when it comes ("stream
   response").
+- **Research says where it looked.** A group of web steps (searches, pages read, data fetched) says *Searched 5
+  websites*. The sites show under it as chips (*netcup.com*, *contabo.com*, *lowendtalk.com*, *2 more*): a coloured
+  initial each, since the menu loads no pictures from other sites. This is the owner's "do shit like this".
 - **An operator alert that keeps firing is one row.** *Disk almost full* fired today, yesterday and Sunday and showed
   as three rows. It is now the newest row, *×3*, *since Sunday*, wherever its repeats fall. Other repeats still fold only
   when they come close together.
@@ -22,7 +25,7 @@
   - a finished one says *See the answer*.
 - **The waiting bubble sits under the bar.** *An agent is waiting for your answer* sat over the bar's coins and face
   on openvibe.bot ("buggy looks"). It now goes under the whole bar, and a bar scrolled out of sight says nothing.
-- Tests: `session-level-chrome` and `session-live-chrome` (new); `notifications-fold-chrome` adds the repeating operator alert; `dock-chrome` checks
+- Tests: `session-level-chrome`, `session-live-chrome` and `session-sites-chrome` (new); `notifications-fold-chrome` adds the repeating operator alert; `dock-chrome` checks
   the bubble is under the bar.
 
 ## 4.312.0 — 2026-11-18
