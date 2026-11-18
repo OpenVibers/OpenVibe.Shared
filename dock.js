@@ -319,7 +319,7 @@
                 border-top-color: var(--accent, #3b82f6); animation: ovdk-older-spin .8s linear infinite; }
             @keyframes ovdk-older-spin { to { transform: rotate(360deg); } }
             .ovdk-gl-jump { position: sticky; bottom: 64px; z-index: 3; height: 0; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
-            /* 4.312.0 (the owner's phone, 11-18: the ↓ ✓ pill sat on the last card, "improve"): a slim bar the width of the
+            /* 4.312.0 (the owner's phone, 11-18: the down-and-check pill sat on the last card, "improve"): a slim bar the width of the
                list, its words said ("3 new messages", "Mark read"), glass over what scrolls under it. */
             .ovdk-gl-jump .ovdk-gl-jump-c { width: calc(100% - 16px); justify-content: space-between; border-radius: 14px; color: var(--text-primary, #e8ecf3);
                 background: color-mix(in srgb, var(--bg-secondary, #111827) 78%, var(--accent, #3b82f6) 22%); border: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent);
