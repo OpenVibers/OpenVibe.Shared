@@ -9,6 +9,8 @@ which no theme sets, so on every light theme the menu's site names and icons sta
 the kit's, the messages', the composer's and the run thread's light colours never applied; on a light phone with a
 dark theme, the composer's and the faces' light colours applied wrongly. They test `data-theme-mode` now.
 - Test: theme-mode-selectors fails on any selector on `data-theme="light"` or `"dark"`.
+- **test.yml: `apt-packages` installs only what is missing.** A shared node (OpenVibe checks) has the packages and
+  no sudo, so Meme's check stopped at that step; on GitHub it saves the install.
 
 ## 4.318.0 — 2026-11-18
 
