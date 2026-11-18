@@ -2288,13 +2288,15 @@
         }
         /** Where the next answer goes, as Actor routes it (tasks/engine.js): the free AI while a turn fits in what is
          *  left (4.300.0, Actor #575: an agent turn takes about 12,000 tokens; Chat's one model, anything left), then a
-         *  key you allowed Actor to use, then a computer of yours that is online; null for a coding run (Codes routes
-         *  itself) or when it is not known. */
+         *  key you allowed Actor to use, then a computer of yours that is online; for a coding run, the Frame's road.code
+         *  (4.314.0); null when it is not known. */
         function roadNow() {
             const res = resources;
-            if (!res || res === 'old' || !res.allowance) return null;
+            if (!res || res === 'old') return null;
             const m = modeNow();
-            if (m === null || m === 'code') return null;
+            if (m === 'code') return codeRoad(res);
+            if (!res.allowance) return null;
+            if (m === null) return null;
             const a = res.allowance;
             // The Frame's own answer when it sends one (4.301.0): Network answers openvibe-sdk/agents/roads, the one order
             // Actor's engine walks, over these facts and your computers, so the chip and Actor cannot disagree. The copy
@@ -2332,6 +2334,25 @@
             if (pc) return { road: 'computer', glyph: 'computer', text: String(pc.name || 'Your computer').slice(0, 24), say: `${pc.name || 'Your computer'}: ${why} until ${atTime(a.resets_at)}` };
             if (left > 0) return { road: 'none', glyph: 'spark', text: 'Chat only', pct: tokens ? left / tokens : 0, say: `The free AI has ${shortN(left)} tokens left today: enough for Chat, not for an agent turn. Back in full at ${atTime(a.resets_at)}. Add a key or a computer to keep going` };
             return { road: 'none', glyph: 'spark', text: `Back ${atTime(a.resets_at)}`, pct: 0, say: `The free AI is used up until ${atTime(a.resets_at)}. Add a key or a computer to keep going` };
+        }
+        /** Code mode (4.314.0, plan §AD.28 item 4): what would run the next coding task, as the Frame answers it (SDK
+         *  0.186's coding order: a coding agent signed in with your plan on your computer, your key allowed for Codes,
+         *  the free AI when a coding turn fits, else why not). A coding agent you picked is yours: the chip says nothing
+         *  over it. A Frame without road.code: no chip, as before. */
+        function codeRoad(res) {
+            const fr = res.road && res.road.code;
+            if (!fr || !fr.road || fr.road === 'code' || pick.harness) return null;
+            const say = String(fr.say || '').trim().replace(/\.$/, '');   // the label adds '. Your AI'
+            const short = (s) => String(s || '').slice(0, 24);
+            if (fr.road === 'plan' || fr.road === 'choice') return { road: 'computer', glyph: 'code', text: short(fr.harness_name || fr.harness || 'Your coding agent'), say };
+            if (fr.road === 'key' && fr.provider) return { road: 'key', glyph: 'key', text: `${keyName(fr.provider)} key`, say };
+            if (fr.road === 'free') {
+                const a = res.allowance || {};
+                const tokens = Number(a.tokens) || 0, left = Math.max(0, Number(a.left) || 0), pct = a.unlimited || !tokens ? 1 : left / tokens;
+                return { road: 'free', glyph: 'spark', text: a.unlimited ? 'Free AI' : `${Math.max(1, Math.round(pct * 100))}% free`, pct, say };
+            }
+            if (fr.road === 'none') return { road: 'none', glyph: 'code', text: 'No coding agent', pct: 0, say };
+            return null;
         }
         function paintRoad() {
             const r = roadNow();

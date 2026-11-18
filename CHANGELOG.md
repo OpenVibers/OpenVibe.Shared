@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.314.0 — 2026-11-18
+
+**Code mode says what would run it** (plan §AD.28 item 4; §AD.17 left "Codes' own runs on the same ladder").
+- **The road chip in Code mode** reads the Frame's `road.code` (Network, SDK 0.186's coding order). Before, Code mode hid
+  the chip.
+  - A coding agent signed in with your plan on your computer: *Claude Code*, with *Claude Code runs it on Tower, on your
+    Anthropic plan* as its label.
+  - Otherwise your key allowed for Codes, the free AI when a coding turn fits, or *No coding agent* with what to do.
+  - A coding agent you picked is yours, so the chip says nothing over it. A Frame without `road.code` shows no chip, as
+    before.
+
 ## 4.313.0 — 2026-11-18
 
 **Alerts enriched, the approval level in the box, answers that stream** (the owner's phone, 11-18, You → Alerts: "Improve, Enrich";
