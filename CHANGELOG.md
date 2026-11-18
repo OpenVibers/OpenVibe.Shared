@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.316.0 — 2026-11-18
+
+**Vibe opens at once, and Global's pill clears** (the owner's phone, 11-18: "Opening Vibe…", "loads insanely slow";
+"1 new message" with Mark read, "doesn't work or clear on scroll").
+- **Vibe in the menu is ready before it is pressed.** Its script (ov-session.js, 350 KB) went out without `?v=` (kept five
+  minutes) and was fetched only when Vibe was pressed. It now has its content hash like every sibling (served for good),
+  the navbar fetches it at idle for someone signed in beside search.js, and the menu reads it a moment after it opens.
+  A visitor loads none of it. `test/menu-vibe-warm-chrome.test.js`.
+- **Global's pill clears.** Reaching the end of Global reads what is there (lines flicked past were never on screen long
+  enough to count, so they stayed new); a drag or a wheel at the very end, which scrolls nothing, asks the same. Mark
+  read empties the list of new lines whatever it holds. `test/dock-global-end-chrome.test.js`.
+
 ## 4.315.0 — 2026-11-18
 
 **The sessions drawer scrolls on a phone** (the owner's phone, 11-18: "Can't scroll!!" in the menu's Vibe tab).
