@@ -1205,9 +1205,15 @@
             }
             update();
         }
+        /** Every line still lit, read: the map is emptied whatever it holds (4.316.0, the owner's phone, 11-18: "Mark read"
+         *  left "1 new message" up, and it came back on the next look). */
+        function clearUnread() {
+            for (const el of unread.values()) { el.classList.remove('is-unread'); el.classList.add('is-read'); if (io) io.unobserve(el); }
+            unread.clear(); onScreen.clear();
+        }
         async function markAll() {
             if (divider) { const d = divider; divider = null; d.classList.add('is-done'); setTimeout(() => d.remove(), motionOff() ? 0 : 360); }
-            if (!moreAfter) { readUpTo(lastId); markRead(lastId, true); return; }
+            if (!moreAfter) { const top = Math.max(lastId, ...[...unread.keys()].map(Number).filter(Number.isFinite)); readUpTo(top); markRead(top, true); clearUnread(); update(); return; }
             // More waited than one page holds: read is the present. Global starts again from its newest lines.
             const d = await chatCall('/api/chat/global/history?limit=30').catch(() => null);
             const rows = d && Array.isArray(d.messages) ? d.messages : [];
@@ -1241,12 +1247,27 @@
             for (const r of unread.values()) io.observe(r);
             topIo = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) loadOlder(); }, { root: el, rootMargin: '240px 0px 0px 0px' });
             topIo.observe(older);
+            // 4.316.0 (the owner's phone, 11-18: the pill did not "clear on scroll"): reaching the end reads what is there,
+            // once the list holds still a moment, as the screen does for each line.
+            let endT = 0;
+            const atEnd = () => el.scrollHeight - el.scrollTop - el.clientHeight < 8;
             const onScroll = () => {
-                if (!box.isConnected) { el.removeEventListener('scroll', onScroll); return; }
+                if (!box.isConnected) { el.removeEventListener('scroll', onScroll); el.removeEventListener('touchend', onScroll); el.removeEventListener('wheel', onScroll); return; }
                 cancelAnimationFrame(frame); frame = requestAnimationFrame(update);
                 if (moreAfter && nearEnd()) loadAfter();
+                clearTimeout(endT);
+                if (!moreAfter && unread.size && atEnd()) {
+                    endT = setTimeout(() => {
+                        if (!box.isConnected || moreAfter || !atEnd() || document.visibilityState !== 'visible') return;
+                        const top = Math.max(lastId, ...[...unread.keys()].map(Number).filter(Number.isFinite));
+                        readUpTo(top); clearUnread(); update();
+                    }, 450);
+                }
             };
             el.addEventListener('scroll', onScroll, { passive: true });
+            // A drag or a wheel at the very end moves nothing, so no scroll event comes: they ask the same question.
+            el.addEventListener('touchend', onScroll, { passive: true });
+            el.addEventListener('wheel', onScroll, { passive: true });
             const onShow = () => {
                 if (!box.isConnected) { document.removeEventListener('visibilitychange', onShow); return; }
                 if (document.visibilityState === 'visible') settle();

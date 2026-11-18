@@ -36,7 +36,10 @@ const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov
     'ov-run.js', 'ov-composer.js',
     // 4.244.0 (§Z.3): what people wear on their names (items.js; items.css), loaded by the navbar the first time a page
     // draws a name that carries a subject.
-    'items.js', 'items.css'];
+    'items.js', 'items.css',
+    // 4.316.0 (the owner's phone, 11-18: "Opening Vibe…", "loads insanely slow"): the menu's Vibe (350 KB) went out
+    // without ?v=, kept five minutes, fetched only when Vibe was pressed.
+    'ov-session.js'];
 // The files dock.js and notification-ui.js load from beside themselves: their own tables, in their own files.
 const OWN = { 'dock.js': { name: 'DOCK_REV', files: ['ov-chat-cards.js', 'ov-tabs.js', 'dock-vibe.js', 'dock-code.js', 'dock-mount.js', 'dock-runs.js', 'ai-marks-client.js', 'action-center.js', 'dock-timeline.js', 'dock-actor.js', 'dock-agent.js', 'dock-timer.js', 'dock-share.js', 'dock-card.js', 'dock-chat-edits.js'] },
     'notification-ui.js': { name: 'NOTIFY_REV', files: ['notification-live.js'] },

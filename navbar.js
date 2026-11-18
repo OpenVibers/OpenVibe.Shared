@@ -665,7 +665,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5287054b7807', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '02c1251d2a18', 'dock.js': 'c5ae7c44e396', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '637b48b06443', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '95c86e40988c', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '219372044646', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'c1e7daded213', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': 'd05bd5afc225', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'fec07c961aa3', 'soft.js': '98ab9b8080b1', 'ov-run.js': '01382e7b5ee9', 'ov-composer.js': '287a9ad1bdf1', 'items.js': '321850a5bd67', 'items.css': 'ccb7103adad6' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5287054b7807', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': 'e94832ca6731', 'dock.js': '5b7d28d403f9', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '637b48b06443', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '95c86e40988c', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '219372044646', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'c1e7daded213', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': 'd05bd5afc225', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'fec07c961aa3', 'soft.js': '98ab9b8080b1', 'ov-run.js': '01382e7b5ee9', 'ov-composer.js': '287a9ad1bdf1', 'items.js': '321850a5bd67', 'items.css': 'ccb7103adad6', 'ov-session.js': '47fbde124143' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -2842,6 +2842,11 @@
         if (_menuWarm || root.OpenVibeSearch || typeof document === 'undefined') return;
         _menuWarm = true;
         try { const l = document.createElement('link'); l.rel = 'prefetch'; l.as = 'script'; l.href = siblingV('search.js'); document.head.appendChild(l); } catch { /* */ }
+        // 4.316.0 (the owner's phone, 11-18: "Opening Vibe…" for seconds): someone signed in also gets the menu's Vibe
+        // (ov-session.js) ahead, by its hashed URL, so pressing Vibe has nothing left to download.
+        if (_config && (_config.user || _config.token)) {
+            try { const l = document.createElement('link'); l.rel = 'prefetch'; l.as = 'script'; l.href = siblingV('ov-session.js'); document.head.appendChild(l); } catch { /* */ }
+        }
     }
     function warmMenuLater() {
         try { const c = root.navigator && root.navigator.connection; if (c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || ''))) return; } catch { /* */ }
