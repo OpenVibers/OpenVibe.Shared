@@ -25,12 +25,12 @@ const RUNS = [
 ];
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
-    if (u.pathname === '/ov-run.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(root, 'ov-run.js'))); }
+    if (u.pathname === '/ov-run.js' || u.pathname === '/ov-face.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(root, u.pathname.slice(1)))); }
     if (u.pathname === '/') {
         res.writeHead(200, { 'content-type': 'text/html' });
         return res.end(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;background:#0b1220;color:#e6edf7">
 <div id="app" style="height:100dvh"></div><script src="/ov-run.js"></script>
-<script>window.view = OpenVibeRun.mount(document.getElementById('app'), { base: location.origin + '/api/frame', token: 'tok', agent: true });</script>`);
+<script>window.view = OpenVibeRun.mount(document.getElementById('app'), { base: location.origin + '/api/frame', token: 'tok', agent: true, sibling: (f) => '/' + f });</script>`);
     }
     const json = (status, body) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
     if (u.pathname === '/api/frame/actor') return json(200, { id: 'act_1', name: 'My Actor', enabled: true, status: 'idle', now: {}, asks: [] });
@@ -52,9 +52,13 @@ const server = http.createServer((req, res) => {
         const row = await until(p, `(() => { const names = [...document.querySelectorAll('.ovr-people .ovr-person .ovr-person-n')].map((n) => n.textContent);
             return names[0] === 'Actor' ? names : null; })()`, 'your agent called Actor');
         assert.deepEqual(row, ['Actor', 'Codes', 'Clipper', 'New'], 'your Actor, Codes always, an agent you made, then New: no Vibe, no "Agent", no "My Actor"');
-        const codes = await p.evaluate(`(() => { const f = document.querySelectorAll('.ovr-people .ovr-person')[1].querySelector('.ovr-face');
-            return { coder: f.classList.contains('ovr-coder'), prompt: !!f.querySelector('.ovr-coder-prompt'), cursor: !!f.querySelector('.ovr-coder-cursor') }; })()`);
+        // 4.318.0: ov-face.js draws the faces (the menu's sessions use the same system).
+        const codes = await until(p, `(() => { const f = document.querySelectorAll('.ovr-people .ovr-person')[1].querySelector('.ovr-face');
+            return f.classList.contains('ovf-coder') && { coder: f.classList.contains('ovr-coder'), prompt: !!f.querySelector('.ovf-coder-prompt'), cursor: !!f.querySelector('.ovf-coder-cursor') }; })()`, 'Codes\' face from ov-face.js');
         assert.deepEqual(codes, { coder: true, prompt: true, cursor: true }, 'Codes has its own face: a terminal with a prompt and a cursor');
+        const me = await p.evaluate(`(() => { const f = document.querySelectorAll('.ovr-people .ovr-person')[0].querySelector('.ovr-face');
+            return { blob: f.classList.contains('ovf-blob'), eyes: f.querySelectorAll(':scope > .ovf-eye').length, shape: f.dataset.shape }; })()`);
+        assert.ok(me.blob && me.eyes === 2 && me.shape, 'your Actor is a blob with two eyes: ' + JSON.stringify(me));
         const rows = await p.evaluate(`[...document.querySelectorAll('.ovr-rows .ovr-row')].map((r) => [r.querySelector('.ovr-row-top b').textContent, r.querySelector('.ovr-face').classList.contains('ovr-me')])`);
         assert.deepEqual(rows, [['Actor', true], ['Find me a deal', true], ['Read the docs', true], ['Task', true], ['Clip the stream', false]], 'Vibe, "My Actor" and nameless runs are your Actor\'s; a conversation titled Vibe says Actor');
         await p.evaluate("document.querySelectorAll('.ovr-people .ovr-person')[1].click(), true");

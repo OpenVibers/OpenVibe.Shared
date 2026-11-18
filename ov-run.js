@@ -177,28 +177,48 @@
         if (last < text.length) node.append(document.createTextNode(text.slice(last)));
     }
 
-    // ── an agent's face: its picture, or its glyph on its hue; what it is doing as a small badge ──
+    // ── an agent's face (4.318.0): drawn by ov-face.js, the one face system (the menu's sessions draw with it too; the
+    // owner, 11-18: "These should share the same universal shared system so they both have the faces"). A face asked for
+    // before ov-face.js arrives is a tile of the agent's colour, filled in when it lands. ──
+    const facesWaiting = [];
+    let faceSibling = null, faceAsked = false;
+    // A host that names no sibling() gets ov-face.js from beside this file (where ov-run.js itself was loaded from).
+    const SELF_SRC = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
+    const besideSelf = (file) => (SELF_SRC && /\/ov-run\.js(?:[?#].*)?$/.test(SELF_SRC) ? SELF_SRC.replace(/ov-run\.js(?:[?#].*)?$/, file) : '');
+    const specOf = (F, spec) => (typeof spec === 'function' ? spec(F) : spec);
+    function faceInto(f, spec) {
+        const F = root.OVFace;
+        if (F) return F.paint(f, specOf(F, spec));
+        facesWaiting.push([f, spec]);
+        askFace();
+        return f;
+    }
+    function askFace() {
+        if (faceAsked || typeof document === 'undefined') return;
+        const src = typeof faceSibling === 'function' ? faceSibling('ov-face.js') : besideSelf('ov-face.js');
+        if (!src) return;
+        faceAsked = true;
+        const done = () => { const F = root.OVFace; if (F) facesWaiting.splice(0).forEach(([f, spec]) => F.paint(f, specOf(F, spec))); };
+        if (root.OVFace) { done(); return; }
+        let sc = document.getElementById('ov-face-script') || document.querySelector('script[src*="/ov-face.js"]');
+        if (!sc) { sc = document.createElement('script'); sc.id = 'ov-face-script'; sc.async = true; sc.src = src; document.head.appendChild(sc); }
+        sc.addEventListener('load', done, { once: true });
+    }
+    /** A run's agent's face; what it is doing as a small badge. */
     function face(run, size = 'm') {
         const a = (run && run.agent) || {};
-        if (isCodes(run) && !httpsUrl(a.avatar_url)) return coderFace(size, run);
+        const codes = isCodes(run) && !httpsUrl(a.avatar_url);
+        if (codes) return coderFace(size, run);
         const f = el('span', `ovr-face is-${size}`);
         f.style.setProperty('--ovr-h', String(Number.isInteger(a.hue) ? a.hue : hueOf(a.id || (run && run.kind))));
-        const pic = httpsUrl(a.avatar_url);
-        if (pic) { const i = el('img'); i.src = pic; i.alt = ''; i.loading = 'lazy'; f.append(i); }
-        else blob(f, a.id || a.name || (run && run.kind));
+        faceInto(f, (F) => F.forRun(run));
         if (run && run.doing && run.status === 'running') { const d = el('i', 'ovr-doing'); d.append(svg(G[run.doing.glyph] ? run.doing.glyph : 'spark')); f.append(d); f.classList.add('is-working'); }
         if (needsPerson(run)) f.classList.add('is-needs');
         return f;
     }
-/** A face without a picture (4.249.0, the owner's messenger of agents): a soft shape of the agent's own colour with two
-     *  eyes; the shape follows from the agent, so the same agent is always the same blob. */
+    /** A face without a picture (4.249.0, the owner's messenger of agents): a soft shape of the agent's own colour with
+     *  two eyes; the shape follows from the agent, so the same agent is always the same blob (ov-face.js draws it). */
     const SHAPES = ['round', 'squircle', 'drop', 'leaf', 'pebble'];
-    function blob(f, key) {
-        f.classList.add('ovr-blob');
-        f.dataset.shape = SHAPES[Math.abs(hueOf(String(key || 'agent')) * 7) % SHAPES.length];
-        f.append(el('i', 'ovr-eye'), el('i', 'ovr-eye'));
-        return f;
-    }
     /** The agents every person has (4.259.0; the owner, 11-15: "the actor is what the actual agent … should be. Like the
      *  default, and then there was also codes"): your Actor, and Codes, the coding agent. A run with no name, Vibe (the
      *  chatbot's old name, Chat's conversations and Actor's first agent) and "My Actor" (Network's old default) are all
@@ -218,14 +238,9 @@
     function coderFace(size = 'm', run) {
         const f = el('span', `ovr-face is-${size} ovr-coder`);
         f.style.setProperty('--ovr-h', '262');
-        const ns = 'http://www.w3.org/2000/svg';
-        const s = document.createElementNS(ns, 'svg'); s.setAttribute('viewBox', '0 0 48 48'); s.setAttribute('aria-hidden', 'true'); s.setAttribute('class', 'ovr-coder-svg');
-        const add = (tag, attrs) => { const n = document.createElementNS(ns, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); s.append(n); return n; };
-        [13, 18, 23].forEach((cx, i) => add('circle', { cx: String(cx), cy: '12.5', r: '1.9', class: `ovr-coder-dot is-${i}` }));
-        add('path', { d: 'M14.5 20.5l7 6.2-7 6.2', class: 'ovr-coder-prompt' });
-        add('rect', { x: '25', y: '30.6', width: '10', height: '3.6', rx: '1.8', class: 'ovr-coder-cursor' });
-        f.append(s);
-        if (run && run.doing && run.status === 'running') f.classList.add('is-working');
+        const working = !!(run && run.doing && run.status === 'running');
+        faceInto(f, { codes: true, working });
+        if (working) f.classList.add('is-working');
         if (run && needsPerson(run)) f.classList.add('is-needs');
         return f;
     }
@@ -279,6 +294,8 @@
     const FILTER_IDS = FILTERS.map(([id]) => id);
 
     function mount(host, o = {}) {
+        if (typeof o.sibling === 'function' && !faceSibling) faceSibling = o.sibling;
+        askFace();
         styles();
         const base = String(o.base || 'https://openvibe.network/api/frame').replace(/\/+$/, '');
         const tokenOf = () => (typeof o.token === 'function' ? o.token() : o.token) || '';
@@ -360,14 +377,11 @@
         const agentName = () => { const n = String((agent && agent.name) || (o.agent && o.agent.name) || '').trim(); return (!n || /^(my actor|vibe)$/i.test(n) ? 'Actor' : n).slice(0, 40); };
         const agentState = () => { const a = agent; if (!a) return 'resting'; if (a.status === 'paused' || a.enabled === false) return 'paused'; if (Array.isArray(a.asks) && a.asks.length) return 'asks'; return a.status === 'working' ? 'working' : 'resting'; };
         function agentFace(size, st) {
-            const f = el('span', `ovr-face is-${size} ovr-me is-${st || agentState()}`);
-            f.style.setProperty('--ovr-h', String(hueOf(agentName())));
-            const pic = agent && (httpsUrl(agent.avatar_url) || (agent.avatar && httpsUrl(agent.avatar.url)));
-            const drawn = agent && agent.avatar && agent.avatar.blob && Number.isInteger(agent.avatar.blob.hue) && SHAPES.includes(agent.avatar.blob.shape) ? agent.avatar.blob : null;
-            if (pic) { const i = el('img'); i.src = pic; i.alt = ''; f.append(i); }
-            else if (drawn) { f.style.setProperty('--ovr-h', String(drawn.hue)); blob(f, 'vibe:' + agentName()); f.dataset.shape = drawn.shape; }
-            else blob(f, 'vibe:' + agentName());
-            return f;
+            const now = st || agentState();
+            const f = el('span', `ovr-face is-${size} ovr-me is-${now}`);
+            const drawn = agent && agent.avatar && agent.avatar.blob && Number.isInteger(agent.avatar.blob.hue) ? agent.avatar.blob : null;
+            f.style.setProperty('--ovr-h', String(drawn ? drawn.hue : hueOf(agentName())));
+            return faceInto(f, (F) => ({ ...F.forActor(agent, agentName()), working: now === 'working', state: now }));
         }
         async function loadAgent() {
             if (!o.agent || !tokenOf()) return null;
@@ -561,8 +575,7 @@
                 faceSlot.textContent = '';
                 const f = el('span', `ovr-face is-xl ovr-me is-${st}`); f.style.setProperty('--ovr-h', String(pick.hue));
                 const pic = !touched && wornUrl();
-                if (pic) { const i = el('img'); i.src = pic; i.alt = ''; f.append(i); }
-                else { blob(f, 'vibe:' + pick.name); f.dataset.shape = pick.shape; }
+                faceInto(f, pic ? { pic } : { key: 'vibe:' + pick.name, hue: pick.hue, shape: pick.shape });
                 faceSlot.append(f);
             };
             drawFace();
@@ -573,12 +586,15 @@
             const shapes = el('div', 'ovr-pick'); shapes.setAttribute('role', 'radiogroup'); shapes.setAttribute('aria-label', 'Shape');
             const hues = el('div', 'ovr-pick'); hues.setAttribute('role', 'radiogroup'); hues.setAttribute('aria-label', 'Colour');
             const paintPick = () => {
-                shapes.querySelectorAll('[data-shape]').forEach((b) => { b.setAttribute('aria-checked', String(b.dataset.shape === pick.shape)); b.style.setProperty('--ovr-h', String(pick.hue)); });
+                shapes.querySelectorAll('.ovr-pick-shape').forEach((b) => {
+                    b.setAttribute('aria-checked', String(b.dataset.shape === pick.shape)); b.style.setProperty('--ovr-h', String(pick.hue));
+                    const f = b.querySelector('.ovr-face'); if (f) faceInto(f, { key: b.dataset.shape, shape: b.dataset.shape, hue: pick.hue });
+                });
                 hues.querySelectorAll('[data-hue]').forEach((b) => b.setAttribute('aria-checked', String(Number(b.dataset.hue) === pick.hue)));
             };
             SHAPES.forEach((sh) => {
                 const b = el('button', 'ovr-pick-shape'); b.type = 'button'; b.setAttribute('role', 'radio'); b.dataset.shape = sh; b.setAttribute('aria-label', sh);
-                const f = el('span', 'ovr-face is-s'); blob(f, sh); f.dataset.shape = sh; b.append(f);
+                const f = el('span', 'ovr-face is-s'); faceInto(f, { key: sh, shape: sh, hue: pick.hue }); b.append(f);
                 b.addEventListener('click', () => { pick.shape = sh; touched = true; drawFace(); paintPick(); dirty(); });
                 shapes.append(b);
             });
@@ -1307,32 +1323,10 @@
 .ovr-face.is-l { width: 56px; height: 56px; } .ovr-face.is-l > svg { width: 26px; height: 26px; }
 .ovr-face.is-xl { width: 88px; height: 88px; }
 .ovr-face-new { border: 1.5px dashed color-mix(in srgb, var(--text-secondary, #96a7c2) 55%, transparent); background: transparent !important; color: var(--text-secondary, #96a7c2) !important; }
-.ovr-blob { color: transparent; background: radial-gradient(circle at 32% 26%, hsl(var(--ovr-h, 215) 90% 74%), hsl(var(--ovr-h, 215) 78% 56%) 62%, hsl(var(--ovr-h, 215) 70% 46%)) !important; box-shadow: inset 0 -3px 6px hsl(var(--ovr-h, 215) 70% 30% / .35), 0 4px 12px -6px hsl(var(--ovr-h, 215) 70% 30% / .7); }
-.ovr .ovr-face.ovr-blob[data-shape="round"] { border-radius: 50%; }
-.ovr .ovr-face.ovr-blob[data-shape="squircle"] { border-radius: 32%; }
-.ovr .ovr-face.ovr-blob[data-shape="drop"] { border-radius: 50% 50% 50% 14%; }
-.ovr .ovr-face.ovr-blob[data-shape="leaf"] { border-radius: 54% 16% 54% 16%; }
-.ovr .ovr-face.ovr-blob[data-shape="pebble"] { border-radius: 58% 42% 52% 48% / 48% 56% 44% 52%; }
 /* Messenger rows: lines, not boxes. */
 .ovr.is-agent .ovr-rows .ovr-row:not(.is-needs) { border-color: transparent; background: transparent; box-shadow: none; }
 .ovr.is-agent .ovr-rows .ovr-row:not(.is-needs):hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
-.ovr-blob > .ovr-eye { position: absolute; top: 36%; width: 9%; height: 19%; min-width: 3px; border-radius: 99px; background: rgba(255, 255, 255, .92); transform: rotate(12deg); animation: ovr-blink 6s infinite; }
-.ovr-blob > .ovr-eye:first-of-type { left: 36%; } .ovr-blob > .ovr-eye:last-of-type { left: 55%; }
-@keyframes ovr-blink { 0%, 94%, 100% { transform: rotate(12deg) scaleY(1); } 96% { transform: rotate(12deg) scaleY(.15); } }
-html[data-ov-motion="off"] .ovr-blob > .ovr-eye, html[data-ov-motion="off"] .ovr-person .ovr-face { animation: none; transition: none; }
-.ovr-blob.is-working > .ovr-eye { animation: ovr-look 1.6s ease-in-out infinite; }
-/* 4.259.0, Codes' face: a terminal window, its prompt and its cursor for eyes; the cursor blinks, faster at work. */
-.ovr .ovr-face.ovr-coder { border-radius: 27%; background: linear-gradient(155deg, hsl(262 88% 68%), hsl(248 78% 44%)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), inset 0 -6px 14px rgba(20, 8, 60, .28); }
-.ovr-coder-svg { width: 100% !important; height: 100% !important; overflow: visible; }
-.ovr .ovr-coder-svg .ovr-coder-dot { fill: rgba(255, 255, 255, .5); stroke: none; } .ovr .ovr-coder-svg .ovr-coder-dot.is-0 { fill: rgba(255, 255, 255, .8); }
-.ovr .ovr-coder-svg .ovr-coder-prompt { fill: none; stroke: rgba(255, 255, 255, .95); stroke-width: 3.6; stroke-linecap: round; stroke-linejoin: round; }
-.ovr .ovr-coder-svg .ovr-coder-cursor { fill: rgba(255, 255, 255, .95); stroke: none; animation: ovr-cursor 1.1s steps(1, end) infinite; }
-.ovr-coder.is-working .ovr-coder-cursor { animation-duration: .5s; }
-.ovr-coder.is-working .ovr-coder-prompt { animation: ovr-type 1.2s ease-in-out infinite; }
-@keyframes ovr-cursor { 0%, 55% { opacity: 1; } 56%, 100% { opacity: .08; } }
-@keyframes ovr-type { 50% { transform: translateX(1.5px); } }
-html[data-ov-motion="off"] .ovr-coder-cursor, html[data-ov-motion="off"] .ovr-coder-prompt { animation: none; }
-@keyframes ovr-look { 0%, 100% { translate: 0 0; } 50% { translate: 2px 0; } }
+html[data-ov-motion="off"] .ovr-person .ovr-face { animation: none; transition: none; }
 .ovr-sheet { position: absolute; inset: 0; z-index: 6; display: grid; align-content: start; justify-items: center; gap: 14px; padding: 28px 18px 18px; background: var(--bg-card, #131c2e); animation: ovr-sheet-in .24s cubic-bezier(.2, .8, .2, 1); overflow-y: auto; }
 @keyframes ovr-sheet-in { from { opacity: 0; transform: translateY(10px); } }
 .ovr-sheet > .ovr-sheet-x { position: absolute; top: 10px; right: 10px; margin: 0; }
@@ -1559,12 +1553,7 @@ a.ovr-row { color: inherit; text-decoration: none; }
 .ovr-agent-go:active { transform: scale(.9); }
 .ovr-agent-go:disabled { opacity: .5; }
 .ovr-face.ovr-me { position: relative; }
-.ovr-face.ovr-me::after { content: ""; position: absolute; right: -1px; bottom: -1px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--bg-secondary, #121826); background: #64748b; }
-.ovr-face.ovr-me.is-resting::after { background: #22c55e; }
-.ovr-face.ovr-me.is-working::after { background: var(--accent, #3b82f6); animation: ovr-pulse 1.2s ease-in-out infinite; }
-.ovr-face.ovr-me.is-asks::after { background: #f59e0b; }
 .ovr-face.ovr-me.is-working { animation: ovr-breathe 2.2s ease-in-out infinite; }
-.ovr-face.ovr-me.is-paused { filter: saturate(.4); opacity: .8; }
 .ovr-typing { align-self: flex-start; display: inline-flex; gap: 5px; padding: 12px 14px; margin: 2px 0 6px; border-radius: 18px 18px 18px 6px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); animation: ovr-rise .25s ease both; }
 .ovr-typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--text-secondary, #a8b3c4); animation: ovr-dot 1.1s ease-in-out infinite; }
 .ovr-typing i:nth-child(2) { animation-delay: .15s; } .ovr-typing i:nth-child(3) { animation-delay: .3s; }

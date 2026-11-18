@@ -25,7 +25,8 @@ const server = http.createServer((req, res) => {
     let body = '';
     req.on('data', (c) => { body += c; });
     req.on('end', () => {
-        if (u.pathname === '/ov-run.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(root, 'ov-run.js'))); }
+        // ov-face.js draws the faces (4.318.0); with no sibling() ov-run.js takes it from beside itself.
+        if (u.pathname === '/ov-run.js' || u.pathname === '/ov-face.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(root, u.pathname.slice(1)))); }
         if (u.pathname === '/') {
             res.writeHead(200, { 'content-type': 'text/html' });
             return res.end(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;background:#0b1220;color:#e6edf7">
