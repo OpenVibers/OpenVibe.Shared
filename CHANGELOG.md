@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.313.0 — 2026-11-18
+
+**Alerts, enriched** (the owner's phone, 11-18, You → Alerts: "Improve, Enrich").
+- **An operator alert that keeps firing is one row.** *Disk almost full* fired today, yesterday and Sunday and showed
+  as three rows. It is now the newest row, *×3*, *since Sunday*, wherever its repeats fall. Other repeats still fold only
+  when they come close together.
+- **What to do, as a button.** When the notice has an address and no actions of its own:
+  - an agent's step that waits for you says *Review and approve* or *Answer it*;
+  - a failed task says *See what happened*;
+  - a finished one says *See the answer*.
+- Test: `notifications-fold-chrome` adds the repeating operator alert.
+
 ## 4.312.0 — 2026-11-18
 
 **The menu's Chat, tidied** (the owner's phone, 11-18).

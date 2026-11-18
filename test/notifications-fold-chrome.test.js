@@ -18,8 +18,14 @@ const ago = (ms) => new Date(Date.now() - ms).toISOString();
 const live = (id, at) => ({ id, type: 'STREAM_LIVE', category: 'stream', service: 'live', title: 'Maticus is live!', message: 'ROBOT', priority: 'normal', is_read: 0, created_at: ago(at) });
 const check = (id, at) => ({ id, type: 'ALERT', category: 'system', service: 'network', title: 'Browser check failed', message: 'media', priority: 'normal', is_read: 0, created_at: ago(at) });
 const MIN = 60e3, HOUR = 3600e3;
+// 4.313.0 (the owner's phone, 11-18: "Disk almost full" today, yesterday and Sunday, three rows): an operator alert that
+// keeps firing is one row, the newest, ×N and since when, wherever its repeats fall.
+const disk = (id, at) => ({ id, type: 'OPERATOR_ALERT', category: 'system', service: 'network', title: 'Alert: Disk almost full', message: 'Root filesystem has less than 10% free', priority: 'critical', is_read: 0, created_at: ago(at),
+    rich_content: { kind: 'ops_alert', name: 'Disk almost full', state: 'firing', severity: 'critical', summary: 'Root filesystem has less than 10% free' } });
+const DAY = 24 * HOUR;
 const NOTES = [live(1, 10 * MIN), live(2, 10 * MIN + 30e3), live(3, 3 * HOUR), live(4, 5 * HOUR),
-    check(5, 6 * HOUR), check(6, 6 * HOUR + 2 * MIN), check(7, 6 * HOUR + 5 * MIN), check(8, 8 * HOUR)];
+    check(5, 6 * HOUR), check(6, 6 * HOUR + 2 * MIN), check(7, 6 * HOUR + 5 * MIN), check(8, 8 * HOUR),
+    disk(9, 19 * HOUR), live(10, 20 * HOUR), disk(11, DAY + 2 * HOUR), disk(12, 2 * DAY + 2 * HOUR)];
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     const json = (b) => { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify(b)); };
@@ -51,7 +57,11 @@ const server = http.createServer((req, res) => {
             ['Maticus is live!', '', '4'],
             ['Browser check failed', '×3', '5,6,7'],
             ['Browser check failed', '', '8'],
-        ], 'a restart folds; go-lives hours apart are their own rows; an alert repeated within minutes folds, two hours later it does not');
+            ['Disk almost full', '×3', '9,11,12'],
+            ['Maticus is live!', '', '10'],
+        ], 'a restart folds; go-lives hours apart are their own rows; an alert repeated within minutes folds, two hours later it does not; an operator alert that keeps firing is one row');
+        const since = await p.evaluate("(() => { const r = [...document.querySelectorAll('#host .openvibe-notif-item')].find((x) => x.dataset.ids === '9,11,12'); return r && (r.querySelector('.since') || {}).textContent; })()");
+        assert.ok(/^since /.test(since || ''), `it says since when: ${since}`);
         console.log('notifications-fold-chrome: a restart folds (×2), go-lives hours apart are separate rows, an alert repeated within minutes folds (×3)');
     } finally {
         await browser.close();
