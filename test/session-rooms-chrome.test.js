@@ -107,8 +107,9 @@ const server = http.createServer((req, res) => {
         await p.evaluate("window.__s.blank()");
         await until(p, "!!document.querySelector('.ovse-group-start')");
         await p.evaluate("document.querySelector('.ovse-group-start').click()");
-        const rows = await until(p, "(() => { const r = [...document.querySelectorAll('.ovp-row .ovp-t b')].map((b) => b.textContent); return r.length === 3 ? r : null; })()");
-        assert.deepStrictEqual(rows, ['Actor, Codes and Design', 'Build, then review', 'A panel of critics']);
+        const rows = await until(p, "(() => { const r = [...document.querySelectorAll('.ovp-row .ovp-t b')].map((b) => b.textContent); return r.length === 4 ? r : null; })()");
+        // 4.313.0: the three recipes, then a coding team (Codes' Orchestrator).
+        assert.deepStrictEqual(rows, ['Actor, Codes and Design', 'Build, then review', 'A panel of critics', 'Orchestrator']);
         await p.evaluate("[...document.querySelectorAll('.ovp-row')].find((r) => /Build, then review/.test(r.textContent)).click()");
         await until(p, 'window.location && ' + "document.querySelector('.ovse-title') && document.querySelector('.ovse-title').textContent === 'Build and review'");
         assert.strictEqual(started.length, 1);

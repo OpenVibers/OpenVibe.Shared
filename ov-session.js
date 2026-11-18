@@ -2549,9 +2549,17 @@
             };
             const P = await need(o, 'ov-picker.js', 'OpenVibePicker');
             if (!P || typeof P.open !== 'function') { make(RECIPES[0]); return; }
+            // 4.313.0 (the owner, 11-18: "the team feature … the orchestrator"): a coding team is Codes' Orchestrator, one
+            // goal split between coding agents, each one's part and the review in one place.
+            const codesBase = String(o.codesUrl || 'https://openvibe.codes').replace(/\/+$/, '');
             P.open({ anchor: btnEl || main, title: 'Start a group', value: 'room',
-                sections: [{ title: '', rows: RECIPES.map((r) => ({ id: r.id, name: r.name, line: r.line, icon: r.icon })) }],
-                onPick: (row) => { const r = RECIPES.find((x) => x.id === row.id); if (r) make(r); } });
+                intro: 'People and agents in one thread. Pick who is in it; you can add anyone later.',
+                sections: [{ title: 'A group here', rows: RECIPES.map((r) => ({ id: r.id, name: r.name, line: r.line, icon: r.icon })) },
+                    { title: 'A coding team', rows: [{ id: 'orchestrator', name: 'Orchestrator', line: 'One goal, split between coding agents: each one\'s part, then the review, on openvibe.codes', svg: svgMarkup('code') }] }],
+                onPick: (row) => {
+                    if (row.id === 'orchestrator') { try { window.open(`${codesBase}/orchestrator`, '_blank', 'noopener'); } catch { /* a blocked window */ } return; }
+                    const r = RECIPES.find((x) => x.id === row.id); if (r) make(r);
+                } });
         }
 
         /** The way the next words go, in a person's words: "DeepSeek Flash (API)", "Claude Code on your computer", "Auto". */

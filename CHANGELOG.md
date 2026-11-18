@@ -18,6 +18,9 @@
   initial each, since the menu loads no pictures from other sites. This is the owner's "do shit like this".
 - **The phone's Sessions drawer is the whole width.** A dimmed slice of the conversation, with its menu button, showed
   beside it ("fix"). Its × closes it.
+- **A coding team, from Start a group.** The sheet says what a group is, then offers the three recipes and **Orchestrator**
+  (Codes' Orchestrator on openvibe.codes: one goal split between coding agents, each one's part, then the review).
+  This answers the owner's "team feature … the orchestrator".
 - **An operator alert that keeps firing is one row.** *Disk almost full* fired today, yesterday and Sunday and showed
   as three rows. It is now the newest row, *×3*, *since Sunday*, wherever its repeats fall. Other repeats still fold only
   when they come close together.
