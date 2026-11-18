@@ -11,6 +11,10 @@ dark theme, the composer's and the faces' light colours applied wrongly. They te
 - Test: theme-mode-selectors fails on any selector on `data-theme="light"` or `"dark"`.
 - **test.yml: `apt-packages` installs only what is missing.** A shared node (OpenVibe checks) has the packages and
   no sudo, so Meme's check stopped at that step; on GitHub it saves the install.
+- **player.js: a video that failed before the player ran gets its card.** A fast 404 while the page was still loading
+  fired the video's error with nobody listening, which left a play button that never plays (and made
+  player-error-chrome flaky under load). The player shows the card at setup when the video has already failed; the
+  test covers it with a player script that arrives late.
 
 ## 4.318.0 — 2026-11-18
 
