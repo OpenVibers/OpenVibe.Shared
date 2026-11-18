@@ -3309,6 +3309,9 @@
 /* the drawer: over the session on a phone, a column on a computer */
 .ovse-drawer { position: absolute; z-index: 5; inset: 0 auto 0 0; width: min(86%, 340px); display: flex; flex-direction: column; min-height: 0; background: var(--bg-secondary, var(--ovse-bg)); border-right: 1px solid var(--ovse-line); transform: translateX(-104%); transition: transform .28s cubic-bezier(.2,.8,.2,1); padding-top: env(safe-area-inset-top, 0px); }
 .ovse-scrim { position: absolute; z-index: 4; inset: 0; background: rgba(0,0,0,.42); opacity: 0; pointer-events: none; transition: opacity .25s; }
+/* 4.313.0 (the owner's phone, 11-18: a slice of the conversation and its ⋯ beside the drawer, "fix"): on a phone the
+   drawer is the whole width; its × closes it. */
+@media (max-width: 480px) { .ovse:not(.is-wide) .ovse-drawer { width: 100%; border-right: 0; } }
 .ovse.is-drawer .ovse-drawer { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.35); }
 .ovse.is-drawer:not(.is-wide) .ovse-scrim { opacity: 1; pointer-events: auto; }
 .ovse.is-wide { grid-template-columns: 0 minmax(0, 1fr); transition: grid-template-columns .28s cubic-bezier(.2,.8,.2,1); }

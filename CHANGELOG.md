@@ -16,6 +16,8 @@
 - **Research says where it looked.** A group of web steps (searches, pages read, data fetched) says *Searched 5
   websites*. The sites show under it as chips (*netcup.com*, *contabo.com*, *lowendtalk.com*, *2 more*): a coloured
   initial each, since the menu loads no pictures from other sites. This is the owner's "do shit like this".
+- **The phone's Sessions drawer is the whole width.** A dimmed slice of the conversation, with its menu button, showed
+  beside it ("fix"). Its × closes it.
 - **An operator alert that keeps firing is one row.** *Disk almost full* fired today, yesterday and Sunday and showed
   as three rows. It is now the newest row, *×3*, *since Sunday*, wherever its repeats fall. Other repeats still fold only
   when they come close together.
