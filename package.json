@@ -63,6 +63,7 @@
     "./tip": "./ov-tip.js",
     "./trending": "./ov-trending.js",
     "./face": "./ov-face.js",
+    "./linkcard": "./ov-linkcard.js",
     "./agent": "./ov-agent.js",
     "./tabs": "./ov-tabs.js",
     "./chat-cards": "./ov-chat-cards.js",
