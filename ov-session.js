@@ -1808,6 +1808,12 @@
         }
         function latestPlan() { let p = null; for (const s of ordered()) { const x = planOf(s); if (x) p = x; } return p; }
         function schedule() { if (state.paint) return; state.paint = requestAnimationFrame(() => { state.paint = 0; paint(); }); }
+        /** The answer as it is being written (delta { live }): plain words and a caret, replaced by the stored answer. */
+        function liveNode() {
+            const n = el('div', 'ovse-say ovse-live'); n.setAttribute('aria-live', 'polite'); n.setAttribute('aria-busy', 'true');
+            const w = el('div', 'ovse-words'); w.append(el('p', 'ovse-live-t', state.live)); n.append(w);
+            return n;
+        }
         function paint() {
             speakNew();
             const nearEnd = body.scrollHeight - body.scrollTop - body.clientHeight < 200;
@@ -1857,7 +1863,8 @@
             if (r && Array.isArray(r.outputs) && r.outputs.length) frag.append(outputsCard(r.outputs));
             const lastStep = ordered().slice(-1)[0];
             const writing = lastStep && lastStep.status === 'running' && lastStep.kind === 'message';
-            if ((isLive(r) || state.pending) && !writing) frag.append(working(r));
+            if (state.live && (isLive(r) || state.pending)) frag.append(liveNode());
+            else if ((isLive(r) || state.pending) && !writing) frag.append(working(r));
             for (const q of state.queue) frag.append(q.node);
             thread.textContent = ''; thread.append(frag);
             thread.querySelectorAll('details[data-key]').forEach((d) => { if (state.open.has(d.dataset.key)) d.open = true; });
@@ -3022,7 +3029,7 @@
         async function open(ref, known, how = {}) {
             clearStream();
             const gen = ++state.gen;
-            state.ref = ref; state.run = known || null; state.steps = new Map(); state.queue = []; state.open = new Set(); state.pending = false; state.replay = null; state.readFrom = null;
+            state.ref = ref; state.run = known || null; state.steps = new Map(); state.queue = []; state.open = new Set(); state.pending = false; state.replay = null; state.readFrom = null; state.live = '';
             // The model this session last asked for: a message carries the chip's model only when it changed (plan §AD.8.3).
             state.modelSent = how.modelSent !== undefined ? how.modelSent : (known && known.model && known.model.id) || null;
             // The way the chip shows when a session opens is taken as the one it runs: a later change on the chip is a swap.
@@ -3066,7 +3073,15 @@
                     if (event === 'step' && d && d.step && Number.isInteger(d.step.seq)) {
                         const s = d.step;
                         if (s.kind === 'message' && s.from === 'person') state.steps.delete(-1);
+                        if (s.kind === 'message' && s.from !== 'person') state.live = '';
                         state.steps.set(s.seq, s); emit('session.step', { ref, step: s }); schedule();
+                    } else if (event === 'delta' && d && d.live) {
+                        // 4.313.0 (the owner, 11-18: "stream response"): the answer's words as the model writes them, in a
+                        // bubble that grows where "Working" was, until the stored answer replaces it.
+                        state.live = `${state.live || ''}${String(d.text || '')}`.slice(-20000);
+                        const n = thread.querySelector('.ovse-live .ovse-live-t');
+                        if (n) { n.textContent = state.live; if (body.scrollHeight - body.scrollTop - body.clientHeight < 200) body.scrollTop = body.scrollHeight; }
+                        else schedule();
                     } else if (event === 'delta' && d && state.steps.has(d.seq)) {
                         const s = state.steps.get(d.seq); state.steps.set(d.seq, { ...s, text: `${s.text || ''}${String(d.text || '')}` });
                         // Words as they come: in place, no repaint of the whole thread.
@@ -3074,6 +3089,7 @@
                         if (n) { const last2 = n.lastElementChild || n; last2.append(document.createTextNode(String(d.text || ''))); if (body.scrollHeight - body.scrollTop - body.clientHeight < 200) body.scrollTop = body.scrollHeight; }
                         else schedule();
                     } else if (event === 'run' && d && d.run) {
+                        if (!['running', 'planning'].includes(d.run.status)) state.live = '';
                         state.run = d.run; schedule(); flushQueue(); updateRow(d.run);
                     } else if (event === 'approval' && d && d.approval) {
                         schedule();
@@ -3172,7 +3188,7 @@
         // ── a new session ──
         function blank() {
             clearStream();
-            state.gen++; state.ref = null; state.run = null; state.steps = new Map(); state.queue = []; state.stack = []; state.pending = false;
+            state.gen++; state.ref = null; state.run = null; state.steps = new Map(); state.live = ''; state.queue = []; state.stack = []; state.pending = false;
             wrap.classList.add('is-blank');
             thread.textContent = '';
             const hi = el('div', 'ovse-hello');
@@ -3648,6 +3664,11 @@ html[data-ov-motion="off"] .ovse-receipt-r { animation: none; }
 .ovse-source i { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--ovse-acc) 22%, transparent); color: var(--ovse-acc2); font-style: normal; font-weight: 700; font-size: 11px; }
 .ovse-source span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
 .ovse-attach { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+/* 4.313.0: an answer being written, with a caret. */
+.ovse-live .ovse-live-t { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ovse-live .ovse-live-t::after { content: ""; display: inline-block; width: .5em; height: 1.05em; margin-left: 2px; vertical-align: -3px; border-radius: 2px; background: var(--ovse-acc2); opacity: .7; animation: ovse-caret 1s steps(2, start) infinite; }
+@keyframes ovse-caret { to { visibility: hidden; } }
+html[data-ov-motion="off"] .ovse-live .ovse-live-t::after { animation: none; }
 /* 4.311.0: a picture you sent, as a picture. */
 .ovse-thumb-box { display: block; border-radius: 14px; overflow: hidden; border: 1px solid var(--ovse-line); background: var(--ovse-card); max-width: min(260px, 70vw); }
 .ovse-thumb-box .ovse-thumb { display: block; width: 100%; height: auto; max-height: 260px; object-fit: cover; }
