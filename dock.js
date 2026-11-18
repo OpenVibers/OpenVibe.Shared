@@ -93,7 +93,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'ov-chat-cards.js': '43cbb5c8c9d6', 'ov-tabs.js': '0e8a449da361', 'dock-vibe.js': 'f43b389e9faa', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
+    const DOCK_REV = { 'ov-chat-cards.js': '43cbb5c8c9d6', 'ov-tabs.js': '0e8a449da361', 'dock-vibe.js': '085231784f88', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -1728,6 +1728,9 @@
     function sayWaiting(s) {
         const w = s && s.tone === 'waiting' ? Number(s.count) || 1 : 0;
         if (w <= saidWaiting) { if (!w) saidWaiting = 0; return; }
+        // 4.310.0 (the owner's phone, 11-18: "wrong position", over the open menu's search and tabs): with the menu open
+        // the person is already where agents wait; the bubble waits until it is closed.
+        if (document.querySelector('.ovs.is-open')) return;
         saidWaiting = w;
         try { sessionStorage.setItem('ov-dock-said-waiting', String(w)); } catch { /* private mode */ }
         const b = [...document.querySelectorAll('.openvibe-navbar #openvibe-search-btn, .openvibe-navbar #openvibe-burger.ovnav-orb')].find((x) => x.getBoundingClientRect().width > 0);

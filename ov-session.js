@@ -294,8 +294,32 @@
         return out;
     }
     /** A plan or todo list a step carries: [{ text, state: done | doing | todo }], or null. */
+    /**
+     * 4.310.0 (the owner's phone, 11-18: the same "Assumptions: …; … Now 1. … · 2. …" as a raw Thought block on every
+     * turn): Actor's plan text (runtime/loop.js planText: an "Assumptions:" line, then "✓ 1. goal" / "Now 2. goal" /
+     * "· 3. goal") is a plan. It leaves the thread, and the one plan panel shows the newest: a checklist, its assumptions
+     * folded under it. → the items (with .assumptions), or null.
+     */
+    function actorPlan(text) {
+        const t = String(text || '');
+        if (!/(?:^|\n|\s)(?:✓|Now|·)\s+\d{1,2}\.\s/.test(t)) return null;
+        const lines = t.split('\n').flatMap((l) => l.split(/\s(?=(?:✓|Now|·)\s+\d{1,2}\.\s)/));
+        const items = [];
+        let assumptions = [];
+        for (const raw of lines) {
+            const l = raw.trim();
+            const a = /^Assumptions:\s*(.*)$/i.exec(l);
+            if (a) { assumptions = a[1].split(/;\s+/).map((x) => x.replace(/[.;]+$/, '').trim()).filter(Boolean).slice(0, 8); continue; }
+            const m = /^(✓|Now|·)\s+\d{1,2}\.\s+(.*)$/.exec(l);
+            if (m) items.push({ text: m[2].trim().slice(0, 300), state: m[1] === '✓' ? 'done' : m[1] === 'Now' ? 'doing' : 'todo' });
+        }
+        if (!items.length) return null;
+        items.assumptions = assumptions;
+        return items;
+    }
     function planOf(s) {
         let items = null;
+        if (s.kind === 'think' && !s.ui && typeof s.text === 'string') { const ap = actorPlan(s.text); if (ap) return ap; }
         if (s.ui && /^(plan|todo|todos|checklist)$/.test(String(s.ui.type || ''))) { const d = s.ui.data || {}; items = d.items || d.todos || d.steps || d.plan; }
         else if (s.kind === 'tool' && toolKind(s) === 'plan') { const i = inputOf(s); items = i.todos || i.plan || i.items || i.steps; }
         if (!Array.isArray(items) || !items.length) return null;
@@ -341,8 +365,36 @@
                 const pre = el('pre', 'ovse-pre'); if (lang) pre.dataset.lang = lang; pre.append(el('code', '', body.join('\n').slice(0, 40000))); box.append(pre);
                 continue;
             }
+            // 4.310.0 (11-18: tables showed as raw "| a | b |" lines run together): a GitHub table, scrolling in its own box.
+            if (/^\s*\|.*\|\s*$/.test(line) && i + 1 < lines.length && /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(lines[i + 1])) {
+                flush(); list = null;
+                const cells = (l) => l.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
+                const head = cells(line);
+                const wrap = el('div', 'ovse-table'); const table = el('table'); const thead = el('thead'); const tr = el('tr');
+                head.forEach((c) => tr.append(inline(el('th'), c, sources))); thead.append(tr); table.append(thead);
+                const tbody = el('tbody');
+                i += 1;
+                while (i + 1 < lines.length && /^\s*\|.*\|\s*$/.test(lines[i + 1])) {
+                    i += 1;
+                    const row = el('tr'); const cs = cells(lines[i]);
+                    head.forEach((_, n) => row.append(inline(el('td'), cs[n] || '', sources)));
+                    tbody.append(row);
+                }
+                table.append(tbody); wrap.append(table); box.append(wrap);
+                continue;
+            }
+            if (/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line)) { flush(); list = null; box.append(el('hr', 'ovse-hr')); continue; }
+            const q = /^\s*>\s?(.*)$/.exec(line);
+            if (q) { flush(); list = null; box.append(inline(el('blockquote', 'ovse-quote'), q[1], sources)); continue; }
             const h = /^(#{1,4})\s+(.*)$/.exec(line);
-            if (h) { flush(); list = null; box.append(inline(el('p', 'ovse-h'), h[2], sources)); continue; }
+            if (h) { flush(); list = null; box.append(inline(el('p', `ovse-h is-h${h[1].length}`), h[2], sources)); continue; }
+            const cb = /^\s*[-*]\s+\[([ xX])\]\s+(.*)$/.exec(line);
+            if (cb) {
+                flush();
+                if (!list || list.tagName.toLowerCase() !== 'ul') { list = el('ul', 'ovse-checks'); box.append(list); }
+                const item = inline(el('li', cb[1].trim() ? 'is-done' : ''), cb[2], sources); list.append(item);
+                continue;
+            }
             const li = /^\s*(?:[-*•]|(\d{1,3})[.)])\s+(.*)$/.exec(line);
             if (li) {
                 flush();
@@ -1595,9 +1647,30 @@
             const r = anchor.getBoundingClientRect(); m.style.top = `${Math.round(r.bottom + 6)}px`; m.style.right = `${Math.max(8, Math.round(root.innerWidth - r.right))}px`;
             document.body.append(m); const first = m.querySelector('button'); if (first) first.focus();
         }
-        function flash(words) {
-            const t = el('div', 'ovse-flash', words); t.setAttribute('role', 'status');
-            main.append(t); setTimeout(() => t.classList.add('is-out'), 1800); setTimeout(() => t.remove(), 2300);
+        /**
+         * 4.310.0 (the owner's phone, 11-18: a white pill over the page, one reading "POST http://127.0.0.1:4100/api/v2/…
+         * -> 404: Unknown app"): a card in the theme above the box. An internal address never shows: what failed is said
+         * in words. A link in it is a button. It stays as long as it takes to read, and a tap puts it away.
+         */
+        function plainError(words) {
+            let w = String(words == null ? '' : words).trim();
+            w = w.replace(/\b(?:GET|POST|PUT|PATCH|DELETE)\s+https?:\/\/(?:127\.0\.0\.1|localhost|\[::1\])(?::\d+)?\S*\s*->\s*/gi, '');
+            w = w.replace(/https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?\S*/gi, 'a service');
+            return w || 'That did not work.';
+        }
+        function flash(words, kind) {
+            const text = plainError(words);
+            const link = /https:\/\/[^\s)]+[^\s).,;:]/.exec(text);
+            const bad = kind === 'bad' || /did not|could not|failed|refused|\b4\d\d\b|\b5\d\d\b|used today's free|spent/i.test(text);
+            const t = el('div', `ovse-flash${bad ? ' is-bad' : ''}`); t.setAttribute('role', bad ? 'alert' : 'status');
+            t.append(svg(bad ? 'x' : 'check', 'ovse-flash-g'), el('span', 'ovse-flash-t', link ? text.replace(link[0], '').replace(/\s+([:.,])/g, '$1').replace(/\s{2,}/g, ' ').trim() : text));
+            if (link) { const go = el('a', 'ovse-flash-go', 'Open it'); go.href = link[0]; go.target = '_blank'; go.rel = 'noopener'; t.append(go); }
+            main.querySelectorAll('.ovse-flash').forEach((x) => x.remove());
+            main.append(t);
+            const ms = Math.min(9000, 2200 + text.length * 35);
+            const out = () => { t.classList.add('is-out'); setTimeout(() => t.remove(), 400); };
+            const timer = setTimeout(out, ms);
+            t.addEventListener('click', (e) => { if (e.target.closest('a')) return; clearTimeout(timer); out(); });
         }
 
         // ── the thread: steps become blocks (words, a group of tool rows, the files it changed, approvals, helpers) ──
@@ -1620,9 +1693,15 @@
                         continue;
                     }
                 }
-                const prev = out[out.length - 1];
-                if (prev && s.kind === 'message' && prev.kind === 'message' && s.from !== 'person' && prev.from !== 'person' && s.text && s.text === prev.text) {
-                    out[out.length - 1] = { ...prev, ...s };
+                // 4.310.0: thoughts between the two copies do not keep them apart (11-18: "I queued the change …" twice).
+                // Tools and thoughts between them do not either; the later copy stays, where the work ended.
+                let k = out.length - 1;
+                while (k >= 0 && (out[k].kind === 'think' || out[k].kind === 'tool')) k--;
+                const prev = out[k];
+                const same = (x, y) => String(x || '').replace(/\s+/g, ' ').trim() === String(y || '').replace(/\s+/g, ' ').trim();
+                if (prev && s.kind === 'message' && prev.kind === 'message' && s.from !== 'person' && prev.from !== 'person' && s.text && same(s.text, prev.text)) {
+                    out.splice(k, 1);
+                    out.push({ ...prev, ...s });
                     continue;
                 }
                 out.push(s);
@@ -1792,6 +1871,11 @@
                 const n = el('div', 'ovse-me'); const b = el('div', 'ovse-bubble'); b.append(words(s.text)); n.append(b); attachments(n, s);
                 return n;
             }
+            // 4.310.0 (the owner's phone, 11-18: "Could not answer: You have used today's free allowance … add your own model
+            // key at …" as a paragraph): what to do next, as a card with its buttons.
+            if (s.kind === 'message' && from !== 'person' && /used today's free allowance|free AI allowance[^.]*is spent|free allowance for today is spent/i.test(String(s.text || ''))) {
+                return allowanceCard(s);
+            }
             if (from === 'agent' && s.status === 'running' && !s.text && s.author && s.author.name) {
                 // An agent of a group at work: its name and the mark's wait, until its words come.
                 const n = el('div', 'ovse-say is-writing ovse-group-working'); n.dataset.seq = String(s.seq);
@@ -1925,6 +2009,19 @@
             n.append(row);
             return n;
         }
+        function allowanceCard(s) {
+            const text = String(s.text || '');
+            const c = el('div', 'ovse-ask is-need ovse-allow'); c.dataset.seq = String(s.seq);
+            const h = el('div', 'ovse-ask-h'); h.append(svg('spark'), el('b', '', 'Today\'s free AI is used up'));
+            const back = /midnight UTC/i.test(text) ? 'It comes back at midnight UTC.' : 'It comes back tomorrow.';
+            c.append(h, el('p', 'ovse-allow-l', `${back} To keep going now, run it on your own key or your own computer: neither counts against the free AI.`));
+            const row = el('div', 'ovse-ask-acts');
+            const keyUrl = (/https:\/\/[^\s)]+\/(?:chat\/model|you|keys?)\b[^\s).,;:]*/.exec(text) || [])[0] || 'https://ai.openvibe.services/you';
+            const key = el('a', 'ovse-b is-primary', 'Add your own key'); key.href = keyUrl; key.target = '_blank'; key.rel = 'noopener';
+            const pc = el('a', 'ovse-b', 'Use your computer'); pc.href = 'https://openvibe.link/machines'; pc.target = '_blank'; pc.rel = 'noopener';
+            row.append(key, pc); c.append(row);
+            return c;
+        }
         function needCard(r) {
             const c = el('div', 'ovse-ask is-need');
             const h = el('div', 'ovse-ask-h'); h.append(svg('computer'), el('b', '', WAITING[r.waiting.for] || 'It needs you'));
@@ -1971,6 +2068,12 @@
             const ol = el('ol', 'ovse-plan-list');
             p.forEach((x) => { const li = el('li', `is-${x.state}`); const box = el('span', 'ovse-tick'); if (x.state === 'done') box.append(svg('check')); li.append(box, el('span', '', x.text)); ol.append(li); });
             planBox.append(sm, ol);
+            if (Array.isArray(p.assumptions) && p.assumptions.length) {
+                const asm = el('details', 'ovse-plan-asm');
+                const as = el('summary', '', `Assumptions · ${p.assumptions.length}`);
+                const ul = el('ul'); p.assumptions.forEach((x) => ul.append(el('li', '', x)));
+                asm.append(as, ul); planBox.append(asm);
+            }
             planBox.open = was;
         }
 
@@ -2234,7 +2337,7 @@
                 const fail = (err) => { note.textContent = (err && err.message) || 'That did not work.'; };
                 const who = el('form', 'ovse-gsheet-f');
                 const name = el('input', 'ovse-gsheet-in'); name.type = 'text'; name.placeholder = 'Their username'; name.setAttribute('aria-label', 'A person by their username'); name.autocomplete = 'off';
-                const go = btn('ovse-sheet-btn', null, 'plus', 'Add person'); go.type = 'submit';
+                const go = btn('ovse-b is-primary ovse-gsheet-go', null, 'plus', 'Add'); go.type = 'submit';
                 who.append(name, go);
                 who.addEventListener('submit', async (e) => { e.preventDefault(); if (!name.value.trim()) return; try { done(await api(`/groups/${encodeURIComponent(id)}/members`, { method: 'POST', body: JSON.stringify({ username: name.value.trim() }) })); } catch (err) { fail(err); } });
                 sh.append(el('small', 'ovse-gsheet-l', 'A person'), who, el('small', 'ovse-gsheet-l', 'An agent'));
@@ -2253,10 +2356,13 @@
                 // Your own Actor agents (Network #1070): each brings its own instructions, memory and engine, and answers you.
                 const yoursBox = el('div', 'ovse-gsheet-list');
                 sh.insertBefore(el('small', 'ovse-gsheet-l', 'Your agents'), note); sh.insertBefore(yoursBox, note);
-                api('/actor/faces').then((j) => {
+                // 4.310.0 (the owner, 11-18: "why dupe"): an agent of yours that the roles above already offer (your Actor is
+                // @actor there) is not listed again.
+                const presetsSaid = api('/groups/presets').then((j) => new Set((j.agents || []).map((x) => String(x.name || '').toLowerCase()))).catch(() => new Set());
+                Promise.all([api('/actor/faces'), presetsSaid]).then(([j, presetNames]) => {
                     const taken = new Set((state.run.members || []).map((m) => m.handle));
                     const here = new Set((state.run.members || []).filter((m) => m.personal).map((m) => m.name));
-                    (Array.isArray(j && j.agents) ? j.agents : []).filter((a) => /^agt_[0-9A-Z]{26}$/.test(String(a.id || '')) && !here.has(a.name)).slice(0, 20).forEach((a) => {
+                    (Array.isArray(j && j.agents) ? j.agents : []).filter((a) => /^agt_[0-9A-Z]{26}$/.test(String(a.id || '')) && !here.has(a.name) && !presetNames.has(String(a.name || '').toLowerCase())).slice(0, 20).forEach((a) => {
                         const handle = handleFor(a.name, taken); taken.add(handle);
                         const b = btn('ovse-gfile ovse-gyours', `Add ${a.name}`, null, '');
                         const t = el('span'); t.append(el('b', '', `${a.name} · @${handle}`), el('small', '', 'Your own agent: its instructions, memory and engine come with it'));
@@ -2267,7 +2373,7 @@
                         });
                         yoursBox.append(b);
                     });
-                    if (!yoursBox.childElementCount) yoursBox.append(el('p', 'ovse-gsheet-empty', 'No agents of your own here yet: make one on OpenVibe.Actor.'));
+                    if (!yoursBox.childElementCount) { yoursBox.previousElementSibling && yoursBox.previousElementSibling.classList.contains('ovse-gsheet-l') && yoursBox.previousElementSibling.remove(); yoursBox.remove(); }
                 }).catch(() => { yoursBox.append(el('p', 'ovse-gsheet-empty', 'Your agents could not be listed right now.')); });
             }
             main.append(sh);
@@ -2611,7 +2717,19 @@
             if (!state.ref) return false;
             if (isLive(state.run)) {
                 // While it works, your words wait in the thread and go at its next turn.
-                const q = el('div', 'ovse-me is-queued'); const b = el('div', 'ovse-bubble'); b.append(words(text)); q.append(b, el('small', 'ovse-queued', 'Queued: it reads this after the step it is on'));
+                const q = el('div', 'ovse-me is-queued'); const b = el('div', 'ovse-bubble'); b.append(words(text));
+                const note = el('small', 'ovse-queued', 'Queued: it reads this after the step it is on');
+                // 4.310.0 (the owner, 11-18: "send now when possible"): stop the step under way, and these words go at once.
+                const now = el('button', 'ovse-b ovse-sendnow', 'Send now'); now.type = 'button';
+                now.addEventListener('click', async () => {
+                    now.disabled = true; note.textContent = 'Stopping the step it is on…';
+                    try { await api(`/runs/${encodeURIComponent(state.ref)}/stop`, { method: 'POST', body: '{}' }); }
+                    catch (err) { now.disabled = false; note.textContent = (err && err.message) || 'It did not stop: these words wait for the next turn'; return; }
+                    if (state.run) state.run = { ...state.run, status: 'stopped' };
+                    flushQueue();
+                });
+                q.append(b, el('div', 'ovse-queued-row'), note);
+                q.lastChild.previousSibling.append(now);
                 state.queue.push({ text, files, node: q }); schedule();
                 return true;
             }
@@ -2848,9 +2966,13 @@
                 g.addEventListener('click', () => startGroup(g));
                 hi.after(g);
             });
-            if (Array.isArray(o.starters) && o.starters.length) {
+            // 4.310.0 (the owner's phone, 11-18: Code mode offered "Remind me to stretch"): a coding session offers coding.
+            const CODE_STARTERS = [['code', 'Fix the failing test in my repository'], ['search', 'Explain how this codebase is laid out'], ['check', 'Add tests for the newest change'],
+                ['spark', 'Make a small web page that shows the weather'], ['file', 'Review my last commit and say what to improve']];
+            const starters = c.kind === 'code' ? CODE_STARTERS : o.starters;
+            if (Array.isArray(starters) && starters.length) {
                 const st = el('div', 'ovse-starters'); st.setAttribute('role', 'group'); st.setAttribute('aria-label', 'Things to ask');
-                o.starters.slice(0, 6).forEach((x, i) => {
+                starters.slice(0, 6).forEach((x, i) => {
                     const [g, w] = Array.isArray(x) ? x : ['spark', String(x)];
                     const b = btn('ovse-starter', null, G[g] ? g : 'spark', w); b.style.setProperty('--i', String(i));
                     b.addEventListener('click', () => { b.disabled = true; start(w); });
@@ -3345,6 +3467,32 @@ details.ovse-tool > .ovse-tool-h { cursor: pointer; } details.ovse-tool > .ovse-
 .ovse-tool-h small { color: var(--ovse-mute); font-size: 11.5px; font-variant-numeric: tabular-nums; }
 .ovse-tool.is-failed .ovse-tool-h { color: var(--danger, #ef4444); } .ovse-bad { color: var(--danger, #ef4444) !important; }
 .ovse-out { margin: 2px 8px 8px 31px; max-height: 280px; overflow: auto; font-size: 12px; }
+/* 4.310.0 (the owner's phone, 11-18: a tool's JSON ran past the screen): a tool's output wraps inside its box. */
+.ovse-out { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; box-sizing: border-box; }
+.ovse-pre { max-width: 100%; box-sizing: border-box; }
+.ovse-words { min-width: 0; overflow-wrap: anywhere; }
+/* 4.310.0: tables, quotes, rules, heading levels and checkbox items in answers. */
+.ovse-table { max-width: 100%; overflow-x: auto; overflow-y: hidden; margin: 6px 0 12px; border: 1px solid var(--ovse-line); border-radius: 12px; }
+.ovse-table table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+.ovse-table th, .ovse-table td { padding: 8px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--ovse-line); overflow-wrap: normal; word-break: normal; min-width: 64px; }
+.ovse-table th { font-weight: 650; color: var(--ovse-fg); background: color-mix(in srgb, var(--ovse-acc) 8%, transparent); white-space: nowrap; }
+.ovse-table tbody tr:last-child td { border-bottom: 0; }
+.ovse-table tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--ovse-fg) 3%, transparent); }
+.ovse-hr { border: 0; border-top: 1px solid var(--ovse-line); margin: 14px 0; }
+.ovse-quote { margin: 8px 0; padding: 6px 14px; border-left: 3px solid color-mix(in srgb, var(--ovse-acc) 60%, transparent); color: var(--ovse-dim); }
+.ovse-h.is-h1 { font-size: 1.2em; } .ovse-h.is-h2 { font-size: 1.1em; } .ovse-h.is-h3, .ovse-h.is-h4 { font-size: 1em; }
+.ovse-checks { list-style: none; padding-left: 4px; }
+.ovse-checks li { position: relative; padding-left: 26px; }
+.ovse-checks li::before { content: ""; position: absolute; left: 0; top: .2em; width: 15px; height: 15px; border-radius: 5px; border: 1.5px solid var(--ovse-line); }
+.ovse-checks li.is-done::before { background: var(--success, #22c55e); border-color: transparent; }
+.ovse-checks li.is-done { color: var(--ovse-mute); text-decoration: line-through; }
+/* 4.310.0: the plan's assumptions, folded under its checklist. */
+.ovse-plan-asm { margin: 0 12px 10px; font-size: 13px; color: var(--ovse-dim); }
+.ovse-plan-asm > summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; color: var(--ovse-mute); }
+.ovse-plan-asm ul { margin: 2px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+/* 4.310.0: a queued message can go now. */
+.ovse-queued-row { display: flex; justify-content: flex-end; margin: 6px 0 2px; }
+.ovse-sendnow { min-height: 36px; padding: 0 14px; font-size: 13px; }
 .ovse-files, .ovse-made { display: grid; gap: 2px; padding: 6px; border-radius: 14px; border: 1px solid var(--ovse-line); background: var(--ovse-card); animation: ovse-in .3s cubic-bezier(.2,.8,.2,1) both; }
 .ovse-files-h { display: flex; align-items: center; gap: 8px; padding: 6px 8px; font-size: 13.5px; }
 .ovse-files-h > b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -3471,6 +3619,17 @@ html[data-ov-motion="off"] .ovse-road { animation: none; transition: none; }
 .ovse-mini-b:hover { background: rgba(127,127,127,.14); } .ovse-mini .ovse-g { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .ovse-flash { position: absolute; z-index: 6; left: 50%; bottom: 120px; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 9px 16px; border-radius: 999px; background: var(--text-primary, #e6edf7); color: var(--bg-primary, #0b0f17); font-size: 13.5px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,.3); animation: ovse-pop .26s cubic-bezier(.2,1.3,.4,1) both; transition: opacity .4s; }
 .ovse-flash.is-out { opacity: 0; }
+/* 4.310.0: the flash is a card in the theme (it was a white pill): a glyph, the words, a link as a button; errors tinted. */
+.ovse-flash { display: flex; align-items: center; gap: 10px; border-radius: 14px; padding: 10px 12px 10px 14px; width: max-content; max-width: min(460px, calc(100% - 32px)); box-sizing: border-box;
+  background: color-mix(in srgb, var(--ovse-bg) 82%, var(--ovse-fg) 18%); color: var(--ovse-fg); border: 1px solid var(--ovse-line); font-weight: 550; line-height: 1.4; cursor: pointer;
+  backdrop-filter: blur(10px); box-shadow: 0 14px 36px rgba(0,0,0,.35); }
+.ovse-flash.is-bad { border-color: color-mix(in srgb, var(--danger, #ef4444) 55%, var(--ovse-line)); background: color-mix(in srgb, var(--ovse-bg) 80%, var(--danger, #ef4444) 20%); }
+.ovse-flash .ovse-flash-g { flex: none; width: 18px; height: 18px; color: var(--ovse-acc2); }
+.ovse-flash.is-bad .ovse-flash-g { color: var(--danger, #ef4444); }
+.ovse-flash-t { min-width: 0; overflow-wrap: anywhere; }
+.ovse-flash-go { flex: none; min-height: 36px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 10px; background: var(--ovse-acc); color: #fff; text-decoration: none; font-weight: 650; }
+.ovse-allow-l { margin: 4px 0 10px; color: var(--ovse-dim); }
+.ovse-gsheet-go { min-height: 44px; flex: none; }
 
 @keyframes ovse-in { from { opacity: 0; transform: translateY(calc(8px * var(--ov-move, 1))); } }
 @keyframes ovse-pop { from { opacity: 0; transform: scale(.94); } }
