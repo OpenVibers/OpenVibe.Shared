@@ -164,7 +164,7 @@
 .ov-appicon>.ov-icon{position:absolute;inset:0;width:100%;height:100%;display:block;--ovi-glyph:hsl(var(--ova-h) 92% 84%);color:hsl(var(--ova-h) 92% 84%)}
 .ov-appicon>.ov-icon svg{position:absolute;left:-13%;top:-13%;width:126%;height:126%;margin:0;transform:none!important}
 .ov-appicon .ovi-ring,.ov-appicon .ovi-bg,.ov-appicon .ovi-comet,.ov-appicon .ovi-prog{display:none}
-:root[data-theme="light"] .ov-appicon>.ov-icon{--ovi-glyph:hsl(var(--ova-h) 70% 30%);color:hsl(var(--ova-h) 70% 30%)}
+:root[data-theme-mode="light"] .ov-appicon>.ov-icon{--ovi-glyph:hsl(var(--ova-h) 70% 30%);color:hsl(var(--ova-h) 70% 30%)}
 .ov-appicon[data-size="20"]{--ova-size:20px}
 .ov-appicon[data-size="26"]{--ova-size:26px}
 .ov-appicon[data-size="32"]{--ova-size:32px}

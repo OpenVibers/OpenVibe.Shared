@@ -247,7 +247,7 @@ html[data-ov-motion=off] .ovk-btn--primary, html[data-ov-motion=off] .ovk-btn--p
 .ovk-tile--warn { --ovk-tone: var(--ovk-warn); }
 .ovk-tile--bad { --ovk-tone: var(--ovk-bad); }
 .ovk-tile--muted { --ovk-tone: var(--ovk-muted); }
-:root[data-theme="light"] .ovk-tile, :root[data-theme="light"] .ovk-heading-icon { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovk-tone) 28%, transparent), inset 0 -1px 0 color-mix(in srgb, #000 6%, transparent); }
+:root[data-theme-mode="light"] .ovk-tile, :root[data-theme-mode="light"] .ovk-heading-icon { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovk-tone) 28%, transparent), inset 0 -1px 0 color-mix(in srgb, #000 6%, transparent); }
 /* Optical centres: a glyph whose weight sits to one side is nudged so it reads centred. */
 .ovk-tile[data-glyph="play"] > .ovk-i, .ovk-tile[data-glyph="send"] > .ovk-i { transform: translateX(calc(var(--ovk-t) * .03)); }
 .ovk-tile[data-glyph="arrow-right"] > .ovk-i, .ovk-tile[data-glyph="open"] > .ovk-i { transform: translateX(calc(var(--ovk-t) * .015)); }

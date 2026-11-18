@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.319.0 — 2026-11-18
+
+**Light themes get their light colours.** `data-theme` carries the theme's own id (vibe, cloud, daylight …); whether it
+is light or dark is `data-theme-mode` (theme-loader.js). 19 rules in 8 files tested `data-theme="light"` or `"dark"`,
+which no theme sets, so on every light theme the menu's site names and icons stayed in their pale dark-theme colours
+(History's "Chat" pale yellow, "Live" pale green on a light page), the selected History tab stayed grey, and the home's,
+the kit's, the messages', the composer's and the run thread's light colours never applied; on a light phone with a
+dark theme, the composer's and the faces' light colours applied wrongly. They test `data-theme-mode` now.
+- Test: theme-mode-selectors fails on any selector on `data-theme="light"` or `"dark"`.
+- **test.yml: `apt-packages` installs only what is missing.** A shared node (OpenVibe checks) has the packages and
+  no sudo, so Meme's check stopped at that step; on GitHub it saves the install.
+- **player.js: a video that failed before the player ran gets its card.** A fast 404 while the page was still loading
+  fired the video's error with nobody listening, which left a play button that never plays (and made
+  player-error-chrome flaky under load). The player shows the card at setup when the video has already failed; the
+  test covers it with a player script that arrives late.
+
 ## 4.318.0 — 2026-11-18
 
 **One face system** (the owner, 11-18, the menu's Vibe beside openvibe.chat/vibe: "These should share the same universal

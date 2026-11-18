@@ -176,7 +176,13 @@ jobs:
         if: ${{ inputs.apt-packages != '' }}
         env:
           PKGS: ${{ inputs.apt-packages }}
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends $PKGS
+        # Only what is missing (11-18): a shared node (OpenVibe checks, act in host mode) already has ffmpeg and the
+        # rest and runs a check as a user with no sudo, so Meme's check stopped here; on GitHub it saves the install.
+        run: |
+          missing=""
+          for p in $PKGS; do dpkg -s "$p" >/dev/null 2>&1 || missing="$missing $p"; done
+          if [ -z "$missing" ]; then echo "packages: all installed ($PKGS)"; exit 0; fi
+          sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends $missing
       - name: install
         run: ${{ inputs.install }}
       - name: syntax

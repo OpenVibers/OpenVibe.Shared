@@ -722,7 +722,7 @@
         // 4.317.0 (the owner's phone, 11-18: "This video could not be played" printed across the play button, "improve"):
         // a failed video is a card of its own over the picture: the sign, what happened in plain words (offline, or the
         // file), and Try again, which loads the source again. The big play button stands down while it shows.
-        video.addEventListener('error', () => {
+        const showError = () => {
             root.classList.remove('is-waiting');
             root.classList.add('is-error');
             message.textContent = '';
@@ -739,7 +739,11 @@
                 try { video.load(); const pr = video.play(); if (pr && pr.catch) pr.catch(() => {}); } catch { /* the error fires again */ }
             });
             message.append(sign, words, again);
-        });
+        };
+        video.addEventListener('error', showError);
+        // 4.319.0: a source that failed before this script ran (a fast 404 while the page was still loading) fired its
+        // error with nobody listening; the card shows for it now too, instead of a play button that never plays.
+        if (video.error) showError();
         if (video.textTracks && video.textTracks.addEventListener) {
             const onTracks = () => { paintCaptions(); paintDescriptions(); };
             video.textTracks.addEventListener('addtrack', onTracks);

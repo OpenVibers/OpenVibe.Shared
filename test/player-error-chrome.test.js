@@ -20,8 +20,11 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     if (u.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(PAGE); }
+    if (u.pathname === '/late') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(PAGE.replace('/player.js', '/player.js?late=1')); }
     if (u.pathname === '/missing.mp4') { tries++; res.writeHead(404); return res.end(); }
     const name = u.pathname.slice(1);
+    // ?late: player.js arrives after the video has already failed (4.319.0: the card still shows).
+    if (name === 'player.js' && u.searchParams.has('late')) { setTimeout(() => { res.writeHead(200, { 'content-type': 'application/javascript' }); res.end(fs.readFileSync(path.join(ROOT, name))); }, 800); return; }
     if (/^player\.(js|css)$/.test(name)) { res.writeHead(200, { 'content-type': name.endsWith('.js') ? 'application/javascript' : 'text/css' }); return res.end(fs.readFileSync(path.join(ROOT, name))); }
     res.writeHead(404); return res.end();
 });
@@ -48,6 +51,10 @@ const server = http.createServer((req, res) => {
         await p.evaluate("document.querySelector('.ov-player-again').click(), 1");
         await h.eventually(async () => assert.ok(tries > before, `Try again loads the source again (${tries} reads)`), { timeout: 5000 });
         await h.eventually(async () => { const x = await p.evaluate(CARD); assert.ok(x && x.error && x.again, 'and says so again when it fails again'); }, { timeout: 15000 });
+        // The race: the source fails before the player's script runs. The card shows for it all the same.
+        const late = await h.openPage(browser, await browser.newContext(), { width: 390, height: 700 });
+        await late.goto(`http://127.0.0.1:${server.address().port}/late`, { maxMs: 6000 });
+        await h.eventually(async () => { const x = await late.evaluate(CARD); assert.ok(x && x.error && x.again, `a source that failed before the player ran still gets its card (${JSON.stringify(x)})`); }, { timeout: 10000 });
         console.log(`player-error-chrome: a ${first.w} px card with its sign, "${first.words.replace('Try again', '').trim()}" and Try again; the play button stands down; Try again reads the source again`);
     } finally {
         await browser.close();

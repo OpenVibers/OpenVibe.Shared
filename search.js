@@ -455,7 +455,7 @@ html[data-ov-motion=off] .ovs-tab span > .ovs-tabdot, html[data-ov-motion=off] .
 .ovs .ovs-ic.ovs-site { position: relative; overflow: hidden; border-radius: var(--ov-app-corner, 22.5%); background: linear-gradient(150deg, hsl(var(--ovs-h, 215) 72% 58% / .36), hsl(var(--ovs-h, 215) 70% 38% / .2)); box-shadow: inset 0 0 0 1px hsl(var(--ovs-h, 215) 70% 64% / .3); }
 .ovs .ovs-ic.ovs-site .ovi-ring, .ovs-ic.ovs-site .ovi-bg, .ovs-ic.ovs-site .ovi-comet, .ovs-ic.ovs-site .ovi-prog { display: none; }
 .ovs .ovs-ic.ovs-site > .ov-icon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; --ovi-glyph: hsl(var(--ovs-h, 215) 92% 84%); color: hsl(var(--ovs-h, 215) 92% 84%); }
-:root[data-theme="light"] .ovs .ovs-ic.ovs-site > .ov-icon { --ovi-glyph: hsl(var(--ovs-h, 215) 70% 30%); color: hsl(var(--ovs-h, 215) 70% 30%); }
+:root[data-theme-mode="light"] .ovs .ovs-ic.ovs-site > .ov-icon { --ovi-glyph: hsl(var(--ovs-h, 215) 70% 30%); color: hsl(var(--ovs-h, 215) 70% 30%); }
 .ovs .ovs-ic.ovs-site > .ov-icon svg { position: absolute; left: -13%; top: -13%; width: 126%; height: 126%; margin: 0; transform: none !important; }
 /* The site list: a grid of app icons, four across on a phone and as many as fit beyond, names on two balanced lines. */
 .ovs-grid.is-mini { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 2px 0 6px; }
@@ -488,7 +488,7 @@ html[data-ov-motion=off] .ovs-grid.is-mini .ovs-ic { transition: none; }
 @keyframes ovs-drift { from { transform: translate3d(-3%, -2%, 0) rotate(0deg); } to { transform: translate3d(3%, 2%, 0) rotate(8deg); } }
 html[data-ov-motion=reduced] .ovs-panel::before { animation-duration: 60s; }
 html[data-ov-motion=off] .ovs-panel::before { animation: none; }
-:root[data-theme="light"] .ovs-panel::before { opacity: .35; }
+:root[data-theme-mode="light"] .ovs-panel::before { opacity: .35; }
 .ovs-group[data-sec="all"]::after { content: ""; flex: 1; height: 1px; background: var(--border, rgba(255,255,255,.1)); }
 .ovs-tabs[hidden] { display: none; }
 .ovs-tab { flex: none; height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer; }
