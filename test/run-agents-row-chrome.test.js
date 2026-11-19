@@ -54,10 +54,10 @@ const server = http.createServer((req, res) => {
         assert.deepEqual(row, ['Actor', 'Codes', 'Clipper', 'New'], 'your Actor, Codes always, an agent you made, then New: no Vibe, no "Agent", no "My Actor"');
         // 4.318.0: ov-face.js draws the faces (the menu's sessions use the same system).
         const codes = await until(p, `(() => { const f = document.querySelectorAll('.ovr-people .ovr-person')[1].querySelector('.ovr-face');
-            return f.classList.contains('ovf-coder') && { coder: f.classList.contains('ovr-coder'), prompt: !!f.querySelector('.ovf-coder-prompt'), cursor: !!f.querySelector('.ovf-coder-cursor') }; })()`, 'Codes\' face from ov-face.js');
+            return f.classList.contains('ovface-coder') && { coder: f.classList.contains('ovr-coder'), prompt: !!f.querySelector('.ovface-coder-prompt'), cursor: !!f.querySelector('.ovface-coder-cursor') }; })()`, 'Codes\' face from ov-face.js');
         assert.deepEqual(codes, { coder: true, prompt: true, cursor: true }, 'Codes has its own face: a terminal with a prompt and a cursor');
         const me = await p.evaluate(`(() => { const f = document.querySelectorAll('.ovr-people .ovr-person')[0].querySelector('.ovr-face');
-            return { blob: f.classList.contains('ovf-blob'), eyes: f.querySelectorAll(':scope > .ovf-eye').length, shape: f.dataset.shape }; })()`);
+            return { blob: f.classList.contains('ovface-blob'), eyes: f.querySelectorAll(':scope > .ovface-eye').length, shape: f.dataset.shape }; })()`);
         assert.ok(me.blob && me.eyes === 2 && me.shape, 'your Actor is a blob with two eyes: ' + JSON.stringify(me));
         const rows = await p.evaluate(`[...document.querySelectorAll('.ovr-rows .ovr-row')].map((r) => [r.querySelector('.ovr-row-top b').textContent, r.querySelector('.ovr-face').classList.contains('ovr-me')])`);
         assert.deepEqual(rows, [['Actor', true], ['Find me a deal', true], ['Read the docs', true], ['Task', true], ['Clip the stream', false]], 'Vibe, "My Actor" and nameless runs are your Actor\'s; a conversation titled Vibe says Actor');

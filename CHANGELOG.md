@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.325.0 — 2026-11-19
+
+**Agents' faces are square again on every site** (the owner, 11-19, the menu's Vibe on a phone: "A lot of these icons
+are the wrong aspect ratio"). `ov-face.js` (4.318.0) drew faces with the class `ovf`, which is the shared footer's own:
+on any page with the footer, its padding (24px 14px 20px), top margin and border landed on every face, so a 30 px face
+was 45 px tall (Actor's blob an egg, Codes' terminal a tall bar with its prompt pushed out), in the menu's agent cards
+and session rows. The face module's classes, keyframes and custom property are `ovface` now (`ovface-blob`,
+`ovface-coder`, `--ovface-h` …); the footer keeps `ovf`. `test/faces-one-system-chrome.test.js` loads the footer's
+stylesheet and checks every face is square and unpadded; `test/class-owners.test.js` keeps the two apart.
+
 ## 4.324.0 — 2026-11-19
 
 **An outside agent in a group conversation** (plan §AD.19, "A2A for outside agents"). A group's add sheet
