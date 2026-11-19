@@ -155,6 +155,18 @@ const SCROLLS = [0, 900, 1800, 500];
                 // size moved (each write there invalidated the whole page's style: Live's home on a phone, 2026-11-19).
                 // The keyboard's field went away above: its focusout measures 60 ms later and lowers the lift back to 0.
                 await page.evaluate('new Promise((r) => setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(r)), 300))');
+                // On a loaded machine (our CI's shared node, 11-19) that focusout can land later than 300 ms, and its one
+                // legitimate write (the lift back to 0) fell inside the count: wait until the bar's --ovb- values hold
+                // still for three looks 75 ms apart, at most 3 s, before counting.
+                await page.evaluate(`(async () => {
+                    const st = document.documentElement.style;
+                    const snap = () => [...st].filter((k) => k.startsWith('--ovb-')).map((k) => k + ':' + st.getPropertyValue(k)).join(';');
+                    let last = snap(); let still = 0;
+                    for (let i = 0; i < 40 && still < 3; i += 1) {
+                        await new Promise((r) => setTimeout(r, 75));
+                        const now = snap(); still = now === last ? still + 1 : 0; last = now;
+                    }
+                })()`);
                 const writes = await page.evaluate(`(async () => {
                     const st = document.documentElement.style; const real = st.setProperty; let n = 0;
                     st.setProperty = function (k, v) { if (String(k).startsWith('--ovb-')) n += 1; return real.call(this, k, v); };
