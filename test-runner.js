@@ -71,7 +71,7 @@ function runOne(file, { dir, cwd, env, timeoutMs, nodeArgs }) {
 /**
  * Run the tests; resolves { results, passed, skipped, failed, strict, exitCode, summary } and prints as it goes.
  * opts: dir (required: the test directory), argv (default process.argv.slice(2)), cwd (default dir/..),
- * timeoutMs (60000), parallel (a number, 'auto' = min(8, cpus-1), default min(4, cpus-1); resolved value returned), env (added to process.env; NODE_ENV=test by default),
+ * timeoutMs (60000; times OV_TEST_TIMEOUT_SCALE, 1-10, when set), parallel (a number, 'auto' = min(8, cpus-1), default min(4, cpus-1); resolved value returned), env (added to process.env; NODE_ENV=test by default),
  * hide (a RegExp: output lines of a failed file left out, e.g. /^\[DB\] /), pad (file-name column, 44),
  * match (which files, default /\.test\.js$/), serial (files to run alone after parallel files),
  * retry (a RegExp: a failed file that matches is run once more; a pass on the second try counts, and is named in the summary),
@@ -96,8 +96,12 @@ async function run(opts = {}) {
         log('no test files matched');
         return { results: [], passed: 0, skipped: 0, failed: 0, strict, exitCode: 1, summary: 'no test files matched' };
     }
+    // OV_TEST_TIMEOUT_SCALE (1 to 10): a slower or busier machine than the one the limit was set for stretches every
+    // file's limit (2026-11-19: our own CI on the shared node runs two suites side by side on four cores, and Live's
+    // 120 s crawl test passed on GitHub but not there). Each file still has a limit.
+    const scale = Math.min(10, Math.max(1, Number(process.env.OV_TEST_TIMEOUT_SCALE) || 1));
     const cfg = {
-        dir, cwd: opts.cwd || path.join(dir, '..'), timeoutMs: opts.timeoutMs || 60000, nodeArgs: opts.nodeArgs || [],
+        dir, cwd: opts.cwd || path.join(dir, '..'), timeoutMs: Math.round((opts.timeoutMs || 60000) * scale), nodeArgs: opts.nodeArgs || [],
         env: { ...process.env, NODE_ENV: 'test', ...(opts.env || {}) },
     };
     const parallel = resolveParallel(opts.parallel);
