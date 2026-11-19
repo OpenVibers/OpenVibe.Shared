@@ -2536,6 +2536,28 @@
                         agentsBox.append(b);
                     });
                     if (!agentsBox.childElementCount) agentsBox.append(el('p', 'ovse-gsheet-empty', 'Every agent role is already here.'));
+                    // 4.324.0 (plan §AD.19, 11-19): an outside agent, any that speaks A2A, at its https address. It answers
+                    // through Actor when asked, seeing what the group said, with your key for it if you connected it on
+                    // openvibe.actor. Offered once the Frame's presets say groups take one.
+                    if (Array.isArray(j.engines) && j.engines.includes('a2a')) {
+                        const out = el('form', 'ovse-gsheet-f ovse-goutside');
+                        const addr = el('input', 'ovse-gsheet-in'); addr.type = 'url'; addr.inputMode = 'url'; addr.placeholder = 'Its address, https://…';
+                        addr.setAttribute('aria-label', 'An outside agent by its https address'); addr.autocomplete = 'off'; addr.spellcheck = false;
+                        const add = btn('ovse-b ovse-gsheet-go', null, 'plus', 'Add'); add.type = 'submit';
+                        out.append(addr, add);
+                        out.addEventListener('submit', async (e) => {
+                            e.preventDefault();
+                            const url = httpsUrl(addr.value.trim());
+                            if (!url) { note.textContent = 'An outside agent is reached at an https address.'; return; }
+                            const host = new URL(url).hostname.replace(/^www\./, '');
+                            const handle = handleFor(host.split('.')[0], new Set((state.run.members || []).map((m) => m.handle)));
+                            add.disabled = true;
+                            try { done(await api(`/groups/${encodeURIComponent(id)}/members`, { method: 'POST', body: JSON.stringify({ agent: { product: 'actor', handle, name: host.slice(0, 60), engine: { kind: 'a2a', url } } }) })); } catch (err) { add.disabled = false; fail(err); }
+                        });
+                        sh.insertBefore(el('small', 'ovse-gsheet-l', 'An outside agent'), note);
+                        sh.insertBefore(out, note);
+                        sh.insertBefore(el('p', 'ovse-gsheet-hint', 'Any agent that speaks A2A. When asked, it sees what the group said, and uses your key for it if you connected it on openvibe.actor.'), note);
+                    }
                 }).catch(() => { agentsBox.append(el('p', 'ovse-gsheet-empty', 'The agents could not be listed right now.')); });
                 // Your own Actor agents (Network #1070): each brings its own instructions, memory and engine, and answers you.
                 const yoursBox = el('div', 'ovse-gsheet-list');
@@ -3656,7 +3678,7 @@ html[data-ov-motion="off"] .ovse-use-seg, html[data-ov-motion="off"] .ovse-use-g
 .ovse-gfile:hover { background: var(--bg-hover, rgba(255,255,255,.06)); }
 .ovse-gfile > svg { flex: none; width: 20px; height: 20px; }
 .ovse-gfile > svg:last-child { margin-left: auto; color: var(--text-muted, #8a96ad); }
-.ovse-gsheet-empty, .ovse-gsheet-note { margin: 0; color: var(--text-muted, #8a96ad); font-size: .85rem; line-height: 1.45; }
+.ovse-gsheet-empty, .ovse-gsheet-note, .ovse-gsheet-hint { margin: 0; color: var(--text-muted, #8a96ad); font-size: .85rem; line-height: 1.45; }
 @keyframes ovse-gm-in { from { opacity: 0; transform: translateY(calc(4px * var(--ov-move, 1))); } }
 html[data-ov-motion=off] .ovse-gm, html[data-ov-motion=off] .ovse-gsheet { animation: none; }
 .ovse-hello-face.is-code { background: linear-gradient(135deg, color-mix(in srgb, var(--accent, #3b82f6) 85%, #22d3ee), color-mix(in srgb, var(--accent, #3b82f6) 70%, #0f172a)); }

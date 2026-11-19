@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.324.0 — 2026-11-19
+
+**An outside agent in a group conversation** (plan §AD.19, "A2A for outside agents"). A group's add sheet
+(`ov-session.js`) gains "An outside agent": any agent that speaks A2A, added by its https address. It joins as
+`{ product: 'actor', engine: { kind: 'a2a', url } }` with a handle from its host's first label, and answers through
+Actor's a2a engine (OpenVibe.Actor #638) when asked, seeing what the group said, with your key for it if you connected
+it on openvibe.actor (OpenVibe.Network #1135). A plain-http address is refused in words before anything is sent. The
+form shows only once the Frame's `/groups/presets` lists `a2a` among its engines. `test/session-group-chrome.test.js`
+adds one by address and checks the refusal.
+
 ## 4.323.0 — 2026-11-19
 
 **A test file's time limit can stretch on a slower machine** (the owner, 11-19: "handle CI with our own system … using

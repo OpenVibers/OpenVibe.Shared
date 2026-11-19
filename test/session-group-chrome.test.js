@@ -45,7 +45,7 @@ const server = http.createServer((req, res) => {
     }
     if (p === '/api/frame/groups' && req.method === 'GET') return json(res, 200, { groups: [], can_start: true });
     if (p === '/api/frame/actor/faces') return json(res, 200, { agents: [{ id: 'agt_01J0SC0VT0000000000000000Z', name: 'Scout Bot', glyph: 'spark', hue: 200, state: 'resting' }, { id: 'not-an-agent', name: 'Nope' }] });
-    if (p === '/api/frame/groups/presets') return json(res, 200, { agents: [{ handle: 'opencode', name: 'Codes · OpenCode', product: 'codes', harness: 'opencode', line: 'Codes on the OpenCode harness' }] });
+    if (p === '/api/frame/groups/presets') return json(res, 200, { agents: [{ handle: 'opencode', name: 'Codes · OpenCode', product: 'codes', harness: 'opencode', line: 'Codes on the OpenCode harness' }], engines: ['agent', 'model', 'a2a'] });
     if (p === '/api/frame/groups/g1/members' && req.method === 'POST') {
         let raw = ''; req.on('data', (c) => { raw += c; }); req.on('end', () => { const b = JSON.parse(raw || '{}'); added.push(b); members = [...members, { id: `agent:${b.agent.handle}`, kind: 'agent', name: b.agent.name, handle: b.agent.handle, product: b.agent.product, harness: b.agent.harness, ...(b.agent.agent ? { personal: true, owner_name: 'Ada' } : {}) }]; json(res, 201, { members }); });
         return undefined;
@@ -120,6 +120,15 @@ const server = http.createServer((req, res) => {
                 await until(p, "!!document.querySelector('.ovse-gsheet .ovse-gmember')");
                 assert.ok(await p.evaluate("[...document.querySelectorAll('.ovse-gsheet .ovse-gmember')].some((r) => /Ada's own agent/.test(r.textContent))"), 'whose agent it is');
                 await p.evaluate("document.querySelector('.ovse-gsheet .ovse-ib').click()");
+                // An outside agent over A2A (4.324.0, plan §AD.19): by its https address; plain http is refused in words.
+                await p.evaluate("[...document.querySelectorAll('.ovse-group-b')].find((b) => /Add/.test(b.textContent)).click()");
+                await until(p, "!!document.querySelector('.ovse-gsheet .ovse-goutside')");
+                await p.evaluate("(() => { const i = document.querySelector('.ovse-goutside input'); i.value = 'http://agents.example.com/helper'; document.querySelector('.ovse-goutside').requestSubmit(); })()");
+                assert.strictEqual(await p.evaluate("document.querySelector('.ovse-gsheet-note').textContent"), 'An outside agent is reached at an https address.');
+                assert.strictEqual(added.length, 2, 'nothing sent for plain http');
+                await p.evaluate("(() => { const i = document.querySelector('.ovse-goutside input'); i.value = 'https://agents.example.com/helper'; document.querySelector('.ovse-goutside').requestSubmit(); })()");
+                await until(p, "[...document.querySelectorAll('.ovse-gm-face')].some((x) => x.dataset.handle === 'agents') || document.querySelector('.ovse-group-count').textContent === '2 people · 6 agents'");
+                assert.deepStrictEqual(added[2].agent, { product: 'actor', handle: 'agents', name: 'agents.example.com', engine: { kind: 'a2a', url: 'https://agents.example.com/helper' } });
             }
             assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), w, 'no sideways scroll');
             assert.deepStrictEqual(errors, [], 'no page errors');
