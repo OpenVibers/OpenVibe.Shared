@@ -1,5 +1,5 @@
 /*!
- * ov-linkcard.js (openvibe-shared 4.320.0): the card under a chat message that carries a web address, drawn the same on
+ * ov-linkcard.js (openvibe-shared 4.320.0; html() and ov-linkcard.css 4.321.0): the card under a chat message that carries a web address, drawn the same on
  * every surface.
  *
  * OpenVibe.Chat reads each address a message carries (server/chat/link-previews.js) and hands the result to every
@@ -9,7 +9,12 @@
  *
  *   OVLinkCard.make(embed, { onHide, hideLabel })   one card, or null for an embed it will not draw
  *   OVLinkCard.render(host, embeds, { onHide, max })  replaces the cards in `host` (at most `max`, 3); returns the count
- *   OVLinkCard.KINDS
+ *   OVLinkCard.html(embed, { hideAction, hideLabel })  4.321.0: the same card as HTML, for a server (no document): the
+ *                                                     same rules, every field escaped; hideAction (a same-site path)
+ *                                                     adds the × as a form post, so it works without JavaScript
+ *   OVLinkCard.watch(root)                           drop the picture of a server-drawn card that does not load
+ *   OVLinkCard.KINDS, OVLinkCard.CSS                 (ov-linkcard.css is the same stylesheet as a file, for pages that
+ *                                                     draw cards on the server; the script injects it otherwise)
  *
  *   embed: { url, title, description?, site_name?, image?, kind?, by?, live? }   (link-previews.js's shape)
  *
@@ -68,6 +73,7 @@ html[data-theme-mode="light"] .ovlc { --ovlc-bg: var(--bg-card, var(--surface, #
 .ovlc:hover .ovlc-hide, .ovlc:focus-within .ovlc-hide, .ovlc-hide:focus-visible { opacity: 1; }
 .ovlc-hide:hover, .ovlc-hide:focus-visible { color: var(--ovlc-text); border-color: var(--ovlc-accent); }
 .ovlc-hide::before { content: ""; position: absolute; inset: -10px; }
+.ovlc-hide-form { display: contents; }
 @media (hover: none) { .ovlc-hide { opacity: 1; } }
 @keyframes ovlc-in { from { opacity: 0; transform: translateY(calc(6px * var(--ov-move, 1))); } }
 html[data-ov-motion="calm"] .ovlc { animation-duration: .18s; }
@@ -149,5 +155,51 @@ html[data-ov-motion="off"] .ovlc:hover, html[data-ov-motion="off"] .ovlc:focus-w
         return n;
     }
 
-    root.OVLinkCard = Object.freeze({ KINDS, make, render, version: '4.320.0' });
+    const escHtml = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    /** The card as HTML for a server: the same markup make() builds, or '' for an embed it will not draw. */
+    function html(e, opts) {
+        const o = opts || {};
+        if (!e || typeof e !== 'object') return '';
+        const title = text(e.title, 200);
+        const href = httpsUrl(e.url);
+        if (!title || !href) return '';
+        const kind = KINDS.includes(e.kind) ? e.kind : 'link';
+        const pic = typeof e.image === 'string' && MEDIA.test(e.image) ? httpsUrl(e.image) : '';
+        const by = text(e.by, 60);
+        const site = [siteOf(e, href), by ? `by ${by}` : ''].filter(Boolean).join(' · ');
+        const line = text(e.description, 300);
+        const hide = typeof o.hideAction === 'string' && /^\/[^/\\]/.test(o.hideAction) ? o.hideAction : '';
+        const label = text(o.hideLabel, 60) || 'Hide this preview';
+        return `<div class="ovlc${pic ? '' : ' ovlc-plain'}" data-kind="${kind}">`
+            + (pic ? `<span class="ovlc-pic"><img src="${escHtml(pic)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-ovlc-pic>`
+                + (kind === 'video' || kind === 'live' ? `<span class="ovlc-play">${PLAY}</span>` : '') + '</span>' : '')
+            + '<span class="ovlc-body"><span class="ovlc-site">'
+            + (e.live === true ? '<span class="ovlc-live">LIVE</span>' : '') + `<span>${escHtml(site)}</span></span>`
+            + `<a class="ovlc-title" href="${escHtml(href)}" target="_blank" rel="noopener nofollow ugc">${escHtml(title)}</a>`
+            + (line ? `<p class="ovlc-line">${escHtml(line)}</p>` : '') + '</span>'
+            + (hide ? `<form class="ovlc-hide-form" method="post" action="${escHtml(hide)}"><input type="hidden" name="hidden" value="1">`
+                + `<button type="submit" class="ovlc-hide" title="${escHtml(label)}" aria-label="${escHtml(label)}">×</button></form>` : '')
+            + '</div>';
+    }
+
+    /** A server-drawn card whose picture does not load keeps its words, not a broken frame. */
+    function watch(scope) {
+        if (typeof document === 'undefined') return;
+        const all = (scope || document).querySelectorAll ? (scope || document).querySelectorAll('img[data-ovlc-pic]') : [];
+        for (const img of all) {
+            if (img.__ovlcWatched) continue;
+            img.__ovlcWatched = true;
+            const drop = () => { const box = img.closest('.ovlc-pic'); const card = img.closest('.ovlc'); if (box) box.remove(); if (card) card.classList.add('ovlc-plain'); };
+            if (img.complete && img.naturalWidth === 0) drop(); else img.addEventListener('error', drop, { once: true });
+        }
+    }
+    if (typeof document !== 'undefined') {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => watch(document), { once: true });
+        else watch(document);
+    }
+
+    const api = Object.freeze({ KINDS, CSS, make, render, html, watch, version: '4.321.0' });
+    root.OVLinkCard = api;
+    if (typeof module === 'object' && module && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

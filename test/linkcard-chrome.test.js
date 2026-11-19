@@ -94,6 +94,22 @@ const server = http.createServer((req, res) => {
         assert.ok(list.titleLines <= 2, `a long title stops at two lines (${list.titleLines})`);
         assert.ok(list.hideW >= 24, 'the × is a real button');
 
+        // 4.321.0: html() (a server's card) draws the card make() builds, and watch() drops a picture that does not load.
+        const parity = await p.evaluate(`(() => {
+            const M = window.OVLinkCard;
+            const e = { url: 'https://example.com/p', title: 'Same card', description: 'Either way', site_name: 'Ex', kind: 'video', image: 'https://openvibe.media/i/ov-test-missing-' + Date.now() + '.jpg' };
+            const a = M.make(e);
+            const host = document.createElement('div'); host.innerHTML = M.html(e); document.body.appendChild(host);
+            const b = host.firstElementChild;
+            const shape = (c) => [c.className.replace(' ovlc-plain', ''), c.dataset.kind, c.querySelector('.ovlc-site').textContent, c.querySelector('.ovlc-title').textContent,
+                c.querySelector('.ovlc-title').href, c.querySelector('.ovlc-title').target, c.querySelector('.ovlc-line').textContent, !!c.querySelector('.ovlc-play svg')];
+            return { same: JSON.stringify(shape(a)) === JSON.stringify(shape(b)), a: shape(a), b: shape(b) };
+        })()`);
+        assert.ok(parity.same, `html() draws make()'s card: ${JSON.stringify(parity)}`);
+        await p.evaluate("window.OVLinkCard.watch(document), 1");
+        await h.eventually(async () => assert.strictEqual(await p.evaluate("(() => { const c = [...document.querySelectorAll('.ovlc')].find((x) => x.querySelector('.ovlc-title').textContent === 'Same card' && x.querySelector('[data-ovlc-pic], .ovlc-pic') === null); return !!(c && c.classList.contains('ovlc-plain')); })()"), true,
+            'a server-drawn card whose picture does not load keeps its words'), { timeout: 8000 });
+
         // Motion Off: no entrance animation.
         const off = await p.evaluate(`(() => { document.documentElement.setAttribute('data-ov-motion', 'off'); const c = window.OVLinkCard.make({ url: 'https://example.com/z', title: 'Still' }); document.body.appendChild(c); return getComputedStyle(c).animationName; })()`);
         assert.strictEqual(off, 'none');

@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.320.0",
+  "version": "4.321.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -64,6 +64,7 @@
     "./trending": "./ov-trending.js",
     "./face": "./ov-face.js",
     "./linkcard": "./ov-linkcard.js",
+    "./linkcard.css": "./ov-linkcard.css",
     "./agent": "./ov-agent.js",
     "./tabs": "./ov-tabs.js",
     "./chat-cards": "./ov-chat-cards.js",
@@ -229,7 +230,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
     "express": "^4.22.3",
-    "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.443.0",
+    "openvibe-contracts": "https://git.openvibe.codes/api/v1/repos/openvibers/openvibe.contracts/archive/v0.449.0.tar.gz",
     "openvibe-sdk": "https://git.openvibe.codes/api/v1/repos/openvibers/openvibe.sdk/archive/v0.188.0.tar.gz"
   }
 }

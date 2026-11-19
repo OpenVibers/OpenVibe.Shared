@@ -5,7 +5,7 @@
 **Docs:** https://openvibe.services · **For AI:** https://openvibe.network/llms.txt
 **Install and test:** `npm ci && npm test`
 
-**Status:** alpha, v4.320.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.321.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -1224,7 +1224,7 @@ vendored or rsynced from Network.
 ## Depends on
 
 - `jsonwebtoken` (the only runtime dependency, for `auth-client`)
-- OpenVibe.Contracts (the release manifest contract; `openvibe-contracts` v0.443.0 is a devDependency
+- OpenVibe.Contracts (the release manifest contract; `openvibe-contracts` v0.449.0 is a devDependency
   the tests validate against)
 - in the browser, at run time: OpenVibe.Network (sessions, notifications and realtime tickets, the
   changelog feed) and OpenVibe.Events (the realtime stream for the notification bell)
@@ -1271,6 +1271,6 @@ Part of the [OpenVibe network](https://openvibe.network). Built in the open by [
 The Locker browser core and the arrange core are generated from the pinned SDK release (`node scripts/build-locker-core.js`, `node scripts/build-arrange-core.js`); after an SDK pin bump, run both and commit the result.
 
 <!-- versions:start -->
-- openvibe-contracts: v0.443.0
-- openvibe-sdk: v0.188.0
+- openvibe-contracts: v0.449.0
+- openvibe-sdk: v0.177.0
 <!-- versions:end -->
