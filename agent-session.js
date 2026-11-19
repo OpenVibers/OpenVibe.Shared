@@ -139,8 +139,9 @@
         const id = (...k) => String(pick(e, ...k) || '');
         switch (e.type) {
             case 'RUN_STARTED': return [{ t: 'state', state: 'running' }];
-            case 'RUN_FINISHED': return [...src, { t: 'done', ok: true, text: cut(typeof e.result === 'string' ? e.result : '', MAX_TEXT) }];
-            case 'RUN_ERROR': return [{ t: 'done', ok: false, text: cut(String(e.message || 'The run failed.'), 2000) }];
+            // The run's end sets its state too (4.322.0): replayed, RUN_STARTED left a finished run "Running", its dots going.
+            case 'RUN_FINISHED': return [...src, { t: 'done', ok: true, text: cut(typeof e.result === 'string' ? e.result : '', MAX_TEXT) }, { t: 'state', state: 'succeeded' }];
+            case 'RUN_ERROR': return [{ t: 'done', ok: false, text: cut(String(e.message || 'The run failed.'), 2000) }, { t: 'state', state: 'failed' }];
             case 'STEP_STARTED': return [{ t: 'phase', id: id('stepName', 'step_name'), title: String(ov.title || pick(e, 'stepName', 'step_name') || 'Step'), status: 'running' }];
             case 'STEP_FINISHED': return [{ t: 'phase', id: id('stepName', 'step_name'), status: 'done' }];
             case 'TEXT_MESSAGE_START': return [{ t: 'text_start', id: id('messageId', 'message_id') }];

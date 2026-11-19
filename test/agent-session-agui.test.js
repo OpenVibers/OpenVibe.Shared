@@ -25,6 +25,10 @@ assert.deepStrictEqual(n({ type: 'STATE_SNAPSHOT', snapshot: { plan: [{ title: '
 assert.deepStrictEqual(n({ type: 'ACTIVITY_SNAPSHOT', content: { title: 'Comparing' } }), [{ t: 'activity', text: 'Comparing' }]);
 assert.deepStrictEqual(n({ type: 'CUSTOM', name: 'ov.sources', value: [{ url: 'https://b.example' }] }), [{ t: 'sources', items: [{ url: 'https://b.example' }] }]);
 assert.strictEqual(n({ type: 'RUN_ERROR', message: 'boom' })[0].ok, false);
+// 4.322.0: the end sets the run's state, so a replayed run that began with RUN_STARTED does not stay "Running" (Actor's
+// task page, 2026-11-19: a failed task's card read Running, its dots going, under "Agent stopped: failed").
+assert.deepStrictEqual(n({ type: 'RUN_ERROR', message: 'boom' }).slice(-1), [{ t: 'state', state: 'failed' }]);
+assert.deepStrictEqual(n({ type: 'RUN_FINISHED' }).slice(-1), [{ t: 'state', state: 'succeeded' }]);
 assert.deepStrictEqual(n({ type: 'SOMETHING_NEW' }), [], 'an unknown family is ignored, never an error');
 assert.deepStrictEqual(n({ type: 'assistant', message: { content: [{ type: 'text', text: 'x' }] } }).map((x) => x.t), ['text'], 'Claude stream-json still reads as before');
 

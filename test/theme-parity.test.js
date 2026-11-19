@@ -54,7 +54,9 @@ assert.ok(LT.arctic['--success'], 'loader entries carry the full token set');
 // 67,600 since 4.186.0 (2026-11-10): a control nobody styled wears the theme (three rules, about 0.9 KB raw with their note).
 // 75,000 since 4.248.0 (2026-11-14): every time in the reader's own zone and clock (time.format, <time data-ov-time>,
 // the clock and tz settings; about 7 KB raw with its notes; the owner: "show the time based on the users computer").
-assert.ok(loader.length < 75000, `theme-loader.js stays small for first paint (${loader.length} characters)`);
+// 75,500 since 4.322.0 (2026-11-19): fewer forced layouts (the browser UI on the next frame; paceLoops skips listing every
+// animation when nothing is calm), about 0.2 KB.
+assert.ok(loader.length < 75500, `theme-loader.js stays small for first paint (${loader.length} characters)`);
 assert.ok(loader.includes('KNOWN_PROPS'), 'loader clears tokens the new theme does not set');
 
 // 5. Derived tokens: text on the accent always reads, on every theme.

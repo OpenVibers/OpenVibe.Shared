@@ -151,9 +151,26 @@ const SCROLLS = [0, 900, 1800, 500];
                 const kb = await page.evaluate(MEASURE);
                 await page.evaluate("document.getElementById('kb-field').remove()");
                 await page.evaluate(`__ovvv.set(${height}); window.dispatchEvent(new Event('resize')); 0`);
+                // 4.322.0: a change inside the app bar measures once, on the next frame, and writes nothing on <html> when no
+                // size moved (each write there invalidated the whole page's style: Live's home on a phone, 2026-11-19).
+                // The keyboard's field went away above: its focusout measures 60 ms later and lowers the lift back to 0.
+                await page.evaluate('new Promise((r) => setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(r)), 300))');
+                const writes = await page.evaluate(`(async () => {
+                    const st = document.documentElement.style; const real = st.setProperty; let n = 0;
+                    st.setProperty = function (k, v) { if (String(k).startsWith('--ovb-')) n += 1; return real.call(this, k, v); };
+                    const bar = document.querySelector('.ovnav-appbar');
+                    for (let i = 0; i < 10; i += 1) {
+                        const s = document.createElement('span'); s.hidden = true; bar.appendChild(s);
+                        await new Promise((r) => setTimeout(r, 0)); s.remove(); await new Promise((r) => setTimeout(r, 0));
+                    }
+                    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+                    st.setProperty = real;
+                    return n;
+                })()`);
                 await wait(150);
                 const failures = [];
                 const check = (ok, text) => { if (!ok) failures.push(text); };
+                check(writes === 0, `ten changes inside the app bar that move nothing write nothing on <html> (${writes} writes)`);
                 check(Math.abs(kb.lift - 300) <= 1, `keyboard: the bottom things lift ${kb.lift}px for a 300 px keyboard (the bar itself steps aside while typing)`);
                 for (const m of samples) {
                     const at = `${m.y}px/${m.toolbar}`;
