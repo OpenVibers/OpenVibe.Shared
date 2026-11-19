@@ -230,6 +230,6 @@
     "@electric-sql/pglite": "^0.5.8",
     "express": "^4.22.3",
     "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.443.0",
-    "openvibe-sdk": "https://git.openvibe.codes/api/v1/repos/openvibers/openvibe.sdk/archive/v0.177.0.tar.gz"
+    "openvibe-sdk": "https://git.openvibe.codes/api/v1/repos/openvibers/openvibe.sdk/archive/v0.188.0.tar.gz"
   }
 }
