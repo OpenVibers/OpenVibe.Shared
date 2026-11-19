@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.323.0 — 2026-11-19
+
+**A test file's time limit can stretch on a slower machine** (the owner, 11-19: "handle CI with our own system … using
+the shared node"). `test-runner.js` multiplies every file's limit by `OV_TEST_TIMEOUT_SCALE` (1 to 10; unset, nonsense or
+below 1 is 1). Our own CI runs two suites side by side on the shared node's four cores, and Live's 120-second crawl
+test (`security-secrets`) passed on GitHub but ran out of time there; the forge runner sets the scale for its test
+phase. Each file still has a limit. `test/test-runner.test.js` covers the scale and its bounds.
+
 ## 4.322.0 — 2026-11-19
 
 **Fewer forced layouts while a page loads** (the owner, 11-19: "optimize loading … faster responses"). A CPU profile of

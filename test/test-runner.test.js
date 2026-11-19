@@ -83,6 +83,18 @@ const { run, skipsIn, resolveParallel } = require('../test-runner');
     fs.rmSync(flag, { force: true });
     r = await run({ dir, argv: ['f-slow'], log });
     assert.deepStrictEqual([r.failed, r.exitCode], [1, 1], 'without retry, the first failure stands');
+    // OV_TEST_TIMEOUT_SCALE stretches each file's limit on a slower machine (our own CI): a 400 ms file fails a 250 ms
+    // limit, and passes it times 3; nonsense and out-of-range values fall back to 1 and 10.
+    write('t-scaled.test.js', "setTimeout(() => console.log('done'), 400);\n");
+    const quiet = () => {};
+    const scaled = async (value) => {
+        if (value === undefined) delete process.env.OV_TEST_TIMEOUT_SCALE; else process.env.OV_TEST_TIMEOUT_SCALE = value;
+        try { return (await run({ dir, argv: ['t-scaled'], timeoutMs: 250, log: quiet })).failed; } finally { delete process.env.OV_TEST_TIMEOUT_SCALE; }
+    };
+    assert.strictEqual(await scaled(undefined), 1, 'the limit as set');
+    assert.strictEqual(await scaled('3'), 0, 'times three');
+    assert.strictEqual(await scaled('nonsense'), 1, 'not a number: as set');
+    assert.strictEqual(await scaled('0.1'), 1, 'never shorter than set');
     fs.rmSync(dir, { recursive: true, force: true });
     console.log('test-runner: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });
