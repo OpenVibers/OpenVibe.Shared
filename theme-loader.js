@@ -251,7 +251,14 @@
             + FAV_BODY + light + '</g></svg>');
     }
     let _browserUiKey = '';
+    // 4.322.0: next frame, once a frame (read at once, it forced the page's style after every apply)
+    let _browserUiFrame = 0;
     function syncBrowserUi() {
+        if (_browserUiFrame) return;
+        if (typeof requestAnimationFrame !== 'function') { syncBrowserUiNow(); return; }
+        _browserUiFrame = requestAnimationFrame(function () { _browserUiFrame = 0; syncBrowserUiNow(); });
+    }
+    function syncBrowserUiNow() {
         if (typeof document === 'undefined' || !document.head) return;
         const accent = readColor('--accent', '#3b82f6'), light = readColor('--accent-light', accent), bg = readColor('--bg-secondary', readColor('--bg-primary', '#0a0f1c'));
         const mode = document.documentElement.getAttribute('data-theme-mode') || 'dark';
@@ -390,17 +397,19 @@
         + 'html[data-ov-motion=off]::view-transition-group(*),html[data-ov-motion=off]::view-transition-old(*),html[data-ov-motion=off]::view-transition-new(*){animation-duration:.001ms!important}'
         + 'html[data-ov-motion=off] .ov-icon .ovi-comet{display:none}';
     const _paced = typeof WeakSet === 'function' ? new WeakSet() : null;
+    let _pacedN = 0;
     function paceLoops(scope) {
         if (!_paced || typeof document === 'undefined') return;
         try {
             const calm = document.documentElement.getAttribute('data-ov-motion') === 'reduced';
+            if (!calm && !_pacedN) return;   // 4.322.0: nothing to slow or undo (listing forced the page's style)
             const list = scope && scope.getAnimations ? scope.getAnimations({ subtree: true }) : document.getAnimations();
             for (let i = 0; i < list.length; i++) {
                 const a = list[i], fx = a.effect, t = fx && fx.getComputedTiming ? fx.getComputedTiming() : null;
                 if (!t || t.iterations !== Infinity) continue;
                 const el = fx.target, slow = calm && !(el && el.closest && el.closest('[data-fx-demo]'));
-                if (slow && !_paced.has(a)) { _paced.add(a); a.updatePlaybackRate(a.playbackRate * CALM_RATE); }
-                else if (!slow && _paced.has(a)) { _paced.delete(a); a.updatePlaybackRate(a.playbackRate / CALM_RATE); }
+                if (slow && !_paced.has(a)) { _paced.add(a); _pacedN++; a.updatePlaybackRate(a.playbackRate * CALM_RATE); }
+                else if (!slow && _paced.has(a)) { _paced.delete(a); _pacedN--; a.updatePlaybackRate(a.playbackRate / CALM_RATE); }
             }
         } catch (e) { /* no Web Animations here: loops keep their own speed */ }
     }

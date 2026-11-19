@@ -665,7 +665,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5287054b7807', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '3a7318accf7c', 'dock.js': 'b44bf9877839', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'e5b2468afb29', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'c8712c1f5025', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '6d6d703446d3', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'c1e7daded213', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': '8265aa031486', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'bd5898c02871', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'e8fea957e9be', 'ov-composer.js': '861a0fa4107f', 'items.js': '321850a5bd67', 'items.css': 'ccb7103adad6', 'ov-session.js': '1ea46770013e', 'ov-face.js': 'cefd7ea9ce1a' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '4418451da9f3', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '3a7318accf7c', 'dock.js': 'b44bf9877839', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'e5b2468afb29', 'history.js': 'f9fb9e096c65', 'bottom.js': '34c927fb7ad5', 'appbar.js': '704adec2ecb4', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'c8712c1f5025', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '6d6d703446d3', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'c1e7daded213', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': '8265aa031486', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'bd5898c02871', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'e8fea957e9be', 'ov-composer.js': '861a0fa4107f', 'items.js': '321850a5bd67', 'items.css': 'ccb7103adad6', 'ov-session.js': '1ea46770013e', 'ov-face.js': 'cefd7ea9ce1a' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -883,17 +883,25 @@
         }
         return null;
     }
-    function markRing(el) {
-        if (el.hasAttribute('data-ov-field') || (el.closest && el.closest('[data-ov-native]'))) return;
+    // What a field's ring is, from reads only; ringMark writes it. markRings reads every field before it marks any
+    // (4.322.0): marking one field invalidated the page's style and the next field's read forced it again, once a field.
+    function ringPlan(el) {
+        if (el.hasAttribute('data-ov-field') || (el.closest && el.closest('[data-ov-native]'))) return null;
         const f = el.getBoundingClientRect();
-        if (f.width < 8 || f.height < 8) return;   // not drawn yet: measured when it is
+        if (f.width < 8 || f.height < 8) return null;   // not drawn yet: measured when it is
         const box = ringBox(el, f);
-        el.setAttribute('data-ov-field', box ? (ringEdged(getComputedStyle(el)) ? 'inner' : 'bare') : 'own');
-        if (box) box.setAttribute('data-ov-fieldbox', '');
+        return { el, box, field: box ? (ringEdged(getComputedStyle(el)) ? 'inner' : 'bare') : 'own' };
     }
+    function ringMark(p) {
+        p.el.setAttribute('data-ov-field', p.field);
+        if (p.box) p.box.setAttribute('data-ov-fieldbox', '');
+    }
+    function markRing(el) { const p = ringPlan(el); if (p) ringMark(p); }
     function markRings() {
         const all = document.querySelectorAll(RING_FIELD);
-        for (let i = 0; i < all.length && i < 300; i++) if (!all[i].hasAttribute('data-ov-field')) markRing(all[i]);
+        const plans = [];
+        for (let i = 0; i < all.length && i < 300; i++) if (!all[i].hasAttribute('data-ov-field')) { const p = ringPlan(all[i]); if (p) plans.push(p); }
+        for (const p of plans) ringMark(p);
     }
     let ringWatch = null;
     function watchRings() {
@@ -988,32 +996,54 @@
     }
     // A scrolling box with nothing focusable gets tabindex="0" so a keyboard can scroll it (WCAG 2.1.1); a page's own wins.
     const SCROLL_FOCUSABLE = 'a[href],button,input,select,textarea,summary,iframe,[tabindex],[contenteditable="true"]';
+    /** Is this a scrolling box a keyboard cannot reach yet? Reads only. */
+    function needsScrollFocus(el) {
+        // Cheap first: only a box whose content is bigger than it is, and that has no tabindex of its own.
+        if (el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1) return false;
+        if (el.hasAttribute('tabindex') || el.closest('#openvibe-navbar, .openvibe-navbar, .ovf, footer')) return false;
+        const cs = getComputedStyle(el);
+        const sx = /(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 1;
+        const sy = /(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1;
+        if (!sx && !sy) return false;
+        return !el.querySelector(SCROLL_FOCUSABLE);
+    }
+    const markScrollFocus = (found) => { for (const el of found) { el.setAttribute('tabindex', '0'); el.setAttribute('data-ov-scroll-focus', ''); } };
     function focusScrollers() {
         if (!document.body || !document.body.getElementsByTagName) return 0;
-        let n = 0;
+        // Every box is read before any is given a tabindex (4.322.0): a write between reads forced the page's style again.
+        const found = [];
         const all = document.body.getElementsByTagName('*');
-        for (let i = 0; i < all.length; i++) {
-            const el = all[i];
-            // Cheap first: only a box whose content is bigger than it is, and that has no tabindex of its own.
-            if (el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1) continue;
-            if (el.hasAttribute('tabindex') || el.closest('#openvibe-navbar, .openvibe-navbar, .ovf, footer')) continue;
-            const cs = getComputedStyle(el);
-            const sx = /(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 1;
-            const sy = /(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1;
-            if (!sx && !sy) continue;
-            if (el.querySelector(SCROLL_FOCUSABLE)) continue;
-            el.setAttribute('tabindex', '0');
-            el.setAttribute('data-ov-scroll-focus', '');
-            n++;
-        }
-        return n;
+        for (let i = 0; i < all.length; i++) if (needsScrollFocus(all[i])) found.push(all[i]);
+        markScrollFocus(found);
+        return found.length;
+    }
+    /**
+     * The same pass in slices, while the browser is idle (4.322.0): on a page of thousands of boxes the whole pass was
+     * one long task on a phone (Network's home, 266 ms at 4x CPU). It reads while the idle time lasts, hands the page
+     * back between slices, and marks what it found at the end.
+     */
+    function focusScrollersIdle(idle) {
+        if (!document.body || !document.body.getElementsByTagName) return;
+        const all = Array.prototype.slice.call(document.body.getElementsByTagName('*'));
+        const found = [];
+        let i = 0;
+        const step = (deadline) => {
+            const until = Date.now() + 8;
+            const more = () => (deadline && typeof deadline.timeRemaining === 'function' ? deadline.timeRemaining() > 1 : Date.now() < until);
+            try {
+                for (; i < all.length && more(); i++) if (all[i].isConnected && needsScrollFocus(all[i])) found.push(all[i]);
+            } catch { i = all.length; }
+            if (i < all.length) { idle(step, 1000); return; }
+            markScrollFocus(found.filter((el) => el.isConnected && !el.hasAttribute('tabindex')));
+        };
+        idle(step, 1000);
     }
     let scrollWatch = false;
     function watchScrollers() {
         if (scrollWatch || typeof window === 'undefined' || !document.body) return;
         scrollWatch = true;
         const idle = (fn, t) => (typeof root.requestIdleCallback === 'function' ? root.requestIdleCallback(fn, { timeout: t }) : setTimeout(fn, Math.min(t, 1500)));
-        const run = () => { try { if (typeof getComputedStyle === 'function') focusScrollers(); } catch { /* never a page's problem */ } };
+        const run = () => { try { if (typeof getComputedStyle === 'function') focusScrollersIdle(idle); } catch { /* never a page's problem */ } };
         idle(run, 3000);
         setTimeout(() => idle(run, 2000), 4000);
         let soon = 0;
@@ -1224,7 +1254,7 @@
         if (_kbWatch || typeof window === 'undefined' || !window.visualViewport || typeof document === 'undefined') return;
         _kbWatch = true;
         const vv = window.visualViewport; const html = document.documentElement;
-        let raf = 0; let base = 0; let turned = typeof screen !== 'undefined' && screen.orientation ? screen.orientation.type : '';
+        let raf = 0; let base = 0; let lastKb = ''; let turned = typeof screen !== 'undefined' && screen.orientation ? screen.orientation.type : '';
         const typing = () => { const a = document.activeElement; return !!a && (a.isContentEditable || a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/^(button|checkbox|radio|range|color|file|submit|reset|image|hidden)$/i.test(a.type || ''))); };
         const paint = () => {
             raf = 0;
@@ -1235,7 +1265,9 @@
             const kb = Math.max(0, Math.round(Math.max(base, window.innerHeight) - vv.height - vv.offsetTop));
             const on = t && kb > 120;
             if (html.classList.contains('ov-kb-open') !== on) html.classList.toggle('ov-kb-open', on);
-            html.style.setProperty('--ov-kb', `${on ? kb : 0}px`);
+            // Written only when it changes (4.322.0): a write on <html> invalidates the whole page's style.
+            const v = `${on ? kb : 0}px`;
+            if (v !== lastKb) { lastKb = v; html.style.setProperty('--ov-kb', v); }
         };
         const later = () => { if (!raf) raf = requestAnimationFrame(paint); };
         vv.addEventListener('resize', later); vv.addEventListener('scroll', later);

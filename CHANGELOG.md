@@ -1,5 +1,32 @@
 # Changelog
 
+## 4.322.0 — 2026-11-19
+
+**Fewer forced layouts while a page loads** (the owner, 11-19: "optimize loading … faster responses"). A CPU profile of
+Live's home on a throttled phone put Shared's own measuring at the top: each wrote on `<html>` (which invalidates the whole
+page's style) and then read a size (which forces it again), several times a frame while the page was drawn. On Live's home
+(interleaved runs against production, 1.6 Mbps and 4× CPU) the main thread was blocked 356 ms less (median TBT 4,258 →
+3,902 ms; long tasks 5,658 → 5,052 ms).
+- **`bottom.js`:** `measure()` reads every size before it writes, and writes a property only when it changes. A change
+  inside the app bar, the small player or a composer measures once, on the next frame (it measured at once, every
+  change); the observer is re-armed only when those parts themselves change. `test/bottom-chrome.test.js`: ten changes
+  that move nothing write nothing on `<html>` (they wrote 96 times).
+- **`navbar.js`:** the keyboard's `--ov-kb` is written only when it changes; the one ring (`data-ov-field`) reads every
+  field before it marks any, and the scroll-focus pass reads every box before it gives any a tabindex. The automatic
+  scroll-focus pass runs in slices while the browser is idle (one long task of 266 ms on Network's home on a throttled
+  phone); `OpenVibeNavbar.focusScrollers()` stays the whole pass at once.
+- **`ov-glyphs.js`:** whether a brand logo is near the screen is the IntersectionObserver's answer alone (each logo's box
+  was read, a forced layout per logo while the page drew: 130 ms on Live's home, 4x CPU).
+- **`shipped.js`:** a release time's tooltip is formatted on first hover (the page's first Intl date format cost 89 ms on
+  a throttled phone on every load).
+- **`appbar.js`:** the lit tab's pill is placed on the next frame, once a frame (it forced a layout each time the navbar
+  drew the bar).
+- **`theme-loader.js`:** the tab colour and icon follow the theme on the next frame, once a frame; applying the display
+  settings no longer lists every running animation (`document.getAnimations()`) unless Calm has something to slow or undo.
+- **`agent-session.js`:** a run's end (`RUN_FINISHED`, `RUN_ERROR`) sets its state. A finished run replayed from its
+  events began with `RUN_STARTED` and stayed "Running", its dots going, under "Agent stopped: failed" (Actor's task page,
+  the owner's screenshot, 11-19).
+
 ## 4.321.0 — 2026-11-18
 
 **One link card on the server too** (plan §AD.30 item 3). OpenVibe.Chat draws a message's cards on the server (with a hide

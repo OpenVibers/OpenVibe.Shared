@@ -145,7 +145,15 @@
     function localHref(u) { const s = String(u || ''); return /^\/(?!\/)/.test(s) || /^https:\/\//.test(s) ? s : null; }
     function clamp(n, lo, hi, d) { const v = parseInt(n, 10); return Number.isFinite(v) ? Math.min(Math.max(v, lo), hi) : d; }
     const siteName = (id) => SITE_NAMES[id] || String(id || '').replace(/(^|-)([a-z])/g, (m, d, c) => `${d ? ' ' : ''}${c.toUpperCase()}`);
-    function timeEl(iso) { const t = el('time', { datetime: iso, 'data-ov-ago': '' }, ago(iso)); t.title = new Date(iso).toLocaleString(); return t; }
+    // The tooltip's local time is formatted on first hover (4.322.0): a page's first Intl date format was this line's
+    // cost on every load (89 ms on a throttled phone) for a title nobody had asked for yet.
+    function timeEl(iso) {
+        const t = el('time', { datetime: iso, 'data-ov-ago': '' }, ago(iso));
+        const title = () => { if (!t.title) { try { t.title = new Date(iso).toLocaleString(); } catch { /* */ } } };
+        t.addEventListener('pointerenter', title, { once: true });
+        t.addEventListener('focus', title, { once: true });
+        return t;
+    }
     function rocket() {
         const ns = 'http://www.w3.org/2000/svg';
         const svg = document.createElementNS(ns, 'svg');

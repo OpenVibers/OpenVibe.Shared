@@ -82,8 +82,16 @@
         document.head.appendChild(st);
     }
 
-    /** Slide the pill under the lit tab's icon (the bar is its offset parent). */
+    /** Slide the pill under the lit tab's icon (the bar is its offset parent), on the next frame and once a frame
+     *  (4.322.0): placed at once, it forced a layout every time the navbar drew the bar while a page loaded. */
+    let pillFrame = 0, pillBar = null, pillInstant = false;
     function placePill(bar, instant) {
+        pillBar = bar; pillInstant = pillInstant || !!instant;
+        if (pillFrame) return;
+        const raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (f) => setTimeout(f, 16);
+        pillFrame = raf(() => { pillFrame = 0; const b = pillBar, i = pillInstant; pillBar = null; pillInstant = false; if (b && b.isConnected) placePillNow(b, i); });
+    }
+    function placePillNow(bar, instant) {
         const pill = bar && bar.querySelector('.ovnav-ab-pill');
         const ic = bar && bar.querySelector('.ovnav-ab.is-here .ovnav-ab-ic');
         if (!pill || !ic) return;

@@ -68,6 +68,15 @@
         return r.height;
     }
 
+    // 4.322.0: every size is read before anything is written, and a property is written only when it changes. Each write
+    // on <html> invalidated the whole page's style and the next read forced it again, several times a frame while a page
+    // loaded (Live's home on a throttled phone, 2026-11-19: measure() was the largest single cost, 656 ms).
+    const written = new Map();
+    function put(name, value) {
+        if (written.get(name) === value) return;
+        written.set(name, value);
+        html.style.setProperty(name, value);
+    }
     function measure() {
         raf = 0;
         const vv = root.visualViewport;
@@ -80,11 +89,7 @@
         const typing = !!(ae && ae.matches && ae.matches('input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=button]):not([type=submit]), textarea, select, [contenteditable=""], [contenteditable="true"]'));
         const raw = Math.max(0, root.innerHeight - (top + vh));
         const lift = typing && raw > 80 && !(vv && Math.abs((vv.scale || 1) - 1) > 0.01) ? raw : 0;
-        html.style.setProperty('--ovb-lift', px(lift));
-        // A visible height of 0 happens between two documents; keep the last real one.
-        if (vh > 0) html.style.setProperty('--ovb-vh', px(vh));
         const bar = onScreen(document.querySelector('.ovnav-appbar'));
-        html.style.setProperty('--ovb-bar', px(bar));
         let mini = 0;
         try {
             if (root.matchMedia && root.matchMedia('(max-width: 640px)').matches) {
@@ -92,19 +97,26 @@
                 if (m) mini = m + 8;      // its 8 px above the bar
             }
         } catch { /* no matchMedia: no full-width small player to stack */ }
-        html.style.setProperty('--ovb-mini', px(mini));
+        put('--ovb-lift', px(lift));
+        // A visible height of 0 happens between two documents; keep the last real one.
+        if (vh > 0) put('--ovb-vh', px(vh));
+        put('--ovb-bar', px(bar));
+        put('--ovb-mini', px(mini));
     }
 
     const later = () => { if (!raf) raf = requestAnimationFrame(measure); };
 
-    /** Watch the parts that are added to the page after this file, and their size changes. */
-    function watch() {
+    /** Watch the parts that are added to the page after this file, and their size changes. A change inside a part only
+     *  measures again (next frame); the observer is re-armed only when the parts themselves change (4.322.0). */
+    function watch(now) {
         const parts = [...document.querySelectorAll(`.ovnav-appbar, .ovmini, ${COMPOSERS}`)];
-        if (resize) { resize.disconnect(); watched = []; }
-        else if (typeof ResizeObserver === 'function') resize = new ResizeObserver(later);
-        if (!resize) return;
-        for (const el of parts) { try { resize.observe(el); watched.push(el); } catch { /* */ } }
-        measure();
+        const same = resize && parts.length === watched.length && parts.every((el, i) => el === watched[i]);
+        if (!same) {
+            if (resize) { resize.disconnect(); watched = []; }
+            else if (typeof ResizeObserver === 'function') resize = new ResizeObserver(later);
+            if (resize) for (const el of parts) { try { resize.observe(el); watched.push(el); } catch { /* */ } }
+        }
+        if (now) measure(); else later();
     }
 
     function start() {
@@ -131,8 +143,8 @@
             });
             observer.observe(document.body, { childList: true, subtree: true });
         }
-        watch();
-        setTimeout(measure, 300);      // fonts, a late app bar, a small player opened by the page
+        watch(true);
+        setTimeout(later, 300);      // fonts, a late app bar, a small player opened by the page
     }
 
     root.OpenVibeBottom = {
