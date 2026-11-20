@@ -45,6 +45,10 @@ const server = http.createServer((req, res) => {
             days: document.querySelectorAll('.ovfd-day, .ovfd-dayline').length, caught: !!document.querySelector('.ovfd-caught'),
             more: document.querySelector('.ovfd-glimpse-more').textContent, wide: document.documentElement.scrollWidth })`);
         assert.deepStrictEqual(got, { cards: 4, chips: true, examples: true, days: 0, caught: false, more: 'Show more of the feed', wide: 390 });
+        // 11-20, on openvibe.live: the arrow drew as a small black triangle (a stroke path filled, no stroke).
+        const arrow = await p.evaluate(`(() => { const cs = getComputedStyle(document.querySelector('.ovfd-glimpse-more svg path') || document.querySelector('.ovfd-glimpse-more svg *'));
+            return { fill: cs.fill, stroke: cs.stroke === 'none' ? 'none' : cs.stroke === getComputedStyle(document.querySelector('.ovfd-glimpse-more')).color ? 'text' : cs.stroke }; })()`);
+        assert.deepStrictEqual(arrow, { fill: 'none', stroke: 'text' }, 'the arrow is a line in the button\'s text colour');
         // Scrolled past it and back: still one page asked for.
         await p.evaluate('window.scrollTo(0, 2600)'); await new Promise((ok) => setTimeout(ok, 300));
         await p.evaluate('window.scrollTo(0, 1200)'); await new Promise((ok) => setTimeout(ok, 300));
