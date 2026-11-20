@@ -1,6 +1,6 @@
 'use strict';
-// A guest sees what signing in adds (plan §Z.2, 4.247.0): the menu's You opens with one card that says it in four
-// lines and a Sign in button whose link is the bar's own (it knows this host's sign-in), at 390 px with no sideways
+// A guest sees what signing in adds (plan §Z.2, 4.247.0): the menu's You opens with one card that says it in one line
+// (4.329.0: the places it opens follow it, locked: menu-guest-ask-chrome) and a Sign in button whose link is the bar's own (it knows this host's sign-in), at 390 px with no sideways
 // scroll; a signed-in person never sees it. A real headless Chrome; skipped without Chrome.
 const assert = require('assert');
 const fs = require('fs');
@@ -57,7 +57,9 @@ const server = http.createServer((req, res) => {
         assert.ok(seen, 'a guest sees the card');
         const card = await p.evaluate(`(() => { const c = document.querySelector('.ovs [data-sec="signin"] .ovs-guest'); return { head: c.querySelector('b').textContent, lines: [...c.querySelectorAll('li')].length, go: c.querySelector('a.ovs-guest-go').getAttribute('href'), bar: (document.getElementById('openvibe-login-btn') || {}).href || '' }; })()`);
         assert.strictEqual(card.head, 'Sign in to make OpenVibe yours');
-        assert.strictEqual(card.lines, 4);
+        assert.strictEqual(card.lines, 0, 'one line, no list (4.329.0)');
+        assert.strictEqual(await p.evaluate(`document.querySelector('.ovs [data-sec="signin"] .ovs-guest-line').textContent`), 'Free, and one account for every OpenVibe site.');
+        assert.strictEqual(await p.evaluate(`document.querySelectorAll('.ovs [data-sec="locked"] .ovs-lock').length`), 6, 'the places follow, locked');
         assert.ok(card.bar && new URL(card.go, base).href === card.bar, `the card's link is the bar's own (${card.go} vs ${card.bar})`);
         assert.ok(/\/auth\/login\?next=/.test(card.go), 'this host\'s sign-in, with the way back');
         assert.strictEqual(await p.evaluate(`document.documentElement.scrollWidth`), 390, 'no sideways scroll');
