@@ -40,6 +40,7 @@ const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov
     // 4.316.0 (the owner's phone, 11-18: "Opening Vibe…", "loads insanely slow"): the menu's Vibe (350 KB) went out
     // without ?v=, kept five minutes, fetched only when Vibe was pressed.
     'ov-session.js',
+    'ov-guest-ask.js',
     // 4.318.0 (the owner, 11-18: one face system for the menu's sessions and Chat's Vibe): ov-run.js and ov-session.js load it.
     'ov-face.js'];
 // The files dock.js and notification-ui.js load from beside themselves: their own tables, in their own files.

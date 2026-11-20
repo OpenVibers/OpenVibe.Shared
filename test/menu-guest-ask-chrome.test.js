@@ -49,7 +49,7 @@ const server = http.createServer((req, res) => {
             if (!solved) return json(403, { error: 'The quick check did not go through: try again', code: 'guest.check_failed' });
             if (mode === 'fail') { mode = 'ok'; return json(502, { error: 'Vibe could not answer right now. Try again in a moment.', code: 'guest.answer_failed' }); }
             if (mode === 'limit') return json(429, { error: "That was today's 3 guest questions. Sign in (free) to ask up to 100 a day.", code: 'guest.limit' });
-            return json(200, { answer: 'Open https://openvibe.live/go-live and press Go live: no OBS, no follower minimum.', model: 'cheap-1', left: 2 });
+            return json(200, { answer: 'Open https://openvibe.live/go-live and press Go live: no OBS, no follower minimum.', model: 'cheap-1', left: 2, receipt: { chose: 'cheap-1', why: 'the cheapest model that fits this task' } });
         });
         return;
     }
@@ -87,6 +87,7 @@ const OPEN = "OpenVibeSearch.open({ service: 'live', scope: { label: 'Live', pag
         await page.evaluate(OPEN);
         assert.ok(await until("!!document.querySelector('.ovs.is-open .ovs-input')"), 'the menu opens');
 
+        assert.equal(await page.evaluate('typeof window.OpenVibeGuestAsk'), 'undefined', 'the guest core is not loaded with the menu');
         // Enter on a question: answered here.
         await typeInBox('How do I go live from my browser?');
         const t0 = Date.now();
@@ -95,6 +96,7 @@ const OPEN = "OpenVibeSearch.open({ service: 'live', scope: { label: 'Live', pag
         await shot('waiting');
         assert.ok(await until("!!document.querySelector('.ovs-gans .ovs-gans-t.is-in')"), 'the answer comes');
         const solveMs = Date.now() - t0;
+        assert.equal(await page.evaluate('typeof window.OpenVibeGuestAsk.ask'), 'function', 'it came when the guest asked (ov-guest-ask.js, 4.330.0)');
         const card = await page.evaluate(`(() => { const g = document.querySelector('.ovs-gans'); return {
             q: g.querySelector('.ovs-gans-q').textContent, text: g.querySelector('.ovs-gans-t').textContent,
             link: (g.querySelector('.ovs-gans-t a') || {}).href || null, note: (g.querySelector('.ovs-gans-n') || {}).textContent || '',
@@ -106,6 +108,7 @@ const OPEN = "OpenVibeSearch.open({ service: 'live', scope: { label: 'Live', pag
         assert.match(card.text, /no OBS, no follower minimum/);
         assert.equal(card.link, 'https://openvibe.live/go-live', 'the link is a link');
         assert.equal(card.note, '2 more today as a guest');
+        assert.equal(await page.evaluate("document.querySelector('.ovs-gans-why').textContent"), 'cheap-1: the cheapest model that fits this task', 'Auto\'s receipt (4.330.0)');
         assert.equal(await page.evaluate("[...document.querySelectorAll('.ovs-list a')].some((a) => /How do I go live/.test(a.textContent))"), false, 'the list is back to its start');
         assert.deepEqual([card.signIn, card.signInText], ['https://openvibe.network/login?return=here', 'Sign in for 100 a day']);
         assert.equal(card.again, false);
