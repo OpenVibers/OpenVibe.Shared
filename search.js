@@ -1972,33 +1972,20 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     // sign in: Network's /api/frame/ask/guest after a quick proof of work done by this browser (ALTCHA's scheme, a second
     // or two), three a day per guest, on the cheapest model. Files and named agents still need an account.
     let gansGen = 0;   // gansEl, the answer's place above the list, is the menu's (build())
-    const GUEST_ID_KEY = 'ov:guest-ask:id';
-    function guestId() {
-        try {
-            const kept = localStorage.getItem(GUEST_ID_KEY);
-            if (kept && /^[A-Za-z0-9_-]{16,64}$/.test(kept)) return kept;
-            const b = new Uint8Array(18); root.crypto.getRandomValues(b);
-            const id = btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-            localStorage.setItem(GUEST_ID_KEY, id);
-            return id;
-        } catch { return ''; }
-    }
-    /** The number whose SHA-256 of salt + number is the challenge, or null (no WebCrypto, gone, or not found). */
-    async function solveGuestCheck(c, current) {
-        const subtle = root.crypto && root.crypto.subtle;
-        if (!subtle || !c || c.algorithm !== 'SHA-256' || !/^[0-9a-f]{64}$/.test(String(c.challenge || ''))) return null;
-        const want = new Uint8Array(32);
-        for (let i = 0; i < 32; i++) want[i] = parseInt(c.challenge.slice(i * 2, i * 2 + 2), 16);
-        const max = Math.min(Number(c.maxnumber) || 0, 1e6), enc = new TextEncoder(), salt = String(c.salt || '');
-        const same = (buf) => { const a = new Uint8Array(buf); for (let i = 0; i < 32; i++) if (a[i] !== want[i]) return false; return true; };
-        for (let n0 = 0; n0 <= max; n0 += 1000) {
-            if (!current()) return null;
-            const batch = [];
-            for (let n = n0; n <= Math.min(n0 + 999, max); n++) batch.push(subtle.digest('SHA-256', enc.encode(salt + n)));
-            const got = await Promise.all(batch);
-            for (let k = 0; k < got.length; k++) if (same(got[k])) return n0 + k;
-        }
-        return null;
+    // 4.330.0: the check, the guest's id and the request are ov-guest-ask.js (OpenVibeGuestAsk), shared with
+    // openvibe.chat's Vibe page; it comes the first time a guest asks.
+    let guestLoading = null;
+    function guestLib() {
+        if (root.OpenVibeGuestAsk) return Promise.resolve(root.OpenVibeGuestAsk);
+        if (guestLoading) return guestLoading;
+        const src = typeof ctx.sibling === 'function' ? ctx.sibling('ov-guest-ask.js') : 'https://openvibe.network/shared/ov-guest-ask.js';
+        guestLoading = new Promise((resolve, reject) => {
+            const sc = document.createElement('script'); sc.src = src; sc.async = true;
+            sc.onload = () => (root.OpenVibeGuestAsk ? resolve(root.OpenVibeGuestAsk) : reject(new Error('ov-guest-ask.js')));
+            sc.onerror = () => { guestLoading = null; sc.remove(); reject(new Error('ov-guest-ask.js')); };
+            document.head.appendChild(sc);
+        });
+        return guestLoading;
     }
     function guestLoginHref() {
         const bar = document.getElementById('openvibe-login-btn');
@@ -2017,7 +2004,6 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (!words || !gansEl) return;
         const gen = ++gansGen;
         const current = () => gen === gansGen && !!gansEl && gansEl.isConnected;
-        const frame = `${ctx.runsBase || ctx.apiBase || 'https://openvibe.network'}/api/frame/ask/guest`;
         // The box is cleared and the list goes back to its start (schedule: a redraw for the typed words may be waiting).
         if (input) { input.value = ''; paintGhost(); syncTools(); schedule(''); }
         gansEl.textContent = ''; gansEl.hidden = false;
@@ -2040,28 +2026,17 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         const again = () => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-gans-again'; b.textContent = 'Try again'; b.addEventListener('click', () => guestAsk(words)); return b; };
         const show = (t) => { body.className = 'ovs-gans-t is-in'; body.textContent = ''; guestWords(body, t); };
         (async () => {
-            let status = 0, code = '';
             try {
-                const cr = await fetch(`${frame}/challenge`, { credentials: 'omit', cache: 'no-store', headers: { Accept: 'application/json' } });
-                const c = cr.ok ? await cr.json() : null;
-                const number = c ? await solveGuestCheck(c, current) : null;
+                const G = await guestLib().catch(() => { throw Object.assign(new Error('Vibe could not be reached. Try again in a moment.'), { status: 0, code: 'guest.offline' }); });
+                const d = await G.ask(words, { apiBase: ctx.runsBase || ctx.apiBase || 'https://openvibe.network', current });
                 if (!current()) return;
-                if (number == null) { code = c ? 'guest.check_unsupported' : 'guest.offline'; throw new Error(c ? 'This browser could not do the quick check. Sign in (free) to ask.' : 'Vibe could not be reached. Try again in a moment.'); }
-                const r = await fetch(frame, {
-                    method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                    body: JSON.stringify({ text: words, context: `${document.title || ''} (${location.origin}${location.pathname})`.slice(0, 2000), site: (/(?:^|\.)openvibe\.([a-z]{2,20})$/.exec(location.hostname) || [])[1] || undefined, guest: guestId() || undefined, proof: { ...c, number } }),
-                });
-                const d = await r.json().catch(() => ({}));
-                if (!current()) return;
-                status = r.status; code = String(d.code || '');
-                if (!r.ok || typeof d.answer !== 'string') throw new Error(d.error || 'Vibe could not answer right now. Try again in a moment.');
                 show(d.answer);
-                const left = Number(d.left);
-                foot.append(note(Number.isFinite(left) ? (left > 0 ? `${left} more today as a guest` : 'Your last guest question today') : 'Answered as a guest'), signIn('Sign in for 100 a day'));
+                const left = d.left;
+                foot.append(note(left != null ? (left > 0 ? `${left} more today as a guest` : 'Your last guest question today') : 'Answered as a guest'), signIn('Sign in for 100 a day'));
             } catch (err) {
-                if (!current()) return;
+                if (!current() || (err && err.code === 'guest.cancelled')) return;
                 show((err && err.message) || 'Vibe could not answer right now. Try again in a moment.');
-                const limited = status === 429 || status === 503 || code === 'guest.check_unsupported';
+                const limited = !!err && (err.status === 429 || err.status === 503 || err.code === 'guest.check_unsupported');
                 if (limited) foot.append(signIn('Sign in (free)'));
                 else foot.append(again(), signIn('Sign in'));
             }

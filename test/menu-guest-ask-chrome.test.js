@@ -87,6 +87,7 @@ const OPEN = "OpenVibeSearch.open({ service: 'live', scope: { label: 'Live', pag
         await page.evaluate(OPEN);
         assert.ok(await until("!!document.querySelector('.ovs.is-open .ovs-input')"), 'the menu opens');
 
+        assert.equal(await page.evaluate('typeof window.OpenVibeGuestAsk'), 'undefined', 'the guest core is not loaded with the menu');
         // Enter on a question: answered here.
         await typeInBox('How do I go live from my browser?');
         const t0 = Date.now();
@@ -95,6 +96,7 @@ const OPEN = "OpenVibeSearch.open({ service: 'live', scope: { label: 'Live', pag
         await shot('waiting');
         assert.ok(await until("!!document.querySelector('.ovs-gans .ovs-gans-t.is-in')"), 'the answer comes');
         const solveMs = Date.now() - t0;
+        assert.equal(await page.evaluate('typeof window.OpenVibeGuestAsk.ask'), 'function', 'it came when the guest asked (ov-guest-ask.js, 4.330.0)');
         const card = await page.evaluate(`(() => { const g = document.querySelector('.ovs-gans'); return {
             q: g.querySelector('.ovs-gans-q').textContent, text: g.querySelector('.ovs-gans-t').textContent,
             link: (g.querySelector('.ovs-gans-t a') || {}).href || null, note: (g.querySelector('.ovs-gans-n') || {}).textContent || '',

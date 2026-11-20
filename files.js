@@ -62,6 +62,7 @@ const BROWSER = Object.freeze([
     'ov-stage.js',          // 4.309.0: OpenVibeStage, our product-demo kit (scripted beats, a cursor, a phone scene, Calm/Off, Pause)
     'ov-speak.js',          // 4.308.0: OpenVibeSpeak, answers read aloud (this device's voices or OpenVibe's; ov-session loads it)
     'ov-session.js',        // 4.265.0: OpenVibeSession, one session surface for every agent (plan §AD.8)
+    'ov-guest-ask.js',      // 4.330.0: OpenVibeGuestAsk, a signed-out visitor's question to Vibe (plan §V.1 guests)
     'ov-face.js',           // 4.318.0: OVFace, an agent's face on every surface (ov-run.js and ov-session.js draw with it)
     'ov-linkcard.js',       // 4.320.0: OVLinkCard, the card under a chat message that carries an address (Chat, Live, the menu)
     'ov-run.js',            // 4.224.0: the one run thread (OpenVibeRun), loaded beside the navbar

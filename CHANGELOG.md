@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.330.0 — 2026-11-20
+
+**A guest's question, for any page** (`ov-guest-ask.js`, `OpenVibeGuestAsk`; the plan's §V.1 guests). The menu's guest
+answer (4.328.0) kept its proof of work, guest id and request inside search.js; openvibe.chat's Vibe page needs the same
+to answer a signed-out visitor in its own thread. Now `OpenVibeGuestAsk.ask(text, { apiBase, context, site, current })`
+→ `{ answer, model, left }` (or an Error whose message is for the visitor, with `.status` and `.code`), plus
+`guestId()`, `solve()` and `limited(err)`. search.js loads it the first time a guest asks (it is not part of the menu's
+own load), and answers exactly as before. Listed in files.js (served on every site) and in the navbar's sibling
+revisions. Test: `menu-guest-ask-chrome` (it is not loaded with the menu, and is there once a guest asked).
+
 ## 4.329.0 — 2026-11-20
 
 **What a guest is missing, in the menu** (the plan's §V.1 guests: "the menu shows its signed-in places, locked, each
