@@ -95,7 +95,7 @@
         paintFeedDot(0); paintFeedTabCount(0);
         try { feedChannel?.postMessage({ type: 'seen', count: 0, at: feedSeen() }); } catch { /* */ }
     };
-    let el = null, input = null, ghost = null, listEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
+    let el = null, input = null, ghost = null, listEl = null, gansEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
     let tab = 'here', mine = null, catalog = null, completion = '';
     let repaintRecent = null;   // the list of recent searches under the field (4.262.0), once the account's arrive
     let historyFailed = false;  // 4.292.0: the last read of the person's history failed (History says so, with Try again)
@@ -661,6 +661,28 @@ html[data-ov-motion=off] .ovs-place .ovs-place-from { display: none; }
 .ovs-guest li::before { content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 8px 1px 2px; border-radius: 50%; background: var(--accent, #3b82f6); }
 .ovs-guest a.ovs-guest-go { justify-self: start; display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 12px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); font-weight: 650; text-decoration: none; }
 .ovs-guest a.ovs-guest-go:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+/* A guest's answer (4.328.0, plan §V.1): signed out, the box answers a short question here, above the list. */
+.ovs-gans { flex: 0 0 auto; max-height: min(46vh, 420px); overflow-y: auto; overscroll-behavior: contain; margin: 8px 10px 2px; padding: 10px 12px 12px 14px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 32%, var(--border, rgba(255,255,255,.12))); background: color-mix(in srgb, var(--accent, #3b82f6) 7%, var(--bg-secondary, #121826)); display: grid; gap: 8px; animation: ovs-rise .32s cubic-bezier(.2, 1.2, .3, 1) both; }
+.ovs-gans[hidden] { display: none; }
+.ovs-gans-h { display: flex; align-items: center; gap: 8px; min-width: 0; margin-right: -6px; }
+.ovs-gans-h > svg { width: 20px; height: 20px; flex: none; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-gans-q { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary, #a8b3c4); font-size: 13px; }
+.ovs-gans-x { flex: none; width: 44px; height: 44px; margin: -8px 0; display: grid; place-items: center; border: 0; border-radius: 12px; background: transparent; color: var(--text-secondary, #a8b3c4); cursor: pointer; transition: background-color .15s, color .15s; }
+.ovs-gans-x svg { width: 18px; height: 18px; }
+.ovs-gans-x:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); color: var(--text-primary, #e8ecf3); }
+.ovs-gans-x:focus-visible, .ovs-gans-again:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
+.ovs-gans-t { margin: 0; font-size: 14.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text-primary, #e8ecf3); }
+.ovs-gans-t.is-in { animation: ovs-rise .28s cubic-bezier(.2, .8, .2, 1) both; }
+.ovs-gans-t a { color: var(--accent-light, var(--accent, #60a5fa)); text-underline-offset: 2px; }
+.ovs-gans-t.is-wait { display: flex; align-items: center; gap: 10px; color: var(--text-secondary, #a8b3c4); }
+.ovs-gans-f { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.ovs-gans-f[hidden] { display: none; }
+.ovs-gans-n { flex: 1 1 12em; min-width: 0; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+.ovs-gans-go { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 12px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); font-weight: 650; font-size: 14px; text-decoration: none; transition: transform .15s; }
+.ovs-gans-go:active { transform: scale(.97); }
+.ovs-gans-go:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovs-gans-again { min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent; color: var(--text-primary, #e8ecf3); font: inherit; font-size: 14px; cursor: pointer; }
+html[data-ov-motion=off] .ovs-gans, html[data-ov-motion=off] .ovs-gans-t.is-in { animation: none; }
 .ovs-cardbody { border-radius: 16px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); padding: 12px 14px; }
 .ovs-displayrow { padding: 4px 8px 10px; }
 .ovs-displayrow .ovnav-display { margin-top: 4px; }
@@ -952,6 +974,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         watchPlaceholder();
         ghost = el.querySelector('.ovs-ghost');
         listEl = el.querySelector('.ovs-list');
+        gansEl = document.createElement('section'); gansEl.className = 'ovs-gans'; gansEl.hidden = true;
+        gansEl.setAttribute('aria-live', 'polite'); gansEl.setAttribute('aria-label', 'Vibe\u2019s answer');
+        listEl.before(gansEl);
         doorEl = document.createElement('div'); doorEl.className = 'ovs-door'; doorEl.hidden = true;
         // 4.225.0: Vibe is one place (the owner, 11-12, crossing out the Chat · Code · Agents switch: "one new unified
         // agent … a shared UI"): every chat, task and coding run in one list with its own filters, drawn by ov-run.js.
@@ -1115,6 +1140,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             const it = items[active >= 0 ? active : 0];
             // 4.287.0: Enter on a question or a request starts the conversation with your Actor here; it does not search.
             if (q && !moved && !door && looksAsked(q) && askRows(q).length) { askAgent(q, null, 'actor'); return; }
+            // 4.328.0: signed out, a question is answered here (guestAsk), not searched.
+            if (q && !moved && !door && looksAsked(q) && !signedInTop() && gansEl) { guestAsk(q); return; }
             // Enter shows every result, unless the person picked a row or typed a place's exact name (live, tools).
             if (it && it.kind === 'run' && typeof it.run === 'function' && (moved || /^@/.test(q))) { try { it.run(); } catch { /* the provider's own */ } return; }
             if (q && !moved && view !== 'results' && !exact(it, q)) { showResults(q); return; }
@@ -1490,7 +1517,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         }
         out.push({ title: `All results for “${q}”`, meta: 'Every OpenVibe site and the web, in one list', url: `${API}/?q=${encodeURIComponent(q)}`, icon: 'search', kind: 'results' });
         // Signed out (or with no conversations in the menu), asking opens Vibe on openvibe.chat with the words.
-        if (!askRows(q).length) out.push({ title: `Ask Vibe: “${q}”`, meta: 'OpenVibe\'s assistant searches the web and OpenVibe', url: `https://openvibe.chat/vibe?ask=${encodeURIComponent(q)}`, icon: 'spark', kind: 'action' });
+        if (!signedInTop() && gansEl) out.push({ title: `Ask Vibe: “${q}”`, meta: 'A quick answer here: free, no account', url: '#', icon: 'spark', kind: 'run', run: () => guestAsk((input && input.value.trim()) || q) });
+        else if (!askRows(q).length) out.push({ title: `Ask Vibe: “${q}”`, meta: 'OpenVibe\'s assistant searches the web and OpenVibe', url: `https://openvibe.chat/vibe?ask=${encodeURIComponent(q)}`, icon: 'spark', kind: 'action' });
         return out;
     }
     // How well a name answers what was typed: its start (3), inside it (2), or only the words behind it (1).
@@ -1910,6 +1938,109 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (send) send.hidden = !has;
     }
     function askVibe(text, files) { return askAgent(text, files, null); }
+
+    // ── A guest's question (4.328.0; plan §V.1, the owner's register #801: "anons … use AI features with abuse
+    // prevention, severe rate limits … a global cap") ──
+    // Signed out, the box answers a short question here instead of sending the visitor to openvibe.chat to be told to
+    // sign in: Network's /api/frame/ask/guest after a quick proof of work done by this browser (ALTCHA's scheme, a second
+    // or two), three a day per guest, on the cheapest model. Files and named agents still need an account.
+    let gansGen = 0;   // gansEl, the answer's place above the list, is the menu's (build())
+    const GUEST_ID_KEY = 'ov:guest-ask:id';
+    function guestId() {
+        try {
+            const kept = localStorage.getItem(GUEST_ID_KEY);
+            if (kept && /^[A-Za-z0-9_-]{16,64}$/.test(kept)) return kept;
+            const b = new Uint8Array(18); root.crypto.getRandomValues(b);
+            const id = btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            localStorage.setItem(GUEST_ID_KEY, id);
+            return id;
+        } catch { return ''; }
+    }
+    /** The number whose SHA-256 of salt + number is the challenge, or null (no WebCrypto, gone, or not found). */
+    async function solveGuestCheck(c, current) {
+        const subtle = root.crypto && root.crypto.subtle;
+        if (!subtle || !c || c.algorithm !== 'SHA-256' || !/^[0-9a-f]{64}$/.test(String(c.challenge || ''))) return null;
+        const want = new Uint8Array(32);
+        for (let i = 0; i < 32; i++) want[i] = parseInt(c.challenge.slice(i * 2, i * 2 + 2), 16);
+        const max = Math.min(Number(c.maxnumber) || 0, 1e6), enc = new TextEncoder(), salt = String(c.salt || '');
+        const same = (buf) => { const a = new Uint8Array(buf); for (let i = 0; i < 32; i++) if (a[i] !== want[i]) return false; return true; };
+        for (let n0 = 0; n0 <= max; n0 += 1000) {
+            if (!current()) return null;
+            const batch = [];
+            for (let n = n0; n <= Math.min(n0 + 999, max); n++) batch.push(subtle.digest('SHA-256', enc.encode(salt + n)));
+            const got = await Promise.all(batch);
+            for (let k = 0; k < got.length; k++) if (same(got[k])) return n0 + k;
+        }
+        return null;
+    }
+    function guestLoginHref() {
+        const bar = document.getElementById('openvibe-login-btn');
+        return (bar && bar.href) || `https://openvibe.network/login?return=${encodeURIComponent(location.href)}`;
+    }
+    /** Words with their https links as links (the answer is plain text). */
+    function guestWords(node, text) {
+        String(text || '').split(/(https:\/\/[^\s<>()"']*[^\s<>()"'.,;:!?])/).forEach((part, i) => {
+            if (!part) return;
+            if (i % 2) { const a = document.createElement('a'); a.href = part; a.target = '_blank'; a.rel = 'noopener nofollow'; a.textContent = part.replace(/^https:\/\//, ''); node.append(a); }
+            else node.append(document.createTextNode(part));
+        });
+    }
+    function guestAsk(text) {
+        const words = String(text || '').trim().slice(0, 1000);
+        if (!words || !gansEl) return;
+        const gen = ++gansGen;
+        const current = () => gen === gansGen && !!gansEl && gansEl.isConnected;
+        const frame = `${ctx.runsBase || ctx.apiBase || 'https://openvibe.network'}/api/frame/ask/guest`;
+        // The box is cleared and the list goes back to its start (schedule: a redraw for the typed words may be waiting).
+        if (input) { input.value = ''; paintGhost(); syncTools(); schedule(''); }
+        gansEl.textContent = ''; gansEl.hidden = false;
+        // A new card rises again (the animation restarts with the element's own box).
+        gansEl.style.animation = 'none'; void gansEl.offsetWidth; gansEl.style.animation = '';
+        const head = document.createElement('div'); head.className = 'ovs-gans-h'; head.innerHTML = ICON.spark;
+        const q = document.createElement('span'); q.className = 'ovs-gans-q'; q.textContent = words; q.title = words;
+        const x = document.createElement('button'); x.type = 'button'; x.className = 'ovs-gans-x'; x.setAttribute('aria-label', 'Close the answer'); x.innerHTML = ICON.close;
+        x.addEventListener('click', () => { gansGen++; gansEl.hidden = true; gansEl.textContent = ''; if (input) input.focus(); });
+        head.append(q, x);
+        const body = document.createElement('p'); body.className = 'ovs-gans-t is-wait';
+        const mark = document.createElement('span'); mark.className = 'ov-mark'; mark.setAttribute('data-size', '20'); mark.setAttribute('data-state', 'busy');
+        const wait = document.createElement('span'); wait.textContent = 'Thinking\u2026';
+        body.append(mark, wait);
+        try { if (typeof root.ovMarkMount === 'function') root.ovMarkMount(mark); } catch { /* the words alone */ }
+        const foot = document.createElement('div'); foot.className = 'ovs-gans-f'; foot.hidden = true;
+        gansEl.append(head, body, foot);
+        const signIn = (label) => { const a = document.createElement('a'); a.className = 'ovs-gans-go'; a.href = guestLoginHref(); a.textContent = label; a.addEventListener('click', () => close()); return a; };
+        const note = (t) => { const n = document.createElement('span'); n.className = 'ovs-gans-n'; n.textContent = t; return n; };
+        const again = () => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-gans-again'; b.textContent = 'Try again'; b.addEventListener('click', () => guestAsk(words)); return b; };
+        const show = (t) => { body.className = 'ovs-gans-t is-in'; body.textContent = ''; guestWords(body, t); };
+        (async () => {
+            let status = 0, code = '';
+            try {
+                const cr = await fetch(`${frame}/challenge`, { credentials: 'omit', cache: 'no-store', headers: { Accept: 'application/json' } });
+                const c = cr.ok ? await cr.json() : null;
+                const number = c ? await solveGuestCheck(c, current) : null;
+                if (!current()) return;
+                if (number == null) { code = c ? 'guest.check_unsupported' : 'guest.offline'; throw new Error(c ? 'This browser could not do the quick check. Sign in (free) to ask.' : 'Vibe could not be reached. Try again in a moment.'); }
+                const r = await fetch(frame, {
+                    method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                    body: JSON.stringify({ text: words, context: `${document.title || ''} (${location.origin}${location.pathname})`.slice(0, 2000), site: (/(?:^|\.)openvibe\.([a-z]{2,20})$/.exec(location.hostname) || [])[1] || undefined, guest: guestId() || undefined, proof: { ...c, number } }),
+                });
+                const d = await r.json().catch(() => ({}));
+                if (!current()) return;
+                status = r.status; code = String(d.code || '');
+                if (!r.ok || typeof d.answer !== 'string') throw new Error(d.error || 'Vibe could not answer right now. Try again in a moment.');
+                show(d.answer);
+                const left = Number(d.left);
+                foot.append(note(Number.isFinite(left) ? (left > 0 ? `${left} more today as a guest` : 'Your last guest question today') : 'Answered as a guest'), signIn('Sign in for 100 a day'));
+            } catch (err) {
+                if (!current()) return;
+                show((err && err.message) || 'Vibe could not answer right now. Try again in a moment.');
+                const limited = status === 429 || status === 503 || code === 'guest.check_unsupported';
+                if (limited) foot.append(signIn('Sign in (free)'));
+                else foot.append(again(), signIn('Sign in'));
+            }
+            foot.hidden = false;
+        })();
+    }
     /** Starts a conversation in the menu with `agent` ('actor', 'codes', an agt_… of yours; null: the box's default). */
     function askAgent(text, files, agent, more) {
         const words = String(text || '').trim();
@@ -1917,6 +2048,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // person to read and send (approve first).
         const how = more || {};
         if (!words && !(files && files.length)) return;
+        if (!signedInTop() && words && !(files && files.length) && !agent && gansEl && el && el.classList.contains('is-open')) { guestAsk(words); return; }
         if (!canDoor() || !signedInTop()) { location.href = `https://openvibe.chat/vibe${words ? `?ask=${encodeURIComponent(words)}` : ''}`; return; }
         if (input) { input.value = ''; paintGhost(); syncTools(); }
         toggleYou(false);

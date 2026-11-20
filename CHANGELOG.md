@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.328.0 — 2026-11-20
+
+**A guest may ask the menu's box** (the plan's §V.1 guests; the owner's register #801: "anons should be able to … use
+AI features with abuse prevention, severe rate limits … a global cap"). Signed out, a question in the menu sent the
+visitor to openvibe.chat/vibe to be told to sign in. Now Enter on a question, the send button and the Ask Vibe row
+("A quick answer here: free, no account") answer it in the menu, above the list (search.js `guestAsk`): the browser
+does Network's quick check (a proof of work, ALTCHA's scheme: SHA-256 through WebCrypto, about half a second), then
+`POST /api/frame/ask/guest` (OpenVibe.Network #1149) answers on the cheapest model, three a day per guest. The card
+shows the question, the mark while it thinks, the answer (its https links as links), how many are left and "Sign in
+for 100 a day"; a failed answer offers Try again; the day's limit or a resting budget says so with the sign-in. The
+guest's id is kept on the device (`ov:guest-ask:id`); the page's title and address (no query) go along as context.
+Files and named agents still need an account. Test: `menu-guest-ask-chrome`.
+
 ## 4.327.0 — 2026-11-20
 
 **A strip is measured when it comes near the screen** (the owner's standing ask: faster pages). A sideways strip or
