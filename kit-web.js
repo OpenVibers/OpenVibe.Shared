@@ -162,11 +162,24 @@
                 if (t.closest('[data-ovk-sidebar-close], [data-ovk-sidebar-scrim]')) Array.prototype.forEach.call(document.querySelectorAll('.ovk-sidebar.is-open'), (sb) => setSidebar(sb, false));
             });
             document.addEventListener('ov:boost:before', () => Array.prototype.forEach.call(document.querySelectorAll('.ovk-sidebar.is-open'), (sb) => setSidebar(sb, false)));
-            // The head casts a shadow once the page has scrolled under it.
-            let ticking = false;
-            const mark = () => { ticking = false; document.documentElement.classList.toggle('ovk-scrolled', (window.scrollY || 0) > 4); };
-            window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(mark); } }, { passive: true });
-            mark();
+            // The head casts a shadow once the page has scrolled under it. A marker at the page's top, watched by an
+            // IntersectionObserver, says so without reading scrollY: the first read, at start, forced a layout of the
+            // page while it was still building (11-20: ~170 ms of main thread at 4x CPU on openvibe.live's home), and every
+            // scroll frame read it again.
+            const scrolled = (on) => { if (document.documentElement.classList.contains('ovk-scrolled') !== on) document.documentElement.classList.toggle('ovk-scrolled', on); };
+            if (typeof IntersectionObserver === 'function' && document.body) {
+                const top = document.createElement('div');
+                top.setAttribute('aria-hidden', 'true');
+                top.setAttribute('data-ovk-top', '');
+                top.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:5px;opacity:0;pointer-events:none';
+                document.body.prepend(top);
+                new IntersectionObserver((entries) => { const e = entries[entries.length - 1]; scrolled(!e.isIntersecting); }).observe(top);
+            } else {
+                let ticking = false;
+                const mark = () => { ticking = false; scrolled((window.scrollY || 0) > 4); };
+                window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(mark); } }, { passive: true });
+                requestAnimationFrame(mark);
+            }
         }
         // The composer: Enter sends (Shift+Enter, or a phone's own Enter key, is a new line); the box grows with the text.
         const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;

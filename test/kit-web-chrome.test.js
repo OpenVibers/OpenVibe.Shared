@@ -29,6 +29,9 @@ const LOW_TABS = `<div style="height:2400px"></div><div style="width:240px"><sty
     kit.tabs({ base: '/s', active: 'h', items: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((k) => ({ key: k, label: `Section ${k}` })) })}</div>`;
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Kit</title><link rel="icon" href="data:,"></head>
 <body>${BODY}${LOW_TABS}<script>
+  // scrollY reads by the page's scripts (the head's shadow used to read it at start, forcing a layout).
+  window.__scrollYReads = 0;
+  { const d = Object.getOwnPropertyDescriptor(window, 'scrollY'); if (d && d.get) Object.defineProperty(window, 'scrollY', { configurable: true, get() { window.__scrollYReads++; return d.get.call(window); } }); }
   window.__asked = []; window.confirm = (m) => { window.__asked.push(m); return false; };
   window.__sent = [];
   document.addEventListener('submit', (e) => { if (!e.defaultPrevented) { e.preventDefault(); window.__sent.push([e.target.getAttribute('action'), new FormData(e.target).get('q')]); } });
@@ -51,6 +54,14 @@ const server = http.createServer((req, res) => {
         const p = await h.openPage(browser, context, { width: 390 });
         await p.goto(`${base}/`, { maxMs: 5000 });
         await wait(200);
+        // The head's shadow (4.332.0): html.ovk-scrolled follows the page's scroll without kit-web reading scrollY.
+        await eventually(async () => assert.strictEqual(await p.evaluate('window.__scrollYReads'), 0, 'kit-web reads no scrollY at start'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.documentElement.classList.contains('ovk-scrolled')"), false, 'at the top: no shadow'));
+        await p.evaluate('window.scrollTo(0, 300)');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.documentElement.classList.contains('ovk-scrolled')"), true, 'scrolled: the shadow'));
+        await p.evaluate('window.scrollTo(0, 0)');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.documentElement.classList.contains('ovk-scrolled')"), false, 'back at the top: none'));
+        assert.strictEqual(await p.evaluate('window.__scrollYReads'), 0, 'and none while scrolling');
         await eventually(async () => assert.strictEqual(await p.evaluate('Math.round(scrollY)'), 0, 'tabs below the fold never scroll the page to themselves'));
         await eventually(async () => assert.ok(await p.evaluate("document.querySelector('.ovk-tabs').scrollLeft") > 0, 'but their strip shows the open tab'));
         const hasClipboard = await p.evaluate('!!navigator.clipboard');
