@@ -170,6 +170,17 @@
         docs: 'main h1, main h2, main h3, article h1, article h2',
     };
     const PAGE_TITLES = '[data-ov-title], main h2, main h3, article h2, article h3, [role="main"] h2, [role="main"] h3';
+    // A heading's own words, without the badges beside them: Exchange's "The engines" with its count became
+    // "The engines35" in a search box (2026-11-20).
+    const BADGES = '.ovk-count, .ovk-badge, .badge, .count, [aria-hidden="true"]';
+    function ownText(e) {
+        let s = '';
+        for (const n of e.childNodes) {
+            if (n.nodeType === 3) s += n.nodeValue;
+            else if (n.nodeType === 1 && !(n.matches && n.matches(BADGES))) s += ` ${ownText(n)}`;
+        }
+        return s;
+    }
     const NOT_CONTENT = 'nav, header, footer, aside, dialog, [role="navigation"], [role="dialog"], [aria-hidden="true"], .ovs, .ovt-chips, .ovt-ghost, [hidden]';
     const CHROME_WORDS = /^(sign in|log in|sign up|menu|more|loading|search|settings|share|close|back)\b/i;
     function pageItems(input) {
@@ -182,7 +193,7 @@
             if (out.length >= 4) break;
             if (e.closest(NOT_CONTENT) || (input && (e === input || e.contains(input)))) continue;
             if (!e.getClientRects().length) continue;   // not shown
-            const t = String(e.getAttribute('data-ov-title') || e.textContent || '').replace(/\s+/g, ' ').trim().replace(/^@/, '');
+            const t = String(e.getAttribute('data-ov-title') || ownText(e) || '').replace(/\s+/g, ' ').trim().replace(/^@/, '');
             const k = t.toLowerCase();
             if (t.length < 2 || t.length > 48 || CHROME_WORDS.test(t) || seen.has(k)) continue;
             seen.add(k); out.push(t);

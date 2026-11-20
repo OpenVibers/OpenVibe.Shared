@@ -19,7 +19,7 @@ const page = (people) => `<!doctype html><html><head><meta charset="utf-8"><meta
 <body style="margin:0;font:16px system-ui;background:#0b1220;color:#e6edf7">
 <nav><h3>Menu</h3><h2>Settings</h2></nav>
 <form id="f" action="/search" method="get" onsubmit="event.preventDefault()"><input id="q" name="q" type="search" placeholder="Search the streams" aria-label="Search"${people ? ' data-ov-trending="people"' : ''} style="width:300px;padding:8px 12px"></form>
-<main><h1>Live now</h1><h2>Night speedruns</h2><section><h3>Cozy art streams</h3><h3>Retro racing cup</h3></section>
+<main><h1>Live now</h1><h2>Night speedruns<span class="ovk-count">35</span></h2><section><h3>Cozy art streams</h3><h3>Retro racing cup</h3></section>
 <a href="/@ada">@ada</a> <a href="/@bo">@bo</a> <div hidden><h2>Hidden heading</h2></div></main>
 <script src="/ov-trending.js"></script></body></html>`;
 const server = http.createServer((req, res) => {
@@ -45,7 +45,7 @@ const server = http.createServer((req, res) => {
         await focus(p);
         await until(p, "document.querySelectorAll('.ovt-chips .ovt-chip').length > 0", 'chips under the empty box');
         assert.deepEqual(await chips(p), ['# On this page', 'Night speedruns', 'Cozy art streams', '# Trending', 'speedrun world record', 'lofi beats', 'chess blitz'],
-            'the page\'s own titles (never its nav, never a hidden one), then the site\'s trending');
+            'the page\'s own titles (never its nav, never a hidden one, never a count badge glued on), then the site\'s trending');
         assert.equal(await p.evaluate("document.querySelector('.ovt-chips').getAttribute('aria-label')"), 'Suggestions');
         const line = await p.evaluate("(document.querySelector('.ovt-ghost .ovt-line') || {}).textContent || ''");
         assert.ok(!/On this page|Yours|Trending/.test(line), `the box's line never names where it came from ("${line}")`);
