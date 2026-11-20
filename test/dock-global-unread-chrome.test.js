@@ -70,6 +70,9 @@ async function until(p, expression, ms = 6000) {
 const badge = `(document.querySelector('.ovdk-seg[data-seg=global] .ovdk-seg-n:not(.is-gone)') || {}).textContent || ''`;
 const unreadCount = `document.querySelectorAll('.ovdk-gl-list > .is-unread').length`;
 
+// Whether the pill is on screen: its box is drawn (the hidden flag alone said nothing while CSS showed it: 11-20).
+const painted = "(!!j && !!j.querySelector('.ovdk-gl-jump-c') && j.querySelector('.ovdk-gl-jump-c').getClientRects().length > 0 && getComputedStyle(j).display !== 'none')";
+
 (async () => {
     await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
     const base = `http://127.0.0.1:${server.address().port}/`;
@@ -106,7 +109,7 @@ const unreadCount = `document.querySelectorAll('.ovdk-gl-list > .is-unread').len
         assert.ok(posted.length >= 1 && Math.max(...posted) > 40 && Math.max(...posted) < 60, `Chat hears where you are (${posted})`);
 
         // The pill says what waits below and takes you there.
-        const pill = await until(p, `(() => { const j = document.querySelector('.ovdk-gl-jump'); return j && !j.hidden && j.querySelector('.ovdk-gl-jump-n').textContent; })()`);
+        const pill = await until(p, `(() => { const j = document.querySelector('.ovdk-gl-jump'); return j && ${painted} && j.querySelector('.ovdk-gl-jump-n').textContent; })()`);
         assert.match(pill, /^\d+ new messages?$/, `the pill counts them (${pill})`);
         const y0 = await p.evaluate("document.querySelector('.ovdk-scroll').scrollTop");
         await p.evaluate("document.querySelector('.ovdk-gl-jump-go').click()");
@@ -118,6 +121,8 @@ const unreadCount = `document.querySelectorAll('.ovdk-gl-list > .is-unread').len
         await until(p, "!document.querySelector('.ovdk-gl-new')", 2000);
         await pause(300);
         assert.strictEqual(Math.max(...posted), 60, 'all read: Chat has the newest line');
+        // 4.332.0 (the owner's phone, 11-20): the pill is gone from the screen, not only flagged hidden.
+        assert.strictEqual(await p.evaluate(`(() => { const j = document.querySelector('.ovdk-gl-jump'); return ${painted}; })()`), false, 'Mark read takes the pill off the screen');
 
         // Reading further up when a line comes: it is new, the line marks where it starts, the pill says so.
         await p.evaluate("document.querySelector('.ovdk-scroll').scrollTop = 0");
@@ -125,11 +130,12 @@ const unreadCount = `document.querySelectorAll('.ovdk-gl-list > .is-unread').len
         assert.ok(asked.some((q) => /before=\d+/.test(q) && !/before=41/.test(q)), 'older lines come as you scroll up');
         tip = 61;
         await until(p, `!!document.querySelector('.ovdk-gl-list > [data-id="61"].is-unread')`, 9000);
-        assert.strictEqual(await until(p, `(() => { const j = document.querySelector('.ovdk-gl-jump'); return j && !j.hidden && j.querySelector('.ovdk-gl-jump-n').textContent; })()`), '1 new message');
+        assert.strictEqual(await until(p, `(() => { const j = document.querySelector('.ovdk-gl-jump'); return j && ${painted} && j.querySelector('.ovdk-gl-jump-n').textContent; })()`), '1 new message');
         assert.strictEqual(await p.evaluate(badge), '1', 'and the Global count');
         assert.ok(await p.evaluate("!!document.querySelector('.ovdk-gl-new') && document.querySelector('.ovdk-gl-new').nextElementSibling.dataset.id === '61'"), 'the New messages line comes back above it');
         await p.evaluate("document.querySelector('.ovdk-gl-jump-go').click()");
         await until(p, `${unreadCount} === 0`, 5000);
+        await until(p, `(() => { const j = document.querySelector('.ovdk-gl-jump'); return !(${painted}); })()`, 3000);
         await pause(1800);
         assert.strictEqual(Math.max(...posted), 61, 'read where it came: Chat hears 61');
         assert.deepStrictEqual(errors, [], 'no page errors');

@@ -144,6 +144,10 @@
             .ovdk-body { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
             .ovdk-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
             .ovdk-panel[hidden] { display: none; }
+            /* 4.332.0 (the owner's phone, 11-20, "never fixed"): hidden means hidden for everything in the Dock. Global's
+               "1 new message · Mark read" pill sets display: flex, which beat the hidden attribute, so reading to the end
+               and Mark read emptied the count while the pill stayed on screen. */
+            .ovdk [hidden], .ovdk-gl-jump[hidden] { display: none !important; }
             .ovdk-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
             .ovdk-foot { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border, rgba(255,255,255,.08)); font-size: 12.5px; }
             .ovdk-foot a, .ovdk-foot button { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; color: var(--accent-light, var(--accent, #60a5fa)); }

@@ -89,7 +89,8 @@ const unreadCount = `document.querySelectorAll('.ovdk-gl-list > .is-unread').len
         await p.evaluate("const sc = document.querySelector('.ovdk-scroll'); sc.scrollTop = sc.scrollHeight;");
         // 12 s, not 5: GitHub's macOS runner took 16 s for this file and timed out here (11-18, red on main twice).
         await until(p, `${unreadCount} === 0 && !document.querySelector('.ovdk-seg[data-seg=global] .ovdk-seg-n:not(.is-gone)')`, 12000);
-        await until(p, "(() => { const j = document.querySelector('.ovdk-gl-jump'); return !j || j.hidden; })()", 2000);
+        // Off the screen, not only flagged hidden (4.332.0: the pill's display: flex beat its hidden attribute).
+        await until(p, "(() => { const j = document.querySelector('.ovdk-gl-jump'); return !j || (getComputedStyle(j).display === 'none' && !j.querySelector('.ovdk-gl-jump-c').getClientRects().length); })()", 2000);
         await h.eventually(async () => assert.strictEqual(Math.max(...posted), 60, `Chat hears the newest line (${posted})`));
         assert.deepStrictEqual(errors, [], 'no page errors');
         console.log('dock-global-end-chrome: reaching the end of Global reads all of it, the count and the pill go');

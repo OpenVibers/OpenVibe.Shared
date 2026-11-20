@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.332.0 — 2026-11-20
+
+**Global's "1 new message · Mark read" pill leaves the screen when it should** (`dock.js`; the owner's phone, 11-20:
+"never fixed … even if you scroll down, it doesn't disappear … mark read … doesn't actually go away"). The pill's CSS sets
+`display: flex`, which beat its `hidden` attribute: reading to the end and Mark read emptied the count and set the pill
+hidden, and it stayed painted with its last words. Hidden now means hidden for everything in the Dock
+(`.ovdk [hidden] { display: none !important }`). The tests judged the pill by its hidden flag, which is why they passed;
+`dock-global-unread-chrome` and `dock-global-end-chrome` now check that its box is not drawn.
+
 ## 4.331.0 — 2026-11-20
 
 **Rows that scroll sideways are measured when they come into view, not on every change** (`navbar.js` startPeeks). The
