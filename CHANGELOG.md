@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.327.0 — 2026-11-20
+
+**A strip is measured when it comes near the screen** (the owner's standing ask: faster pages). A sideways strip or
+rail inside a section that skips its rendering off screen (`content-visibility: auto`) read its sizes at setup, and the
+browser rendered that whole section to answer: Live's home on a slow laptop (CPU 4x, 1280 px) spent 250 ms on one such
+read, 1,160 elements restyled. `kit-web.js` `whenNear(el, measure)`: a strip's first measure waits until it is within
+400 px of the screen (IntersectionObserver); a resize measures again only after that; scrolling a strip still measures
+at once. Test: rails-scroll-chrome (a strip far down in a skipped section stays unmeasured until scrolled near, then
+fades).
+
 ## 4.326.0 — 2026-11-20
 
 **Sideways strips measure together** (the owner's standing ask: faster pages). `kit-web.js` read each sideways strip's

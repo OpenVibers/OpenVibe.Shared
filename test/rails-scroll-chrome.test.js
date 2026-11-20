@@ -22,6 +22,8 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 <div id="plain" data-ovk-scroll style="display:flex;gap:8px">${chips(12)}</div>
 <div id="drift" data-ovk-scroll="drift" style="display:flex;gap:8px;margin-top:24px">${chips(12)}</div>
 <div id="short" data-ovk-scroll style="display:flex;gap:8px;margin-top:24px">${chips(1)}</div>
+<div style="height:3000px"></div>
+<section id="farsec" style="content-visibility:auto;contain-intrinsic-size:auto 200px"><div id="far" data-ovk-scroll style="display:flex;gap:8px">${chips(12)}</div></section>
 <script src="/kit-web.js"></script></body></html>`;
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
@@ -53,6 +55,13 @@ const server = http.createServer((req, res) => {
         const end = await p.evaluate(`({ endFade: document.getElementById('plain').classList.contains('is-more-end'), startFade: document.getElementById('plain').classList.contains('is-more-start'), thumb: document.querySelector('#plain + .ovk-scroll-bar > i').style.transform })`);
         assert.ok(!end.endFade && end.startFade, 'at the end only the near edge fades');
         assert.ok(/translateX\((?!0%)/.test(end.thumb), `the bar's thumb moved (${end.thumb})`);
+        // A strip in a section that skips its rendering off screen is not measured until it comes near (4.327.0: reading it
+        // made the browser render the whole section), then it fades like any other.
+        assert.strictEqual(await p.evaluate("document.getElementById('far').classList.contains('is-more-end')"), false, 'far below in a skipped section: not measured yet');
+        await p.evaluate("document.getElementById('farsec').scrollIntoView()");
+        await eventually(async () => assert.ok(await p.evaluate("document.getElementById('far').classList.contains('is-more-end')"), 'near: measured, its far edge fades'));
+        await p.evaluate('window.scrollTo(0, 0)');
+        await wait(150);
         // Drift: it moves on its own, and a touch stops it for good.
         // A slow runner (CI) gets more time. A browser that asks for less motion drifts too, at half the speed (Calm
         // reduces, it does not remove); it may already be on its way back, so any change counts.
