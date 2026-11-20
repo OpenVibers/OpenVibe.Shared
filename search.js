@@ -681,6 +681,8 @@ html[data-ov-motion=off] .ovs-opt .ovs-lock { transition: none; transform: none;
 .ovs-gans-t a { color: var(--accent-light, var(--accent, #60a5fa)); text-underline-offset: 2px; }
 .ovs-gans-t.is-wait { display: flex; align-items: center; gap: 10px; color: var(--text-secondary, #a8b3c4); }
 .ovs-gans-f { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.ovs-gans-why { margin: 0; font-size: 12.5px; line-height: 1.4; color: var(--text-secondary, #a8b3c4); }
+.ovs-gans-why b { font-weight: 600; color: var(--text-primary, #e8ecf3); }
 .ovs-gans-f[hidden] { display: none; }
 .ovs-gans-n { flex: 1 1 12em; min-width: 0; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
 .ovs-gans-go { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 12px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); font-weight: 650; font-size: 14px; text-decoration: none; transition: transform .15s; }
@@ -2031,6 +2033,12 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
                 const d = await G.ask(words, { apiBase: ctx.runsBase || ctx.apiBase || 'https://openvibe.network', current });
                 if (!current()) return;
                 show(d.answer);
+                if (d.receipt && d.receipt.why) {
+                    const w = document.createElement('p'); w.className = 'ovs-gans-why';
+                    if (d.receipt.chose) { const b = document.createElement('b'); b.textContent = String(d.receipt.chose).slice(0, 80); w.append(b, document.createTextNode(': ')); }
+                    w.append(document.createTextNode(String(d.receipt.why).slice(0, 300)));
+                    foot.before(w);
+                }
                 const left = d.left;
                 foot.append(note(left != null ? (left > 0 ? `${left} more today as a guest` : 'Your last guest question today') : 'Answered as a guest'), signIn('Sign in for 100 a day'));
             } catch (err) {

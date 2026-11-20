@@ -3,7 +3,8 @@
  * owner's register #801: "anons should be able to … use AI features with abuse prevention, severe rate limits … a global
  * cap"). The menu's box (search.js) and openvibe.chat's Vibe page use it; a page draws the answer its own way.
  *
- *   const { answer, model, left } = await OpenVibeGuestAsk.ask('How do I go live?', { apiBase, context, site, current });
+ *   const { answer, model, left, receipt } = await OpenVibeGuestAsk.ask('How do I go live?', { apiBase, context, site, current });
+ *   (receipt: { chose, why } or null: which model answered and why, Auto's receipt from OpenVibe.AI)
  *
  * It asks OpenVibe.Network's GET /api/frame/ask/guest/challenge, solves it here (ALTCHA's proof of work: the number whose
  * SHA-256 of salt + number is the challenge, through WebCrypto, about half a second), then POST /api/frame/ask/guest.
@@ -74,7 +75,8 @@
         if (!current()) throw fail('', 0, 'guest.cancelled');
         if (!r.ok || typeof d.answer !== 'string') throw fail(d.error || 'Vibe could not answer right now. Try again in a moment.', r.status, String(d.code || ''));
         const left = Number(d.left);
-        return { answer: d.answer, model: d.model || null, left: Number.isFinite(left) ? left : null };
+        const receipt = d.receipt && typeof d.receipt.why === 'string' ? { chose: d.receipt.chose ? String(d.receipt.chose) : null, why: String(d.receipt.why) } : null;
+        return { answer: d.answer, model: d.model || null, left: Number.isFinite(left) ? left : null, receipt };
     }
     /** Whether a failure is the day's limit or a resting budget (sign in, no Try again). */
     const limited = (err) => !!err && (err.status === 429 || err.status === 503 || err.code === 'guest.check_unsupported');

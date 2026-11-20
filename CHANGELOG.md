@@ -10,6 +10,11 @@ to answer a signed-out visitor in its own thread. Now `OpenVibeGuestAsk.ask(text
 own load), and answers exactly as before. Listed in files.js (served on every site) and in the navbar's sibling
 revisions. Test: `menu-guest-ask-chrome` (it is not loaded with the menu, and is there once a guest asked).
 
+**Auto's receipt under an answer** (the plan's §V.1 routing item 4: "its receipt says what it chose and why").
+OpenVibe.AI now gives a run `receipt: { chose, why }` (AI #665) and the Frame passes it on (Network #1150). The
+composer's answer card and the menu's guest card show it as one quiet line under the answer: "gpt-5-nano: the cheapest
+model that fits this task; it cost nothing extra". `OpenVibeGuestAsk.ask` returns it too. Nothing shows without one.
+
 ## 4.329.0 — 2026-11-20
 
 **What a guest is missing, in the menu** (the plan's §V.1 guests: "the menu shows its signed-in places, locked, each

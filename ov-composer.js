@@ -343,6 +343,8 @@ html[data-ov-motion=off] .ovc-models .ovc-model { animation: none; }
 .ovc-cites { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
 .ovc-cites a { display: inline-block; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #fff) 7%, transparent); color: var(--text-primary, #e6edf7); font-size: 12.5px; text-decoration: none; }
 .ovc-answer footer { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.ovc-receipt { margin: 8px 0 0; font-size: 12.5px; line-height: 1.4; color: var(--text-secondary, #94a3b8); }
+.ovc-receipt b { font-weight: 600; color: var(--text-primary, #e8ecf3); }
 .ovc-answer-a { min-height: 36px; padding: 0 14px; border: 1px solid var(--border, rgba(148, 163, 184, .22)); border-radius: 999px; background: none; color: var(--text-primary, #e6edf7); font: 600 13.5px/1 inherit; cursor: pointer; }
 .ovc-answer-a:first-child { background: var(--ovt-accent, var(--accent, #3b82f6)); border-color: transparent; color: #fff; }
 @media (pointer: coarse) { .ovc-answer-a { min-height: 44px; } }
@@ -2501,6 +2503,14 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                     if (meta.answer != null) ctl.set(meta.answer);
                     if (meta.citations) ctl.cite(meta.citations);
                     if (meta.cost != null) card.querySelector('small').textContent = `${model.name || ''} · $${Number(meta.cost).toFixed(3)}`;
+                    // 4.330.0, Auto's receipt (AI #665 through the Frame): which model answered and why, in one line.
+                    card.querySelector('.ovc-receipt')?.remove();
+                    if (meta.receipt && typeof meta.receipt.why === 'string' && meta.receipt.why) {
+                        const rc = el('p', 'ovc-receipt');
+                        if (meta.receipt.chose) { const b = el('b'); b.textContent = String(meta.receipt.chose).slice(0, 80); rc.append(b, document.createTextNode(': ')); }
+                        rc.append(document.createTextNode(String(meta.receipt.why).slice(0, 300)));
+                        foot.before(rc);
+                    }
                     foot.replaceChildren();
                     const act = (label, fn) => { const b = el('button', 'ovc-answer-a'); b.type = 'button'; b.textContent = label; b.addEventListener('click', fn); foot.appendChild(b); };
                     if (verbs.includes('post')) act(name === 'chat' ? 'Send it' : name === 'comment' ? 'Reply with it' : 'Post it', () => { setVerb('post'); ta.value = body.textContent; ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus(); });
