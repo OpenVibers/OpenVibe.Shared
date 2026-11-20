@@ -55,7 +55,7 @@ const server = http.createServer((req, res) => {
         await p.goto(`${base}/`, { maxMs: 5000 });
         await wait(200);
         // The head's shadow (4.332.0): html.ovk-scrolled follows the page's scroll without kit-web reading scrollY.
-        assert.strictEqual(await p.evaluate('window.__scrollYReads'), 0, 'kit-web reads no scrollY at start');
+        await eventually(async () => assert.strictEqual(await p.evaluate('window.__scrollYReads'), 0, 'kit-web reads no scrollY at start'));
         await eventually(async () => assert.strictEqual(await p.evaluate("document.documentElement.classList.contains('ovk-scrolled')"), false, 'at the top: no shadow'));
         await p.evaluate('window.scrollTo(0, 300)');
         await eventually(async () => assert.strictEqual(await p.evaluate("document.documentElement.classList.contains('ovk-scrolled')"), true, 'scrolled: the shadow'));
