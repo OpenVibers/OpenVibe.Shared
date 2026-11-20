@@ -3410,14 +3410,18 @@
         }, { threshold: [0.6] });
         const SEL = '[data-ov-peek]:not([data-ov-peek="off"]), [class*="rail"], [class*="chips"], [class*="tabs"], [class*="pills"], [class*="strip"], [class*="carousel"], [class*="scroller"]';
         let queued = false;
+        // A row is only observed here: whether it is wider than its box is read when it comes into view, in the
+        // observer's callback, which runs after layout. Reading it here made every DOM change force a layout of the
+        // whole page (11-20, Live's home: ~420 ms of main thread at 4x CPU in its first five seconds, as cards loaded).
         const scan = () => {
             queued = false;
             let n = 0;
             document.querySelectorAll(SEL).forEach((el) => {
                 if (n > 60 || seen.has(el) || el.getAttribute('data-ov-peek') === 'off' || el.closest('.openvibe-navbar, .ovs-panel, [role=dialog]')) return;
                 seen.add(el); n++;
-                if (wide(el)) io.observe(el);
+                io.observe(el);
             });
+            root.__ovPeekScans = (root.__ovPeekScans || 0) + 1;   // how many scans ran (test/peek-chrome.test.js)
         };
         const later = () => { if (queued) return; queued = true; (root.requestIdleCallback || ((f) => setTimeout(f, 300)))(scan, { timeout: 1500 }); };
         later();

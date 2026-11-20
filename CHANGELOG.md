@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.331.0 — 2026-11-20
+
+**Rows that scroll sideways are measured when they come into view, not on every change** (`navbar.js` startPeeks). The
+peek's scan read each new row's `scrollWidth` and style after every DOM change, so each change on a page forced a layout
+of the whole page; on openvibe.live's home, as cards loaded, that was ~420 ms of main thread at 4x CPU in the first five
+seconds. The scan now only observes the rows; the IntersectionObserver callback, which runs after layout, decides
+whether a row is wider than its box. `window.__ovPeekScans` counts the scans. Test: `peek-chrome` (thirty rows added
+below the fold: 0 reads, was 30; a wide row on screen still peeks).
+
+**The feed glimpse's Show more arrow is a line in the text colour** (`ov-home.js`, #637): it drew as a small black
+triangle (a stroke path with the default fill and no stroke). Test: `feed-glimpse-chrome`.
+
 ## 4.330.0 — 2026-11-20
 
 **A guest's question, for any page** (`ov-guest-ask.js`, `OpenVibeGuestAsk`; the plan's §V.1 guests). The menu's guest
