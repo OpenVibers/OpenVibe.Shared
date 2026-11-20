@@ -2691,7 +2691,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 /* A glimpse (4.329.0): the first cards, then Show more. */
 .ovfd--glimpse .ovfd-more { padding: 4px 0 0; }
 .ovfd-glimpse-more { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 44px; border-radius: 14px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); color: var(--text-primary, #e8ecf3); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .15s, border-color .15s; }
-.ovfd-glimpse-more svg { width: 18px; height: 18px; transition: transform .2s cubic-bezier(.2, 1.2, .3, 1); }
+.ovfd-glimpse-more svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s cubic-bezier(.2, 1.2, .3, 1); }
 .ovfd-glimpse-more:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); border-color: color-mix(in srgb, var(--accent, #3b82f6) 40%, transparent); }
 .ovfd-glimpse-more:hover svg { transform: translateX(calc(3px * var(--ov-move, 1))); }
 .ovfd-glimpse-more:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
