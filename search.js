@@ -658,6 +658,11 @@ html[data-ov-motion=off] .ovs-place .ovs-place-from { display: none; }
 .ovs-guest { display: grid; gap: 8px; }
 .ovs-guest b { font-size: 15px; font-weight: 650; }
 .ovs-guest ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; color: var(--text-secondary, #a8b3c4); font-size: 13.5px; line-height: 1.4; }
+.ovs-guest .ovs-guest-line { margin: 0; color: var(--text-secondary, #a8b3c4); font-size: 13.5px; line-height: 1.4; }
+.ovs-opt .ovs-lock { flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin-left: auto; border-radius: 9px; color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent); transition: transform .18s cubic-bezier(.2, 1.2, .3, 1), color .15s, background-color .15s; }
+.ovs-opt .ovs-lock svg { width: 16px; height: 16px; }
+.ovs-opt:hover .ovs-lock, .ovs-opt.is-active .ovs-lock { color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); transform: translateY(calc(-1px * var(--ov-move, 1))) rotate(-8deg); }
+html[data-ov-motion=off] .ovs-opt .ovs-lock { transition: none; transform: none; }
 .ovs-guest li::before { content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 8px 1px 2px; border-radius: 50%; background: var(--accent, #3b82f6); }
 .ovs-guest a.ovs-guest-go { justify-self: start; display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 12px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); font-weight: 650; text-decoration: none; }
 .ovs-guest a.ovs-guest-go:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
@@ -945,6 +950,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>',
         clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
         go: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>',
+        lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>',
         spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/></svg>',
         back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg>',
         grid: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>',
@@ -1307,13 +1313,11 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
                 const li = document.createElement('li'); li.className = 'ovs-card'; li.setAttribute('role', 'presentation'); li.setAttribute('data-sec', 'signin');
                 const body = document.createElement('div'); body.className = 'ovs-cardbody ovs-guest';
                 const head = document.createElement('b'); head.textContent = 'Sign in to make OpenVibe yours';
-                const list = document.createElement('ul');
-                for (const line of ['Your home screen, arranged your way, on every site', 'Your feed, messages and notifications', 'Your agents, and the AI that comes with your account', 'Your wallet, and what you own']) {
-                    const item = document.createElement('li'); item.textContent = line; list.appendChild(item);
-                }
+                // 4.329.0: the places it opens are drawn below, locked, each with its line (plan §V.1 "what you're missing").
+                const line = document.createElement('p'); line.className = 'ovs-guest-line'; line.textContent = 'Free, and one account for every OpenVibe site.';
                 const go = document.createElement('a'); go.className = 'ovs-guest-go'; go.href = href; go.textContent = 'Sign in';
                 go.addEventListener('click', () => close());
-                body.append(head, list, go); li.appendChild(body); listEl.appendChild(li);
+                body.append(head, line, go); li.appendChild(body); listEl.appendChild(li);
                 return;
             }
             if (g.as === 'display') {
@@ -1376,6 +1380,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
                         tile.append(icon(it)); a.appendChild(tile);
                     } else a.append(icon(it));
                     a.appendChild(main);
+                    if (it.locked) { const lk = document.createElement('span'); lk.className = 'ovs-lock'; lk.innerHTML = ICON.lock; a.appendChild(lk); a.setAttribute('aria-label', `${it.title}: ${it.meta}. Sign in to open it`); }
                     const q = input.value.trim();
                     if (q && view !== 'results' && (it.kind === 'results' || (items.length === 1 && exact(it, q)))) { const k = document.createElement('span'); k.className = 'ovs-key'; k.textContent = 'Enter'; a.appendChild(k); }
                     li.appendChild(a); listEl.appendChild(li);
@@ -1682,6 +1687,28 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     /** The person's workspace (signed in): their agents and Vibe (the Dock opens in place), Codes, their files, their
      *  machines, wallet, account and themes, one tap from every site (the owner, 11-07: "access codes through this menu
      *  easily, and talk to your agent … less having to hop between sites"). */
+    // What a guest is missing (4.329.0; plan §V.1, research guests-and-feed §6.3): the signed-in places, locked, each
+    // with one line; a press signs in and lands on that place. Sign-in is asked for at a moment of value, never a wall.
+    const LOCKED = [
+        ['Vibe', 'Ask anything, 100 a day, kept in your history', 'ov', 'https://openvibe.chat/vibe'],
+        ['Agents', 'Agents that answer, search and do things for you', 'actor', 'https://openvibe.actor/'],
+        ['Codes', 'Write and change code with AI', 'codes', 'https://openvibe.codes/'],
+        ['Files', 'Your files and uploads, on every site', 'drive', 'https://openvibe.download/files'],
+        ['Machines', 'Your own computers, running models and tools', 'plug', 'https://openvibe.link/machines'],
+        ['Wallet', 'OpenCoins, tips and what you own', 'billing', 'https://openvibe.network/wallet'],
+    ];
+    /** The bar's own sign-in link (its OAuth path for this site), coming back to `to` instead of this page. */
+    function signInTo(to) {
+        const bar = document.getElementById('openvibe-login-btn');
+        try {
+            const u = new URL((bar && bar.href) || 'https://openvibe.network/login', location.href);
+            u.searchParams.set(u.searchParams.has('next') ? 'next' : 'return', to);
+            return u.toString();
+        } catch { return `https://openvibe.network/login?return=${encodeURIComponent(to)}`; }
+    }
+    function lockedPlaces() {
+        return LOCKED.map(([title, meta, site, url]) => ({ title, meta, site, url: signInTo(url), kind: 'locked', locked: true }));
+    }
     function youItems() {
         const f = ctx.frame;
         if (f && Array.isArray(f.you) && f.you.length) return f.you.map((y) => ({ title: String(y.name || ''), url: safeUrl(y.url), site: y.icon || 'ov', kind: y.dock ? 'dock' : 'you', dock: y.dock || null })).filter((x) => x.url && x.title);
@@ -2822,7 +2849,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // §Z.2 (4.247.0): a guest sees first what signing in adds, with the bar's own Sign in link.
         // Signed in is the person the bar shows, not a token: a site that signs in by its own session cookie (Download) has
         // no token in the page, and the menu said "Sign in to make OpenVibe yours" under their avatar (11-14).
-        if (!(ctx.user && !ctx.user.is_anon)) groups.push({ as: 'signin', items: [], section: 'signin' });
+        if (!(ctx.user && !ctx.user.is_anon)) groups.push({ as: 'signin', items: [], section: 'signin' }, { title: 'Yours when you sign in', as: 'rows', items: lockedPlaces(), section: 'locked' });
         if (H) {
             groups.push({ as: 'home', items: [], section: 'home' });
             // Signed out, Display stays at the foot (a signed-in person has it beside their name, in ov-home).

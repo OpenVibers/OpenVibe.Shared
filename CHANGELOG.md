@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.329.0 — 2026-11-20
+
+**What a guest is missing, in the menu** (the plan's §V.1 guests: "the menu shows its signed-in places, locked, each
+with one line of what it does. Sign-in is asked at a moment of value, never as a wall"). A guest's You showed four
+bullet lines under "Sign in to make OpenVibe yours". Now the card says it in one line ("Free, and one account for every
+OpenVibe site.") and the places follow as rows, "Yours when you sign in": Vibe, Agents, Codes, Files, Machines and
+Wallet, each with its icon, one line of what it does and a lock that lifts on hover. A press signs in through the bar's
+own link and lands on that place, not back on this page (search.js `lockedPlaces`, `signInTo`). Test:
+`menu-guest-ask-chrome` (six rows, their lines, the return address, no sideways scroll).
+
+**A glimpse of the feed for a site's home** (§V.1 and the owner's #800: "a glimpse into the feed … on the homepage that
+shows the beginning and then opens … the feed"). `OpenVibeHome.feed(el, { glimpse: n, onMore, moreHref, moreLabel })`
+draws the first n cards (up to 12) of the public feed: no chips, example searches or day lines, one page asked for and
+never the next, and a Show more button at the end (the page's `onMore`; Live opens the menu's Feed). A feed that does
+not answer leaves nothing and calls `feedMissing`, never the old wall. Test: `feed-glimpse-chrome`.
+
 ## 4.328.0 — 2026-11-20
 
 **A guest may ask the menu's box** (the plan's §V.1 guests; the owner's register #801: "anons should be able to … use

@@ -2541,6 +2541,11 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         const list = h('div', 'ovfd-list');
         const sentinel = h('div', 'ovfd-more');
         el.append(examples, resultHead, chips, list, sentinel);
+        // 4.329.0, a glimpse (the plan's §V.1 and the owner's #800: "a glimpse into the feed … on the homepage that shows
+        // the beginning and then opens … the feed"): o.glimpse = how many cards; no chips, examples, days or endless
+        // loading, and the end is a Show more button (o.onMore, else o.moreHref, else Network's feed).
+        const glimpse = Number.isInteger(o.glimpse) && o.glimpse > 0 ? Math.min(o.glimpse, 12) : 0;
+        if (glimpse) { el.classList.add('ovfd--glimpse'); examples.hidden = true; chips.hidden = true; }
         let kind = '', cursor = null, busy = false, done = false, seq = 0, lastDay = '';
         // 4.229.0: a card already on the list is never drawn again (the owner, 11-12: "112 new deals" three times, one
         // per page of a Deals poll; Network now names a burst once, and this keeps any repeat off the screen).
@@ -2613,6 +2618,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             clearSkels();
             if (!j) {
                 busy = false;
+                if (first && !kind && glimpse) { el.textContent = ''; if (o.feedMissing) o.feedMissing(); return; }   // a glimpse just goes
                 if (first && !kind) { el.textContent = ''; if (o.feedMissing) o.feedMissing(); timeline(el, o); return; }   // the API is not there: the wall stands
                 done = true; sentinel.textContent = ''; sentinel.append(h('p', 'ovh-note', 'That did not load. Pull the menu again to retry.')); return;
             }
@@ -2626,14 +2632,23 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             // Date by date (the owner, 11-09): a quiet day line where the day changes. The network's trending cards
             // (no time of their own) sit between, under the day they were woven into.
             const day = (x) => { const t = Date.parse(String((x && x.at) || '')); return Number.isFinite(t) ? new Date(t).toDateString() : ''; };
-            const mark = (x) => { const d = day(x); if (!d || d === lastDay) return; flush(); lastDay = d; list.append(dayLine(Date.parse(String(x.at)))); };
+            const mark = (x) => { if (glimpse) return; const d = day(x); if (!d || d === lastDay) return; flush(); lastDay = d; list.append(dayLine(Date.parse(String(x.at)))); };
             j.items.filter((x) => x && x.id && !shownIds.has(x.id) && shownIds.add(x.id)).forEach((x) => { mark(x); if (past(x) && !kind) { run.push(x); return; } flush(); add(x, feedCard(x, o)); });
             flush();
+            if (glimpse) { while (list.children.length > glimpse) list.lastElementChild.remove(); }
             if (typeof o.mountIcons === 'function') { try { o.mountIcons(list); } catch { /* */ } }
             cursor = j.next_cursor || null;
-            done = !cursor;
+            done = !cursor || !!glimpse;
             busy = false;
             sentinel.textContent = '';
+            if (glimpse) {
+                if (!list.children.length) { el.textContent = ''; if (o.feedMissing) o.feedMissing(); return; }
+                const go = h('button', 'ovfd-glimpse-more'); go.type = 'button';
+                go.append(h('span', '', o.moreLabel || 'Show more of the feed'), svgIcon('go'));
+                go.addEventListener('click', () => { if (typeof o.onMore === 'function') { try { o.onMore(); return; } catch { /* the link below */ } } location.href = o.moreHref || 'https://openvibe.network/feed'; });
+                sentinel.append(go);
+                return;
+            }
             // An observer speaks only when the end comes into view or leaves it. A page that finished with the end still in
             // view (a short page, a slow answer while the person kept scrolling) would never load the next: observing the
             // end afresh reports where it is now (a slow macOS runner caught this, menu-feed-v2-chrome).
@@ -2641,7 +2656,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             if (done) sentinel.append(h('p', 'ovh-note ovfd-caught', list.querySelector('.ovfd-card,.ovfd-act,.ovfd-update') ? "You're all caught up."
                 : (kind === 'following' ? 'Nothing yet from the people you follow. Follow someone on their profile and what they share shows here.' : 'Nothing here yet.')));
         }
-        KINDS.forEach(([k, label]) => {
+        if (!glimpse) KINDS.forEach(([k, label]) => {
             if (k === 'following' && !signedIn(o)) return;
             const b = h('button', 'ovfd-chip'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', k === kind ? 'true' : 'false');
             { const g = svgIcon(KIND_GL[k] || 'spark'); g.setAttribute('class', 'ovfd-chip-g'); b.append(g, h('span', '', label)); }
@@ -2655,6 +2670,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             });
             chips.append(b);
         });
+        if (glimpse) { more(true); return { update() {}, search, get query() { return query; } }; }
         if (typeof IntersectionObserver === 'function') {
             io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) more(false); }, { root: el.closest('.ovs-list') || null, rootMargin: '600px 0px' });
             io.observe(sentinel);
@@ -2672,6 +2688,14 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         if (document.getElementById('ovfd-styles')) return;
         const st = document.createElement('style'); st.id = 'ovfd-styles';
         st.textContent = `
+/* A glimpse (4.329.0): the first cards, then Show more. */
+.ovfd--glimpse .ovfd-more { padding: 4px 0 0; }
+.ovfd-glimpse-more { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 44px; border-radius: 14px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); color: var(--text-primary, #e8ecf3); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .15s, border-color .15s; }
+.ovfd-glimpse-more svg { width: 18px; height: 18px; transition: transform .2s cubic-bezier(.2, 1.2, .3, 1); }
+.ovfd-glimpse-more:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); border-color: color-mix(in srgb, var(--accent, #3b82f6) 40%, transparent); }
+.ovfd-glimpse-more:hover svg { transform: translateX(calc(3px * var(--ov-move, 1))); }
+.ovfd-glimpse-more:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+html[data-ov-motion=off] .ovfd-glimpse-more svg { transition: none; }
 .ovfd-chips{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:8px 4px;margin:0 -4px;background:var(--bg-secondary,#141a24)}
 .ovfd-chips::-webkit-scrollbar{display:none}
 .ovfd-examples{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:2px 4px 6px;margin:0 -4px}.ovfd-examples::-webkit-scrollbar{display:none}.ovfd-examples[hidden]{display:none}
@@ -2889,5 +2913,6 @@ html[data-ov-motion=off] :is(.ovfd-chip,.ovfd-act-b){transition:none}
         if (o.token) { const a = h('div', 'ovh-notice'); box.append(a); actor(a, o); }
         if (typeof o.look === 'function') { try { o.look(box); } catch { /* the Display button stays a link */ } }
     }
-    root.OpenVibeHome = { home, wallTop, timeline, feed, loadPulse, youCard, actorCard: (box, o) => actor(box, o), _defaultHome: defaultHome };
+    // glimpse: true says feed() takes { glimpse } (4.329.0); a page checks it before asking for one.
+    root.OpenVibeHome = { home, wallTop, timeline, feed, glimpse: true, loadPulse, youCard, actorCard: (box, o) => actor(box, o), _defaultHome: defaultHome };
 })(typeof window !== 'undefined' ? window : globalThis);

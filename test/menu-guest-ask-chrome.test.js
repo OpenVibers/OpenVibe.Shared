@@ -6,7 +6,8 @@
 //     proof), the answer's link is a link, it says how many are left and offers the sign-in; nobody leaves the page;
 //   - the Ask Vibe row is a guest's too (words that are not a question);
 //   - a failed answer offers Try again, which answers; the day's limit says so with the sign-in and no Try again;
-//   - the close button puts the card away; the phone's page never scrolls sideways.
+//   - the close button puts the card away; the phone's page never scrolls sideways;
+//   - You shows the signed-in places, locked, each with its line, signing in back to that place (4.329.0).
 //   node test/menu-guest-ask-chrome.test.js   (OV_SHOTS=dir keeps the phone's pictures)
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
@@ -143,7 +144,17 @@ const OPEN = "OpenVibeSearch.open({ service: 'live', scope: { label: 'Live', pag
         // Closed: the card goes, the list stays.
         await page.evaluate("document.querySelector('.ovs-gans-x').click()");
         assert.ok(await until("document.querySelector('.ovs-gans').hidden && !!document.querySelector('.ovs-list')"), 'closed');
-        console.log(`menu-guest-ask-chrome: a guest is answered in the menu (the check took ${solveMs} ms with 60,000 tries), retries, hears the limit, closes it`);
+        // You: the signed-in places, locked, each with its line; a press signs in and comes back to that place (4.329.0).
+        await page.evaluate("document.querySelector('.ovs-starttabs [data-tab=you]').click()");
+        assert.ok(await until("document.querySelectorAll('[data-sec=locked] .ovs-lock').length === 6"), 'six places, locked');
+        const locked = await page.evaluate(`[...document.querySelectorAll('[data-sec="locked"] a.ovs-opt')].map((a) => [a.querySelector('.ovs-title').textContent, a.querySelector('.ovs-meta').textContent, a.href])`);
+        assert.deepEqual(locked.map((x) => x[0]), ['Vibe', 'Agents', 'Codes', 'Files', 'Machines', 'Wallet']);
+        assert.ok(locked.every((x) => x[1].length > 10), 'each says what it does');
+        assert.equal(locked[0][2], 'https://openvibe.network/login?return=https%3A%2F%2Fopenvibe.chat%2Fvibe', 'signs in and lands on the place');
+        assert.equal(await page.evaluate("document.querySelector('.ovs-guest .ovs-guest-line').textContent"), 'Free, and one account for every OpenVibe site.');
+        assert.equal(await page.evaluate('document.documentElement.scrollWidth'), 390);
+        if (process.env.OV_SHOTS) { const pic = await page.send('Page.captureScreenshot', { format: 'png', clip: { x: 0, y: 0, width: 390, height: 780, scale: 2 } }); fs.writeFileSync(path.join(process.env.OV_SHOTS, 'guest-ask-locked.png'), Buffer.from(pic.data, 'base64')); }
+        console.log(`menu-guest-ask-chrome: a guest is answered in the menu (the check took ${solveMs} ms with 60,000 tries), retries, hears the limit, closes it; You shows the places it is missing, locked`);
     } finally {
         await browser.close().catch(() => {});
         server.close();
