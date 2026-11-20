@@ -123,7 +123,8 @@ const server = http.createServer((req, res) => {
         assert.ok(!v.rows.some(([, u]) => /^javascript:/.test(u)), 'a script link is dropped');
         assert.ok(v.rows.some(([t, u]) => t === 'Search “night” on Chat' && u.endsWith('/search?q=night')), 'this site\'s own search page');
         assert.ok(v.rows.some(([t, u]) => t === 'All results for “night”' && u === 'https://search.openvibe.network/?q=night'), 'every result, in this panel (the link for a new tab)');
-        assert.ok(v.rows.some(([t, u]) => t === 'Ask Vibe: “night”' && u === 'https://openvibe.chat/vibe?ask=night'));
+        // 4.328.0: a guest's Ask Vibe answers in the menu (menu-guest-ask-chrome), it does not go to openvibe.chat.
+        assert.ok(v.rows.some(([t, u]) => t === 'Ask Vibe: “night”' && /#$/.test(u)), 'a guest asks here');
         assert.strictEqual(v.active, 'night room', 'the first row is ready for Enter');
         assert.ok(asked.includes('night'), 'Search was asked');
         // Enter (no row picked, not a place's exact name): every result here, OpenVibe's first, the web as it answers.
