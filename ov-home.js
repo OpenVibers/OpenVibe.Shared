@@ -2914,5 +2914,5 @@ html[data-ov-motion=off] :is(.ovfd-chip,.ovfd-act-b){transition:none}
         if (typeof o.look === 'function') { try { o.look(box); } catch { /* the Display button stays a link */ } }
     }
     // glimpse: true says feed() takes { glimpse } (4.329.0); a page checks it before asking for one.
-    root.OpenVibeHome = { home, wallTop, timeline, feed, glimpse: true, loadPulse, youCard, actorCard: (box, o) => actor(box, o), _defaultHome: defaultHome };
+    root.OpenVibeHome = { home, wallTop, timeline, feed, loadPulse, youCard, actorCard: (box, o) => actor(box, o), _defaultHome: defaultHome, glimpse: true };
 })(typeof window !== 'undefined' ? window : globalThis);
