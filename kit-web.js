@@ -31,6 +31,28 @@
     const SHARE_SRC = (() => { try { const me = document.currentScript; return me && me.src ? me.src.replace(/kit-web\.js(\?[^#]*)?.*$/, 'ov-share.js$1') : ''; } catch (_) { return ''; } })();
     const CHECK = '<svg class="ovk-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
 
+    /**
+     * The strips' measures, together (4.326.0): every sideways strip and rail read its size and then changed its fades,
+     * bar and arrows on its own, at setup and on each resize, so every one after the first made the browser recompute
+     * the page's style (Live's home on a throttled phone, 2026-11-19: 26 recalcs, 279 ms). frame(measure) runs every
+     * waiting measure (reads only) in one frame, then all the writes each returned; a write touches only what changed.
+     */
+    const waiting = new Set();
+    let raf = 0;
+    function frame(measure) {
+        waiting.add(measure);
+        if (raf) return;
+        raf = requestAnimationFrame(() => {
+            raf = 0;
+            const all = Array.from(waiting);
+            waiting.clear();
+            const writes = all.map((f) => { try { return f(); } catch (_) { return null; } });
+            for (const w of writes) if (typeof w === 'function') { try { w(); } catch (_) { /* one strip gone */ } }
+        });
+    }
+    const setHidden = (el, on) => { if (el.hidden !== on) el.hidden = on; };
+    const setStyle = (el, prop, v) => { if (el.style[prop] !== v) el.style[prop] = v; };
+
     /** Opens or closes a sidebar drawer: its scrim, its buttons' aria-expanded, and the focus into it. */
     function setSidebar(sb, on) {
         if (!sb) return;
@@ -193,15 +215,15 @@
             if (!track || !prev || !next || !fine) return;
             const update = () => {
                 const max = track.scrollWidth - track.clientWidth;
-                prev.hidden = track.scrollLeft <= 4;
-                next.hidden = track.scrollLeft >= max - 4;
+                const left = track.scrollLeft;
+                return () => { setHidden(prev, left <= 4); setHidden(next, left >= max - 4); };
             };
             const go = (dir) => track.scrollBy({ left: dir * Math.max(track.clientWidth * 0.85, 200), behavior: still() ? 'auto' : 'smooth' });
             prev.addEventListener('click', () => go(-1));
             next.addEventListener('click', () => go(1));
-            track.addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
-            if (typeof ResizeObserver === 'function') new ResizeObserver(update).observe(track); else window.addEventListener('resize', update);
-            update();
+            track.addEventListener('scroll', () => frame(update), { passive: true });
+            if (typeof ResizeObserver === 'function') new ResizeObserver(() => frame(update)).observe(track); else window.addEventListener('resize', () => frame(update));
+            frame(update);
         });
         // Every sideways strip says it scrolls (11-09, the owner: "it's not very apparent you can horizontal scroll… a little
         // bounce… or auto scroll until you tap"): a kit rail's track, or any element marked data-ovk-scroll. Its edges fade
@@ -219,16 +241,23 @@
             }
             const edges = () => {
                 const max = track.scrollWidth - track.clientWidth;
-                track.classList.toggle('is-more-start', max > 4 && track.scrollLeft > 4);
-                track.classList.toggle('is-more-end', max > 4 && track.scrollLeft < max - 4);
-                if (bar) {
-                    bar.hidden = max <= 4;
-                    if (max > 4) { const share = track.clientWidth / track.scrollWidth; thumb.style.width = `${Math.max(14, share * 100)}%`; thumb.style.transform = `translateX(${(track.scrollLeft / max) * ((1 / Math.max(share, 0.14)) - 1) * 100}%)`; }
-                }
+                const left = track.scrollLeft, width = track.clientWidth, whole = track.scrollWidth;
+                return () => {
+                    track.classList.toggle('is-more-start', max > 4 && left > 4);
+                    track.classList.toggle('is-more-end', max > 4 && left < max - 4);
+                    if (bar) {
+                        setHidden(bar, max <= 4);
+                        if (max > 4) {
+                            const share = width / whole;
+                            setStyle(thumb, 'width', `${Math.max(14, share * 100)}%`);
+                            setStyle(thumb, 'transform', `translateX(${(left / max) * ((1 / Math.max(share, 0.14)) - 1) * 100}%)`);
+                        }
+                    }
+                };
             };
-            track.addEventListener('scroll', () => requestAnimationFrame(edges), { passive: true });
-            if (typeof ResizeObserver === 'function') new ResizeObserver(edges).observe(track);
-            edges();
+            track.addEventListener('scroll', () => frame(edges), { passive: true });
+            if (typeof ResizeObserver === 'function') new ResizeObserver(() => frame(edges)).observe(track);
+            frame(edges);
             if (still() || typeof IntersectionObserver !== 'function') return;
             const drift = track.getAttribute('data-ovk-scroll') === 'drift';
             let touched = false, inView = false, raf = 0, dir = 1, last = 0, pos = -1;
