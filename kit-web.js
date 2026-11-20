@@ -50,6 +50,24 @@
             for (const w of writes) if (typeof w === 'function') { try { w(); } catch (_) { /* one strip gone */ } }
         });
     }
+    /**
+     * A strip measured once it comes near the screen (4.327.0): one inside a section that skips its rendering off screen
+     * (content-visibility: auto) made the browser render that whole section to answer its first size read (Live's home
+     * on a slow laptop, 2026-11-20: 1,160 elements, 250 ms, once a strip). The first measure waits for the strip to be
+     * within 400 px; a resize after that measures again. → the function a resize calls.
+     */
+    function whenNear(el, measure) {
+        if (typeof IntersectionObserver !== 'function') { frame(measure); return () => frame(measure); }
+        let near = false;
+        const io = new IntersectionObserver((entries) => {
+            if (!entries.some((e) => e.isIntersecting)) return;
+            near = true;
+            io.disconnect();
+            frame(measure);
+        }, { rootMargin: '400px 0px' });
+        io.observe(el);
+        return () => { if (near) frame(measure); };
+    }
     const setHidden = (el, on) => { if (el.hidden !== on) el.hidden = on; };
     const setStyle = (el, prop, v) => { if (el.style[prop] !== v) el.style[prop] = v; };
 
@@ -221,9 +239,9 @@
             const go = (dir) => track.scrollBy({ left: dir * Math.max(track.clientWidth * 0.85, 200), behavior: still() ? 'auto' : 'smooth' });
             prev.addEventListener('click', () => go(-1));
             next.addEventListener('click', () => go(1));
-            track.addEventListener('scroll', () => frame(update), { passive: true });
-            if (typeof ResizeObserver === 'function') new ResizeObserver(() => frame(update)).observe(track); else window.addEventListener('resize', () => frame(update));
-            frame(update);
+            track.addEventListener('scroll', () => frame(update), { passive: true });   // a strip being scrolled is on screen
+            const again = whenNear(track, update);
+            if (typeof ResizeObserver === 'function') new ResizeObserver(again).observe(track); else window.addEventListener('resize', again);
         });
         // Every sideways strip says it scrolls (11-09, the owner: "it's not very apparent you can horizontal scroll… a little
         // bounce… or auto scroll until you tap"): a kit rail's track, or any element marked data-ovk-scroll. Its edges fade
@@ -256,8 +274,8 @@
                 };
             };
             track.addEventListener('scroll', () => frame(edges), { passive: true });
-            if (typeof ResizeObserver === 'function') new ResizeObserver(() => frame(edges)).observe(track);
-            frame(edges);
+            const againEdges = whenNear(track, edges);
+            if (typeof ResizeObserver === 'function') new ResizeObserver(againEdges).observe(track);
             if (still() || typeof IntersectionObserver !== 'function') return;
             const drift = track.getAttribute('data-ovk-scroll') === 'drift';
             let touched = false, inView = false, raf = 0, dir = 1, last = 0, pos = -1;
