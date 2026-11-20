@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.326.0 — 2026-11-20
+
+**Sideways strips measure together** (the owner's standing ask: faster pages). `kit-web.js` read each sideways strip's
+and rail's size and then changed its fades, position bar and arrows on its own, at setup and on each resize: every
+strip after the first made the browser recompute the whole page's style (Live's home on a throttled phone: 24-26
+recalcs from it alone, about 230 ms). `frame(measure)` runs every waiting strip's reads in one frame, then all their
+writes, and a write touches only what changed. Measured on Live's home (390, CPU 4x, three loads each): layouts
+71-80 → 41-47, style recalcs 89-98 → 58-61. The fades, bar and arrows behave as before (kit-web-chrome).
+
 ## 4.325.0 — 2026-11-19
 
 **Agents' faces are square again on every site** (the owner, 11-19, the menu's Vibe on a phone: "A lot of these icons
