@@ -121,8 +121,10 @@
                 .openvibe-navbar .ovnav-orb::after { content: ''; position: absolute; inset: -6px -12px -6px -4px; }
             }
             .openvibe-navbar .ovnav-dd { position: relative; display: inline-flex; flex: none; }
-            .openvibe-navbar .ovnav-dd-menu { display: none; position: fixed; top: 56px; left: 0; min-width: 180px; padding: 5px; border-radius: 12px; z-index: 1002; background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); box-shadow: 0 18px 44px rgba(0,0,0,.45); flex-direction: column; gap: 2px; }
+            .openvibe-navbar .ovnav-dd-menu { display: none; position: fixed; top: 56px; left: 0; min-width: 220px; padding: 6px; border-radius: 16px; z-index: 1002; transform-origin: top left; animation: ovnav-dd-in .18s cubic-bezier(.2, .8, .2, 1) both; background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); box-shadow: 0 18px 44px rgba(0,0,0,.45); flex-direction: column; gap: 2px; }
             .openvibe-navbar .ovnav-dd:hover .ovnav-dd-menu, .openvibe-navbar .ovnav-dd.open .ovnav-dd-menu, .openvibe-navbar .ovnav-dd:focus-within .ovnav-dd-menu { display: flex; }
+            @keyframes ovnav-dd-in { from { opacity: 0; transform: translateY(calc(-6px * var(--ov-move, 1))) scale(.98); } to { opacity: 1; transform: none; } }
+            html[data-ov-motion=off] .openvibe-navbar .ovnav-dd-menu { animation: none; }
             .openvibe-navbar .ovnav-chip { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px; border-radius: 999px; font: 700 13px/1 inherit; color: var(--chip-c, var(--text-primary, #e6edf7)); background: color-mix(in srgb, var(--chip-c, var(--accent, #3b82f6)) 12%, transparent); border: 1px solid color-mix(in srgb, var(--chip-c, var(--accent, #3b82f6)) 38%, transparent); font-variant-numeric: tabular-nums; }
             .ovnav-chip[data-tone="gold"] { --chip-c: #fbbf24; } .ovnav-chip[data-tone="green"] { --chip-c: #4ade80; } .ovnav-chip[hidden] { display: none !important; }
             /* A single balance chip (computers): the same calm surface, the icon in its colour, the number in the text's. */
@@ -289,12 +291,27 @@
             @media (min-width: 861px) { .openvibe-navbar .openvibe-navbar-brand { flex: none; } }
             .openvibe-navbar-links > .ovnav-out { display: none; }
             .openvibe-navbar-links a {
-                padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;
+                display: inline-flex; align-items: center; gap: 8px; box-sizing: border-box; min-height: 40px;
+                padding: 0 13px; border-radius: 12px; font-size: 14.5px; font-weight: 600; letter-spacing: -.005em; line-height: 1;
                 color: var(--text-secondary, #b0b0b8); text-decoration: none;
-                transition: all .15s;
+                transition: background-color .15s, color .15s, transform .12s;
             }
-            .openvibe-navbar-links a:hover { background: var(--bg-hover, #2f2f3d); color: var(--text-primary, #e0e0e0); }
-            .openvibe-navbar-links a.active { background: var(--bg-tertiary, #2a2a38); color: var(--accent-light, #60a5fa); }
+            .openvibe-navbar-links a:hover { background: color-mix(in srgb, var(--text-primary, #e0e0e0) 7%, transparent); color: var(--text-primary, #e0e0e0); }
+            .openvibe-navbar-links a:active { transform: scale(.97); }
+            .openvibe-navbar-links a:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+            .openvibe-navbar-links a.active { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); color: var(--accent-light, #60a5fa); }
+            /* Our glyphs, drawn in line at 20 px (below 18.4 px they turn solid: the bar's 14 px icons were). */
+            .openvibe-navbar-links a .icon { display: inline-grid; place-items: center; width: 20px; height: 20px; margin: 0; opacity: .85; }
+            .openvibe-navbar-links a .icon .ovnav-ic { font-size: 17.4px; width: 20px; height: 20px; }
+            .openvibe-navbar-links a .icon svg { width: 20px; height: 20px; }
+            .openvibe-navbar-links a.active .icon, .openvibe-navbar-links a:hover .icon { opacity: 1; }
+            .openvibe-navbar .ovnav-caret { flex: none; width: 16px; height: 16px; margin: 0 -3px 0 -2px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: .75; transition: transform .2s cubic-bezier(.2, 1.2, .3, 1); }
+            .openvibe-navbar .ovnav-dd.open > a .ovnav-caret, .openvibe-navbar .ovnav-dd:hover > a .ovnav-caret, .openvibe-navbar .ovnav-dd:focus-within > a .ovnav-caret { transform: rotate(180deg); }
+            .openvibe-navbar .ovnav-dd-menu a.ovnav-sublink { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; font-size: 14.5px; font-weight: 600; color: var(--text-primary, #e6edf7); }
+            .openvibe-navbar .ovnav-dd-menu a.ovnav-sublink .icon { width: 20px; height: 20px; color: var(--text-secondary, #a8b3c4); }
+            .openvibe-navbar .ovnav-dd-menu a.ovnav-sublink:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); }
+            .openvibe-navbar .ovnav-dd-menu a.ovnav-sublink:hover .icon { color: var(--accent-light, #60a5fa); }
+            html[data-ov-motion=off] .openvibe-navbar .ovnav-caret, html[data-ov-motion=off] .openvibe-navbar-links a { transition: none; }
             /* A featured link (4.117.0): one quiet accent pill with its glyph, for the piece a site is
                built around (the Node on the Network). Deliberate, not loud: one hairline, one tint, the
                glyph, and nothing that moves. */
@@ -1860,10 +1877,10 @@
         const attrs = `${l.id ? ` data-link-id="${escapeAttr(l.id)}"` : ''}${l.elId ? ` id="${escapeAttr((inDrawer ? 'drawer-' : '') + l.elId)}"` : ''}${l.page ? ` data-page="${escapeAttr(l.page)}"` : ''}${l.hidden ? ' hidden' : ''}${l.external ? ' target="_blank" rel="noopener"' : ''}`;
         const kids = Array.isArray(l.children) ? l.children.filter(Boolean) : [];
         const inner = `${l.icon ? `<span class="icon">${navIcon(l.icon)}</span>` : ''}<span class="ovnav-l">${escapeAttr(l.label)}</span>${l.dot !== undefined ? `<span class="ovnav-dot"${l.dotId && !inDrawer ? ` id="${escapeAttr(l.dotId)}"` : ''}${l.dot ? '' : ' hidden'}></span>` : ''}`;
-        const a = `<a href="${escapeAttr(l.href || '#')}" class="ovnav-link${l.active ? ' active' : ''}${l.featured ? ' ovnav-link--featured' : ''}"${attrs}>${inner}${kids.length && !inDrawer ? '<span class="ovnav-caret" aria-hidden="true">▾</span>' : ''}</a>`;
+        const a = `<a href="${escapeAttr(l.href || '#')}" class="ovnav-link${l.active ? ' active' : ''}${l.featured ? ' ovnav-link--featured' : ''}"${attrs}>${inner}${kids.length && !inDrawer ? '<svg class="ovnav-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5l5.5 5.5l5.5-5.5"/></svg>' : ''}</a>`;
         if (!kids.length) return a;
         const menu = kids.map(k => `<a href="${escapeAttr(k.href || '#')}" class="ovnav-link ovnav-sublink"${k.id ? ` data-link-id="${escapeAttr(k.id)}"` : ''}${k.hidden ? ' hidden' : ''}>${k.icon ? `<span class="icon">${navIcon(k.icon)}</span>` : ''}<span class="ovnav-l">${escapeAttr(k.label)}</span></a>`).join('');
-        return inDrawer ? a + menu : `<div class="ovnav-dd"${l.hidden ? ' hidden' : ''}>${a}<div class="ovnav-dd-menu">${menu}</div></div>`;
+        return inDrawer ? a + menu : `<div class="ovnav-dd"${l.hidden ? ' hidden' : ''}>${a.replace('<a ', '<a aria-haspopup="menu" ')}<div class="ovnav-dd-menu" role="menu">${menu}</div></div>`;
     }
     /** 4.119.0: a featured link with an icon keeps a button on the phone's bar. */
     function featuredPhoneHTML(links) {

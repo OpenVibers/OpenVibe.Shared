@@ -18,6 +18,13 @@ type thing that we use for other places, like search").
 Tests: session-organized-chrome and dock-chrome check the tiles, that the box is on the screen and holds its height,
 and that a new session sends from the box.
 
+**The navbar's links and its More menu, polished** (`navbar.js`; the owner, 11-21, circling Actor's bar: "Improve the
+nav bar buttons and fonts and consistency in the drop down for more, and like make it look nicer and use better icons,
+using our icons"). The links are 40 px pills in 14.5 px semibold with our glyphs at 20 px: below 18.4 px the glyphs
+turn solid, which is how the bar's 14 px icons looked heavy and out of place. The active page is an accent pill; the
+More caret is a drawn chevron that turns when it opens (it was the "▾" character); the menu is 220 px wide with 44 px
+rows, its glyphs tinted on hover, and it comes in with a short drop (Off: none). A menu's link says aria-haspopup.
+
 **The menu's Feed is in order** (`ov-home.js`; the owner, 11-21: "the way everything is organized and listed and
 ordered is … broken … the feed just needs major improvement … It needs to be better in order"). For you came ranked
 (score, then one site at a time), so the day lines read Yesterday, Today, Yesterday.
