@@ -2882,8 +2882,15 @@
         loadOptions().then(paintCtx);
 
         // ── the box ──
-        function composer(placeholder) {
+        function composer(placeholder, { ideas = null } = {}) {
             composeSlot.textContent = '';
+            const withIdeas = () => {
+                if (!Array.isArray(ideas) || ideas.length < 2) return;
+                const ta = composeSlot.querySelector('textarea');
+                if (!ta) return;
+                ta.setAttribute('data-ov-trending', 'own');
+                need(o, 'ov-trending.js', 'OVTrending').then((T) => { if (T && ta.isConnected) T.attach(ta, { items: () => ideas, chips: true, prefix: '' }); }).catch(() => {});
+            };
             const send = (v) => onSend(v);
             const plain = () => {
                 const f = el('form', 'ovse-plainbox'); const ta = el('textarea'); ta.rows = 1; ta.placeholder = placeholder; ta.setAttribute('aria-label', placeholder);
@@ -2898,7 +2905,8 @@
             };
             const real = (C) => {
                 try {
-                    C.mount(composeSlot, { preset: 'agent', run: false, frameBase: base, placeholder, label: placeholder, examples: o.examples, user: o.me, noDraft: true, ...(o.composer && typeof o.composer === 'object' ? o.composer : {}), onSubmit: (v) => send({ text: v.text, files: v.files }) });
+                    C.mount(composeSlot, { preset: 'agent', run: false, frameBase: base, placeholder, label: placeholder, examples: Array.isArray(ideas) && ideas.length > 1 ? [placeholder, ...ideas] : o.examples, user: o.me, noDraft: true, ...(o.composer && typeof o.composer === 'object' ? o.composer : {}), onSubmit: (v) => send({ text: v.text, files: v.files }) });
+                    withIdeas();
                 } catch { composeSlot.textContent = ''; plain(); }
             };
             if (root.OpenVibeComposer && root.OpenVibeComposer.mount) real(root.OpenVibeComposer);
@@ -3233,7 +3241,9 @@
         function howCard() {
             // 4.311.0 (the owner, 11-18: "explain this better … I'm so confused"): one card, a row per choice, each with what
             // it means in a line; a tap changes it.
-            const box = el('div', 'ovse-how is-list'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'How your next message runs');
+            // 4.334.0 (11-21: "not wordy … bigger fonts"): four tiles, the value large; the explanation moves to the tile's
+            // title and its accessible name, and to the picker it opens.
+            const box = el('div', 'ovse-how is-tiles'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'How your next message runs');
             const opts = options || fallbackOptions;
             const p = ctxParts();
             const code = coding(opts);
@@ -3251,18 +3261,17 @@
                 ['where', 'Runs on', p.where === 'Auto' ? 'Auto' : p.where, pick.where === 'auto' || !place ? (code ? 'A shared node, or your own computer when it is on' : 'Wherever it fits: OpenVibe, a shared node or your computer') : (place.line || ''), 'computer'],
                 ...(code ? [['effort', 'Effort', p.effort ? p.effort.replace(/ effort$/, '') : 'Auto', (EFFORTS.find((x) => x.id === (pick.effort || 'auto')) || EFFORTS[0]).line || '', 'think']] : []),
             ];
-            box.append(el('p', 'ovse-how-h', 'How your next message runs'));
             const row = ([id, label, value, line, glyph], i, own) => {
-                const b = btn(`ovse-how-c${own ? ' is-own' : ''}`, `${label}: ${value || 'Auto'}. Change it`);
+                const b = btn(`ovse-how-c${own ? ' is-own' : ''}`, `${label}: ${value || 'Auto'}.${line ? ` ${line}.` : ''} Change it`);
                 b.style.setProperty('--i', String(i));
+                if (line) b.title = line;
                 const tile = el('span', 'ovse-how-i'); tile.append(svg(glyph));
                 const t = el('span', 'ovse-how-t'); t.append(el('small', '', label), el('b', '', value || 'Auto'));
-                if (line) t.append(el('span', 'ovse-how-l', line));
-                b.append(tile, t, svg('chev', 'ovse-how-go'));
+                b.append(tile, t);
                 return b;
             };
             rows.forEach((x, i) => { const b = row(x, i); b.addEventListener('click', () => openCtx(x[0])); box.append(b); });
-            const own = row(['own', 'Your AI', 'Keys · Balance · computers', 'Use your own keys, Balance or computer instead of the free AI', 'tune'], rows.length, true);
+            const own = row(['own', 'Your AI', 'Set it up', 'Use your own keys, Balance or computer instead of the free AI', 'tune'], rows.length, true);
             own.addEventListener('click', () => yourAI());
             box.append(own);
             // Drawn at once from what is known; once, when the Frame's choices first arrive, again with their names.
@@ -3316,16 +3325,18 @@
             const big = el('span', `ovse-hello-face is-${c.kind}`); big.append(svg(c.kind === 'auto' ? 'spark' : c.kind === 'actor' ? 'robot' : 'code'));
             if (o.actor && c.kind === 'actor') loadActor().then(() => { if (!actor || !big.isConnected || chosen().kind !== 'actor') return; big.textContent = ''; big.classList.add('is-actor'); big.append(actorFace('xl')); });
             const helloT = c.kind === 'code' ? 'What should we build?' : (o.helloTitle || 'What should we do?');
-            const helloL = c.kind === 'code' ? `${c.name} writes and changes code on a shared node or your own computer, with the coding agent and model you pick.`
-                : c.kind === 'actor' && c.id === 'actor' ? `${c.name} answers, searches and does things for you. / for commands.` : null;
-            hi.append(big, el('b', 'ovse-hello-t', helloT), el('p', 'ovse-hello-l', helloL || o.line || 'Type anything. It answers, searches, makes things and writes code, on the right agent for it. / for commands, @ to pick who works on it.'));
+            // 4.334.0 (the owner's phone, 11-21: "a little more intuitive and nicer looking and easy to understand … not
+            // wordy … bigger fonts"): one short line; / and @ are in the box's own hint.
+            const helloL = c.kind === 'code' ? 'Build, fix or explain code, on a shared node or your computer.'
+                : c.kind === 'actor' && c.id === 'actor' ? 'Ask, search or get something done.' : null;
+            hi.append(big, el('b', 'ovse-hello-t', helloT), el('p', 'ovse-hello-l', helloL || o.line || 'Ask, search, make or code.'));
             thread.append(hi, howCard());
             // Admins and the owner start groups (4.302.0, plan §AD.19): people and agents in one thread.
             groupsAllowed().then((ok) => {
                 if (!ok || !hi.isConnected) return;
-                const g = btn('ovse-group-start', 'Start a group with people and agents', 'members', '');
-                const t = el('span'); t.append(el('b', '', 'Start a group'), el('small', '', 'People and agents in one thread: Actor, Codes and any harness, with a shared space'));
-                g.append(t);
+                const g = btn('ovse-group-start', 'Start a group: people and agents in one thread', 'members', '');
+                g.title = 'People and agents in one thread: Actor, Codes and any harness, with a shared space';
+                g.append(el('b', '', 'Start a group'));
                 g.addEventListener('click', () => startGroup(g));
                 hi.after(g);
             });
@@ -3333,20 +3344,14 @@
             const CODE_STARTERS = [['code', 'Fix the failing test in my repository'], ['search', 'Explain how this codebase is laid out'], ['check', 'Add tests for the newest change'],
                 ['spark', 'Make a small web page that shows the weather'], ['file', 'Review my last commit and say what to improve']];
             const starters = c.kind === 'code' ? CODE_STARTERS : o.starters;
-            if (Array.isArray(starters) && starters.length) {
-                const st = el('div', 'ovse-starters'); st.setAttribute('role', 'group'); st.setAttribute('aria-label', 'Things to ask');
-                starters.slice(0, 6).forEach((x, i) => {
-                    const [g, w] = Array.isArray(x) ? x : ['spark', String(x)];
-                    const b = btn('ovse-starter', null, G[g] ? g : 'spark', w); b.style.setProperty('--i', String(i));
-                    b.addEventListener('click', () => { b.disabled = true; start(w); });
-                    st.append(b);
-                });
-                thread.append(st);
-            }
+            // 4.334.0 (the owner, 11-21: "do we even need that? … use the placeholder text type thing that we use for other
+            // places, like search"): the ideas turn in the box itself and come up as chips when it is focused.
+            const ideas = [...new Set([...(Array.isArray(starters) ? starters : []).map((x) => (Array.isArray(x) ? x[1] : String(x))),
+                ...(c.kind === 'code' ? [] : Array.isArray(o.examples) ? o.examples : [])].map((x) => String(x || '').trim()).filter(Boolean))].slice(0, 12);
             planBox.hidden = true;
             [...runsBox.querySelectorAll('.ovse-row')].forEach((b) => b.classList.remove('is-on'));
             paintHead(); paintCtx(); markChosen();
-            composer(o.placeholder || 'Ask anything, or describe what to build');
+            composer(o.placeholder || 'Ask anything, or describe what to build', { ideas });
             emit('session.blank', {});
         }
         function prefill(text) {
@@ -3660,8 +3665,10 @@ html[data-ov-motion="off"] .ovse-use-seg, html[data-ov-motion="off"] .ovse-use-g
 .ovse-group-b:hover { background: var(--bg-hover, rgba(255,255,255,.06)); }
 .ovse-them { align-self: flex-start; }
 .ovse-group-working .ovse-typing { color: var(--text-muted, #8a96ad); font-size: .85rem; }
-.ovse-group-start { display: flex; align-items: center; gap: 12px; width: min(100%, 420px); margin: 12px auto 0; padding: 12px 14px; border: 1px dashed color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.ovse-group-start > svg { flex: none; width: 22px; height: 22px; color: var(--accent, #3b82f6); }
+.ovse-group-start { display: flex; align-items: center; justify-content: center; gap: 8px; width: auto; min-height: 44px; margin: 6px auto 0; padding: 8px 16px; border: 1px dashed color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); color: inherit; font: inherit; font-size: 15px; text-align: left; cursor: pointer; transition: background-color .15s, transform .15s; }
+.ovse-group-start:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); }
+.ovse-group-start:active { transform: scale(.97); }
+.ovse-group-start > svg { flex: none; width: 20px; height: 20px; color: var(--accent, #3b82f6); }
 .ovse-group-start span, .ovse-gfile span { display: grid; gap: 2px; min-width: 0; }
 .ovse-group-start small, .ovse-gfile small { color: var(--text-muted, #8a96ad); font-size: .78rem; }
 .ovse-mention { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 12px 0; }
@@ -3727,6 +3734,7 @@ html[data-ov-motion="off"] .ovse-how-c, html[data-ov-motion="off"] .ovse-setup, 
 
 /* the session */
 .ovse-main { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-width: 0; min-height: 0; grid-row: 1; }
+.ovse-main > .ovse-head { grid-row: 1; } .ovse-main > .ovse-body { grid-row: 2; } .ovse-main > .ovse-foot { grid-row: 3; }
 .ovse.has-nav-lead .ovse-menu { display: none; }
 .ovse.has-nav-lead.is-blank .ovse-head { display: none; }
 .ovse-sb-pane { transform-box: fill-box; transform-origin: 0 50%; transform: scaleX(0); opacity: 0; transition: transform .34s cubic-bezier(.2, .9, .3, 1), opacity .22s ease; }
@@ -3945,8 +3953,26 @@ details.ovse-tool > .ovse-tool-h { cursor: pointer; } details.ovse-tool > .ovse-
 .ovse-hello { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 8px 8px 4px; animation: ovse-in .4s cubic-bezier(.2,.8,.2,1) both; }
 .ovse-hello-face { display: inline-grid; place-items: center; width: 60px; height: 60px; border-radius: 22px; background: linear-gradient(140deg, var(--ovse-acc), var(--ovse-acc2)); color: var(--on-accent, #fff); box-shadow: 0 12px 40px color-mix(in srgb, var(--ovse-acc) 40%, transparent); animation: ovse-float 5s ease-in-out infinite; }
 .ovse-hello-face .ovse-g { width: 30px; height: 30px; }
-.ovse-hello-t { font-size: 24px; letter-spacing: -.01em; }
-.ovse-hello-l { margin: 0; max-width: 46ch; color: var(--ovse-dim); }
+.ovse-hello-t { font-size: clamp(27px, 7.4vw, 36px); font-weight: 800; line-height: 1.1; letter-spacing: -.02em; text-wrap: balance; }
+.ovse-hello-l { margin: 0; max-width: 34ch; font-size: clamp(16.5px, 4.4vw, 19px); line-height: 1.4; color: var(--ovse-dim); text-wrap: balance; }
+.ovse.is-blank .ovse-hello { gap: 10px; padding: 8px 8px 2px; }
+.ovse.is-blank .ovse-hello-face:not(.is-actor) { width: 72px; height: 72px; border-radius: 26px; }
+.ovse.is-blank .ovse-hello-face:not(.is-actor) .ovse-g { width: 36px; height: 36px; }
+/* 4.334.0: the choices as tiles (two across on a phone, four on a wide screen). */
+.ovse-how.is-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: min(560px, 100%); box-sizing: border-box; margin: 20px auto 6px; padding: 0; border: 0; background: none; }
+.ovse.is-wide .ovse-how.is-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); width: min(820px, 100%); }
+.ovse-how.is-tiles .ovse-how-c { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 10px; width: 100%; max-width: none; min-height: 70px; box-sizing: border-box; padding: 12px; border: 1px solid var(--ovse-line); border-radius: 18px; background: var(--ovse-card); text-align: left; animation: ovse-in .35s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(60ms + var(--i, 0) * 45ms); transition: border-color .15s, background-color .15s, transform .15s; }
+.ovse-how.is-tiles .ovse-how-c:hover { border-color: color-mix(in srgb, var(--ovse-acc) 55%, var(--ovse-line)); background: color-mix(in srgb, var(--ovse-acc) 6%, var(--ovse-card)); }
+.ovse-how.is-tiles .ovse-how-c:active { transform: scale(.97); }
+.ovse-how.is-tiles .ovse-how-c:focus-visible { outline: 2px solid var(--ovse-acc); outline-offset: 2px; }
+.ovse-how.is-tiles .ovse-how-i { width: 40px; height: 40px; border-radius: 13px; }
+.ovse-how.is-tiles .ovse-how-i .ovse-g { width: 22px; height: 22px; }
+.ovse-how.is-tiles .ovse-how-t { gap: 2px; }
+.ovse-how.is-tiles .ovse-how-t small { font-size: 12.5px; color: var(--ovse-mute); }
+.ovse-how.is-tiles .ovse-how-t b { max-width: none; font-size: 16.5px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovse-how.is-tiles .ovse-how-c.is-own { border-style: dashed; }
+.ovse-how.is-tiles .ovse-how-c.is-own .ovse-how-i { background: transparent; border: 1px dashed var(--ovse-line); }
+html[data-ov-motion=off] .ovse-how.is-tiles .ovse-how-c { animation: none; transition: none; }
 .ovse-starters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 8px; margin-top: 10px; }
 .ovse-starter { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 10px 14px; border: 1px solid var(--ovse-line); border-radius: 16px; background: var(--ovse-card); text-align: left; cursor: pointer; animation: ovse-in .35s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(80ms + var(--i, 0) * 45ms); transition: border-color .15s, transform .15s; }
 .ovse-starter:hover { border-color: color-mix(in srgb, var(--ovse-acc) 50%, var(--ovse-line)); transform: translateY(calc(-1px * var(--ov-move, 1))); }

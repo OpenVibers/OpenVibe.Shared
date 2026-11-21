@@ -121,8 +121,10 @@
                 .openvibe-navbar .ovnav-orb::after { content: ''; position: absolute; inset: -6px -12px -6px -4px; }
             }
             .openvibe-navbar .ovnav-dd { position: relative; display: inline-flex; flex: none; }
-            .openvibe-navbar .ovnav-dd-menu { display: none; position: fixed; top: 56px; left: 0; min-width: 180px; padding: 5px; border-radius: 12px; z-index: 1002; background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); box-shadow: 0 18px 44px rgba(0,0,0,.45); flex-direction: column; gap: 2px; }
+            .openvibe-navbar .ovnav-dd-menu { display: none; position: fixed; top: 56px; left: 0; min-width: 220px; padding: 6px; border-radius: 16px; z-index: 1002; transform-origin: top left; animation: ovnav-dd-in .18s cubic-bezier(.2, .8, .2, 1) both; background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); box-shadow: 0 18px 44px rgba(0,0,0,.45); flex-direction: column; gap: 2px; }
             .openvibe-navbar .ovnav-dd:hover .ovnav-dd-menu, .openvibe-navbar .ovnav-dd.open .ovnav-dd-menu, .openvibe-navbar .ovnav-dd:focus-within .ovnav-dd-menu { display: flex; }
+            @keyframes ovnav-dd-in { from { opacity: 0; transform: translateY(calc(-6px * var(--ov-move, 1))) scale(.98); } to { opacity: 1; transform: none; } }
+            html[data-ov-motion=off] .openvibe-navbar .ovnav-dd-menu { animation: none; }
             .openvibe-navbar .ovnav-chip { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px; border-radius: 999px; font: 700 13px/1 inherit; color: var(--chip-c, var(--text-primary, #e6edf7)); background: color-mix(in srgb, var(--chip-c, var(--accent, #3b82f6)) 12%, transparent); border: 1px solid color-mix(in srgb, var(--chip-c, var(--accent, #3b82f6)) 38%, transparent); font-variant-numeric: tabular-nums; }
             .ovnav-chip[data-tone="gold"] { --chip-c: #fbbf24; } .ovnav-chip[data-tone="green"] { --chip-c: #4ade80; } .ovnav-chip[hidden] { display: none !important; }
             /* A single balance chip (computers): the same calm surface, the icon in its colour, the number in the text's. */
@@ -289,12 +291,27 @@
             @media (min-width: 861px) { .openvibe-navbar .openvibe-navbar-brand { flex: none; } }
             .openvibe-navbar-links > .ovnav-out { display: none; }
             .openvibe-navbar-links a {
-                padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;
+                display: inline-flex; align-items: center; gap: 8px; box-sizing: border-box; min-height: 40px;
+                padding: 0 13px; border-radius: 12px; font-size: 14.5px; font-weight: 600; letter-spacing: -.005em; line-height: 1;
                 color: var(--text-secondary, #b0b0b8); text-decoration: none;
-                transition: all .15s;
+                transition: background-color .15s, color .15s, transform .12s;
             }
-            .openvibe-navbar-links a:hover { background: var(--bg-hover, #2f2f3d); color: var(--text-primary, #e0e0e0); }
-            .openvibe-navbar-links a.active { background: var(--bg-tertiary, #2a2a38); color: var(--accent-light, #60a5fa); }
+            .openvibe-navbar-links a:hover { background: color-mix(in srgb, var(--text-primary, #e0e0e0) 7%, transparent); color: var(--text-primary, #e0e0e0); }
+            .openvibe-navbar-links a:active { transform: scale(.97); }
+            .openvibe-navbar-links a:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+            .openvibe-navbar-links a.active { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); color: var(--accent-light, #60a5fa); }
+            /* Our glyphs, drawn in line at 20 px (below 18.4 px they turn solid: the bar's 14 px icons were). */
+            .openvibe-navbar-links a .icon { display: inline-grid; place-items: center; width: 20px; height: 20px; margin: 0; opacity: .85; }
+            .openvibe-navbar-links a .icon .ovnav-ic { font-size: 17.4px; width: 20px; height: 20px; }
+            .openvibe-navbar-links a .icon svg { width: 20px; height: 20px; }
+            .openvibe-navbar-links a.active .icon, .openvibe-navbar-links a:hover .icon { opacity: 1; }
+            .openvibe-navbar .ovnav-caret { flex: none; width: 16px; height: 16px; margin: 0 -3px 0 -2px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: .75; transition: transform .2s cubic-bezier(.2, 1.2, .3, 1); }
+            .openvibe-navbar .ovnav-dd.open > a .ovnav-caret, .openvibe-navbar .ovnav-dd:hover > a .ovnav-caret, .openvibe-navbar .ovnav-dd:focus-within > a .ovnav-caret { transform: rotate(180deg); }
+            .openvibe-navbar .ovnav-dd-menu a.ovnav-sublink { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; font-size: 14.5px; font-weight: 600; color: var(--text-primary, #e6edf7); }
+            .openvibe-navbar .ovnav-dd-menu a.ovnav-sublink .icon { width: 20px; height: 20px; color: var(--text-secondary, #a8b3c4); }
+            .openvibe-navbar .ovnav-dd-menu a.ovnav-sublink:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); }
+            .openvibe-navbar .ovnav-dd-menu a.ovnav-sublink:hover .icon { color: var(--accent-light, #60a5fa); }
+            html[data-ov-motion=off] .openvibe-navbar .ovnav-caret, html[data-ov-motion=off] .openvibe-navbar-links a { transition: none; }
             /* A featured link (4.117.0): one quiet accent pill with its glyph, for the piece a site is
                built around (the Node on the Network). Deliberate, not loud: one hairline, one tint, the
                glyph, and nothing that moves. */
@@ -665,7 +682,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '4418451da9f3', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '3e88494ddcc6', 'dock.js': '6efd8bb9b020', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'e5b2468afb29', 'history.js': 'f9fb9e096c65', 'bottom.js': '34c927fb7ad5', 'appbar.js': '704adec2ecb4', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'c8712c1f5025', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '92e28094d186', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'c1e7daded213', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': '8e4322324f64', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'bd5898c02871', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'e8fea957e9be', 'ov-composer.js': 'aae5f2e0e6d1', 'items.js': '321850a5bd67', 'items.css': 'ccb7103adad6', 'ov-session.js': 'ff2b2226d9cd', 'ov-guest-ask.js': '6c7a4927d8c3', 'ov-face.js': 'e6ae3168452e' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '4418451da9f3', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '3e88494ddcc6', 'dock.js': '6efd8bb9b020', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '1626f844e2fa', 'history.js': 'f9fb9e096c65', 'bottom.js': '34c927fb7ad5', 'appbar.js': '704adec2ecb4', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'c8712c1f5025', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '67bd3552b46a', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'c1e7daded213', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-trending.js': '8e4322324f64', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'bd5898c02871', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'e8fea957e9be', 'ov-composer.js': 'aae5f2e0e6d1', 'items.js': '321850a5bd67', 'items.css': 'ccb7103adad6', 'ov-session.js': '3cbb72d45453', 'ov-guest-ask.js': '6c7a4927d8c3', 'ov-face.js': 'e6ae3168452e' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -1860,10 +1877,10 @@
         const attrs = `${l.id ? ` data-link-id="${escapeAttr(l.id)}"` : ''}${l.elId ? ` id="${escapeAttr((inDrawer ? 'drawer-' : '') + l.elId)}"` : ''}${l.page ? ` data-page="${escapeAttr(l.page)}"` : ''}${l.hidden ? ' hidden' : ''}${l.external ? ' target="_blank" rel="noopener"' : ''}`;
         const kids = Array.isArray(l.children) ? l.children.filter(Boolean) : [];
         const inner = `${l.icon ? `<span class="icon">${navIcon(l.icon)}</span>` : ''}<span class="ovnav-l">${escapeAttr(l.label)}</span>${l.dot !== undefined ? `<span class="ovnav-dot"${l.dotId && !inDrawer ? ` id="${escapeAttr(l.dotId)}"` : ''}${l.dot ? '' : ' hidden'}></span>` : ''}`;
-        const a = `<a href="${escapeAttr(l.href || '#')}" class="ovnav-link${l.active ? ' active' : ''}${l.featured ? ' ovnav-link--featured' : ''}"${attrs}>${inner}${kids.length && !inDrawer ? '<span class="ovnav-caret" aria-hidden="true">▾</span>' : ''}</a>`;
+        const a = `<a href="${escapeAttr(l.href || '#')}" class="ovnav-link${l.active ? ' active' : ''}${l.featured ? ' ovnav-link--featured' : ''}"${attrs}>${inner}${kids.length && !inDrawer ? '<svg class="ovnav-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5l5.5 5.5l5.5-5.5"/></svg>' : ''}</a>`;
         if (!kids.length) return a;
         const menu = kids.map(k => `<a href="${escapeAttr(k.href || '#')}" class="ovnav-link ovnav-sublink"${k.id ? ` data-link-id="${escapeAttr(k.id)}"` : ''}${k.hidden ? ' hidden' : ''}>${k.icon ? `<span class="icon">${navIcon(k.icon)}</span>` : ''}<span class="ovnav-l">${escapeAttr(k.label)}</span></a>`).join('');
-        return inDrawer ? a + menu : `<div class="ovnav-dd"${l.hidden ? ' hidden' : ''}>${a}<div class="ovnav-dd-menu">${menu}</div></div>`;
+        return inDrawer ? a + menu : `<div class="ovnav-dd"${l.hidden ? ' hidden' : ''}>${a.replace('<a ', '<a aria-haspopup="menu" ')}<div class="ovnav-dd-menu" role="menu">${menu}</div></div>`;
     }
     /** 4.119.0: a featured link with an icon keeps a button on the phone's bar. */
     function featuredPhoneHTML(links) {

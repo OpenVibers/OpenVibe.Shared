@@ -1678,6 +1678,10 @@
             if (seq !== v.seq) return;
             v.items = data.notifications || []; v.items.forEach(n => v.ids.add(String(n.id)));
             v.hasMore = !!data.has_more; v.total = data.total ?? null; v.offset = v.items.length;
+            // 4.334.0 (11-21: a "1" on Alerts over "0 unread"): an unread list with no search and no tab is the count.
+            if (v.unread && !v.q && (!v.tab || v.tab === 'all') && Number.isFinite(Number(data.total)) && Number(data.total) !== _unreadCount) {
+                setBadge(Number(data.total), { quiet: true }); broadcast({ type: 'unread', count: Number(data.total) });
+            }
             if (typeof v.onCount === 'function') { try { v.onCount(v.total); } catch { /* */ } }
             renderItems(v);
         } catch (e) {
@@ -1704,7 +1708,11 @@
             if (earlier && !v.items.length && !v.earlier.hasMore) { v.earlier = null; renderItems(v); return; }
             if (earlier && fresh.length && !v.earlier.started) {
                 v.earlier.started = true; v.lastDay = null;
-                if (list) list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-earlier" role="separator">Earlier</div>');
+                // "Earlier" parts unread rows from read ones; with no unread row above it, it only stacked over "Today"
+                // (11-21), so the caught-up line stands alone and the day lines follow.
+                const unreadAbove = list && [...list.children].some((x) => x.classList && x.classList.contains('openvibe-notif-item'));
+                if (list && unreadAbove) list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-earlier" role="separator">Earlier</div>');
+                else if (list && !list.querySelector('.ovn-caught')) list.insertAdjacentHTML('beforeend', `<p class="ovn-caught">${svg(ICON.read)}<span>You're all caught up</span></p>`);
             }
             if (fresh.length) { const tail = { ...v, items: fresh }; renderItems(tail, { append: true, view: v }); v.lastDay = tail.lastDay; }
             else if (v.hasMore || earlierNext(v)) moreMark(v, list);

@@ -371,7 +371,8 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await p.evaluate(MENU_BUTTON);
             await until(p, "!!document.querySelector('.ovs.is-open .ovs-starttabs [data-dock=\"vibe\"]')", 'the Vibe place');
             await p.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`);
-            await until(p, "!!document.querySelector('.ovs-door-host .ovse.is-blank .ovse-hello') && document.querySelectorAll('.ovs-door-host .ovse-starter').length === 6", 'a new session first');
+            // 4.334.0: the starters are the box's turning ideas (and its chips on focus), not a stack of cards.
+            await until(p, "!!document.querySelector('.ovs-door-host .ovse.is-blank .ovse-hello') && !document.querySelector('.ovs-door-host .ovse-starter') && !!document.querySelector('.ovs-door-host .ovse-compose textarea[data-ov-trending=\"own\"]')", 'a new session first');
             if (process.env.OV_CAPTURE_VIBE) { await wait(700); const r = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(process.env.OV_CAPTURE_VIBE, 'vibe-new-390.png'), Buffer.from(r.data, 'base64')); }
             await p.evaluate("document.querySelector('.ovs-door-host .ovse-menu').click()");
             await until(p, "document.querySelectorAll('.ovs-door-host .ovse-row:not(.is-ghost)').length === 4", 'the session and the Action Center\'s three');
@@ -595,8 +596,8 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             assert.match(me.text, /Ready · \$0\.12 of \$1\.00 today/, 'its state and today\'s spend');
             assert.strictEqual(me.go, 'Pause Juniper', 'and Pause on its card');
             await p.evaluate("document.querySelector('.ovs-door-host .ovse-dclose').click()");
-            await until(p, "document.querySelectorAll('.ovs-door-host .ovse-starter').length === 6 && [...document.querySelectorAll('.ovs-door-host .ovse-starter')].every((b) => b.querySelector('svg'))", 'the starters, each with its glyph');
-            await p.evaluate("document.querySelector('.ovs-door-host .ovse-starter').click()");
+            await until(p, "!!document.querySelector('.ovs-door-host .ovse-compose textarea[data-ov-trending=\"own\"]')", 'the box, with its ideas');
+            await p.evaluate("(() => { const t = document.querySelector('.ovs-door-host .ovse-compose textarea'); t.value = 'Remind me to stretch every 2 hours'; t.dispatchEvent(new Event('input', { bubbles: true })); const f = t.closest('form'); if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable: true })); return 1; })()");
             await until(p, "!!document.querySelector('.ovs-door-host .ovse-thread .ovse-me')", 'my words at once');
             assert.strictEqual(asked[0].message, 'Remind me to stretch every 2 hours');
             assert.strictEqual(asked[0].kind, null, 'no kind: the Frame places the words');

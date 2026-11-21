@@ -1,5 +1,45 @@
 # Changelog
 
+## 4.334.0 — 2026-11-21
+
+**A new session: the box is on the screen, the page says less and says it larger, and the ideas turn in the box**
+(`ov-session.js`; the owner's phone, openvibe.actor/chat, 11-21: "the composer is missing … the design and layout needs
+improvement … more intuitive … not wordy … bigger fonts … do we even need [the suggestions]? … use the placeholder text
+type thing that we use for other places, like search").
+- The composer was off the screen on a phone: a blank session hides its head, and CSS grid's auto-placement then put
+  the thread in the head's `auto` row (as tall as its content) and the box in a 0-px row under the page's tab bar. Each
+  part of the main column has its own row now.
+- The hello is one short line ("Ask, search or get something done.") under a larger title.
+- How the next message runs is four tiles (two across on a phone, four on a wide screen): what each is set to, large;
+  what it means is the tile's title and accessible name, and the picker it opens. "Your AI" reads "Set it up".
+- The starter cards are gone: they turn in the box with the shared suggestion line (`OVTrending`, chips on focus, Tab
+  takes one), with the site's examples.
+- Start a group is a pill.
+Tests: session-organized-chrome and dock-chrome check the tiles, that the box is on the screen and holds its height,
+and that a new session sends from the box.
+
+**The navbar's links and its More menu, polished** (`navbar.js`; the owner, 11-21, circling Actor's bar: "Improve the
+nav bar buttons and fonts and consistency in the drop down for more, and like make it look nicer and use better icons,
+using our icons"). The links are 40 px pills in 14.5 px semibold with our glyphs at 20 px: below 18.4 px the glyphs
+turn solid, which is how the bar's 14 px icons looked heavy and out of place. The active page is an accent pill; the
+More caret is a drawn chevron that turns when it opens (it was the "▾" character); the menu is 220 px wide with 44 px
+rows, its glyphs tinted on hover, and it comes in with a short drop (Off: none). A menu's link says aria-haspopup.
+
+**Alerts: the badge agrees with the list, and no "Earlier" over "Today"** (`notification-ui.js`; the owner's phone, 11-21:
+"Bugged", circling a "1" on Alerts and the avatar over "0 unread · 771 in all", and "EARLIER" drawn above "TODAY").
+An unread list with no search and no tab is the count now: the bell, the menu's Alerts tab and the avatar take its
+total. "Earlier" parts unread rows from read ones; with nothing unread above it, the caught-up line stands alone and the
+day lines follow.
+
+**The menu's Feed is in order** (`ov-home.js`; the owner, 11-21: "the way everything is organized and listed and
+ordered is … broken … the feed just needs major improvement … It needs to be better in order"). For you came ranked
+(score, then one site at a time), so the day lines read Yesterday, Today, Yesterday.
+- A page is drawn newest first; a card with no time keeps the place of the one before it.
+- What is live now leads, under its own "Live now" line.
+- A day line is drawn only when the day is older than the last one.
+- The network's numbers of one day (Report's cards) are one card, "OpenVibe right now", its figures in a grid.
+- The same thing done by several people on one day (an achievement, a quest) is one card of their faces.
+
 ## 4.333.0 — 2026-11-21
 
 **Every site's footer: structured data, and headings that never skip a level** (`footer.js`; the owner, 11-21: "analyze
