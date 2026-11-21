@@ -162,13 +162,17 @@
         if (TOOL_FAMILIES.has(s)) return `https://${s}.openvibe.tools`;
         return /^[a-z]{2,12}$/.test(s) ? `https://openvibe.${s}` : null;
     }
-    /** The JSON-LD the footer carries: the organization, and the site when its address is known. */
+    /**
+     * The structured data the footer carries, as microdata (4.336.0; was a JSON-LD script): the organization, and the
+     * site when its address is known. Microdata leaves a page's JSON-LD to the page alone (one script, the page's own
+     * Recipe, JobPosting or VideoObject, and none on a private page) while search engines read the same facts.
+     */
     function structuredData(c) {
         const url = siteUrlOf(c);
-        const graph = [ORG];
-        if (url) graph.push({ '@type': 'WebSite', '@id': `${url}/#website`, name: c.brandName || brandFor(c.service), url: `${url}/`, publisher: { '@id': ORG_ID }, inLanguage: 'en' });
-        // JSON in a script element: "<" is escaped so no text in it can close the element.
-        return `<script type="application/ld+json" data-ovf-ld>${JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c')}</script>`;
+        const org = (inner) => `<div itemscope itemtype="https://schema.org/Organization" itemid="${ORG_ID}"${inner ? ' itemprop="publisher"' : ''}><meta itemprop="name" content="${esc(ORG.name)}">`
+            + (inner ? '' : `<link itemprop="url" href="${esc(ORG.url)}"><link itemprop="logo" href="${esc(ORG.logo)}">${ORG.sameAs.map((s) => `<link itemprop="sameAs" href="${esc(s)}">`).join('')}`) + '</div>';
+        const site = url ? `<div itemscope itemtype="https://schema.org/WebSite" itemid="${esc(url)}/#website"><meta itemprop="name" content="${esc(c.brandName || brandFor(c.service))}"><link itemprop="url" href="${esc(url)}/"><meta itemprop="inLanguage" content="en">${org(true)}</div>` : '';
+        return `<div class="ovf-ld" data-ovf-ld hidden>${org(false)}${site}</div>`;
     }
 
     const DEFAULTS = {
@@ -884,7 +888,7 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
         try { el.setAttribute('data-ovf-live', ''); } catch { /* */ }
         // The structured data, when the server did not write it (a page that mounts the footer with no SSR).
         try {
-            if (_cfg.structuredData !== false && !document.querySelector('script[data-ovf-ld]')) el.insertAdjacentHTML('afterend', structuredData(_cfg));
+            if (_cfg.structuredData !== false && !document.querySelector('[data-ovf-ld]')) el.insertAdjacentHTML('afterend', structuredData(_cfg));
         } catch { /* a page without the DOM API needed: no structured data */ }
         render();
         // 'auto' on a single-page site follows its routes: back and forward re-read the path (a route the site pushes

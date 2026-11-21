@@ -24,6 +24,7 @@ const said = { stops: 0, messages: [] };
 const runs = [
     { ref: 'actor:run_1', kind: 'chat', title: 'Test code something', status: 'waiting', waiting: { for: 'message' }, created_at: iso(600), updated_at: iso(500), agent: { id: 'actor', name: 'Actor' } },
     { ref: 'actor:run_live', kind: 'chat', title: 'Analyze this', status: 'running', created_at: iso(60), updated_at: iso(5), agent: { id: 'actor', name: 'Actor' } },
+    { ref: 'actor:run_done', kind: 'chat', title: 'All of it', status: 'succeeded', created_at: iso(900), updated_at: iso(800), agent: { id: 'actor', name: 'Actor' } },
 ];
 const steps = {
     'actor:run_1': [
@@ -34,6 +35,11 @@ const steps = {
         { seq: 5, kind: 'think', status: 'done', text: PLAN2 },
         { seq: 6, kind: 'message', from: 'agent', status: 'done', text: SAID },
         { seq: 7, kind: 'message', from: 'agent', status: 'done', text: TABLE },
+    ],
+    'actor:run_done': [
+        { seq: 1, kind: 'message', from: 'person', status: 'done', text: 'All of it' },
+        { seq: 2, kind: 'think', status: 'done', text: '✓ 1. Choose a small function\n✓ 2. Write its unittest\n✓ 3. Run it' },
+        { seq: 3, kind: 'message', from: 'agent', status: 'done', text: 'Done: the test passes.' },
     ],
     'actor:run_live': [
         { seq: 1, kind: 'message', from: 'person', status: 'done', text: 'Analyze this' },
@@ -69,7 +75,7 @@ const server = http.createServer(async (req, res) => {
 });
 const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
 async function until(p, expr, ms = 8000) { const end = Date.now() + ms; while (Date.now() < end) { const v = await p.evaluate(expr); if (v) return v; await pause(50); } throw new Error(`Timed out: ${expr}`); }
-const REFS = { 'Test code something': 'actor:run_1', 'Analyze this': 'actor:run_live' };
+const REFS = { 'Test code something': 'actor:run_1', 'Analyze this': 'actor:run_live', 'All of it': 'actor:run_done' };
 const openRun = async (p, title) => {
     await p.evaluate(`window.__s.open(${JSON.stringify(REFS[title])})`);
     await until(p, `(document.querySelector('.ovse-title') || {}).textContent === ${JSON.stringify(title)}`);
@@ -95,6 +101,28 @@ const openRun = async (p, title) => {
             assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovse-plan-asm li').length"), 2, 'two assumptions, folded under it');
             const raw = await p.evaluate("[...document.querySelectorAll('.ovse-thread *')].filter((n) => !n.closest('.ovse-plan') && !n.closest('details.ovse-plan-asm') && /Assumptions:/.test(n.textContent || '') && !n.children.length).length");
             assert.strictEqual(raw, 0, 'no raw "Assumptions:" text in the thread');
+        });
+
+        await check('a long plan step never widens the plan card past a phone screen (the owner, 11-21)', async () => {
+            const fits = await p.evaluate(`(() => {
+                const now = document.querySelector('.ovse-plan-now');
+                const li = document.querySelector('.ovse-plan-list li span:last-child') || document.querySelector('.ovse-plan-list li');
+                const long = 'Choose a specific, current general-interest tech query to search for and collect the top results with titles and snippets';
+                now.textContent = long; if (li) li.textContent = long;
+                const box = document.querySelector('.ovse-plan').getBoundingClientRect();
+                return { right: Math.round(box.right), width: innerWidth, scroll: document.documentElement.scrollWidth };
+            })()`);
+            assert.ok(fits.right <= fits.width, `the card ends at ${fits.right}px on a ${fits.width}px screen`);
+            assert.ok(fits.scroll <= fits.width, 'no sideways scroll');
+        });
+
+        await check('a plan that is all done steps aside once the run has ended (the owner, 11-21)', async () => {
+            await openRun(p, 'All of it');
+            await until(p, "(document.body.textContent || '').includes('the test passes')");
+            assert.ok(await p.evaluate("document.querySelector('.ovse-plan').hidden"), 'no "Plan · 3 of 3 · All done" over the box');
+            await openRun(p, 'Test code something');
+            await until(p, "(document.body.textContent || '').includes('What is there')");
+            assert.ok(!(await p.evaluate("document.querySelector('.ovse-plan').hidden")), 'an unfinished plan stays');
         });
 
         await check('the same answer said twice, with a thought between, is shown once', async () => {
