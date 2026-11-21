@@ -24,6 +24,9 @@ the parsing … so you can see more easier and more visualizer").
 - In a group, an agent at work says "Design is working" with **Watch Design work**, and each answer has **See how Design
   worked** (its run, from the step's `run_ref`); that run, opened alone, folds the group's instruction into one line.
 
+- A page that asks not to be indexed (`robots: 'noindex…'`, a signed-in page) carries no footer structured data.
+- `ov-embeds.js` stops its entrance motion under the Off setting (`html[data-ov-motion=off]`), never by the device setting alone.
+
 ## 4.334.0 — 2026-11-21
 
 **A new session: the box is on the screen, the page says less and says it larger, and the ideas turn in the box**

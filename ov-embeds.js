@@ -86,7 +86,7 @@
 .ove-c0{--c:var(--accent,#3b82f6)}.ove-c1{--c:var(--success,#22c55e)}.ove-c2{--c:var(--warning,#f59e0b)}.ove-c3{--c:var(--danger,#ef4444)}.ove-c4{--c:var(--accent-2,#a855f7)}.ove-c5{--c:var(--info,#06b6d4)}
 @keyframes ove-in{from{opacity:0;transform:translateY(calc(6px * var(--ov-move,1)))}to{opacity:1;transform:none}}
 html[data-ov-motion=off] .ove-card,html[data-ov-motion=off] .ove-pic,html[data-ov-motion=off] .ove-box,html[data-ov-motion=off] .ove-frame{animation:none;transition:none}
-@media (prefers-reduced-motion:reduce){.ove-card,.ove-pic,.ove-box{animation:none}}`;
+html[data-ov-motion=off] .ove-card,html[data-ov-motion=off] .ove-pic,html[data-ov-motion=off] .ove-box{animation:none}`;
     function styles() {
         if (!doc || doc.getElementById('ove-css')) return;
         const st = el('style'); st.id = 'ove-css'; st.textContent = CSS; doc.head.appendChild(st);
