@@ -47,6 +47,8 @@
         shared: 'Shared', examples: 'Examples', publishing: 'Publishing', play: 'Play', inventory: 'Inventory',
         bench: 'Bench', cam: 'Cam', casino: 'Casino', design: 'Design', domains: 'Domains', exchange: 'Exchange', fun: 'Fun',
         meme: 'Meme', report: 'Report', surf: 'Surf', today: 'Today', tours: 'Tours', vision: 'Vision', shoes: 'Shoes',
+        compare: 'Compare', computer: 'Computer', directory: 'Directory', git: 'Git', locker: 'Locker', mail: 'Email',
+        studio: 'Studio', markets: 'Markets', finance: 'Finance',
     };
     const STYLE_ID = 'ov-shipped-style';
     const TEXT = 'var(--text-primary,var(--text,inherit))';

@@ -1,5 +1,35 @@
 # Changelog
 
+## 4.333.0 — 2026-11-21
+
+**Every site's footer: structured data, and headings that never skip a level** (`footer.js`; the owner, 11-21: "analyze
+openseo GitHub repo and improve our SEO network wide"). A crawl of 67 sites with OpenSEO's audit rules
+(every-app/open-seo, MIT) found 48 sites with no structured data and 217 pages, on 50 sites, skipping from h1 to h3: the
+footer titled its Network and Legal columns with h3, so any page with no h2 of its own (every site's /updates) skipped
+a level.
+- The footer's column headings are h2 (styled exactly as before).
+- The server footer (`ssr`) carries schema.org JSON-LD: the OpenVibe Organization (one `@id` across the network, logo,
+  GitHub) and the site as a WebSite it publishes, at its address (`siteUrl`, else the page's origin, else
+  `openvibe.<service>` and a few known exceptions; unsure: the organization only). `init()` adds it where the server
+  did not. `structuredData: false` leaves it to a site that writes its own. Test: footer-structured-data.
+
+**robots.txt is open by default: every page crawlable, by every bot** (`seo.js`; the owner, 11-21: "We should allow
+robots and AI and everything. Everything should be just crawlable. We should take advantage of as many bots as we
+can"). An audit of 67 robots.txt files found 59 blocking page paths (Drive, saved lists, dashboards, the API…) and
+Finance and Host closing the whole site. `robotsTxt()` now keeps only the paths that are never pages from a site's
+`disallow` (`NEVER_PAGES`: `/auth/`, `/oauth/`, `/internal`, `/metrics`, `/release-metrics`, `/_openvibe/`,
+`/realtime/`), plus `costly` (paths where each request spends money or quota, such as a search box that queries
+engines); `allow` is `/` and AI crawlers are always welcomed. `open: false` keeps a site's own list. New
+`seo.isCrawler(ua)`: every crawler robots.txt names plus the usual words, for a site that skips silent sign-in for
+bots (Directory and My sent ChatGPT-User, Google-Extended and meta-externalagent to sign-in).
+
+**Share cards for seven sites that had none** (`social/`): Compare, Computer, Directory, Git, Locker, Email and Studio
+(the crawl: 148 pages on 17 sites with no og:image; Compare, Directory and Git had none on any page). Drawn by
+`scripts/build-social-cards.js` from their Contracts site blocks; a site serves its card as `/shared/social/<id>.jpg`.
+
+Also in this release: **trending suggestions name a heading without its count badge** (`ov-trending.js`, #642:
+Exchange's "The engines" with its count became "The engines35").
+
 ## 4.332.0 — 2026-11-20
 
 **Global's "1 new message · Mark read" pill leaves the screen when it should** (`dock.js`; the owner's phone, 11-20:
