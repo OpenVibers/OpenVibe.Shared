@@ -1,5 +1,32 @@
 # Changelog
 
+## 4.334.0 — 2026-11-21
+
+**A new session: the box is on the screen, the page says less and says it larger, and the ideas turn in the box**
+(`ov-session.js`; the owner's phone, openvibe.actor/chat, 11-21: "the composer is missing … the design and layout needs
+improvement … more intuitive … not wordy … bigger fonts … do we even need [the suggestions]? … use the placeholder text
+type thing that we use for other places, like search").
+- The composer was off the screen on a phone: a blank session hides its head, and CSS grid's auto-placement then put
+  the thread in the head's `auto` row (as tall as its content) and the box in a 0-px row under the page's tab bar. Each
+  part of the main column has its own row now.
+- The hello is one short line ("Ask, search or get something done.") under a larger title.
+- How the next message runs is four tiles (two across on a phone, four on a wide screen): what each is set to, large;
+  what it means is the tile's title and accessible name, and the picker it opens. "Your AI" reads "Set it up".
+- The starter cards are gone: they turn in the box with the shared suggestion line (`OVTrending`, chips on focus, Tab
+  takes one), with the site's examples.
+- Start a group is a pill.
+Tests: session-organized-chrome and dock-chrome check the tiles, that the box is on the screen and holds its height,
+and that a new session sends from the box.
+
+**The menu's Feed is in order** (`ov-home.js`; the owner, 11-21: "the way everything is organized and listed and
+ordered is … broken … the feed just needs major improvement … It needs to be better in order"). For you came ranked
+(score, then one site at a time), so the day lines read Yesterday, Today, Yesterday.
+- A page is drawn newest first; a card with no time keeps the place of the one before it.
+- What is live now leads, under its own "Live now" line.
+- A day line is drawn only when the day is older than the last one.
+- The network's numbers of one day (Report's cards) are one card, "OpenVibe right now", its figures in a grid.
+- The same thing done by several people on one day (an achievement, a quest) is one card of their faces.
+
 ## 4.333.0 — 2026-11-21
 
 **Every site's footer: structured data, and headings that never skip a level** (`footer.js`; the owner, 11-21: "analyze

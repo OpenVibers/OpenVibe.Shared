@@ -2,7 +2,9 @@
 // 4.311.0, the owner's phone (11-18): "add custom layouts for this, explain this better, make this more organized … I'm so
 // confused … more user friendly and intuitive", over a local Frame at 390 px:
 //   - the spent free AI, refused when a session starts, is a card with its ways to keep going, never a white bubble;
-//   - the hello explains each choice in a line (who answers, what it thinks with, where it runs, your own AI);
+//   - the hello shows each choice as a tile (who answers, what it thinks with, where it runs, your own AI), its value large,
+//     what it means in its name (4.334.0, the owner, 11-21: "not wordy … bigger fonts"), and the box stays on the screen
+//     (11-21: "the composer is missing": a blank session's hidden head shifted the grid and put the box under the tab bar);
 //   - the box's row stays on one line: the modes, one chip, the road;
 //   - a picture you send shows as a picture, not only its name.
 const assert = require('assert');
@@ -59,11 +61,15 @@ async function until(p, expr, ms = 8000) { const end = Date.now() + ms; while (D
         const errors = []; p.on('pageerror', (e) => errors.push(e.message));
         await p.goto(base, { maxMs: 8000 });
 
-        await check('the hello explains each choice in a line', async () => {
-            const rows = await until(p, "document.querySelectorAll('.ovse-how.is-list .ovse-how-c').length >= 4 && [...document.querySelectorAll('.ovse-how.is-list .ovse-how-c')].map((b) => [b.querySelector('small').textContent, (b.querySelector('.ovse-how-l') || {}).textContent || ''])");
+        await check('the hello shows each choice as a tile, and the box is on the screen', async () => {
+            const rows = await until(p, "document.querySelectorAll('.ovse-how.is-tiles .ovse-how-c').length >= 4 && [...document.querySelectorAll('.ovse-how.is-tiles .ovse-how-c')].map((b) => [b.querySelector('small').textContent, b.querySelector('b').textContent, b.getAttribute('aria-label') || '', parseFloat(getComputedStyle(b.querySelector('b')).fontSize)])");
             assert.deepStrictEqual(rows.map((r) => r[0]).slice(0, 3), ['Who answers', 'Thinks with', 'Runs on'], JSON.stringify(rows));
-            assert.ok(rows.every((r) => r[1].length > 10), `every row says what it means: ${JSON.stringify(rows)}`);
-            assert.match(await p.evaluate("document.querySelector('.ovse-how-h').textContent"), /How your next message runs/);
+            assert.ok(rows.every((r) => r[2].length > r[0].length + r[1].length + 12), `every tile says what it means in its name: ${JSON.stringify(rows)}`);
+            assert.ok(rows.every((r) => r[3] >= 16), `the values are large: ${JSON.stringify(rows)}`);
+            assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovse-how-h, .ovse-how-l, .ovse-starter').length"), 0, 'no paragraph per choice, no stack of starters');
+            const box = await p.evaluate("(() => { const t = document.querySelector('.ovse-compose textarea'); const r = t && t.getBoundingClientRect(); return r ? { top: r.top, bottom: r.bottom, vh: innerHeight, foot: Math.round(document.querySelector('.ovse-foot').getBoundingClientRect().height) } : null; })()");
+            assert.ok(box && box.top >= 0 && box.bottom <= box.vh, `the box is on the screen: ${JSON.stringify(box)}`);
+            assert.ok(box.foot >= 50, `the foot holds the box: ${JSON.stringify(box)}`);
         });
 
         await check('the box\'s row is one line at 390 px: the modes, one chip, the road', async () => {

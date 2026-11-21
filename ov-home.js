@@ -2482,6 +2482,108 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         box.append(head, row);
         return box;
     }
+    /**
+     * One page, in order (4.334.0): { live, rest }. live: what is live now (first page only; it leads). rest: newest
+     * first; a card with no time of its own keeps the place of the card before it. The network's numbers of one day (Report's
+     * cards, nobody behind them) become one entry { ovfdPulse: [...] }; the same thing done by several people on one day
+     * (kind, site and the words without the name) one entry { ovfdSame: [...] }, at the newest one's place.
+     */
+    function arrangeFeed(items, { first = true, kind = '' } = {}) {
+        const live = [];
+        const timed = [];
+        let lastT = Infinity;
+        items.forEach((x, i) => {
+            if (first && x.kind === 'live' && x.live_now === true) { live.push(x); return; }
+            const t = Date.parse(String(x.at || ''));
+            const at = Number.isFinite(t) ? t : lastT;
+            if (Number.isFinite(t)) lastT = t;
+            timed.push({ x, at, i });
+        });
+        timed.sort((a, b) => (b.at - a.at) || (a.i - b.i));
+        const dayOf = (t) => (Number.isFinite(t) ? new Date(t).toDateString() : '');
+        const nobody = (x) => !(x.actor && x.actor.name && !/^system$/i.test(String(x.actor.name)));
+        const sameWords = (x) => String(x.title || '').replace(new RegExp(String((x.actor && x.actor.name) || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '').replace(/\s+/g, ' ').trim().toLowerCase();
+        const rest = [];
+        const pulses = new Map();
+        const sames = new Map();
+        for (const { x, at } of timed) {
+            if (!kind && x.kind === 'report' && nobody(x) && !(x.media && safe(x.media.thumb))) {
+                const k = dayOf(at);
+                if (pulses.has(k)) { pulses.get(k).ovfdPulse.push(x); continue; }
+                const e = { ovfdPulse: [x] }; pulses.set(k, e); rest.push(e); continue;
+            }
+            if (!nobody(x) && ['game', 'quest', 'member', 'follow', 'avatar', 'banner'].includes(String(x.kind)) && !x.group) {
+                const k = `${dayOf(at)}|${x.kind}|${x.site}|${sameWords(x)}`;
+                const e = sames.get(k);
+                if (e && !e.ovfdSame.some((y) => y.actor && x.actor && y.actor.name === x.actor.name)) { e.ovfdSame.push(x); continue; }
+                if (!e) { const n = { ovfdSame: [x] }; sames.set(k, n); rest.push(n); continue; }
+            }
+            rest.push(x);
+        }
+        // A pulse of one is its own card; a "same" of one is the card it was.
+        return { live, rest: rest.map((e) => (e.ovfdPulse && e.ovfdPulse.length < 2 ? e.ovfdPulse[0] : e.ovfdSame && e.ovfdSame.length < 2 ? e.ovfdSame[0] : e)) };
+    }
+    /** A quiet line like the day's, naming a part of the feed (Live now). */
+    function sectionLine(label, tone) {
+        const line = h('div', `ovfd-day ovfd-sec is-${tone}`); line.setAttribute('role', 'separator');
+        if (tone === 'live') line.append(h('i', 'ovfd-sec-dot'));
+        line.append(h('span', '', label));
+        return line;
+    }
+    /** The network's numbers of one day as one card (4.334.0; four Report cards in a row were a third of the first page). */
+    function pulseCard(items, o) {
+        const top = items[0];
+        const a = h('a', 'ovfd-card ovfd-pulse'); a.href = safe(top.url) || 'https://openvibe.report';
+        const head = h('span', 'ovfd-head');
+        const face = h('span', 'ovfd-face is-site'); face.append(appFace(top.site || 'report'));
+        const who = h('span', 'ovfd-who'); who.append(h('b', '', 'OpenVibe right now'));
+        const meta = h('small', ''); meta.append(siteIcon(top.site || 'report', 18), document.createTextNode(` ${[String(top.site_name || 'Report'), when(top.at)].filter(Boolean).join(' · ')}`));
+        who.append(meta); head.append(face, who); a.append(head);
+        const grid = h('span', 'ovfd-pulse-grid');
+        items.slice(0, 6).forEach((c, i) => {
+            const cell = h('span', 'ovfd-pulse-c'); cell.style.setProperty('--i', String(i));
+            const n = c.counts && Number(c.counts.people);
+            const title = String(c.title || '');
+            // The number leads: the card's own count, else the first number in its words.
+            const m = /(\d[\d,.]*\s*%?)/.exec(title);
+            const big = Number.isFinite(n) && n > 0 ? num(n) : m ? m[1].trim() : '';
+            const words = (big && m && !Number.isFinite(n) ? title.replace(m[1], '').replace(/\s+/g, ' ') : title).replace(/^[^:]{0,24}:\s*/, (p) => (big ? '' : p)).trim();
+            if (big) cell.append(h('b', 'ovfd-pulse-n', big));
+            cell.append(h('small', 'ovfd-pulse-l', (words || String(c.text || '')).slice(0, 80)));
+            const t = c.trend && typeof c.trend === 'object' ? c.trend : null;
+            if (t && ['up', 'down'].includes(t.direction) && Number.isFinite(Number(t.pct))) cell.append(h('span', `ovfd-trend is-${t.direction}`, `${t.direction === 'up' ? '▲' : '▼'} ${Math.round(Number(t.pct))}%`));
+            grid.append(cell);
+        });
+        a.append(grid);
+        return a;
+    }
+    /** The same thing done by several people on one day, as one card of their faces (4.334.0: "Unlocked First Visit in
+     *  Scraplandia", once per person, was half a screen). Each name goes to its own card's page. */
+    function sameCard(items, o) {
+        const top = items[0];
+        const box = h('div', 'ovfd-card ovfd-lives ovfd-same');
+        const head = h('div', 'ovfd-head');
+        const faces = h('span', 'ovfd-faces');
+        items.slice(0, 4).forEach((x) => {
+            const f = h('span', 'ovfd-face');
+            const av = x.actor && safe(x.actor.avatar);
+            if (av && /^https:/.test(av)) faceImg(f, av, x.actor && x.actor.name); else f.textContent = String((x.actor && x.actor.name) || '?').charAt(0).toUpperCase();
+            faces.append(f);
+        });
+        const names = items.map((x) => String((x.actor && x.actor.name) || '').slice(0, 40)).filter(Boolean);
+        const said = String(top.title || '').replace(String((top.actor && top.actor.name) || ''), '').replace(/^\s*[:·-]?\s*/, '').trim();
+        const who = h('span', 'ovfd-who');
+        who.append(h('b', '', names.length > 2 ? `${names.slice(0, 2).join(', ')} and ${names.length - 2} more` : names.join(' and ')));
+        const meta = h('small'); meta.append(siteIcon(top.site || 'ov', 14), document.createTextNode(` ${[String(top.site_name || top.site || ''), when(top.at)].filter(Boolean).join(' · ')}`));
+        who.append(meta); head.append(faces, who);
+        const what = h('a', 'ovfd-same-what'); what.href = safe(top.url) || '#';
+        what.append(h('b', '', said.slice(0, 120) || String(top.title || '').slice(0, 120)));
+        if (top.text) what.append(h('span', '', String(top.text).slice(0, 120)));
+        const row = h('div', 'ovfd-lives-row');
+        items.forEach((x) => { const l = h('a', 'ovfd-pill'); l.href = safe(x.url) || '#'; l.append(h('b', '', String((x.actor && x.actor.name) || '').slice(0, 40))); row.append(l); });
+        box.append(head, what, row);
+        return box;
+    }
     function dayLine(t) {
         const d = new Date(t); const now = new Date();
         const start = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
@@ -2612,7 +2714,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         async function more(first) {
             if (busy || done) return;
             busy = true; const my = ++seq;
-            if (first) { list.textContent = ''; shownIds.clear(); skeletons(); } else skeletons();
+            if (first) { list.textContent = ''; shownIds.clear(); lastDay = ''; skeletons(); } else skeletons();
             const j = await loadFeed(o, kind, cursor);
             if (my !== seq) return;
             clearSkels();
@@ -2631,9 +2733,28 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             const flush = () => { if (run.length >= 2) list.append(livesCard(run)); else run.forEach((x) => add(x, feedCard(x, o))); run = []; decorate(); };
             // Date by date (the owner, 11-09): a quiet day line where the day changes. The network's trending cards
             // (no time of their own) sit between, under the day they were woven into.
-            const day = (x) => { const t = Date.parse(String((x && x.at) || '')); return Number.isFinite(t) ? new Date(t).toDateString() : ''; };
-            const mark = (x) => { if (glimpse) return; const d = day(x); if (!d || d === lastDay) return; flush(); lastDay = d; list.append(dayLine(Date.parse(String(x.at)))); };
-            j.items.filter((x) => x && x.id && !shownIds.has(x.id) && shownIds.add(x.id)).forEach((x) => { mark(x); if (past(x) && !kind) { run.push(x); return; } flush(); add(x, feedCard(x, o)); });
+            // 4.334.0 (the owner, 11-21: "the way everything is organized and listed and ordered is … broken … It needs to be
+            // better in order"): For you came ranked (score, then one site at a time), so the day lines read Yesterday,
+            // Today, Yesterday. A page is drawn in time now, newest first; what is live now leads under its own line; a day
+            // line is drawn only when the day is older than the last one; the network's numbers are one card; and the same
+            // thing done by several people (an achievement, a quest) is one card of their faces.
+            const dayStart = (t) => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+            const mark = (x) => {
+                if (glimpse) return;
+                const t = Date.parse(String((x && x.at) || ''));
+                if (!Number.isFinite(t)) return;
+                const d = dayStart(t);
+                if (lastDay !== '' && d >= Number(lastDay)) return;
+                flush(); lastDay = String(d); list.append(dayLine(t));
+            };
+            const fresh = j.items.filter((x) => x && x.id && !shownIds.has(x.id) && shownIds.add(x.id));
+            const parts = arrangeFeed(fresh, { first, kind });
+            if (parts.live.length && !glimpse) { list.append(sectionLine('Live now', 'live')); parts.live.forEach((x) => add(x, feedCard(x, o))); }
+            parts.rest.forEach((x) => {
+                if (x.ovfdPulse) { mark(x.ovfdPulse[0]); flush(); add(x.ovfdPulse[0], pulseCard(x.ovfdPulse, o)); return; }
+                if (x.ovfdSame) { mark(x.ovfdSame[0]); flush(); add(x.ovfdSame[0], sameCard(x.ovfdSame, o)); return; }
+                mark(x); if (past(x) && !kind) { run.push(x); return; } flush(); add(x, feedCard(x, o));
+            });
             flush();
             if (glimpse) { while (list.children.length > glimpse) list.lastElementChild.remove(); }
             if (typeof o.mountIcons === 'function') { try { o.mountIcons(list); } catch { /* */ } }
@@ -2810,6 +2931,17 @@ html[data-ov-motion=off] .ovfd-glimpse-more svg { transition: none; }
 .ovfd-badge svg.ovfd-gl{width:12px;height:12px;stroke-width:2.4}
 .ovfd-day{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:8px 2px 0;font-size:12px;font-weight:750;letter-spacing:.04em;color:var(--text-muted,#93a0b4)}
 .ovfd-day::after{content:"";flex:1;height:1px;background:var(--border,rgba(255,255,255,.1))}
+.ovfd-sec.is-live{color:var(--ovfd-live,#ef4444)}.ovfd-sec-dot{flex:none;width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 currentColor;animation:ovfd-pulse-dot 1.8s ease-out infinite}
+@keyframes ovfd-pulse-dot{0%{box-shadow:0 0 0 0 color-mix(in srgb,currentColor 55%,transparent)}70%,100%{box-shadow:0 0 0 7px transparent}}
+html[data-ov-motion=off] .ovfd-sec-dot{animation:none}
+.ovfd-pulse-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.ovfd-pulse-c{display:grid;align-content:start;gap:2px;min-width:0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 4%,transparent);animation:ovfd-rise .35s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 50ms)}
+.ovfd-pulse-n{font-family:'OV Brand',Nunito,Inter,sans-serif;font-size:24px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.ovfd-pulse-l{font-size:12.5px;line-height:1.3;color:var(--text-secondary,#a8b3c4);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ovfd-pulse-c .ovfd-trend{justify-self:start}
+@keyframes ovfd-rise{from{opacity:0;transform:translateY(calc(6px * var(--ov-move,1)))}to{opacity:1;transform:none}}
+html[data-ov-motion=off] .ovfd-pulse-c{animation:none}
+.ovfd-same-what{display:grid;gap:2px;color:inherit;text-decoration:none}.ovfd-same-what b{font-size:15px;line-height:1.3}.ovfd-same-what span{font-size:13px;color:var(--text-muted,#93a0b4)}
 .ovfd-list>.ovfd-day:first-child{margin-top:0}
 .ovfd-update{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;color:inherit;text-decoration:none}
 .ovfd-update .ovh-ic{width:34px;height:34px;border-radius:10px;flex:none}
