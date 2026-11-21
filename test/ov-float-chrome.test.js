@@ -163,9 +163,18 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
             assert.ok(Math.abs(g.x - 0.1) < 0.001 && Math.abs(g.w - 0.25) < 0.001, 'and puts it back where it started');
         }, 'Home');
 
-        // The corner grip sizes it.
+        // The corner grip sizes it. Home's move back is animated: the grip is taken once it has stopped moving (a slow
+        // runner grabbed it mid-glide and the drag missed, 11-21).
         v = await box(page);
-        const grip = await page.evaluate(`(() => { const r = document.querySelector('.ov-float-resize').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+        const gripAt = () => page.evaluate(`(() => { const r = document.querySelector('.ov-float-resize').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+        let grip = await gripAt();
+        await eventually(async () => {
+            await new Promise((r) => setTimeout(r, 120));
+            const next = await gripAt();
+            const still = Math.abs(next.x - grip.x) < 0.5 && Math.abs(next.y - grip.y) < 0.5;
+            grip = next;
+            assert.ok(still, 'the grip has settled');
+        }, 'settle');
         await drag(page, grip, { x: grip.x + 80, y: grip.y + 50 });
         await eventually(async () => assert.ok((await box(page)).w > 0.25, 'the corner sizes it'), 'resize');
         assert.ok((await page.evaluate(`JSON.parse(localStorage.getItem('test-float')).w`)) > 0.25, 'the new size is kept');
