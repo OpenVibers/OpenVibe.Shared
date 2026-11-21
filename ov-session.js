@@ -3516,7 +3516,18 @@
                 b.append(tile, t);
                 return b;
             };
-            rows.forEach((x, i) => { const b = row(x, i); b.addEventListener('click', () => openCtx(x[0])); box.append(b); });
+            rows.forEach((x, i) => {
+                const b = row(x, i);
+                // 4.337.0: the coding agent picked is not set up for you: the tile says so, and a tap opens its setup.
+                const unready = x[0] === 'agent' && agent && agent.kind === 'harness' && agent.available === false;
+                if (unready) {
+                    b.classList.add('is-warn');
+                    b.setAttribute('aria-label', `${agent.name} is not set up for you yet. Set it up`);
+                    b.querySelector('.ovse-how-t').append(el('em', 'ovse-how-warn', agent.badge === 'Sign in' ? 'Sign in' : 'Set it up'));
+                }
+                b.addEventListener('click', () => (unready ? harnessSetup(agent) : openCtx(x[0])));
+                box.append(b);
+            });
             const own = row(['own', 'Your AI', 'Set it up', 'Use your own keys, Balance or computer instead of the free AI', 'tune'], rows.length, true);
             own.addEventListener('click', () => yourAI());
             box.append(own);
@@ -4264,6 +4275,8 @@ html[data-ov-motion=off] .ovse-how.is-tiles .ovse-how-c { animation: none; trans
 /* the foot: the plan, the commands, the chip, the box */
 .ovse-foot { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; width: 100%; max-width: 852px; margin: 0 auto; padding: 6px 16px max(10px, env(safe-area-inset-bottom, 0px)); container: ovse-foot / inline-size; }
 .ovse-hs { display: grid; gap: 14px; align-content: start; }
+.ovse-how-c.is-warn { border-color: color-mix(in srgb, var(--warning, #f59e0b) 55%, var(--ovse-line)); }
+.ovse-how-warn { font-style: normal; font-size: 12.5px; font-weight: 600; color: var(--warning, #f59e0b); }
 .ovse-hs-why { margin: 0; color: var(--ovse-dim); font-size: 14.5px; line-height: 1.5; }
 .ovse-hs-steps { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; counter-reset: hs; }
 .ovse-hs-step { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; counter-increment: hs; }

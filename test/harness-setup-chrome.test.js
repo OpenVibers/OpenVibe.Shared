@@ -60,6 +60,17 @@ async function until(p, expr, ms = 6000) { const end = Date.now() + ms; while (D
         await p.goto(base, { maxMs: 8000 });
         await until(p, "!!document.querySelector('.ovse-foot textarea')");
 
+        await check('the new session\'s Coding agent tile says Claude Code is not set up, and opens its setup (4.337.0)', async () => {
+            const tile = await until(p, "(() => { const b = document.querySelector('.ovse-how-c.is-warn'); return b && b.textContent; })()");
+            assert.match(tile, /Claude Code/);
+            assert.match(tile, /Set it up/);
+            await p.evaluate("document.querySelector('.ovse-how-c.is-warn').click()");
+            const title = await until(p, "(() => { const s = document.querySelector('.ovse-sheet.is-in'); return s && s.querySelector('.ovse-sheet-h b').textContent; })()");
+            assert.strictEqual(title, 'Set up Claude Code');
+            await p.evaluate("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))");
+            await until(p, "!document.querySelector('.ovse-sheet')");
+        });
+
         await check('"Test" to Claude Code that is not set up is not sent: the guided sheet opens and the words stay', async () => {
             await p.evaluate("(() => { const t = document.querySelector('.ovse-foot textarea'); t.value = 'Test'; t.closest('form').requestSubmit(); })()");
             const sheet = await until(p, `(() => { const s = document.querySelector('.ovse-sheet.is-in'); return s && {

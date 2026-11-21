@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.337.0 - 2026-11-21
+
+- **The new session's Coding agent tile says when it is not set up** (`ov-session.js`; the owner's phone, 11-21: a Claude
+  Code session read "Coding agent · Claude Code" while it was not set up for them): the tile is marked, says "Set it up"
+  ("Sign in" when only that is missing), and a tap opens "Set up Claude Code".
+
 ## 4.336.0 - 2026-11-21
 
 - **robots.txt keeps each site's private paths again** (`seo.robotsTxt`). 4.333.0's open default dropped every site's
