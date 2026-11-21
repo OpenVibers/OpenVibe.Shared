@@ -169,7 +169,7 @@ const SCROLLS = [0, 900, 1800, 500];
                         const now = snap(); still = now === last ? still + 1 : 0; last = now;
                     }
                 })()`);
-                const writes = await page.evaluate(`(async () => {
+                const countWrites = () => page.evaluate(`(async () => {
                     const st = document.documentElement.style; const real = st.setProperty; const n = [];
                     st.setProperty = function (k, v) { if (String(k).startsWith('--ovb-')) n.push(k + '=' + v); return real.call(this, k, v); };
                     const bar = document.querySelector('.ovnav-appbar');
@@ -181,6 +181,11 @@ const SCROLLS = [0, 900, 1800, 500];
                     st.setProperty = real;
                     return n;
                 })()`);
+                let writes = await countWrites();
+                // A write in the count can be the bar's own late settle, not the changes (macOS's runner, 4.335.0 and 4.337.0:
+                // one --ovb-bar=58px as the bar finished its transition): count again once it has held still for a second;
+                // a write caused by the changes themselves happens on every count.
+                if (writes.length) { await wait(1000); writes = await countWrites(); }
                 await wait(150);
                 const failures = [];
                 const check = (ok, text) => { if (!ok) failures.push(text); };
