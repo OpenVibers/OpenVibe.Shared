@@ -851,7 +851,7 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
     let _shippedLoading = false;
     // shipped.js's content hash (scripts/sibling-revs.js writes it), and the footer's "shipped" line is fetched only when the
     // footer comes near the screen (4.138.0): most visits never scroll there, and it is 12 KB.
-    const FOOTER_REV = { 'shipped.js': 'e6747a8b049c' };
+    const FOOTER_REV = { 'shipped.js': 'a9190ef2d029' };
     let _shippedSeen = null;
     function shippedWhenNear(el) {
         if (typeof IntersectionObserver !== 'function' || !el || !el.getBoundingClientRect) { loadShipped(); return; }

@@ -13,6 +13,16 @@ a level.
   `openvibe.<service>` and a few known exceptions; unsure: the organization only). `init()` adds it where the server
   did not. `structuredData: false` leaves it to a site that writes its own. Test: footer-structured-data.
 
+**robots.txt is open by default: every page crawlable, by every bot** (`seo.js`; the owner, 11-21: "We should allow
+robots and AI and everything. Everything should be just crawlable. We should take advantage of as many bots as we
+can"). An audit of 67 robots.txt files found 59 blocking page paths (Drive, saved lists, dashboards, the API…) and
+Finance and Host closing the whole site. `robotsTxt()` now keeps only the paths that are never pages from a site's
+`disallow` (`NEVER_PAGES`: `/auth/`, `/oauth/`, `/internal`, `/metrics`, `/release-metrics`, `/_openvibe/`,
+`/realtime/`), plus `costly` (paths where each request spends money or quota, such as a search box that queries
+engines); `allow` is `/` and AI crawlers are always welcomed. `open: false` keeps a site's own list. New
+`seo.isCrawler(ua)`: every crawler robots.txt names plus the usual words, for a site that skips silent sign-in for
+bots (Directory and My sent ChatGPT-User, Google-Extended and meta-externalagent to sign-in).
+
 **Share cards for seven sites that had none** (`social/`): Compare, Computer, Directory, Git, Locker, Email and Studio
 (the crawl: 148 pages on 17 sites with no og:image; Compare, Directory and Git had none on any page). Drawn by
 `scripts/build-social-cards.js` from their Contracts site blocks; a site serves its card as `/shared/social/<id>.jpg`.

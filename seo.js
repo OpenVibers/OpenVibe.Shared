@@ -257,7 +257,21 @@ function sitemapIndexXml(maps = []) {
 // Crawlers that build search and AI indexes — welcomed by name so a generic Disallow never hits them.
 const AI_AND_SEARCH_BOTS = ['Googlebot', 'Bingbot', 'DuckDuckBot', 'Applebot', 'GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-User', 'Claude-SearchBot', 'Claude-Web', 'anthropic-ai', 'PerplexityBot', 'Perplexity-User', 'CCBot', 'Google-Extended', 'Amazonbot', 'meta-externalagent', 'YouBot', 'Bytespider'];
 
-function robotsTxt({ sitemaps = [], disallow = [], allow = ['/'], allowAI = true, block = [], crawlDelay } = {}) {
+// Open by default (owner, 2026-11-21: "allow robots and AI and everything. Everything should be just crawlable. We
+// should take advantage of as many bots as we can"). A site's `disallow` keeps only the paths that are never pages:
+// sign-in plumbing (a crawler there only starts sign-ins) and service-only routes (they answer 401 to everyone).
+// Every page is crawlable, a signed-in one included (it answers a crawler with its sign-in page). `costly` names
+// paths where each request spends money or someone's quota (a search box that queries engines): those stay out.
+// `open: false` keeps a site's own list as given.
+const NEVER_PAGES = ['/auth/', '/oauth/', '/internal', '/metrics', '/release-metrics', '/_openvibe/', '/realtime/'];
+const neverPage = (path) => NEVER_PAGES.some((p) => String(path).startsWith(p));
+
+function robotsTxt({ sitemaps = [], disallow = [], allow = ['/'], allowAI = true, block = [], crawlDelay, costly = [], open = true } = {}) {
+    if (open) {
+        disallow = [...new Set([...disallow.filter(neverPage), ...costly])];
+        allow = ['/'];
+        allowAI = true;
+    }
     const lines = [];
     // Content signals (contentsignals.org): with allowAI the network says yes to search, AI answers and training in so many
     // words (owner, 2026-10-25: "fully AI allowed and indexable"), so no crawler has to guess from silence.
@@ -454,7 +468,14 @@ function feedLinkTags({ rss, atom, title = 'Feed' } = {}) {
     return out.join('\n');
 }
 
-module.exports = { headTags, jsonLd, jsonLdTag, sitemapXml, sitemapIndexXml, robotsTxt, llmsTxt, llmsFull, pageSummary, feedXml, feedLinkTags, clip, esc, absolute, AI_AND_SEARCH_BOTS };
+// A crawler or an AI agent by its user agent: every one robots.txt welcomes by name, and the usual words. A site that
+// sends browsers through a silent sign-in skips it for these, so an AI agent reading for a person (ChatGPT-User,
+// Google-Extended, meta-externalagent: no "bot" in the name) gets the page, not a redirect (11-21: Directory and My
+// sent them to sign-in).
+const CRAWLER_RE = new RegExp(`bot|crawl|spider|slurp|archiver|facebookexternalhit|embedly|preview|headless|${AI_AND_SEARCH_BOTS.map((b) => b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')}|cohere-ai|diffbot|omgili|timpibot|imagesift|petalbot|yandex|baiduspider|sogou|seznam|qwant|mojeek|kagi|brave|ahrefs|semrush|mj12|dotbot`, 'i');
+function isCrawler(ua) { return CRAWLER_RE.test(String(ua || '')); }
+
+module.exports = { headTags, jsonLd, jsonLdTag, sitemapXml, sitemapIndexXml, robotsTxt, llmsTxt, llmsFull, pageSummary, feedXml, feedLinkTags, clip, esc, absolute, AI_AND_SEARCH_BOTS, isCrawler, NEVER_PAGES };
 
 // Lazy server-only agent helpers; ordinary SEO rendering need not load the HTML parser.
 for (const name of ['agentManifest', 'markdownTwin', 'linkHeaderTags']) {

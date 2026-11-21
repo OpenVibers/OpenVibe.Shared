@@ -49,6 +49,16 @@
     "description": "Pastes and posts",
     "icon": "community"
   },
+  "compare": {
+    "name": "OpenVibe.Compare",
+    "description": "Compare anything",
+    "icon": "network"
+  },
+  "computer": {
+    "name": "OpenVibe.Computer",
+    "description": "A computer for you, your AI, or both",
+    "icon": "network"
+  },
   "coupons": {
     "name": "OpenVibe.Coupons",
     "description": "Codes that work",
@@ -62,6 +72,11 @@
   "design": {
     "name": "OpenVibe.Design",
     "description": "Make it yours",
+    "icon": "network"
+  },
+  "directory": {
+    "name": "OpenVibe.Directory",
+    "description": "Directories that keep themselves current",
     "icon": "network"
   },
   "domains": {
@@ -99,6 +114,11 @@
     "description": "Browser games, and games you make",
     "icon": "games"
   },
+  "git": {
+    "name": "OpenVibe.Git",
+    "description": "Code with your OpenVibe account",
+    "icon": "network"
+  },
   "help": {
     "name": "OpenVibe.Help",
     "description": "Answers for every OpenVibe site",
@@ -123,6 +143,16 @@
     "name": "OpenVibe.Live",
     "description": "Go live from your browser",
     "icon": "live"
+  },
+  "locker": {
+    "name": "OpenVibe.Locker",
+    "description": "Files only you can open",
+    "icon": "network"
+  },
+  "mail": {
+    "name": "OpenVibe.Email",
+    "description": "An address for every sign-up",
+    "icon": "network"
   },
   "media": {
     "name": "OpenVibe.Media",
@@ -208,6 +238,11 @@
     "name": "OpenVibe.Space",
     "description": "Make a space: an app on your account",
     "icon": "space"
+  },
+  "studio": {
+    "name": "OpenVibe.Studio",
+    "description": "Edit photos right in your browser",
+    "icon": "network"
   },
   "surf": {
     "name": "OpenVibe.Surf",

@@ -11,7 +11,18 @@ for (const bot of ['Googlebot', 'Bingbot', 'OAI-SearchBot', 'ChatGPT-User', 'GPT
     assert.ok(seo.robotsTxt({}).includes(`User-agent: ${bot}\n`), `${bot} is welcomed by name`);
 }
 assert.ok(seo.robotsTxt({}).includes('Content-Signal: search=yes, ai-input=yes, ai-train=yes'), 'AI use allowed in so many words');
-assert.ok(!seo.robotsTxt({ allowAI: false }).includes('Content-Signal'), 'and not when a site opts out');
+assert.ok(!seo.robotsTxt({ allowAI: false, open: false }).includes('Content-Signal'), 'and not when a site opts out of the open default');
+// Open by default (11-21): every page is crawlable; only sign-in plumbing, service-only routes and costly paths stay out.
+{
+    const txt = seo.robotsTxt({ disallow: ['/auth/', '/api/', '/drive', '/internal/', '/metrics', '/mine'], costly: ['/?'], allow: ['/$', '/docs'], allowAI: false });
+    const dis = txt.split('User-agent: Googlebot')[0].match(/^Disallow: .*$/gm);
+    assert.deepStrictEqual(dis, ['Disallow: /auth/', 'Disallow: /internal/', 'Disallow: /metrics', 'Disallow: /?'], 'pages and the API open; sign-in, service routes and costly paths out');
+    assert.ok(/User-agent: \*\nAllow: \/\n/.test(txt) && txt.includes('User-agent: GPTBot') && txt.includes('Content-Signal: search=yes'), 'everyone welcome, AI included, whatever the site passed');
+    assert.ok(!/^Disallow: \/$/m.test(seo.robotsTxt({ allow: ['/$'], disallow: ['/'] })), 'a site-wide block no longer closes a site');
+    assert.ok(/^Disallow: \/drive$/m.test(seo.robotsTxt({ disallow: ['/drive'], open: false })), 'open: false keeps the site\'s list');
+}
+for (const ua of ['Mozilla/5.0 (compatible; Googlebot/2.1)', 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ChatGPT-User/1.0; +https://openai.com/bot)', 'meta-externalagent/1.1', 'Mozilla/5.0 (compatible; Google-Extended)', 'facebookexternalhit/1.1', 'PerplexityBot/1.0', 'Mozilla/5.0 (compatible; YandexBot/3.0)']) assert.ok(seo.isCrawler(ua), ua);
+for (const ua of ['Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', 'Mozilla/5.0 (iPhone; CPU iPhone OS 19_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.1 Mobile/15E148 Safari/604.1', '']) assert.ok(!seo.isCrawler(ua), `a browser is not a crawler: ${ua}`);
 assert.ok(!seo.sitemapXml([{ loc: '/relative' }, { loc: 'https://ok.test/' }]).includes('/relative'), 'sitemaps hold absolute URLs only');
 assert.ok(seo.llmsTxt({ name: 'X', summary: 's', sections: [] }).startsWith('# X'));
 
