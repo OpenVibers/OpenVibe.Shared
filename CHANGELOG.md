@@ -1,5 +1,29 @@
 # Changelog
 
+## 4.335.0 — 2026-11-21
+
+**Rich content in an agent's answer, and an answer that says how it ran** (`ov-embeds.js`, new; `ov-session.js`; the
+owner, 11-21, on Actor's chat: "improve the formatting of these links and make more rich embedded content in the chat
+… a system that's able to just detect shit that it can add or make using custom HTML, or just generate code just like
+in the chat"; then on an answer's "Free AI · DeepSeek Flash": "did it run on the DeepSeek harness, or … just API or
+what? And also, what mode are we in? … It needs to be like easy, more unified"; and on a run's raw tool output: "improve
+the parsing … so you can see more easier and more visualizer").
+- **Links are chips that say what they are**: a repository's owner/name, "Codes task", "Actor task", "YouTube video",
+  else the site and the page; the full address is the title.
+- **`ov-embeds.js`** (loaded only when an answer has something to show): cards under an answer for a repository, a
+  task, a video, a stream, a model or a picture (three at most); a fenced `chart` block (a JSON spec: bar, line, area,
+  pie, donut) is drawn as a chart; a fenced `html` or `svg` block runs as a live preview in a sandbox (scripts yes; the
+  page, its cookies, the network and top navigation no), Preview and Code, sized to what it draws (120 to 720 px). An
+  agent can also send `ui` of type `chart` or `widget`. Test: embeds-chrome.
+- **The receipt says how it ran**: the loop (Agent, Chat · one model, Decisions, a coding harness by name) from the run's
+  `agent.harness`, the model and how it was reached ("via OpenVibe AI", "on your computer"), then what paid.
+- **Tool results are readable**: search results are rows with their links, a list of records a table, a record its
+  fields; the raw result is one tap away (Raw).
+- An answer written twice (a turn's last text, then the same words with DONE and its sources) is shown once; the claim
+  check's evidence marks ([E5]) stay out of the words; DONE, APPROVED and CHANGES are chips in any agent's answer.
+- In a group, an agent at work says "Design is working" with **Watch Design work**, and each answer has **See how Design
+  worked** (its run, from the step's `run_ref`); that run, opened alone, folds the group's instruction into one line.
+
 ## 4.334.0 — 2026-11-21
 
 **A new session: the box is on the screen, the page says less and says it larger, and the ideas turn in the box**
