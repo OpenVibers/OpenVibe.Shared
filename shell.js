@@ -193,7 +193,7 @@ function page(o = {}) {
         `<body${attrs(bodyAttributes)}>`,
         summary ? summary.body : '',
         ...oneMount(frame.serverNav({ name, service: navbar.service, home: o.home, links: navbar.links }), o.body || ''),
-        frame.footer(o.footer || { service: name, variant: 'compact' }),
+        frame.footer({ ...(o.footer || { service: name, variant: 'compact' }), ...(/noindex/i.test(String(o.robots || '')) ? { structuredData: false } : {}) }),
         '</body>',
         '</html>',
     ].filter((part) => part !== '').join('\n');

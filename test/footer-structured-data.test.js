@@ -25,3 +25,13 @@ assert.ok(!/<\/script><script>alert/.test(footer.ssr({ service: 'bot', brandName
 const html = footer.ssr({ service: 'bot', variant: 'full' });
 assert.ok(/<summary><h2>Network<\/h2>/.test(html) && !/<h3>/.test(html), 'the footer\'s headings are h2');
 console.log('footer-structured-data: 6 checks passed');
+
+// A page that asks not to be indexed (a signed-in page) carries no structured data (OpenRestream's private pages, 11-21).
+{
+    const shell = require('../shell.js');
+    const open = shell.page({ name: 'example', title: 'Example', body: '<main>hi</main>' });
+    const closed = shell.page({ name: 'example', title: 'Mine', robots: 'noindex, nofollow', body: '<main>hi</main>' });
+    assert.ok(open.includes('application/ld+json'), 'a public page carries the organization');
+    assert.ok(!closed.includes('application/ld+json'), 'a noindex page carries no structured data');
+    console.log('footer structured data: none on a noindex page');
+}

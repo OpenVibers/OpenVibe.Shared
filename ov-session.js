@@ -393,6 +393,28 @@
         }).filter((x) => x.text);
     }
 
+    // ── a link, as a chip that says what it is (4.335.0; the owner, 11-21: "improve the formatting of these links") ──
+    // The full address stays the link and its title; the chip shows its meaning: owner/name for a repository, "Codes
+    // task", a channel, a video, else the site and the page. ov-embeds.js adds cards for the ones with more to show.
+    const LINK_RICH = /^(git\.openvibe\.codes|github\.com|openvibe\.codes|openvibe\.actor|openvibe\.live|openvibe\.video|openvibe\.exchange|youtube\.com|youtu\.be|m\.youtube\.com)$/;
+    function linkChip(url, text) {
+        let u;
+        try { u = new URL(url); } catch { return null; }
+        const host = u.hostname.replace(/^www\./, '').toLowerCase();
+        const parts = u.pathname.split('/').filter(Boolean).map((p) => { try { return decodeURIComponent(p); } catch { return p; } });
+        let label = '', glyph = 'link';
+        if (host === 'git.openvibe.codes' && parts.length >= 2) { label = `${parts[0]}/${parts[1]}`; glyph = 'repo'; }
+        else if (host === 'github.com' && parts.length >= 2) { label = `${parts[0]}/${parts[1]}${/^(pull|issues)$/.test(parts[2] || '') && /^\d+$/.test(parts[3] || '') ? ` #${parts[3]}` : ''}`; glyph = /^(pull)$/.test(parts[2] || '') ? 'pr' : 'repo'; }
+        else if (host === 'openvibe.codes' && parts[0] === 'run' && parts[1] === 'tasks') { label = 'Codes task'; glyph = 'code'; }
+        else if (host === 'openvibe.actor' && parts[0] === 'tasks' && parts[1]) { label = 'Actor task'; glyph = 'robot'; }
+        else if (/^(youtube\.com|m\.youtube\.com|youtu\.be)$/.test(host)) { label = 'YouTube video'; glyph = 'play'; }
+        else if (host === 'openvibe.video') { label = 'Video'; glyph = 'play'; }
+        const shown = text && text !== url && !/^https?:\/\//.test(text) ? text : label || `${host}${parts.length ? ` · ${parts[parts.length - 1].replace(/[-_]+/g, ' ').slice(0, 40)}` : ''}`;
+        const a = el('a', `ovse-lk${LINK_RICH.test(host) ? ' is-rich' : ''}`); a.href = u.href; a.target = '_blank'; a.rel = 'nofollow noopener noreferrer'; a.title = u.href;
+        a.append(svg(glyph, 'ovse-lk-g'), el('span', '', shown));
+        return a;
+    }
+
     // ── words: paragraphs, headings, lists, code, links, numbered sources (as nodes, never markup) ──
     function inline(node, text, sources) {
         const re = /(`[^`\n]{1,400}`)|(\*\*[^*\n]{1,400}\*\*)|\[([^\]\n]{1,200})\]\((https:\/\/[^\s)]{1,800})\)|(https:\/\/[^\s<>()]{2,800}[^\s<>().,;:!?'"])|\[(\d{1,2})\]/g;
@@ -402,8 +424,8 @@
             if (m.index > at) node.append(document.createTextNode(s.slice(at, m.index)));
             if (m[1]) node.append(el('code', 'ovse-ic', m[1].slice(1, -1)));
             else if (m[2]) node.append(el('b', '', m[2].slice(2, -2)));
-            else if (m[3]) { const a = el('a', '', m[3]); a.href = m[4]; a.target = '_blank'; a.rel = 'nofollow noopener noreferrer'; node.append(a); }
-            else if (m[5]) { const a = el('a', '', m[5].replace(/^https:\/\/(www\.)?/, '').slice(0, 60)); a.href = m[5]; a.target = '_blank'; a.rel = 'nofollow noopener noreferrer'; node.append(a); }
+            else if (m[3]) { const a = linkChip(m[4], m[3]); if (a) node.append(a); else node.append(document.createTextNode(m[3])); }
+            else if (m[5]) { const a = linkChip(m[5]); if (a) node.append(a); else node.append(document.createTextNode(m[5])); }
             else if (m[6]) {
                 const n = Number(m[6]); const src = Array.isArray(sources) ? sources.find((x) => Number(x.n) === n) : null; const url = src && httpsUrl(src.url);
                 if (url) { const a = el('a', 'ovse-cite', String(n)); a.href = url; a.target = '_blank'; a.rel = 'nofollow noopener noreferrer'; a.title = src.title || ''; node.append(a); }
@@ -416,7 +438,8 @@
     }
     function words(text, sources) {
         const box = el('div', 'ovse-words');
-        const lines = String(text || '').replace(/\r/g, '').split('\n');
+        // 4.335.0: the claim check's evidence marks ([E5], [E2, E7]) are for the checker; the reader sees the words.
+        const lines = String(text || '').replace(/\r/g, '').replace(/\s?\[E\d{1,3}(?:\s*,\s*E\d{1,3})*\]/g, '').split('\n');
         let para = [], list = null;
         const flush = () => { if (para.length) { box.append(inline(el('p'), para.join(' '), sources)); para = []; } };
         for (let i = 0; i < lines.length; i++) {
@@ -493,6 +516,9 @@
         return row;
     });
     card('code', (data) => { const pre = el('pre', 'ovse-pre'); pre.append(el('code', '', String(data.code || data.text || '').slice(0, 40000))); return pre; });
+    // 4.335.0: a chart ({ type, title?, labels, series, unit? }) and a widget ({ html, title? }) an agent sends as its step's
+    // ui: a place held here, drawn by ov-embeds.js when it has loaded (enrich).
+    ['chart', 'widget'].forEach((kind) => card(kind, (data) => { const ph = el('div', 'ovse-wait'); ph.dataset.oveWait = kind; ph.__oveData = data || {}; ph.textContent = kind === 'chart' ? 'Drawing the chart…' : 'Opening the preview…'; return ph; }));
     card('table', (data) => {
         const wrap = el('div', 'ovse-table'); const t = el('table');
         const cols = Array.isArray(data.columns) ? data.columns.slice(0, 8) : [];
@@ -542,6 +568,10 @@
 
     /** A sibling file (ov-composer.js, ov-picker.js), once per page. */
     const asked = new Map();
+    // An answer with something to show more richly: ov-embeds.js upgrades it (4.335.0). Nothing to do: nothing loads.
+    function wantsEmbeds(node) {
+        return !!(node && node.querySelector && node.querySelector('pre[data-lang="chart"], pre[data-lang="html"], pre[data-lang="svg"], pre[data-lang="json"], pre[data-lang="xml"], [data-ove-wait], a.ovse-lk.is-rich, a.ovse-lk[href$=".png"], a.ovse-lk[href$=".jpg"], a.ovse-lk[href$=".jpeg"], a.ovse-lk[href$=".webp"], a.ovse-lk[href$=".gif"]'));
+    }
     function need(o, file, global) {
         if (root[global]) return Promise.resolve(root[global]);
         if (asked.has(file)) return asked.get(file);
@@ -620,6 +650,7 @@
             return j;
         };
         const emit = (type, data) => { if (typeof o.onEvent === 'function') { try { o.onEvent(type, data); } catch { /* the host's */ } } };
+        const enrichLater = (node) => { if (!wantsEmbeds(node)) return; need(o, 'ov-embeds.js', 'OVEmbeds').then((E) => { if (E && typeof E.enrich === 'function') { try { E.enrich(node); } catch { /* the words stand */ } } }); };
         const state = { gen: 0, ref: null, run: null, steps: new Map(), nodes: new Map(), stack: [], stop: null, abort: null, tick: null, runs: [], partial: [], q: '', listGen: 0, paint: 0, queue: [], open: new Set(), drawer: false };
         // The choice for a new session, shared with the composer's (localStorage 'ov:composer:run').
         let pick = { agent: o.agent || 'auto', where: 'auto', model: null, works: null, way: 'auto', effort: 'auto', permission: null };
@@ -1846,7 +1877,10 @@
                 let k = out.length - 1;
                 while (k >= 0 && (out[k].kind === 'think' || out[k].kind === 'tool')) k--;
                 const prev = out[k];
-                const same = (x, y) => String(x || '').replace(/\s+/g, ' ').trim() === String(y || '').replace(/\s+/g, ' ').trim();
+                // 4.335.0: the words themselves, without a trailing verdict (DONE), a Sources tail or the check's evidence marks
+                // (Design's reply showed twice, one copy with DONE and its sources, 11-21).
+                const core = (t) => String(t || '').replace(/\s?\[E\d{1,3}(?:\s*,\s*E\d{1,3})*\]/g, '').replace(/\n+\s*Sources?:[\s\S]*$/i, '').replace(/\s*(?:APPROVED|DONE)[.!]?\s*$/, '').replace(/\s+/g, ' ').trim();
+                const same = (x, y) => { const a = core(x); return a.length > 0 && a === core(y); };
                 if (prev && s.kind === 'message' && prev.kind === 'message' && s.from !== 'person' && prev.from !== 'person' && s.text && same(s.text, prev.text)) {
                     out.splice(k, 1);
                     out.push({ ...prev, ...s });
@@ -1998,8 +2032,99 @@
             else if (took >= 1) line.append(el('small', '', took < 60 ? `${Math.round(took)} s` : clock(took)));
             if (s.status === 'failed') line.append(svg('x', 'ovse-bad'));
             n.append(line);
-            if (out) { const pre = el('pre', 'ovse-out'); pre.append(el('code', '', String(out).slice(0, 6000))); n.append(pre); }
+            if (out) n.append(outView(out));
             return n;
+        }
+        /**
+         * A tool's result as something to read (4.335.0; the owner's phone, 11-21: "improve the parsing … so you can see
+         * more easier and more visualizer"; Design's run showed its tools' raw JSON): search results as rows with their
+         * links, a list of records as a table, a record as key-value rows, long text folded; the raw text is one tap away.
+         */
+        function outView(out) {
+            const raw = String(out).slice(0, 20000);
+            let data = null;
+            if (/^\s*[[{]/.test(raw)) { try { data = JSON.parse(raw); } catch { data = null; } }
+            const box = el('div', 'ovse-outv');
+            const view = data != null ? dataView(data, 0) : null;
+            const pre = el('pre', 'ovse-out'); pre.append(el('code', '', raw.slice(0, 6000)));
+            if (!view) { box.append(pre); return box; }
+            pre.hidden = true;
+            const rawB = btn('ovse-out-raw', 'Show the raw result', null, 'Raw'); rawB.setAttribute('aria-pressed', 'false');
+            rawB.addEventListener('click', () => { const on = pre.hidden; pre.hidden = !on; view.hidden = on; rawB.setAttribute('aria-pressed', String(on)); });
+            box.append(view, pre, rawB);
+            return box;
+        }
+        const scalar = (v) => v == null || ['string', 'number', 'boolean'].includes(typeof v);
+        const cellText = (v) => (v == null ? '' : typeof v === 'object' ? (Array.isArray(v) ? `${v.length} item${v.length === 1 ? '' : 's'}` : '…') : String(v));
+        function dataView(d, depth) {
+            if (depth > 2) return null;
+            if (Array.isArray(d)) {
+                if (!d.length) return el('p', 'ovse-out-none', 'Nothing came back.');
+                const objs = d.filter((x) => x && typeof x === 'object' && !Array.isArray(x));
+                // Results with a title and an address: rows that open them.
+                if (objs.length === d.length && objs.every((x) => typeof (x.url || x.link || x.href) === 'string' && (x.title || x.name))) {
+                    const list = el('div', 'ovse-out-rows');
+                    objs.slice(0, 12).forEach((x) => {
+                        const url = httpsUrl(x.url || x.link || x.href);
+                        const r = el(url ? 'a' : 'div', 'ovse-out-row'); if (url) { r.href = url; r.target = '_blank'; r.rel = 'nofollow noopener noreferrer'; }
+                        let host = ''; try { host = url ? new URL(url).hostname.replace(/^www\./, '') : ''; } catch { /* */ }
+                        const t = el('span', ''); t.append(el('b', '', String(x.title || x.name).slice(0, 160)));
+                        const said = x.summary || x.snippet || x.description || x.text || '';
+                        if (said) t.append(el('small', '', String(said).slice(0, 220)));
+                        r.append(svg(url ? 'globe' : 'file'), t);
+                        if (host) r.append(el('i', '', host));
+                        list.append(r);
+                    });
+                    if (objs.length > 12) list.append(el('small', 'ovse-out-more', `and ${objs.length - 12} more`));
+                    return list;
+                }
+                // Records: a table of the columns most of them have.
+                if (objs.length === d.length) {
+                    const count = new Map();
+                    objs.forEach((x) => Object.keys(x).forEach((k) => count.set(k, (count.get(k) || 0) + 1)));
+                    const cols = [...count.entries()].filter(([k, n]) => n >= objs.length / 2 && objs.some((x) => scalar(x[k]))).map(([k]) => k).slice(0, 5);
+                    if (cols.length) {
+                        const wrap = el('div', 'ovse-table ovse-out-table'); const t = el('table');
+                        const hr = el('tr'); cols.forEach((c) => hr.append(el('th', '', c.replace(/_/g, ' ')))); const th = el('thead'); th.append(hr); t.append(th);
+                        const tb = el('tbody');
+                        objs.slice(0, 20).forEach((x) => { const tr = el('tr'); cols.forEach((c) => tr.append(el('td', '', cellText(x[c]).slice(0, 140)))); tb.append(tr); });
+                        t.append(tb); wrap.append(t);
+                        if (objs.length > 20) wrap.append(el('small', 'ovse-out-more', `and ${objs.length - 20} more`));
+                        return wrap;
+                    }
+                }
+                if (d.every(scalar)) { const ul = el('ul', 'ovse-out-list'); d.slice(0, 20).forEach((v) => ul.append(el('li', '', cellText(v).slice(0, 200)))); return ul; }
+                return null;
+            }
+            if (d && typeof d === 'object') {
+                const keys = Object.keys(d);
+                if (!keys.length) return el('p', 'ovse-out-none', 'Nothing came back.');
+                // One list inside (results, items, components…): that list, under its name.
+                const lists = keys.filter((k) => Array.isArray(d[k]) && d[k].length);
+                if (lists.length === 1 && keys.filter((k) => !scalar(d[k])).length === 1) {
+                    const inner = dataView(d[lists[0]], depth + 1);
+                    if (inner) {
+                        const box = el('div', 'ovse-out-group');
+                        const meta = keys.filter((k) => scalar(d[k]) && d[k] !== '' && d[k] != null).slice(0, 4);
+                        box.append(el('small', 'ovse-out-name', `${lists[0].replace(/_/g, ' ')} · ${d[lists[0]].length}${meta.length ? ` · ${meta.map((k) => `${k.replace(/_/g, ' ')} ${cellText(d[k]).slice(0, 40)}`).join(' · ')}` : ''}`));
+                        box.append(inner);
+                        return box;
+                    }
+                }
+                // A record: its fields as rows.
+                const dl = el('dl', 'ovse-out-kv');
+                keys.slice(0, 14).forEach((k) => {
+                    const v = d[k];
+                    dl.append(el('dt', '', k.replace(/_/g, ' ')));
+                    const dd = el('dd');
+                    if (scalar(v)) { const url = typeof v === 'string' ? httpsUrl(v) : null; if (url && /^https:/.test(v)) { const a = el('a', '', v.replace(/^https:\/\/(www\.)?/, '').slice(0, 80)); a.href = url; a.target = '_blank'; a.rel = 'nofollow noopener noreferrer'; dd.append(a); } else dd.textContent = cellText(v).slice(0, 300); }
+                    else { const inner = dataView(v, depth + 1); if (inner) dd.append(inner); else dd.textContent = cellText(v); }
+                    dl.append(dd);
+                });
+                if (keys.length > 14) dl.append(el('dt', 'ovse-out-more', `and ${keys.length - 14} more fields`));
+                return dl;
+            }
+            return null;
         }
         function filesCard(files) {
             const by = new Map();
@@ -2023,6 +2148,12 @@
             b.addEventListener('click', () => openDiff(f));
             return b;
         }
+        /** A group agent's own run, opened in place (its steps, tools and model). */
+        function watchRun(ref, words) {
+            const b = btn('ovse-watch', words, 'play', words);
+            b.addEventListener('click', () => { try { open(ref); } catch { /* the group stays */ } });
+            return b;
+        }
         function stepNode(s) {
             const from = s.from || 'agent';
             if (s.kind === 'message' && from === 'person' && s.author && s.author.you === false) {
@@ -2034,6 +2165,14 @@
                 return n;
             }
             if (s.kind === 'message' && from === 'person') {
+                const g = /^You are ([^\n]{1,60}?) in a group conversation with/.exec(String(s.text || ''));
+                if (g) {
+                    // 4.335.0 (11-21: the instruction showed as the person's own words): who it is, the rest folded.
+                    const n = el('details', 'ovse-brief'); n.dataset.seq = String(s.seq);
+                    const sm = el('summary'); sm.append(svg('members'), el('span', '', `${g[1]}'s turn in a group`), svg('fold', 'ovse-fold'));
+                    n.append(sm, words(s.text));
+                    return n;
+                }
                 const n = el('div', 'ovse-me'); const b = el('div', 'ovse-bubble'); b.append(words(s.text)); n.append(b); attachments(n, s);
                 return n;
             }
@@ -2042,12 +2181,15 @@
             if (s.kind === 'message' && from !== 'person' && /used today's free allowance|free AI allowance[^.]*is spent|free allowance for today is spent/i.test(String(s.text || ''))) {
                 return allowanceCard(s);
             }
-            if (from === 'agent' && s.status === 'running' && !s.text && s.author && s.author.name) {
-                // An agent of a group at work: its name and the mark's wait, until its words come.
+            if (from === 'agent' && s.status === 'running' && (!s.text || /^working\b/i.test(String(s.text))) && s.author && s.author.name) {
+                // An agent of a group at work: its name, the mark's wait, and (4.335.0; 11-21: "it spawns sub-agents, but it's
+                // not indicated in the main chat") a way to watch it work.
                 const n = el('div', 'ovse-say is-writing ovse-group-working'); n.dataset.seq = String(s.seq);
-                n.append(el('small', 'ovse-author', s.author.name), el('span', 'ovse-typing', 'Working'));
+                n.append(el('small', 'ovse-author', s.author.name), el('span', 'ovse-typing', `${s.author.name} is working`));
+                if (s.run_ref) n.append(watchRun(s.run_ref, `Watch ${s.author.name} work`));
                 return n;
             }
+
             if (from === 'system' && s.kind === 'message') {
                 const compact = (s.ui && s.ui.type === 'compaction') || /summari[sz]ed|compact/i.test(String(s.text || ''));
                 const n = el('div', compact ? 'ovse-mark' : 'ovse-sys');
@@ -2087,6 +2229,8 @@
                 n.append(who);
             }
             if (said.text) n.append(words(said.text, s.sources));
+            enrichLater(n);
+            if (s.run_ref && state.run && state.run.kind === 'group' && s.author && s.author.name) n.append(watchRun(s.run_ref, `See how ${s.author.name} worked`));
             if (said.chip) {
                 const c = el('span', `ovse-verdict is-${said.chip.tone}`); c.setAttribute('role', 'status');
                 c.append(svg(said.chip.glyph), el('span', '', said.chip.words));
@@ -2108,6 +2252,23 @@
          * words, what paid for it (the free AI, your own key, your computer), the model, what it took. It opens on the
          * spend by rung. Nothing for an answer without one.
          */
+        /** The way a run is worked, from its agent.harness (Actor's runs; 11-21): what the chips call the mode. */
+        function howWord() {
+            const r = state.run;
+            const h = r && r.agent && typeof r.agent.harness === 'string' ? r.agent.harness : '';
+            if (!h) return '';
+            const NAMES = { openvibe: 'Agent', 'one-model': 'Chat · one model', decisions: 'Decisions', 'open-model': 'Private model', 'openai-agent': 'OpenAI agent', a2a: 'Outside agent',
+                'claude-code': 'Claude Code', codex: 'Codex', opencode: 'OpenCode', gemini: 'Gemini CLI', muse: 'Muse', 'codebuddy-code': 'CodeBuddy', qwen: 'Qwen Code', goose: 'Goose', aider: 'Aider', codes: 'Codes' };
+            return NAMES[h] || h.replace(/-/g, ' ').replace(/^./, (c) => c.toUpperCase());
+        }
+        /** Where the model ran: through OpenVibe's AI (an API call), on the person's computer, or a harness there. */
+        function throughWord(rung) {
+            const r = state.run;
+            const where = r && r.where && r.where.kind;
+            if (rung === 'machine' || where === 'machine') return ' on your computer';
+            if (rung === 'allowance' || rung === 'key' || rung === 'credits' || where === 'openvibe') return ' via OpenVibe AI';
+            return '';
+        }
         function receiptNode(s) {
             const c = s.cost && typeof s.cost === 'object' ? s.cost : null;
             const by = c && c.by && typeof c.by === 'object' ? c.by : null;
@@ -2119,7 +2280,9 @@
             const paid = rungs.length === 1 ? rungWord(last, provider) : `${rungWord(rungs[0], provider)}, then ${rungWord(last, provider).replace(/^Your/, 'your')}`;
             const took = (sec) => (sec >= 60 ? clock(Math.round(sec)) : sec >= 1 ? `${Math.round(sec)} s` : '');
             const tokens = Number(c.tokens) || 0;
-            const head = [paid, s.model && s.model.id ? modelName(s.model.id) : ''].filter(Boolean);
+            // 4.335.0 (the owner, 11-21: "did it run on the DeepSeek harness, or … just API or what? And also, what mode are
+            // we in?"): the way it was worked (agents.run@1 agent.harness) and where (where.kind) lead the line.
+            const head = [howWord(), s.model && s.model.id ? `${modelName(s.model.id)}${throughWord(last)}` : throughWord(last).replace(/^ /, ''), paid].filter(Boolean);
             const more = [tokens ? `${shortN(tokens)} tokens` : '', took(Number(c.seconds) || 0)].filter(Boolean);
             const bits = head.concat(more);
             const d = el('details', 'ovse-receipt'); d.dataset.key = `receipt:${s.seq}`;
@@ -2422,10 +2585,11 @@
          */
         function groupWords(st) {
             const text = st && st.text ? String(st.text) : '';
-            if (!state.run || state.run.kind !== 'group' || !st || st.from === 'person') return { text };
+            if (!st || st.from === 'person') return { text };
             // Why it spoke, only where it says something the thread does not: a review's number, who asked for changes,
-            // a handoff, plainly coding words. A person's @mention or the lead answering needs no note.
-            const w = String(st.why || '');
+            // a handoff, plainly coding words. A person's @mention or the lead answering needs no note. (4.335.0: the
+            // verdict chips are for any agent's answer; the reasons are a group's.)
+            const w = state.run && state.run.kind === 'group' ? String(st.why || '') : '';
             const why = /^review (\d+) of (\d+)$/.test(w) ? w.replace(/^review (\d+) of (\d+)$/, 'Review $1 of $2')
                 : /asked for changes$/.test(w) ? w.slice(0, 80)
                     : /^handed to /.test(w) ? 'A handoff'
@@ -3796,6 +3960,12 @@ html[data-ov-motion="off"] .ovse-speak.is-speaking .ovse-g, html[data-ov-motion=
 .ovse-words p { margin: 0 0 10px; } .ovse-words .ovse-h { font-weight: 700; margin-top: 14px; }
 .ovse-words ul, .ovse-words ol { margin: 0 0 10px; padding-left: 22px; } .ovse-words li { margin: 3px 0; }
 .ovse-words a { color: var(--ovse-acc2); text-decoration: underline; text-underline-offset: 2px; }
+/* 4.335.0: a link is a chip that says what it is; the address is its title. */
+.ovse-words a.ovse-lk { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; box-sizing: border-box; padding: 1px 8px 1px 6px; margin: 1px 0; border-radius: 8px; vertical-align: baseline; background: color-mix(in srgb, var(--ovse-acc) 12%, transparent); color: var(--ovse-acc2); font-weight: 600; text-decoration: none; line-height: 1.45; transition: background-color .15s; }
+.ovse-words a.ovse-lk:hover { background: color-mix(in srgb, var(--ovse-acc) 22%, transparent); }
+.ovse-words a.ovse-lk > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovse-words a.ovse-lk .ovse-lk-g { flex: none; width: 15px; height: 15px; }
+.ovse-wait { padding: 12px; border-radius: 14px; border: 1px dashed var(--ovse-line); color: var(--ovse-mute); font-size: 13px; }
 .ovse-ic { padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--ovse-fg) 9%, transparent); font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .ovse-cite { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin: 0 2px; padding: 0 4px; border-radius: 6px; background: color-mix(in srgb, var(--ovse-acc) 22%, transparent); color: var(--ovse-acc2) !important; font-size: 11px; font-weight: 700; text-decoration: none !important; vertical-align: 2px; }
 .ovse-pre, .ovse-out { margin: 0 0 10px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--ovse-bg) 60%, #000 40%); border: 1px solid var(--ovse-line); overflow-x: auto; overflow-y: auto; font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; }
@@ -3889,6 +4059,36 @@ details.ovse-tool > .ovse-tool-h { cursor: pointer; } details.ovse-tool > .ovse-
 .ovse-tool-h small { color: var(--ovse-mute); font-size: 11.5px; font-variant-numeric: tabular-nums; }
 .ovse-tool.is-failed .ovse-tool-h { color: var(--danger, #ef4444); } .ovse-bad { color: var(--danger, #ef4444) !important; }
 .ovse-out { margin: 2px 8px 8px 31px; max-height: 280px; overflow: auto; font-size: 12px; }
+/* 4.335.0: a tool's result as something to read. */
+.ovse-outv { display: grid; gap: 6px; margin: 2px 8px 10px 31px; min-width: 0; }
+.ovse-outv .ovse-out { margin: 0; }
+.ovse-out-rows { display: grid; gap: 4px; }
+.ovse-out-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: start; gap: 8px; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--ovse-acc) 5%, transparent); color: inherit; text-decoration: none; }
+a.ovse-out-row:hover { background: color-mix(in srgb, var(--ovse-acc) 11%, transparent); }
+.ovse-out-row .ovse-g { width: 16px; height: 16px; margin-top: 2px; color: var(--ovse-acc2); }
+.ovse-out-row span { display: grid; gap: 2px; min-width: 0; }
+.ovse-out-row b { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovse-out-row small { font-size: 12.5px; color: var(--ovse-mute); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ovse-out-row i { font-style: normal; font-size: 11.5px; color: var(--ovse-mute); white-space: nowrap; }
+.ovse-out-table { max-height: 300px; overflow: auto; }
+.ovse-out-kv { display: grid; grid-template-columns: minmax(80px, max-content) minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: 13px; }
+.ovse-out-kv dt { color: var(--ovse-mute); text-transform: capitalize; }
+.ovse-out-kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.ovse-out-list { margin: 0; padding-left: 18px; font-size: 13px; }
+.ovse-out-name, .ovse-out-more { font-size: 12px; color: var(--ovse-mute); text-transform: capitalize; }
+.ovse-out-group { display: grid; gap: 6px; }
+.ovse-out-none { margin: 0; font-size: 13px; color: var(--ovse-mute); }
+.ovse-out-raw { justify-self: start; min-height: 28px; padding: 0 10px; border: 1px solid var(--ovse-line); border-radius: 8px; background: none; color: var(--ovse-mute); font: inherit; font-size: 12px; cursor: pointer; }
+.ovse-out-raw[aria-pressed=true] { color: var(--ovse-acc2); border-color: color-mix(in srgb, var(--ovse-acc) 50%, var(--ovse-line)); }
+.ovse-watch { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; margin-top: 6px; padding: 0 12px; border: 1px solid var(--ovse-line); border-radius: 999px; background: none; color: var(--ovse-acc2); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.ovse-watch .ovse-g { width: 14px; height: 14px; }
+.ovse-watch:hover { background: color-mix(in srgb, var(--ovse-acc) 10%, transparent); }
+.ovse-brief { margin: 0 0 8px; padding: 8px 12px; border-radius: 12px; border: 1px dashed var(--ovse-line); color: var(--ovse-mute); font-size: 13px; }
+.ovse-brief > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; }
+.ovse-brief > summary::-webkit-details-marker { display: none; }
+.ovse-brief > summary .ovse-g { width: 16px; height: 16px; }
+.ovse-brief > summary .ovse-fold { margin-left: auto; }
+.ovse-brief[open] > summary .ovse-fold { transform: rotate(180deg); }
 /* 4.310.0 (the owner's phone, 11-18: a tool's JSON ran past the screen): a tool's output wraps inside its box. */
 .ovse-out { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; box-sizing: border-box; }
 .ovse-pre { max-width: 100%; box-sizing: border-box; }

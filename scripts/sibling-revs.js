@@ -42,7 +42,9 @@ const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov
     'ov-session.js',
     'ov-guest-ask.js',
     // 4.318.0 (the owner, 11-18: one face system for the menu's sessions and Chat's Vibe): ov-run.js and ov-session.js load it.
-    'ov-face.js'];
+    'ov-face.js',
+    // 4.335.0: rich content in an answer (ov-session.js loads it only when an answer has something to show).
+    'ov-embeds.js'];
 // The files dock.js and notification-ui.js load from beside themselves: their own tables, in their own files.
 const OWN = { 'dock.js': { name: 'DOCK_REV', files: ['ov-chat-cards.js', 'ov-tabs.js', 'dock-vibe.js', 'dock-code.js', 'dock-mount.js', 'dock-runs.js', 'ai-marks-client.js', 'action-center.js', 'dock-timeline.js', 'dock-actor.js', 'dock-agent.js', 'dock-timer.js', 'dock-share.js', 'dock-card.js', 'dock-chat-edits.js', 'ov-linkcard.js'] },
     'notification-ui.js': { name: 'NOTIFY_REV', files: ['notification-live.js'] },

@@ -66,14 +66,14 @@ async function until(p, expr, ms = 6000) { const end = Date.now() + ms; while (D
         const got = await until(p, `(() => { const says = [...document.querySelectorAll('.ovse-say')]; if (says.length < 2) return null;
             return { lines: says.map((n) => { const r = n.querySelector('.ovse-receipt > summary'); return r ? r.textContent : null; }),
                 more: getComputedStyle(document.querySelector('.ovse-receipt-more')).display, w: document.documentElement.scrollWidth }; })()`);
-        assert.deepStrictEqual(got.lines, ['Free AI, then your Anthropic key · Claude Sonnet 5.5 · 6.1k tokens · 21 s', null], 'the first answer has its receipt; the second has none');
+        assert.deepStrictEqual(got.lines, ['Claude Sonnet 5.5 via OpenVibe AI · Free AI, then your Anthropic key · 6.1k tokens · 21 s', null], 'the first answer has its receipt (4.335.0: the model and how it was reached lead, then what paid); the second has none');
         assert.strictEqual(got.more, 'none', 'a phone keeps what paid and the model on the line');
         assert.strictEqual(got.w, 390, 'nothing off the screen');
 
         await p.evaluate("document.querySelector('.ovse-receipt > summary').click()");
         const rows = await until(p, `(() => { const r = [...document.querySelectorAll('.ovse-receipt[open] .ovse-receipt-r')]; return r.length ? r.map((x) => [x.querySelector('b').textContent, x.querySelector('span').textContent]) : null; })()`);
         assert.deepStrictEqual(rows, [['Free AI', '4.1k tokens · 10 s · free'], ['Your Anthropic key', '2k tokens · 12 s · $0.0042']]);
-        assert.match(await p.evaluate("document.querySelector('.ovse-receipt > summary').getAttribute('aria-label')"), /^How this answer ran: Free AI, then your Anthropic key, Claude Sonnet 5\.5/);
+        assert.match(await p.evaluate("document.querySelector('.ovse-receipt > summary').getAttribute('aria-label')"), /^How this answer ran: Claude Sonnet 5\.5 via OpenVibe AI, Free AI, then your Anthropic key/);
         assert.deepStrictEqual(errors, [], 'no page errors');
         console.log('answer-receipt-chrome: every answer says how it ran (what paid, the model, tokens, time), and opens on the spend by rung ok');
     } finally {

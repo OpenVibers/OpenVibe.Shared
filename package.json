@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.334.0",
+  "version": "4.335.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -64,6 +64,7 @@
     "./trending": "./ov-trending.js",
     "./face": "./ov-face.js",
     "./linkcard": "./ov-linkcard.js",
+    "./embeds": "./ov-embeds.js",
     "./linkcard.css": "./ov-linkcard.css",
     "./agent": "./ov-agent.js",
     "./tabs": "./ov-tabs.js",

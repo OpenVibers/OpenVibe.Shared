@@ -64,7 +64,8 @@ const BROWSER = Object.freeze([
     'ov-session.js',        // 4.265.0: OpenVibeSession, one session surface for every agent (plan §AD.8)
     'ov-guest-ask.js',      // 4.330.0: OpenVibeGuestAsk, a signed-out visitor's question to Vibe (plan §V.1 guests)
     'ov-face.js',           // 4.318.0: OVFace, an agent's face on every surface (ov-run.js and ov-session.js draw with it)
-    'ov-linkcard.js',       // 4.320.0: OVLinkCard, the card under a chat message that carries an address (Chat, Live, the menu)
+    'ov-linkcard.js',
+    'ov-embeds.js',         // 4.335.0: OVEmbeds, rich content in an agent's answer (link cards, charts, live HTML previews)       // 4.320.0: OVLinkCard, the card under a chat message that carries an address (Chat, Live, the menu)
     'ov-run.js',            // 4.224.0: the one run thread (OpenVibeRun), loaded beside the navbar
     'ov-harness.js',        // 4.257.0: the coding-harness layout over ov-run.js (projects, threads, changes): openvibe.codes
     'ov-metrics.js',        // 4.232.0: the one way to show numbers (tiles, sparklines, bars, percentiles, splits, tables)
