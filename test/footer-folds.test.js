@@ -18,7 +18,7 @@ assert.ok(folds.every((d) => / open\b/.test(d)), 'every fold is written open');
 // Each fold's line says how many links it holds (4.93.2): a site's own columns, the network's 8 and Everything else, Legal.
 const counts = { Watch: null, Create: null, Network: 9, Legal: null };
 for (const [label, heading] of [['Watch', 'Watch'], ['Create', 'Create'], ['The OpenVibe network', 'Network'], ['Legal', 'Legal']]) {
-    const re = new RegExp(`<nav class="ovf-col" aria-label="${label}"><details class="ovf-fold" open><summary><h3>${heading}</h3><span class="ovf-fold-n">(\\d+) links?</span></summary>`);
+    const re = new RegExp(`<nav class="ovf-col" aria-label="${label}"><details class="ovf-fold" open><summary><h2>${heading}</h2><span class="ovf-fold-n">(\\d+) links?</span></summary>`);
     const m = re.exec(html);
     assert.ok(m && Number(m[1]) > 0, `${label}: the fold's line carries its count`);
     if (counts[heading]) assert.strictEqual(Number(m[1]), counts[heading], `${label}: ${counts[heading]} links`);
@@ -41,7 +41,7 @@ assert.match(phone, /\.ovf-fold\[open\]>summary::after\{transform:/);
 // An untitled or empty group is never a fold (4.202.0's screenshots showed two "0 links" folds with no heading).
 {
     const empty = footer.buildHTML({ service: 'live', variant: 'full', links: [{ heading: '', items: [] }, { heading: 'Nothing', items: [] }, { heading: '', items: [{ name: 'X', url: '/x' }] }, ...links] });
-    assert.ok(!/<h3><\/h3>/.test(empty), 'no fold without a heading');
+    assert.ok(!/<h2><\/h2>/.test(empty), 'no fold without a heading');
     assert.ok(!/>0 links</.test(empty), 'no fold with no links');
     assert.strictEqual((empty.match(/<details class="ovf-fold"/g) || []).length, folds.length, 'only the real columns are folds');
 }

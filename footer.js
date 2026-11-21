@@ -145,7 +145,35 @@
         { name: 'Discord', icon: 'discord', url: 'https://discord.gg/M6MuRUaeJj' },
     ];
 
+    // Structured data (schema.org JSON-LD; the network SEO pass of 2026-11-21: 48 of 67 sites carried none). Every site
+    // names the same organization by one @id, and itself as a WebSite it publishes. Google reads JSON-LD anywhere in the
+    // page, and also when a script adds it, so the server footer carries it and init() adds the WebSite where it is
+    // missing.
+    const ORG_ID = `${NETWORK_URL}/#organization`;
+    const ORG = { '@type': 'Organization', '@id': ORG_ID, name: 'OpenVibe', url: `${NETWORK_URL}/`, logo: `${NETWORK_URL}/assets/logo-512.png`, sameAs: ['https://github.com/OpenVibers'] };
+    // Sites whose address is not openvibe.<service>.
+    const SITE_URLS = { openre: 'https://openre.stream', shoes: 'https://open.shoes', search: 'https://search.openvibe.network', ai: 'https://ai.openvibe.services', mail: 'https://openvibe.email', inventory: 'https://openvibe.my/inventory', play: 'https://play.openvibe.games' };
+    /** This site's address: the page's, the one the site passed, or the one its service names (null when unsure). */
+    function siteUrlOf(c) {
+        if (c.siteUrl && /^https:\/\/[a-z0-9.-]+(\/[^\s]*)?$/i.test(c.siteUrl)) return String(c.siteUrl).replace(/\/+$/, '');
+        if (typeof location !== 'undefined' && location.origin && /^https:/.test(location.origin)) return location.origin;
+        const s = String(c.service || '');
+        if (SITE_URLS[s]) return SITE_URLS[s];
+        if (TOOL_FAMILIES.has(s)) return `https://${s}.openvibe.tools`;
+        return /^[a-z]{2,12}$/.test(s) ? `https://openvibe.${s}` : null;
+    }
+    /** The JSON-LD the footer carries: the organization, and the site when its address is known. */
+    function structuredData(c) {
+        const url = siteUrlOf(c);
+        const graph = [ORG];
+        if (url) graph.push({ '@type': 'WebSite', '@id': `${url}/#website`, name: c.brandName || brandFor(c.service), url: `${url}/`, publisher: { '@id': ORG_ID }, inLanguage: 'en' });
+        // JSON in a script element: "<" is escaped so no text in it can close the element.
+        return `<script type="application/ld+json" data-ovf-ld>${JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c')}</script>`;
+    }
+
     const DEFAULTS = {
+        siteUrl: null,               // this site's https origin, for its structured data (else from the service id)
+        structuredData: true,        // false: the site writes its own Organization/WebSite JSON-LD
         service: null,               // 'live' | 'tools' | 'dev' | … (auto-detected when omitted)
         brandName: null,
         tagline: 'Open source and community run. Built in the open by the people using it.',
@@ -321,7 +349,7 @@
         // (a 48 px row with a chevron), so a phone's footer is about one screen shorter. Every link stays in the page.
         // The fold's line carries its count ("9 links"), so a folded column still says how much it holds (#208).
         const fold = (label, heading, body, count) => `
-            <nav class="ovf-col" aria-label="${esc(label)}"><details class="ovf-fold" open><summary><h3>${esc(heading)}</h3><span class="ovf-fold-n">${esc(String(count))} ${count === 1 ? 'link' : 'links'}</span></summary>
+            <nav class="ovf-col" aria-label="${esc(label)}"><details class="ovf-fold" open><summary><h2>${esc(heading)}</h2><span class="ovf-fold-n">${esc(String(count))} ${count === 1 ? 'link' : 'links'}</span></summary>
                 <div class="ovf-fold-body">${body}</div></details></nav>`;
         // A column needs a name and at least one link: an untitled "0 links" fold is never drawn (4.202.0's screenshots
         // showed two when a site passed empty groups).
@@ -417,7 +445,7 @@
 .ovf-inner--compact{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 18px;text-align:center}
 .ovf-cols{display:grid;gap:clamp(20px,3vw,36px);grid-template-columns:minmax(230px,1.6fr) repeat(auto-fit,minmax(120px,1fr));align-items:start}
 .ovf-col{display:flex;flex-direction:column;gap:8px;min-width:0}
-.ovf-col h3{margin:0 0 2px;font-size:.75rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted,#8b93ad)}
+.ovf-col h2{margin:0 0 2px;font-size:.75rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted,#8b93ad)}
 .ovf-fold>summary{list-style:none;cursor:default;pointer-events:none}
 .ovf-fold>summary::-webkit-details-marker{display:none}
 .ovf-fold-body{display:flex;flex-direction:column;gap:8px;margin-top:8px}
@@ -554,7 +582,7 @@ a.ovf-tile:active{transform:scale(.96)}
   .ovf-col:not(.ovf-col--brand){grid-column:1/-1;border-top:1px solid var(--border,rgba(255,255,255,.08))}
   .ovf-col:not(.ovf-col--brand):last-child{border-bottom:1px solid var(--border,rgba(255,255,255,.08))}
   .ovf-fold>summary{pointer-events:auto;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:48px}
-  .ovf-fold>summary h3{margin:0}
+  .ovf-fold>summary h2{margin:0}
   .ovf-fold-n{display:inline;margin-left:auto;margin-right:10px;color:var(--text-muted,#8b93ad);font-size:.82rem;font-weight:600;font-variant-numeric:tabular-nums}
   .ovf-fold>summary::after{content:"";width:.5em;height:.5em;margin-right:4px;border:solid var(--text-muted,#8b93ad);border-width:0 1.8px 1.8px 0;transform:translateY(-.2em) rotate(45deg);transition:transform .2s}
   .ovf-fold[open]>summary::after{transform:translateY(.1em) rotate(-135deg)}
@@ -854,6 +882,10 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
         _mounted = el;
         // Started: shell.page's own start (after the site's scripts) leaves a footer the site started alone.
         try { el.setAttribute('data-ovf-live', ''); } catch { /* */ }
+        // The structured data, when the server did not write it (a page that mounts the footer with no SSR).
+        try {
+            if (_cfg.structuredData !== false && !document.querySelector('script[data-ovf-ld]')) el.insertAdjacentHTML('afterend', structuredData(_cfg));
+        } catch { /* a page without the DOM API needed: no structured data */ }
         render();
         // 'auto' on a single-page site follows its routes: back and forward re-read the path (a route the site pushes
         // itself calls setVariant or render).
@@ -902,8 +934,8 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
         const c = { ...DEFAULTS, ...cfg };
         if (c.variant === 'auto') c.variant = autoFor(cfg.path, c.fullOn);   // the request's path, on the server
         const id = String(cfg.mountId || 'ov-footer').replace(/[^\w-]/g, '');
-        return `<style id="ovf-css">${CSS}</style><footer id="${id}" class="ovf" data-variant="${c.variant === 'compact' ? 'compact' : 'full'}">${buildHTML(c)}</footer>`;
+        return `<style id="ovf-css">${CSS}</style><footer id="${id}" class="ovf" data-variant="${c.variant === 'compact' ? 'compact' : 'full'}">${buildHTML(c)}</footer>${c.structuredData === false ? '' : structuredData(c)}`;
     }
 
-    return { init, ssr, setVariant, claim, buildHTML, render, CSS, NETWORK, LEGAL, detectService, pulseHTML, onlineHTML, cleanOnline, autoFor, get config() { return { ..._cfg }; }, get variant() { return shownVariant(_cfg.variant); } };
+    return { init, ssr, setVariant, claim, buildHTML, render, structuredData, siteUrlOf, CSS, NETWORK, LEGAL, detectService, pulseHTML, onlineHTML, cleanOnline, autoFor, get config() { return { ..._cfg }; }, get variant() { return shownVariant(_cfg.variant); } };
 });

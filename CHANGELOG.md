@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.333.0 — 2026-11-21
+
+**Every site's footer: structured data, and headings that never skip a level** (`footer.js`; the owner, 11-21: "analyze
+openseo GitHub repo and improve our SEO network wide"). A crawl of 67 sites with OpenSEO's audit rules
+(every-app/open-seo, MIT) found 48 sites with no structured data and 217 pages, on 50 sites, skipping from h1 to h3: the
+footer titled its Network and Legal columns with h3, so any page with no h2 of its own (every site's /updates) skipped
+a level.
+- The footer's column headings are h2 (styled exactly as before).
+- The server footer (`ssr`) carries schema.org JSON-LD: the OpenVibe Organization (one `@id` across the network, logo,
+  GitHub) and the site as a WebSite it publishes, at its address (`siteUrl`, else the page's origin, else
+  `openvibe.<service>` and a few known exceptions; unsure: the organization only). `init()` adds it where the server
+  did not. `structuredData: false` leaves it to a site that writes its own. Test: footer-structured-data.
+
+Also in this release: **trending suggestions name a heading without its count badge** (`ov-trending.js`, #642:
+Exchange's "The engines" with its count became "The engines35").
+
 ## 4.332.0 — 2026-11-20
 
 **Global's "1 new message · Mark read" pill leaves the screen when it should** (`dock.js`; the owner's phone, 11-20:
