@@ -257,20 +257,24 @@ function sitemapIndexXml(maps = []) {
 // Crawlers that build search and AI indexes — welcomed by name so a generic Disallow never hits them.
 const AI_AND_SEARCH_BOTS = ['Googlebot', 'Bingbot', 'DuckDuckBot', 'Applebot', 'GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-User', 'Claude-SearchBot', 'Claude-Web', 'anthropic-ai', 'PerplexityBot', 'Perplexity-User', 'CCBot', 'Google-Extended', 'Amazonbot', 'meta-externalagent', 'YouBot', 'Bytespider'];
 
-// Open by default (owner, 2026-11-21: "allow robots and AI and everything. Everything should be just crawlable. We
-// should take advantage of as many bots as we can"). A site's `disallow` keeps only the paths that are never pages:
-// sign-in plumbing (a crawler there only starts sign-ins) and service-only routes (they answer 401 to everyone).
-// Every page is crawlable, a signed-in one included (it answers a crawler with its sign-in page). `costly` names
-// paths where each request spends money or someone's quota (a search box that queries engines): those stay out.
-// `open: false` keeps a site's own list as given.
+// Every bot welcome (owner, 2026-11-21: "allow robots and AI and everything. Everything should be just crawlable. We
+// should take advantage of as many bots as we can"): no crawler is blocked, the AI crawlers are named and allowed, AI use
+// is said yes to, and no site closes itself whole by accident. A site's own `disallow` is kept (4.336.0): it holds what
+// is one person's alone (a share or unlisted link, a plan, a watchlist, a draft) and the screens that only answer
+// "sign in"; 4.333.0's open default dropped those and let share links be crawled. A deliberate close (`allow: []` with
+// `Disallow: /`, a sandbox site) is written as given. `costly` adds paths where each request spends money or someone's
+// quota. `open: true` keeps only NEVER_PAGES (sign-in plumbing, service-only routes) plus `costly`.
 const NEVER_PAGES = ['/auth/', '/oauth/', '/internal', '/metrics', '/release-metrics', '/_openvibe/', '/realtime/'];
 const neverPage = (path) => NEVER_PAGES.some((p) => String(path).startsWith(p));
 
-function robotsTxt({ sitemaps = [], disallow = [], allow = ['/'], allowAI = true, block = [], crawlDelay, costly = [], open = true } = {}) {
-    if (open) {
-        disallow = [...new Set([...disallow.filter(neverPage), ...costly])];
-        allow = ['/'];
+function robotsTxt({ sitemaps = [], disallow = [], allow = ['/'], allowAI = true, block = [], crawlDelay, costly = [], open = false } = {}) {
+    const closed = Array.isArray(allow) && allow.length === 0 && disallow.includes('/');
+    if (!closed) {
         allowAI = true;
+        block = [];
+        disallow = disallow.filter((d) => d && d !== '/' && d !== '/*');
+        if (open) { disallow = disallow.filter(neverPage); allow = ['/']; }
+        disallow = [...new Set([...disallow, ...costly])];
     }
     const lines = [];
     // Content signals (contentsignals.org): with allowAI the network says yes to search, AI answers and training in so many

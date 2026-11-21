@@ -1,5 +1,25 @@
 # Changelog
 
+## 4.336.0 - 2026-11-21
+
+- **robots.txt keeps each site's private paths again** (`seo.robotsTxt`). 4.333.0's open default dropped every site's
+  own Disallow list but sign-in plumbing, which let one person's share and unlisted links (MediaHub `/s/`, Media `/o/`,
+  Food plans, Tours trips, Trade watchlists) be crawled. A site's list is kept; every bot is still welcome (no bot
+  blocked, the AI crawlers named and allowed, AI use said yes to), a stray `Disallow: /` is still dropped, a deliberate
+  close (`allow: []` with `Disallow: /`, Space's sandbox sites) is written as given, and `costly` paths are added.
+  `open: true` keeps the strict mode.
+- **The footer's structured data is microdata** on a hidden block after the footer (the organization by its one itemid,
+  the site as a WebSite it publishes), not a second `application/ld+json` script on every page: a page's JSON-LD stays
+  the page's own (one Recipe or JobPosting script; none on a private page) and search engines read the same facts.
+- **Set up a coding agent, guided** (`ov-session.js`; the owner, 11-21: "there should be a guided setup"): the agent picker
+  shows each coding agent as it stands for you (the Frame's run options carry Codes' readiness: Ready, Sign in, Not
+  installed …), and one that is not ready opens "Set up Claude Code": a computer of yours with OpenVibe Link, the install
+  command and the sign-in command (each copies with a tap), Check (reads your computers again) and Use it. Sending to a
+  coding agent that is not set up opens the same sheet and keeps the words in the box, sent once it is ready.
+- **The plan card fits the screen** (`ov-session.js`): the foot's grid column is `minmax(0, 1fr)`, so a long step no
+  longer widens the card past the window on a phone (the owner, 11-21); steps wrap. The same fix keeps the mode row (Auto · Chat · Agent · Code, Runs on, the ring) on
+  screen. A plan that is all done steps aside once the run has ended; an unfinished one stays.
+
 ## 4.335.0 — 2026-11-21
 
 **Rich content in an agent's answer, and an answer that says how it ran** (`ov-embeds.js`, new; `ov-session.js`; the

@@ -120,6 +120,7 @@
         plan: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="M3.8 6.5l1.3 1.3 2.2-2.4M3.8 12l1.3 1.3 2.2-2.4"/><circle cx="5.2" cy="17.5" r="1.4"/>',
         fold: '<path d="M6 9l6 6 6-6"/>',
         copy: '<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/>',
+        refresh: '<path d="M19.4 12a7.4 7.4 0 1 1-2.2-5.25"/><path d="M19.6 4.6v3.9h-3.9"/>',
         made: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9Z"/>',
         clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
         send: '<path d="M12 19.5V5M5.8 11.2L12 5l6.2 6.2"/>',
@@ -1671,6 +1672,72 @@
             emit('setup.open', { id: x.id, url });
             try { const w = root.open(url, '_blank', 'noopener'); if (!w) root.location.href = url; } catch { root.location.href = url; }
         }
+        /**
+         * Set up a coding agent (4.336.0; the owner, 11-21: "there should be a guided setup"): what it needs, then the
+         * steps in order: a computer of yours paired with OpenVibe Link, the agent installed, signed in with your own
+         * account; Check reads your machines again and, once it is ready, Use it picks it. The commands copy with one tap.
+         * `then` is what to do once it is ready (send the words that were waiting).
+         */
+        function harnessSetup(a, then) {
+            const s = a.setup || {};
+            sheet(`Set up ${a.name}`, (b, ctl) => {
+                b.classList.add('ovse-hs');
+                b.append(el('p', 'ovse-hs-why', `${a.name} works on a computer of yours, with ${s.plan || 'your own account'}: OpenVibe never lends it someone else's sign-in.`));
+                const opts = options || fallbackOptions;
+                const pcs = (opts.places || []).filter((x) => x.kind === 'machine');
+                const online = pcs.find((x) => !x.disabled);
+                const steps = el('ol', 'ovse-hs-steps');
+                const step = (done, title, body) => {
+                    const li = el('li', `ovse-hs-step${done ? ' is-done' : ''}`);
+                    const mark = el('span', 'ovse-hs-n'); if (done) mark.append(svg('check'));
+                    const text = el('div', 'ovse-hs-t'); text.append(el('b', '', title));
+                    if (body) text.append(body);
+                    li.append(mark, text); steps.append(li);
+                };
+                const cmd = (line, note) => {
+                    const box = el('div', 'ovse-hs-cmd');
+                    const code = el('code', '', line); code.tabIndex = 0;
+                    const copy = btn('ovse-hs-copy', `Copy: ${line}`, 'copy', 'Copy');
+                    copy.addEventListener('click', async () => {
+                        try { await navigator.clipboard.writeText(line); copy.lastChild.textContent = 'Copied'; } catch { try { const r = document.createRange(); r.selectNodeContents(code); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); } catch { /* */ } }
+                    });
+                    box.append(code, copy);
+                    if (!note) return box;
+                    const wrap = el('div'); wrap.append(box, el('small', 'ovse-hs-note', note)); return wrap;
+                };
+                const linkBtn = (label, url, glyph) => {
+                    const x = btn('ovse-hs-link', label, glyph || 'link', label);
+                    x.addEventListener('click', () => goSetup({ id: 'harnesses', url }));
+                    return x;
+                };
+                step(!!online, online ? `Your computer: ${online.name}` : 'A computer of yours, with OpenVibe Link',
+                    online ? el('small', 'ovse-hs-note', 'Paired and online.') : linkBtn('Get OpenVibe Link', 'https://openvibe.link', 'computer'));
+                step(false, `Install ${a.name} on it`, s.install ? cmd(s.install) : (s.docs ? linkBtn('How to install it', s.docs) : el('small', 'ovse-hs-note', 'Its maker\'s page says how.')));
+                step(false, 'Sign in with your own account', s.sign_in ? cmd(s.sign_in, s.sign_in_note ? `Run it on that computer ${s.sign_in_note}.` : 'Run it on that computer.') : el('small', 'ovse-hs-note', 'Sign in on that computer the way its maker says.'));
+                b.append(steps);
+                const row = el('div', 'ovse-hs-acts');
+                const check = btn('ovse-hs-check', `Check ${a.name}`, 'refresh', 'Check');
+                const said = el('p', 'ovse-hs-said'); said.setAttribute('role', 'status');
+                check.addEventListener('click', async () => {
+                    check.disabled = true; said.textContent = 'Reading your computers…';
+                    options = null;
+                    const fresh = await loadOptions();
+                    const now = (fresh.agents || []).find((x) => x.id === a.id) || a;
+                    check.disabled = false;
+                    if (now.available !== false) {
+                        said.textContent = `${a.name} is ready.`;
+                        const use = btn('ovse-hs-use', `Use ${a.name}`, 'check', `Use ${a.name}`);
+                        use.addEventListener('click', () => { pick.agent = a.id; savePick(); ctl.end(); if (typeof then === 'function') then(); });
+                        row.replaceChildren(use);
+                    } else {
+                        said.textContent = `Not yet: ${now.line || 'your computers have not reported it signed in'}. It can take a minute after you sign in.`;
+                    }
+                });
+                row.append(check);
+                if (s.url) row.append(linkBtn('Full setup', s.url, 'open'));
+                b.append(row, said);
+            });
+        }
         const ACTOR_WORD = { working: 'Working', asks: 'Asks you something', resting: 'Ready', paused: 'Paused' };
         function paintActor() {
             actorSlot.textContent = '';
@@ -2385,6 +2452,9 @@
             const was = planBox.open;
             planBox.textContent = '';
             const done = p.filter((x) => x.state === 'done').length;
+            // 4.336.0 (the owner's phone, 11-21: "Plan · 4 of 4 · All done" stayed over the box after the answer): a plan
+            // that is done steps aside once the run has ended; one left unfinished stays, it says what is still to do.
+            if (done === p.length && !isLive(state.run) && !state.pending) { planBox.hidden = true; return; }
             const now = p.find((x) => x.state === 'doing') || p.find((x) => x.state === 'todo');
             const sm = el('summary', 'ovse-plan-h');
             const ring = el('span', 'ovse-ring'); ring.style.setProperty('--p', String(p.length ? done / p.length : 0));
@@ -2985,7 +3055,7 @@
                 const all = opts.agents || [];
                 const tileOf = (a) => (a.kind === 'auto' ? 'spark' : a.kind === 'actor' ? 'robot' : a.kind === 'codes' ? 'code' : a.kind === 'harness' ? 'term' : 'robot');
                 const lineOf = (a) => (a.kind === 'actor' ? 'Answers, searches and does things, with AI models through their APIs' : a.kind === 'codes' ? 'Writes and changes code, with the best coding agent for it' : a.line || '');
-                const rowOf = (a) => ({ id: a.id, name: a.name, line: lineOf(a), svg: svgMarkup(tileOf(a)), disabled: a.available === false, badge: a.kind === 'harness' ? (a.available === false ? 'Set up' : 'Ready') : '' });
+                const rowOf = (a) => ({ id: a.id, name: a.name, line: lineOf(a), svg: svgMarkup(tileOf(a)), disabled: a.kind !== 'harness' && a.available === false, badge: a.kind === 'harness' ? (a.badge || (a.available === false ? 'Set up' : 'Ready')) : '' });
                 const sections = [
                     { title: '', rows: all.filter((a) => a.kind === 'auto').map(rowOf) },
                     { title: 'Your agents', rows: all.filter((a) => a.kind === 'actor' || a.kind === 'codes').map(rowOf) },
@@ -2995,7 +3065,10 @@
                 ].filter((x) => x.rows.length);
                 P.open({ anchor: ctxB, title: 'Who works on it', intro: 'An agent does the work. Actor uses AI models through their APIs. A coding agent (a harness: Claude Code, Codex …) works in a repository on a machine, run by Codes.',
                     search: 'auto', value: pick.agent, sections, onPick: (row) => {
-                    if (row.id === SETUP_ROW.id) { then(() => openCtx('setup')); return; } pick.agent = row.id; if (pick.where === 'openvibe' && coding(opts)) pick.where = 'auto'; savePick(); } });
+                    if (row.id === SETUP_ROW.id) { then(() => openCtx('setup')); return; }
+                    const h = all.find((x) => x.id === row.id && x.kind === 'harness' && x.available === false);
+                    if (h) { then(() => harnessSetup(h)); return; }
+                    pick.agent = row.id; if (pick.where === 'openvibe' && coding(opts)) pick.where = 'auto'; savePick(); } });
             } else if (section === 'where') {
                 const places = coding(opts) ? (opts.places || []).filter((x) => x.kind !== 'openvibe').map((x) => (x.kind === 'auto' ? { ...x, line: 'A shared node or your own computer' } : x)) : (opts.places || []);
                 P.open({ anchor: ctxB, title: 'Runs on', search: 'auto', value: pick.where, rows: [...places.map((x) => ({ id: placeKey(x), name: x.name, line: x.line || '', disabled: x.available === false })), SETUP_ROW], onPick: (row) => { if (row.id === SETUP_ROW.id) { then(() => openCtx('setup')); return; } pick.where = row.id; savePick(); } });
@@ -3175,6 +3248,19 @@
             // 4.287.0: the menu's box may name who answers (Ask Actor, Ask Codes, Ask one of your agents).
             const named = choice && typeof choice.agent === 'string' && choice.agent.trim() ? choice.agent.trim().slice(0, 160) : null;
             const who = named || agent || pick.agent;
+            // 4.336.0: a coding agent that is not set up for you is not sent to (Codes would refuse it, or worse, another
+            // agent would take it): the guided sheet opens and the words stay in the box, sent once it is ready.
+            const known = who && !['auto', 'actor', 'codes'].includes(who) ? await loadOptions() : (options || fallbackOptions);
+            const notReady = who && (known.agents || []).find((x) => x.id === who && x.kind === 'harness' && x.available === false);
+            if (notReady) {
+                harnessSetup(notReady, async () => {
+                    const r = await start(raw, files, choice);
+                    // Sent once it was ready: the words leave the box as a send does.
+                    const t = main.querySelector('.ovse-foot textarea');
+                    if (r !== false && t && t.value.trim() === String(raw || '').trim()) t.value = '';
+                });
+                return false;
+            }
             if (who && who !== 'auto') how.agent = who;
             if (pick.model) how.model = { id: pick.model.id, source: pick.model.source || 'openvibe', name: pick.model.name };
             const opts = options || fallbackOptions;
@@ -3553,7 +3639,8 @@
         if (styled || document.getElementById('ovse-styles')) { styled = true; return; }
         styled = true;
         const css = `
-.ovse { --ovse-fg: var(--text-primary, #e6edf7); --ovse-dim: var(--text-secondary, #a8b3c4); --ovse-mute: var(--text-muted, #93a0b4); --ovse-line: var(--border, rgba(255,255,255,.09)); --ovse-card: var(--bg-card, rgba(255,255,255,.035)); --ovse-bg: var(--bg-primary, #0b0f17); --ovse-acc: var(--accent, #3b82f6); --ovse-acc2: var(--accent-light, #60a5fa);
+/* 4.336.0: a sheet hangs off <body>, outside .ovse: it reads the same tokens. */
+.ovse, .ovse-sheet { --ovse-fg: var(--text-primary, #e6edf7); --ovse-dim: var(--text-secondary, #a8b3c4); --ovse-mute: var(--text-muted, #93a0b4); --ovse-line: var(--border, rgba(255,255,255,.09)); --ovse-card: var(--bg-card, rgba(255,255,255,.035)); --ovse-bg: var(--bg-primary, #0b0f17); --ovse-acc: var(--accent, #3b82f6); --ovse-acc2: var(--accent-light, #60a5fa);
   position: relative; display: grid; grid-template-columns: minmax(0, 1fr); height: 100%; min-height: 0; color: var(--ovse-fg); font: 15px/1.5 var(--font-body, system-ui, sans-serif); overflow: hidden; background: var(--ovse-bg); }
 .ovse * { box-sizing: border-box; }
 /* A host page's rules for bare elements stay out of the frame (11-15: openvibe.design's .ds section margin-top
@@ -4179,13 +4266,33 @@ html[data-ov-motion=off] .ovse-how.is-tiles .ovse-how-c { animation: none; trans
 .ovse-starter .ovse-g { color: var(--ovse-acc2); } .ovse-starter span { min-width: 0; }
 
 /* the foot: the plan, the commands, the chip, the box */
-.ovse-foot { position: relative; display: grid; gap: 6px; width: 100%; max-width: 852px; margin: 0 auto; padding: 6px 16px max(10px, env(safe-area-inset-bottom, 0px)); container: ovse-foot / inline-size; }
-.ovse-plan { border: 1px solid var(--ovse-line); border-radius: 14px; background: var(--ovse-card); animation: ovse-in .3s both; }
+.ovse-foot { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; width: 100%; max-width: 852px; margin: 0 auto; padding: 6px 16px max(10px, env(safe-area-inset-bottom, 0px)); container: ovse-foot / inline-size; }
+.ovse-hs { display: grid; gap: 14px; align-content: start; }
+.ovse-hs-why { margin: 0; color: var(--ovse-dim); font-size: 14.5px; line-height: 1.5; }
+.ovse-hs-steps { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; counter-reset: hs; }
+.ovse-hs-step { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; counter-increment: hs; }
+.ovse-hs-n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--ovse-line); color: var(--ovse-dim); font: 600 13px/1 inherit; }
+.ovse-hs-n:empty::before { content: counter(hs); }
+.ovse-hs-step.is-done .ovse-hs-n { background: var(--success, #22c55e); border-color: transparent; color: #fff; }
+.ovse-hs-n svg { width: 16px; height: 16px; }
+.ovse-hs-t { display: grid; gap: 6px; min-width: 0; padding-top: 4px; }
+.ovse-hs-t > b { font-size: 15px; }
+.ovse-hs-note { color: var(--ovse-mute); font-size: 13px; }
+.ovse-hs-cmd { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 6px 6px 12px; border: 1px solid var(--ovse-line); border-radius: 12px; background: var(--ovse-card); }
+.ovse-hs-cmd code { flex: 1; min-width: 0; overflow-wrap: anywhere; font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.ovse-hs-copy, .ovse-hs-link, .ovse-hs-check, .ovse-hs-use { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--ovse-line); background: transparent; color: var(--ovse-fg); font: 600 14px/1 inherit; cursor: pointer; }
+.ovse-hs-copy { min-height: 36px; padding: 0 12px; flex: none; }
+.ovse-hs-link { justify-self: start; }
+.ovse-hs-check, .ovse-hs-use { background: var(--ovse-acc); border-color: transparent; color: var(--ovse-on-acc, #fff); }
+.ovse-hs-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.ovse-hs-said { margin: 0; min-height: 1.2em; color: var(--ovse-dim); font-size: 13.5px; }
+.ovse-hs-copy svg, .ovse-hs-link svg, .ovse-hs-check svg, .ovse-hs-use svg { width: 18px; height: 18px; }
+.ovse-plan { min-width: 0; max-width: 100%; border: 1px solid var(--ovse-line); border-radius: 14px; background: var(--ovse-card); animation: ovse-in .3s both; }
 .ovse-plan-h { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 6px 12px; cursor: pointer; list-style: none; font-size: 13.5px; }
 .ovse-plan-h > b { flex: none; } .ovse-plan-now { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ovse-dim); }
 .ovse-ring { --p: 0; width: 18px; height: 18px; flex: none; border-radius: 50%; background: conic-gradient(var(--success, #22c55e) calc(var(--p) * 360deg), color-mix(in srgb, var(--ovse-fg) 14%, transparent) 0); -webkit-mask: radial-gradient(circle, transparent 5px, #000 5.5px); mask: radial-gradient(circle, transparent 5px, #000 5.5px); }
 .ovse-plan-list { display: grid; gap: 2px; max-height: 40vh; overflow-y: auto; margin: 0; padding: 0 12px 10px; list-style: none; font-size: 13.5px; }
-.ovse-plan-list li { display: flex; align-items: flex-start; gap: 10px; padding: 4px 0; color: var(--ovse-dim); }
+.ovse-plan-list li { display: flex; align-items: flex-start; gap: 10px; padding: 4px 0; color: var(--ovse-dim); min-width: 0; overflow-wrap: anywhere; }
 .ovse-plan-list li.is-done { color: var(--ovse-mute); } .ovse-plan-list li.is-done > span:last-child { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--ovse-mute) 60%, transparent); }
 .ovse-plan-list li.is-doing { color: var(--ovse-fg); font-weight: 600; }
 .ovse-tick { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-top: 1px; flex: none; border-radius: 6px; border: 1.6px solid color-mix(in srgb, var(--ovse-fg) 28%, transparent); }
