@@ -25,6 +25,12 @@ turn solid, which is how the bar's 14 px icons looked heavy and out of place. Th
 More caret is a drawn chevron that turns when it opens (it was the "▾" character); the menu is 220 px wide with 44 px
 rows, its glyphs tinted on hover, and it comes in with a short drop (Off: none). A menu's link says aria-haspopup.
 
+**Alerts: the badge agrees with the list, and no "Earlier" over "Today"** (`notification-ui.js`; the owner's phone, 11-21:
+"Bugged", circling a "1" on Alerts and the avatar over "0 unread · 771 in all", and "EARLIER" drawn above "TODAY").
+An unread list with no search and no tab is the count now: the bell, the menu's Alerts tab and the avatar take its
+total. "Earlier" parts unread rows from read ones; with nothing unread above it, the caught-up line stands alone and the
+day lines follow.
+
 **The menu's Feed is in order** (`ov-home.js`; the owner, 11-21: "the way everything is organized and listed and
 ordered is … broken … the feed just needs major improvement … It needs to be better in order"). For you came ranked
 (score, then one site at a time), so the day lines read Yesterday, Today, Yesterday.
