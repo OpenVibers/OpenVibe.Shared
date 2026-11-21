@@ -13,6 +13,10 @@ a level.
   `openvibe.<service>` and a few known exceptions; unsure: the organization only). `init()` adds it where the server
   did not. `structuredData: false` leaves it to a site that writes its own. Test: footer-structured-data.
 
+**Share cards for seven sites that had none** (`social/`): Compare, Computer, Directory, Git, Locker, Email and Studio
+(the crawl: 148 pages on 17 sites with no og:image; Compare, Directory and Git had none on any page). Drawn by
+`scripts/build-social-cards.js` from their Contracts site blocks; a site serves its card as `/shared/social/<id>.jpg`.
+
 Also in this release: **trending suggestions name a heading without its count badge** (`ov-trending.js`, #642:
 Exchange's "The engines" with its count became "The engines35").
 
