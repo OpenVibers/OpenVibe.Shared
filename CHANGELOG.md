@@ -13,8 +13,9 @@
   the page's own (one Recipe or JobPosting script; none on a private page) and search engines read the same facts.
 - **Set up a coding agent, guided** (`ov-session.js`; the owner, 11-21: "there should be a guided setup"): the agent picker
   shows each coding agent as it stands for you (the Frame's run options carry Codes' readiness: Ready, Sign in, Not
-  installed …), and one that is not ready opens "Set up Claude Code": a computer of yours with OpenVibe Link, the install
-  command and the sign-in command (each copies with a tap), Check (reads your computers again) and Use it. Sending to a
+  installed …), and one that is not ready opens "Set up Claude Code": a computer of yours with OpenVibe Link, then "Sign
+  in on <computer>" (Codes' own sign-in on that computer, in the profile your runs read: it installs the agent if missing,
+  shows the maker's sign-in link and takes the code back), Check (reads your computers again) and Use it. Sending to a
   coding agent that is not set up opens the same sheet and keeps the words in the box, sent once it is ready.
 - **The plan card fits the screen** (`ov-session.js`): the foot's grid column is `minmax(0, 1fr)`, so a long step no
   longer widens the card past the window on a phone (the owner, 11-21); steps wrap. The same fix keeps the mode row (Auto · Chat · Agent · Code, Runs on, the ring) on

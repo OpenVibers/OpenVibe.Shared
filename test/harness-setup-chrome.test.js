@@ -2,8 +2,8 @@
 // Setting up a coding agent, guided (4.336.0; the owner's phone, 11-21: "I'm trying to set up Claude Code harness, but I
 // can't … there should be a guided setup"; the picker said Claude Code was Ready while no computer of theirs had it, and
 // "Test" ran on another agent). Over a local Frame, in a real headless Chrome at 390 px: Claude Code picked but not set
-// up, "Test" is not sent: "Set up Claude Code" opens with the computer, the install and sign-in commands (they copy) and
-// Check, and the words stay in the box. Check reads the computers again; once it is ready, Use Claude Code sends the
+// up, "Test" is not sent: "Set up Claude Code" opens with the computer and "Sign in on ov-node-01" (Codes' sign-in on that
+// computer: it installs the agent if missing and takes the code back) and Check, and the words stay in the box. Check reads the computers again; once it is ready, Use Claude Code sends the
 // waiting words to Claude Code. In the picker the row says "Not installed" and opens the same sheet. Nothing off screen.
 const assert = require('assert');
 const fs = require('fs');
@@ -66,12 +66,14 @@ async function until(p, expr, ms = 6000) { const end = Date.now() + ms; while (D
                 title: s.querySelector('.ovse-sheet-h b').textContent,
                 steps: [...s.querySelectorAll('.ovse-hs-step > .ovse-hs-t > b')].map((b) => b.textContent),
                 done: [...s.querySelectorAll('.ovse-hs-step')].map((li) => li.classList.contains('is-done')),
-                cmds: [...s.querySelectorAll('.ovse-hs-cmd code')].map((c) => c.textContent),
+                signIn: (s.querySelector('.ovse-hs-t2 .ovse-hs-link') || {}).textContent || null,
                 why: s.querySelector('.ovse-hs-why').textContent }; })()`);
             assert.strictEqual(sheet.title, 'Set up Claude Code');
-            assert.deepStrictEqual(sheet.steps, ['Your computer: ov-node-01', 'Install Claude Code on it', 'Sign in with your own account']);
-            assert.deepStrictEqual(sheet.done, [true, false, false], 'the paired computer is done');
-            assert.deepStrictEqual(sheet.cmds, ['npm install -g @anthropic-ai/claude-code', 'claude']);
+            assert.deepStrictEqual(sheet.steps, ['Your computer: ov-node-01', 'Sign in with your own account']);
+            assert.deepStrictEqual(sheet.done, [true, false], 'the paired computer is done');
+            assert.strictEqual(sheet.signIn, 'Sign in on ov-node-01', 'the sign-in runs on that computer, through Codes');
+            await p.evaluate("document.querySelector('.ovse-hs-t2 .ovse-hs-link').click()");
+            assert.deepStrictEqual(await p.evaluate('window.__opened'), ['https://openvibe.codes/setup#agent-claude-code'], 'it opens the sign-in on Codes');
             assert.match(sheet.why, /a Claude Pro or Max plan: OpenVibe never lends it someone else's sign-in/);
             assert.strictEqual(started.length, 0, 'nothing was sent');
             assert.strictEqual(await p.evaluate("document.querySelector('.ovse-foot textarea').value"), 'Test', 'the words stay in the box');

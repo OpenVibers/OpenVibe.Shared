@@ -1694,17 +1694,6 @@
                     if (body) text.append(body);
                     li.append(mark, text); steps.append(li);
                 };
-                const cmd = (line, note) => {
-                    const box = el('div', 'ovse-hs-cmd');
-                    const code = el('code', '', line); code.tabIndex = 0;
-                    const copy = btn('ovse-hs-copy', `Copy: ${line}`, 'copy', 'Copy');
-                    copy.addEventListener('click', async () => {
-                        try { await navigator.clipboard.writeText(line); copy.lastChild.textContent = 'Copied'; } catch { try { const r = document.createRange(); r.selectNodeContents(code); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); } catch { /* */ } }
-                    });
-                    box.append(code, copy);
-                    if (!note) return box;
-                    const wrap = el('div'); wrap.append(box, el('small', 'ovse-hs-note', note)); return wrap;
-                };
                 const linkBtn = (label, url, glyph) => {
                     const x = btn('ovse-hs-link', label, glyph || 'link', label);
                     x.addEventListener('click', () => goSetup({ id: 'harnesses', url }));
@@ -1712,8 +1701,15 @@
                 };
                 step(!!online, online ? `Your computer: ${online.name}` : 'A computer of yours, with OpenVibe Link',
                     online ? el('small', 'ovse-hs-note', 'Paired and online.') : linkBtn('Get OpenVibe Link', 'https://openvibe.link', 'computer'));
-                step(false, `Install ${a.name} on it`, s.install ? cmd(s.install) : (s.docs ? linkBtn('How to install it', s.docs) : el('small', 'ovse-hs-note', 'Its maker\'s page says how.')));
-                step(false, 'Sign in with your own account', s.sign_in ? cmd(s.sign_in, s.sign_in_note ? `Run it on that computer ${s.sign_in_note}.` : 'Run it on that computer.') : el('small', 'ovse-hs-note', 'Sign in on that computer the way its maker says.'));
+                // The sign-in runs on that computer, inside the profile Codes runs your work in (a Codes sign-in job: it
+                // installs the agent there when it is missing, then shows the maker's sign-in link and takes the code back),
+                // so a sign-in typed by hand in another place is never the one a run reads.
+                const signBody = el('div', 'ovse-hs-t2');
+                signBody.append(el('small', 'ovse-hs-note', online
+                    ? `Codes installs ${a.name} on ${online.name} if it is missing, then shows ${a.name}'s sign-in link: open it, sign in, and paste the code it gives you.`
+                    : 'Once a computer of yours is paired, sign in from here.'));
+                if (online && s.url) signBody.append(linkBtn(`Sign in on ${online.name}`, s.url, 'key'));
+                step(false, 'Sign in with your own account', signBody);
                 b.append(steps);
                 const row = el('div', 'ovse-hs-acts');
                 const check = btn('ovse-hs-check', `Check ${a.name}`, 'refresh', 'Check');
@@ -4277,16 +4273,15 @@ html[data-ov-motion=off] .ovse-how.is-tiles .ovse-how-c { animation: none; trans
 .ovse-hs-n svg { width: 16px; height: 16px; }
 .ovse-hs-t { display: grid; gap: 6px; min-width: 0; padding-top: 4px; }
 .ovse-hs-t > b { font-size: 15px; }
+.ovse-hs-t2 { display: grid; gap: 10px; justify-items: start; }
 .ovse-hs-note { color: var(--ovse-mute); font-size: 13px; }
-.ovse-hs-cmd { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 6px 6px 12px; border: 1px solid var(--ovse-line); border-radius: 12px; background: var(--ovse-card); }
-.ovse-hs-cmd code { flex: 1; min-width: 0; overflow-wrap: anywhere; font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
-.ovse-hs-copy, .ovse-hs-link, .ovse-hs-check, .ovse-hs-use { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--ovse-line); background: transparent; color: var(--ovse-fg); font: 600 14px/1 inherit; cursor: pointer; }
-.ovse-hs-copy { min-height: 36px; padding: 0 12px; flex: none; }
+.ovse-hs-link, .ovse-hs-check, .ovse-hs-use { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--ovse-line); background: transparent; color: var(--ovse-fg); font: 600 14px/1 inherit; cursor: pointer; }
 .ovse-hs-link { justify-self: start; }
-.ovse-hs-check, .ovse-hs-use { background: var(--ovse-acc); border-color: transparent; color: var(--ovse-on-acc, #fff); }
+/* The next thing to do is the filled one: Sign in, then Use it; Check stays quiet beside them. */
+.ovse-hs-t2 .ovse-hs-link, .ovse-hs-use { background: var(--ovse-acc); border-color: transparent; color: var(--ovse-on-acc, #fff); }
 .ovse-hs-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .ovse-hs-said { margin: 0; min-height: 1.2em; color: var(--ovse-dim); font-size: 13.5px; }
-.ovse-hs-copy svg, .ovse-hs-link svg, .ovse-hs-check svg, .ovse-hs-use svg { width: 18px; height: 18px; }
+.ovse-hs-link svg, .ovse-hs-check svg, .ovse-hs-use svg { width: 18px; height: 18px; }
 .ovse-plan { min-width: 0; max-width: 100%; border: 1px solid var(--ovse-line); border-radius: 14px; background: var(--ovse-card); animation: ovse-in .3s both; }
 .ovse-plan-h { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 6px 12px; cursor: pointer; list-style: none; font-size: 13.5px; }
 .ovse-plan-h > b { flex: none; } .ovse-plan-now { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ovse-dim); }
