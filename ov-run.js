@@ -257,37 +257,69 @@
     function follow({ url, headers, after, onEvent, signal }) {
         let last = String(after || 0);
         let stopped = false;
+        let activeReader = null, timer = null, wake = null;
+        const stop = () => {
+            stopped = true;
+            clearTimeout(timer);
+            if (wake) wake();
+            if (activeReader) activeReader.cancel().catch(() => {});
+        };
+        if (signal) signal.addEventListener('abort', stop, { once: true });
         const once = async () => {
             const r = await fetch(url, { headers: { ...headers, Accept: 'text/event-stream', 'Last-Event-ID': last }, signal, credentials: 'omit' });
             if (!r.ok || !r.body) throw new Error(`stream ${r.status}`);
-            const reader = r.body.getReader(); const dec = new TextDecoder(); let buf = '';
-            for (;;) {
-                const { value, done } = await reader.read(); if (done) return 'closed';
-                buf += dec.decode(value, { stream: true });
-                let i;
-                while ((i = buf.indexOf('\n\n')) >= 0) {
-                    const raw = buf.slice(0, i); buf = buf.slice(i + 2);
-                    let id = null, event = 'message', data = '';
-                    for (const line of raw.split('\n')) {
-                        if (line.startsWith('id:')) id = line.slice(3).trim();
-                        else if (line.startsWith('event:')) event = line.slice(6).trim();
-                        else if (line.startsWith('data:')) data += line.slice(5).trim();
+            const reader = r.body.getReader(); activeReader = reader;
+            const dec = new TextDecoder(); let buf = '', skipLF = false;
+            let id = null, event = 'message', data = [];
+            try {
+                while (!stopped && !(signal && signal.aborted)) {
+                    const { value, done } = await reader.read();
+                    if (stopped || (signal && signal.aborted) || done) return 'closed';
+                    let chunk = dec.decode(value, { stream: true });
+                    if (!chunk) continue;
+                    // SSE lines may end in CR, LF or CRLF, even across reads. Only one optional space after ':' is removed.
+                    if (skipLF && chunk[0] === '\n') chunk = chunk.slice(1);
+                    skipLF = chunk.endsWith('\r');
+                    buf += chunk.replace(/\r\n?/g, '\n');
+                    let i;
+                    while ((i = buf.indexOf('\n')) >= 0) {
+                        const line = buf.slice(0, i); buf = buf.slice(i + 1);
+                        if (!line) {
+                            let d = null; try { d = JSON.parse(data.join('\n')); } catch { /* incomplete or invalid JSON is not a step */ }
+                            if (d !== null) {
+                                if (event === 'step' && d.step && Number.isInteger(d.step.seq) && id && /^\d+$/.test(id) && Number(id) > Number(last)) last = id;
+                                if (onEvent(event, d) === 'end') return 'end';
+                            }
+                            id = null; event = 'message'; data = [];
+                        } else {
+                            const colon = line.indexOf(':');
+                            const field = colon < 0 ? line : line.slice(0, colon);
+                            const value = colon < 0 ? '' : line.slice(colon + 1).replace(/^ /, '');
+                            if (field === 'id') id = value;
+                            else if (field === 'event') event = value || 'message';
+                            else if (field === 'data') data.push(value);
+                        }
                     }
-                    let d = null; try { d = JSON.parse(data); } catch { d = null; }
-                    if (event === 'step' && id && /^\d+$/.test(id) && Number(id) > Number(last)) last = id;
-                    if (onEvent(event, d) === 'end') return 'end';
                 }
+            } finally {
+                await reader.cancel().catch(() => {});
+                reader.releaseLock();
+                if (activeReader === reader) activeReader = null;
             }
         };
         (async () => {
             let failures = 0;
-            while (!stopped && !(signal && signal.aborted)) {
-                try { const how = await once(); failures = 0; if (how === 'end') return; }
-                catch { if (signal && signal.aborted) return; failures++; }
-                await new Promise((r) => setTimeout(r, Math.min(30000, 800 * 2 ** Math.min(failures, 5))));
-            }
+            try {
+                while (!stopped && !(signal && signal.aborted)) {
+                    try { const how = await once(); failures = 0; if (how === 'end') return; }
+                    catch { if (stopped || (signal && signal.aborted)) return; failures++; }
+                    if (stopped || (signal && signal.aborted)) return;
+                    await new Promise((resolve) => { wake = resolve; timer = setTimeout(resolve, Math.min(30000, 800 * 2 ** Math.min(failures, 5))); });
+                    wake = null; timer = null;
+                }
+            } finally { stop(); if (signal) signal.removeEventListener('abort', stop); }
         })();
-        return () => { stopped = true; };
+        return stop;
     }
 
     const FILTERS = [['all', 'All', 'spark'], ['chat', 'Chats', 'chat'], ['task', 'Tasks', 'robot'], ['code', 'Code', 'code']];
