@@ -2,6 +2,10 @@
 
 ## 4.342.0 - 2026-11-28
 
+- **Every <small> at 12 px or more, on every site** (`theme-loader.js`): a <small> with no size of its own was the
+  browser's "smaller", 10-10.7 px under 12-13 px text. The loader's display styles carry `:where(small)
+  {font-size:max(.75rem,83%)}`: no weight, so any site's or part's own small size still wins. In place at 390 px: Tips,
+  Coupons and Help 5 → 0 small <small>s each, no sideways scroll. Test: theme-loader-small.
 - **Legal pages wear the site's share card** (`legal.js`): Chat's, Media's, Codes' and Actor's terms and privacy pages
   had no og:image (an SEO left-over of 11-21); the site's own /shared/social/<site>.jpg now, none for a site without a
   card. Test: legal-profiles.

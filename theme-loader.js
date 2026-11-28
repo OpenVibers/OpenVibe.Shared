@@ -430,7 +430,9 @@
         for (const k in COMFORT_ATTRS) { const [attr, off] = COMFORT_ATTRS[k]; if (d[k] && d[k] !== off) el.setAttribute(attr, d[k]); else el.removeAttribute(attr); }
         if (!document.getElementById('ov-display-css') && document.head) {
             const st = document.createElement('style'); st.id = 'ov-display-css';
-            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}' + MOTION_CSS + BARE_CSS + ALIAS_CSS + COMFORT_CSS;
+            // 4.342.0, the owner's 12 px floor: a <small> with no size of its own is the browser's "smaller" (10-10.7 px
+            // under 12-13 px text, on every site). :where() keeps it at no weight: any site's or part's own small size wins.
+            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}:where(small){font-size:max(.75rem,83%)}' + MOTION_CSS + BARE_CSS + ALIAS_CSS + COMFORT_CSS;
             document.head.appendChild(st);
         }
         paceLoops();
