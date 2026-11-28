@@ -13,6 +13,11 @@
   "Starts 2026-11-12 18:00 UTC" line was turned into the reader's time; an event with a description ("Starts … UTC ·
   Bring snacks") showed the UTC line and lost its date tile. The start now comes from the card's `starts_at` (the Network
   sends it), else that line at the head of the words, and the rest of the words stay. Test: menu-feed-v2-chrome.
+- **No more "null/wallet/changes"** (`purse.js`, `navbar.js`). The navbar's `frameBase` defaults to null, and a null
+  skipped the purse catch-up's default, so the wallet's recent changes were asked of the page's own site as
+  `null/wallet/changes` (relative: `/@name/null/wallet/changes` on a channel), about 40 404s a day on Live, Restream,
+  the Network and others, and the purse never caught up there. The navbar passes the Network's frame like its other
+  wallet calls, and the purse uses only an absolute address. Test: purse-null-base.
 - **The last small text in the footer and what-shipped** at the 12px floor: the footer's avatar initials, who-is-here
   initials and LIVE badge (.7-.72rem) and what-shipped's count, developer label and area chips (.68-.72rem) are .75rem.
 
