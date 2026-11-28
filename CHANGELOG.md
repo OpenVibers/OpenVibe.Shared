@@ -9,6 +9,10 @@
   at the height it had last time on this device, 96 px the first time), it fills in place, and only a read that fails
   takes the box away. Measured on the Live home, scrolled to the end at 1000x700: CLS 0.394 → 0.013 and 0.097 → 0.014.
   Test: footer-online.
+- **An event's start in your own time, description or not** (`ov-home.js`, the menu Feed). Only Today's bare
+  "Starts 2026-11-12 18:00 UTC" line was turned into the reader's time; an event with a description ("Starts … UTC ·
+  Bring snacks") showed the UTC line and lost its date tile. The start now comes from the card's `starts_at` (the Network
+  sends it), else that line at the head of the words, and the rest of the words stay. Test: menu-feed-v2-chrome.
 - **The last small text in the footer and what-shipped** at the 12px floor: the footer's avatar initials, who-is-here
   initials and LIVE badge (.7-.72rem) and what-shipped's count, developer label and area chips (.68-.72rem) are .75rem.
 

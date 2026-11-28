@@ -1966,13 +1966,17 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         // Today: how long ago; before that, the day and the time (it used to print a bare time, as if it were today's).
         return Date.now() - t < 12 * 3600000 ? ago(iso) : tf(t, 'day');
     };
-    /** "Starts 2026-11-12 18:00 UTC" (Today's line when an event has no description) in the reader's own time. */
-    const startsLocal = (text) => {
-        const m = /^Starts (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}) UTC$/.exec(String(text || ''));
-        if (!m) return text;
-        const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]));
-        return `Starts ${tf(d.getTime(), 'day')}`;
+    // When an event starts: the card's starts_at (the Network sends it), else Today's "Starts 2026-11-12 18:00 UTC" at the
+    // head of its words. 4.341.0: an event with a description ("Starts … UTC · Bring snacks") kept the UTC line and lost its
+    // date tile, since only the bare line was read; now the start is the reader's own time and the rest stays.
+    const STARTS_RE = /^Starts (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}) UTC(?: · |$)/;
+    const startOf = (c) => {
+        const t = Date.parse(c.starts_at || '');
+        if (Number.isFinite(t)) return t;
+        const m = STARTS_RE.exec(String(c.text || ''));
+        return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) : 0;
     };
+    const startsLine = (c, at) => [`Starts ${tf(at, 'day')}`, String(c.text || '').replace(STARTS_RE, '').trim()].filter(Boolean).join(' · ');
     const tidy = (v) => String(v || '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
     const cap = (v) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v);
     /** A face: the person's picture, else their initial; the site's icon on its hue when nobody is behind the card. */
@@ -2039,14 +2043,14 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         }
         if (kind === 'event') {
             const m = /^(Live|Event):\s*(.+)$/.exec(title);
-            const st = /^Starts (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}) UTC$/.exec(String(c.text || ''));
+            const at = startOf(c);
             let tile;
-            if (st) {
-                const d = new Date(Date.UTC(+st[1], +st[2] - 1, +st[3], +st[4], +st[5]));
+            if (at) {
+                const d = new Date(at);
                 tile = h('span', 'ovfd-tile ovfd-tile-date');
                 tile.append(h('small', '', d.toLocaleDateString('en-US', { month: 'short' })), h('b', '', String(d.getDate())));
             } else tile = faceOf(c.actor ? c : { site: c.site || 'today' });
-            return actRow(c, { tile, title: m ? m[2] : title, what: m && m[1] === 'Live' ? 'Stream on the calendar' : 'Event', icon: 'calendar', text: startsLocal(c.text), site: false });
+            return actRow(c, { tile, title: m ? m[2] : title, what: m && m[1] === 'Live' ? 'Stream on the calendar' : 'Event', icon: 'calendar', text: at ? startsLine(c, at) : c.text, site: false });
         }
         if (kind === 'quest') {
             const m = /^Finished a quest:\s*(.+)$/.exec(title);
