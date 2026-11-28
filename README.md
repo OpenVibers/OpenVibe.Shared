@@ -1224,7 +1224,7 @@ vendored or rsynced from Network.
 ## Depends on
 
 - `jsonwebtoken` (the only runtime dependency, for `auth-client`)
-- OpenVibe.Contracts (the release manifest contract; `openvibe-contracts` v0.449.0 is a devDependency
+- OpenVibe.Contracts (the release manifest contract; `openvibe-contracts` v0.455.0 is a devDependency
   the tests validate against)
 - in the browser, at run time: OpenVibe.Network (sessions, notifications and realtime tickets, the
   changelog feed) and OpenVibe.Events (the realtime stream for the notification bell)
@@ -1271,6 +1271,6 @@ Part of the [OpenVibe network](https://openvibe.network). Built in the open by [
 The Locker browser core and the arrange core are generated from the pinned SDK release (`node scripts/build-locker-core.js`, `node scripts/build-arrange-core.js`); after an SDK pin bump, run both and commit the result.
 
 <!-- versions:start -->
-- openvibe-contracts: v0.449.0
+- openvibe-contracts: v0.455.0
 - openvibe-sdk: v0.190.0
 <!-- versions:end -->
