@@ -57,9 +57,9 @@ html[data-theme-mode="light"] .ovlc { --ovlc-bg: var(--bg-card, var(--surface, #
 .ovlc-play { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; pointer-events: none; }
 .ovlc-play > svg { width: 22px; height: 22px; filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .6)); }
 .ovlc-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.ovlc-site { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--ovlc-muted); font-size: 11.5px; line-height: 1.3; }
+.ovlc-site { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--ovlc-muted); font-size: 12px; line-height: 1.3; }
 .ovlc-site > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ovlc-live { flex: 0 0 auto; padding: 1px 6px; border-radius: 999px; background: var(--ovlc-live); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+.ovlc-live { flex: 0 0 auto; padding: 1px 6px; border-radius: 999px; background: var(--ovlc-live); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .04em; }
 .ovlc-title { color: var(--ovlc-text); font-size: 14px; font-weight: 600; line-height: 1.3; text-decoration: none;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .ovlc-title::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }

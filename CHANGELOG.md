@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.342.0 - 2026-11-28
+
+- **Shared's own parts at the 12px floor, the rest of the way** (the owner's rule). The first pass (4.340.0) read only
+  .60-.74rem and the sweep's own finds; the menu, the notifications, the navbar's account menu, the Dock, search, the
+  Run and session sheets, the kit's tables and charts, quests, the profile and user cards, tooltips, the link cards and
+  the showcase still had 9-11.5 px and .66-.74rem text: about 155 sizes, all 12 px now. Glyphs, avatar initials, count
+  bubbles in their circles, chart text, the brand tag and the timer pill keep their sizes (sized for their boxes). Checked
+  with the browser tests of every part touched, and in place on the Network (menu, search) and Quest (the showcase orb's
+  "16 sites" fits its core at 12 px).
+
 ## 4.341.0 - 2026-11-28
 
 - **The footer stops jumping when you reach it** (`footer.js`). The strip at its top (who is here, live now, the counts)

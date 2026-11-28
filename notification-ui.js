@@ -153,8 +153,8 @@
             .openvibe-toast-body { min-width: 0; }
             .openvibe-toast-title { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 14px; font-weight: 650; line-height: 1.3; }
             .openvibe-toast-title .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .openvibe-toast-title .n { flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 50%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 16%, transparent); }
-            .openvibe-toast-sub { margin-top: 1px; font-size: 11.5px; color: var(--text-muted, #8b8b96); display: flex; gap: 6px; align-items: center; }
+            .openvibe-toast-title .n { flex: none; font-size: 12px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 50%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 16%, transparent); }
+            .openvibe-toast-sub { margin-top: 1px; font-size: 12px; color: var(--text-muted, #8b8b96); display: flex; gap: 6px; align-items: center; }
             .openvibe-toast-msg { margin-top: 4px; font-size: 13px; line-height: 1.4; color: var(--text-secondary, #b6b6c0); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
             .openvibe-toast-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
             .openvibe-toast-actions button, .openvibe-toast-actions a { font: inherit; font-size: 12.5px; font-weight: 650; padding: 7px 13px; border-radius: 999px; cursor: pointer; text-decoration: none; line-height: 1;
@@ -163,7 +163,7 @@
             .openvibe-toast-close { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; border: none; background: transparent; color: var(--text-muted, #8b8b96); cursor: pointer; display: grid; place-items: center; font-size: 16px; line-height: 1; }
             .openvibe-toast-close:hover { background: var(--bg-hover, rgba(255,255,255,.06)); color: var(--text-primary, #ececf1); }
             .openvibe-toast-progress { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; transform-origin: left; background: var(--ovn-tone, var(--accent, #3b82f6)); opacity: .7; }
-            .openvibe-toast-more { margin-left: auto; flex: none; font: inherit; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px; cursor: pointer;
+            .openvibe-toast-more { margin-left: auto; flex: none; font: inherit; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; cursor: pointer;
                 border: 1px solid color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 40%, var(--border, #333)); background: transparent; color: var(--text-secondary, #b6b6c0); }
             .openvibe-toast.priority-critical { border-color: color-mix(in srgb, var(--ovn-tone) 60%, var(--border, #333)); }
 
@@ -178,8 +178,8 @@
                 background: var(--ovn-tone, var(--accent, #3b82f6)); color: var(--bg-elevated, var(--bg-card, #1f2129)); box-shadow: 0 0 0 2px var(--bg-elevated, var(--bg-card, #1f2129)); }
             .ovn-glyph .ovn-badge svg { width: 11px; height: 11px; stroke-width: 2.4; }
             .ovn-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
-            .ovn-chip { font-size: 11px; font-weight: 600; line-height: 1; padding: 4px 8px; border-radius: 999px; color: var(--text-secondary, #b6b6c0); background: var(--bg-tertiary, rgba(255,255,255,.06)); border: 1px solid var(--border, rgba(255,255,255,.08)); }
-            .ovn-chip.sev { color: color-mix(in srgb, var(--ovn-tone) 50%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone) 14%, transparent); border-color: transparent; text-transform: uppercase; letter-spacing: .03em; font-size: 10px; }
+            .ovn-chip { font-size: 12px; font-weight: 600; line-height: 1; padding: 4px 8px; border-radius: 999px; color: var(--text-secondary, #b6b6c0); background: var(--bg-tertiary, rgba(255,255,255,.06)); border: 1px solid var(--border, rgba(255,255,255,.08)); }
+            .ovn-chip.sev { color: color-mix(in srgb, var(--ovn-tone) 50%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone) 14%, transparent); border-color: transparent; text-transform: uppercase; letter-spacing: .03em; font-size: 12px; }
 
             .openvibe-bell { position: relative; cursor: pointer; padding: 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }
             html[data-ov-icons=solid] .openvibe-bell svg.has-s { stroke-width: 0; } html[data-ov-icons=solid] .openvibe-bell svg > .ovg-s { display: inline; fill: currentColor; stroke: none; } .openvibe-bell svg > .ovg-s { display: none; }
@@ -341,7 +341,7 @@
 
             .openvibe-nv-head { padding: 14px 14px 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
             .openvibe-nv-head h3 { font-size: 17px; font-weight: 750; letter-spacing: -.01em; margin: 0; display: flex; align-items: center; gap: 8px; }
-            .openvibe-nv-head h3 .count { font-size: 11px; font-weight: 750; background: color-mix(in srgb, var(--live-red, #e5484d), #000 20%); color: #fff; border-radius: 999px; padding: 2px 7px; font-variant-numeric: tabular-nums; }
+            .openvibe-nv-head h3 .count { font-size: 12px; font-weight: 750; background: color-mix(in srgb, var(--live-red, #e5484d), #000 20%); color: #fff; border-radius: 999px; padding: 2px 7px; font-variant-numeric: tabular-nums; }
             .openvibe-nv-head h3 .count.zero { display: none; }
             .openvibe-nv-actions { display: flex; gap: 2px; align-items: center; }
             .openvibe-nv-actions button, .openvibe-nv-actions a { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; border: none; background: transparent; color: var(--text-muted, #8b8b96); cursor: pointer; text-decoration: none; }
@@ -373,14 +373,14 @@
             .openvibe-nv-tabs button:hover, .openvibe-nv-tabs button[aria-selected="true"] { color: var(--text-primary, #ececf1); }
             .openvibe-nv-tabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2.5px; border-radius: 2px 2px 0 0; background: var(--accent, #3b82f6); }
             .openvibe-nv-tabs button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -3px; border-radius: 10px; }
-            .openvibe-nv-tabs .n { min-width: 18px; padding: 2px 5px; box-sizing: border-box; border-radius: 999px; font-size: 10.5px; font-weight: 750; line-height: 1.2; text-align: center; font-variant-numeric: tabular-nums;
+            .openvibe-nv-tabs .n { min-width: 18px; padding: 2px 5px; box-sizing: border-box; border-radius: 999px; font-size: 12px; font-weight: 750; line-height: 1.2; text-align: center; font-variant-numeric: tabular-nums;
                 /* 4.260.0 (the owner, 11-15: "make the little badges red, since that indicates … unread alerts"). */
                 color: #fff; background: var(--danger, #ef4444); }
             .openvibe-nv-tabs .n:empty { display: none; }
             
 
             .openvibe-nv-list { flex: 1; overflow-y: auto; padding: 2px 0 6px; overscroll-behavior: contain; }
-            .openvibe-nv-day { position: sticky; top: 0; z-index: 1; padding: 10px 16px 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #8b8b96); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); }
+            .openvibe-nv-day { position: sticky; top: 0; z-index: 1; padding: 10px 16px 6px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #8b8b96); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); }
             /* A row: the opaque .ovn-row over .ovn-under, which a swipe uncovers (Read on the left, Clear on the right). */
             .openvibe-notif-item { position: relative; margin: 0 8px 8px; border-radius: 16px; overflow: hidden; cursor: pointer; }
             /* 4.248.0 (the owner, 11-14: "no spacing between them … confusing to have an X … more like social media"): every row
@@ -420,9 +420,9 @@
             .openvibe-notif-item .title .t { display: inline; }
             .openvibe-notif-item .title .count { display: inline-block; margin-left: 6px; vertical-align: 1px; }
             .openvibe-notif-item.unread .title { font-weight: 700; }
-            .openvibe-notif-item .title .count { flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 50%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
+            .openvibe-notif-item .title .count { flex: none; font-size: 12px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 50%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
             .openvibe-notif-item .msg { margin-top: 2px; font-size: 12.5px; color: var(--text-secondary, #b6b6c0); line-height: 1.42; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
-            .openvibe-notif-item .meta { font-size: 11.5px; color: var(--text-muted, #8b8b96); margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+            .openvibe-notif-item .meta { font-size: 12px; color: var(--text-muted, #8b8b96); margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
             .openvibe-notif-item .meta .since { order: -1; font-weight: 650; }
             .openvibe-notif-item .meta .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .6; }
             /* 4.317.0: an operator alert: its glyph on a tile of its tone, a hairline of that tone around a failing one,
@@ -436,7 +436,7 @@
             .openvibe-notif-item.is-ops .ovn-glyph { border-radius: 14px; background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
             .openvibe-notif-item.is-ops .ovn-glyph svg { width: 24px; height: 24px; }
             .openvibe-notif-item.is-ops:not(.is-resolved) .ovn-row { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovn-tone, #f59e0b) 30%, transparent); }
-            .openvibe-notif-item.is-ops .ovn-chip { font-size: 11px; padding: 3px 8px; }
+            .openvibe-notif-item.is-ops .ovn-chip { font-size: 12px; padding: 3px 8px; }
             .openvibe-notif-item .unread-dot { position: absolute; right: 14px; top: 50%; margin-top: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent, #3b82f6); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
             /* 4.260.0 (the owner, 11-15: "more minimalist … nicer organization … more icons"): unread is a tint and a dot at
                the right, not a bar down the side. */
@@ -487,7 +487,7 @@
             .openvibe-notif-item .row-actions button { width: 28px; height: 28px; border-radius: 8px; border: none; background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); color: var(--text-muted, #8b8b96); cursor: pointer; display: grid; place-items: center; }
             .openvibe-notif-item .row-actions button:hover { color: var(--text-primary, #ececf1); background: var(--bg-hover, rgba(255,255,255,.08)); }
             .openvibe-notif-item .row-actions svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-            .openvibe-notif-item .copy { font: inherit; font-size: 11.5px; font-weight: 650; margin-top: 7px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
+            .openvibe-notif-item .copy { font: inherit; font-size: 12px; font-weight: 650; margin-top: 7px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
             .openvibe-notif-item .copy:hover { color: var(--text-primary, #ececf1); }
             .openvibe-nv-empty { text-align: center; padding: 48px 24px 56px; color: var(--text-muted, #8b8b96); font-size: 13.5px; }
             .openvibe-nv-empty svg { width: 64px; height: 64px; display: block; margin: 0 auto 12px; fill: none; stroke: var(--accent-light, var(--accent, #60a5fa)); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: .9;
@@ -543,7 +543,7 @@
             .openvibe-notif-dock .openvibe-nv-bar .openvibe-nv-unread:hover { color: var(--text-primary, #ececf1); }
             .openvibe-notif-dock .openvibe-nv-bar { gap: 2px; min-height: 40px; padding: 0 0 4px; border-top: 0; }
             @media (pointer: coarse) { .openvibe-notif-dock .openvibe-nv-bar .openvibe-nv-unread { height: 40px !important; } }
-            @media (max-width: 400px) { .openvibe-notif-dock .openvibe-nv-bar .ovn-bar-b { padding: 0 8px; } .openvibe-notif-dock .openvibe-nv-bar [data-role="status"] { font-size: 11.5px; } }
+            @media (max-width: 400px) { .openvibe-notif-dock .openvibe-nv-bar .ovn-bar-b { padding: 0 8px; } .openvibe-notif-dock .openvibe-nv-bar [data-role="status"] { font-size: 12px; } }
             .ovn-ac-link { padding: 8px 12px; gap: 9px; align-items: baseline; flex-wrap: nowrap; white-space: nowrap; }
             .ovn-ac-link svg { align-self: center; }
             .ovn-ac-link span { flex: none; }

@@ -104,7 +104,7 @@
 .ovk-card-noimg--who { overflow: hidden; }
 /* A day as the cover (kit.card({ date })): the month in the accent, the day large, the weekday quiet. */
 .ovk-card-noimg--date { container-type: inline-size; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding-bottom: 8%; line-height: 1; font-variant-numeric: tabular-nums; }
-.ovk-card-date-m { font-size: clamp(11px, 6cqi, 15px); font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+.ovk-card-date-m { font-size: clamp(12px, 6cqi, 15px); font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
 .ovk-card-date-d { margin: 4px 0 0; font-size: clamp(30px, 23cqi, 64px); font-weight: 800; letter-spacing: -.03em; color: var(--ovk-text, var(--text-primary, #e6edf7)); }
 .ovk-card-date-w { font-weight: 650; color: var(--ovk-muted, var(--text-muted, #8b97ab)); }
 .ovk-card-noimg--who .ovk-card-noimg-bg { position: absolute; inset: -15%; width: 130%; height: 130%; object-fit: cover; filter: blur(24px) saturate(1.15); opacity: .5; }
@@ -202,7 +202,7 @@
 .sc-room-proof{list-style:none;display:flex;flex-wrap:wrap;gap:8px 22px;margin:22px 0 0;padding:0;font-size:.92rem;color:var(--text-secondary,#96a7c2)}
 .sc-room-proof li{display:inline-flex;align-items:baseline;gap:6px}
 .sc-room-proof b{color:var(--text-primary,#e6edf7);font-size:1.18rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.sc-room-proof em{font-style:normal;font-size:.7rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted,#7386a3)}
+.sc-room-proof em{font-style:normal;font-size:.75rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted,#7386a3)}
 .sc-room-proof .sc-room-live{display:inline-flex;align-items:center;gap:4px;color:var(--room-strong,#60a5fa)}
 .sc-room-live::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:sc-breathe 2s ease-in-out infinite}
 .sc-room-pic{display:flex;justify-content:center;min-width:0}

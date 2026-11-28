@@ -29,7 +29,7 @@
 .ovdk-timer[data-kind="break"] .ovdk-timer-bar i { background: #22c55e; }
 .ovdk-timer.is-done b { color: var(--accent, #3b82f6); }
 .ovdk-tmenu { position: absolute; z-index: 5; right: 8px; top: 52px; width: min(300px, calc(100% - 16px)); display: grid; gap: 10px; padding: 12px; border-radius: 14px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-card, var(--bg-secondary, #16161d)); box-shadow: 0 16px 40px rgba(0,0,0,.4); }
-.ovdk-tmenu p { margin: 0; color: var(--text-muted, #8b8b96); font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.ovdk-tmenu p { margin: 0; color: var(--text-muted, #8b8b96); font-size: 12px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
 .ovdk-tmenu .row { display: flex; flex-wrap: wrap; gap: 6px; }
 .ovdk-tmenu .own { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; gap: 6px; }
 .ovdk-tmenu input { min-height: 32px; min-width: 0; box-sizing: border-box; padding: 0 10px; border-radius: 10px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent; color: inherit; font: inherit; font-size: 13px; }

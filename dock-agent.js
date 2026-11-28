@@ -58,7 +58,7 @@
             .ovda-line .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent, #3b82f6); flex: none; }
             .ovda-line .dot.live { background: var(--live-red, #e5484d); animation: ovda-pulse 1.6s ease-in-out infinite; }
             .ovda-line .dot.off { background: var(--text-muted, #8b8b96); }
-            .ovda-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-muted, #8b8b96); }
+            .ovda-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted, #8b8b96); }
             .ovda-acts { display: flex; gap: 6px; margin-left: auto; }
             .ovda-acts button, .ovda-acts a { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12));
                 background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; }

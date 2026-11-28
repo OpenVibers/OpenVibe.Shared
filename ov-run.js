@@ -1322,7 +1322,7 @@
 .ovr-row-line { font-size: 13.5px; color: var(--text-secondary, #a8b3c4); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; line-height: 1.35; }
 .ovr-row-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted, #93a0b4); }
 .ovr-row-meta svg { width: 14px; height: 14px; }
-.ovr-pill { font-style: normal; font-size: 11.5px; font-weight: 750; padding: 1px 8px; border-radius: 999px; margin-left: auto; }
+.ovr-pill { font-style: normal; font-size: 12px; font-weight: 750; padding: 1px 8px; border-radius: 999px; margin-left: auto; }
 .ovr-pill.is-needs { color: #fbbf24; background: color-mix(in srgb, #f59e0b 16%, transparent); }
 .ovr-pill.is-working { color: var(--accent-light, #60a5fa); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
 .ovr-pill.is-failed { color: #f87171; background: color-mix(in srgb, #ef4444 14%, transparent); }
@@ -1370,7 +1370,7 @@ html[data-ov-motion="off"] .ovr-person .ovr-face { animation: none; transition: 
 .ovr-sheet-name:focus { border-style: solid; border-color: var(--accent, #3b82f6); background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); }
 .ovr-sheet-face { display: grid; place-items: center; }
 .ovr-sheet-sec { display: grid; gap: 8px; justify-items: center; width: min(100%, 340px); padding: 12px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent); }
-.ovr-sheet-h { justify-self: start; font-size: 11.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #7f8ea3); }
+.ovr-sheet-h { justify-self: start; font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #7f8ea3); }
 .ovr-pick { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .ovr-pick-shape, .ovr-pick-hue { all: unset; box-sizing: border-box; cursor: pointer; display: grid; place-items: center; border-radius: 14px; -webkit-tap-highlight-color: transparent; }
 .ovr-pick-shape { width: 48px; height: 48px; }
@@ -1460,7 +1460,7 @@ html[data-ov-motion=off] .ovr-welcome-stage > .ovr-face, html[data-ov-motion=off
 html[data-ov-motion=off] .ovr-welcome-n, html[data-ov-motion=off] .ovr-welcome-s { animation: none; }
 /* 4.260.0: how many work now, as a badge on the face that runs them (was the "Run (3)" chip). */
 .ovr-person .ovr-face { position: relative; }
-.ovr-person-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; display: grid; place-items: center; font-style: normal; font-size: 11px; font-weight: 800; color: #fff; background: var(--accent-strong, var(--accent, #3b82f6)); box-shadow: 0 0 0 2px var(--bg-card, #131c2e); }
+.ovr-person-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; display: grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 800; color: #fff; background: var(--accent-strong, var(--accent, #3b82f6)); box-shadow: 0 0 0 2px var(--bg-card, #131c2e); }
 /* 4.260.0 (the owner, 11-15: "fixed float"): the box floats over the end of the list, which scrolls under it. */
 .ovr.is-list > .ovr-compose { position: sticky; bottom: 0; z-index: 5; padding-top: 10px; padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)); background: linear-gradient(to bottom, transparent, var(--bg-card, var(--bg-secondary, #121826)) 14px); }
 .ovr-sheet-s { font-size: 13.5px; color: var(--text-secondary, #96a7c2); }
@@ -1522,7 +1522,7 @@ a.ovr-row { color: inherit; text-decoration: none; }
 .ovr-words ul, .ovr-words ol { margin: 0; padding-left: 20px; } .ovr-words li + li { margin-top: 3px; }
 .ovr-a { color: var(--accent-light, #60a5fa); text-decoration: underline; text-underline-offset: 2px; }
 .ovr-ic { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; padding: 1px 5px; border-radius: 6px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 9%, transparent); }
-.ovr-cite { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin: 0 2px; padding: 0 4px; border-radius: 6px; font-size: 11px; font-weight: 800; text-decoration: none; vertical-align: 2px; color: var(--accent-light, #60a5fa); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
+.ovr-cite { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin: 0 2px; padding: 0 4px; border-radius: 6px; font-size: 12px; font-weight: 800; text-decoration: none; vertical-align: 2px; color: var(--accent-light, #60a5fa); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
 .ovr-code { margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; overflow-x: auto; overflow-y: auto; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: color-mix(in srgb, #000 30%, transparent); }
 .ovr-sources { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .ovr-source { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 10px 4px 4px; border-radius: 999px; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); text-decoration: none; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }

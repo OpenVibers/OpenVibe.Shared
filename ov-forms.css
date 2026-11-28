@@ -136,7 +136,7 @@ html.ov-sel-locked, html.ov-sel-locked body { overflow: hidden; overscroll-behav
 .ov-sel-dot.is-new { background: var(--accent, #3b82f6); }
 .ov-sel-badge {
     flex: none; display: inline-flex; align-items: center; min-height: 20px; padding: 1px 8px; border-radius: 999px;
-    font-size: 11.5px; font-weight: 600; line-height: 1.3; white-space: nowrap;
+    font-size: 12px; font-weight: 600; line-height: 1.3; white-space: nowrap;
     color: var(--text-secondary, color-mix(in srgb, CanvasText 70%, Canvas)); background: color-mix(in srgb, CanvasText 8%, transparent);
 }
 .ov-sel-badge.is-ok { color: var(--success-text, var(--success, #15803d)); background: color-mix(in srgb, var(--success, #22c55e) 15%, transparent); }
@@ -147,7 +147,7 @@ html.ov-sel-locked, html.ov-sel-locked body { overflow: hidden; overscroll-behav
 .ov-sel-sheet .ov-sel-link { min-height: 38px; padding: 0 14px; font-size: 14px; }
 .ov-sel-link:hover { background: color-mix(in srgb, var(--ovf-accent) 20%, transparent); }
 .ov-sel-link:focus-visible { outline: 2px solid var(--ovf-accent); outline-offset: 2px; }
-.ov-sel-group { padding: 10px 10px 4px; color: var(--ovf-muted); font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.ov-sel-group { padding: 10px 10px 4px; color: var(--ovf-muted); font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 .ov-sel-group:first-child { padding-top: 4px; }
 .ov-sel-none { padding: 18px 12px; color: var(--ovf-muted); text-align: center; }
 

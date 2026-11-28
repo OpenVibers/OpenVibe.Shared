@@ -49,7 +49,7 @@
   transform-origin: 24px 0; animation: ovcombo-in .2s cubic-bezier(.2, 1.2, .3, 1) both; }
 .ovcombo.is-up { transform-origin: 24px 100%; }
 .ovcombo[hidden] { display: none; }
-.ovcombo-sec { margin: 0; padding: 8px 10px 5px; font-size: 11.5px; font-weight: 700; letter-spacing: .02em; color: var(--text-muted, #93a0b4); }
+.ovcombo-sec { margin: 0; padding: 8px 10px 5px; font-size: 12px; font-weight: 700; letter-spacing: .02em; color: var(--text-muted, #93a0b4); }
 .ovcombo-sec:not(:first-child) { margin-top: 4px; border-top: 1px solid var(--border, rgba(255,255,255,.08)); padding-top: 10px; }
 .ovcombo-i { display: flex; align-items: center; gap: 11px; min-height: 46px; padding: 4px 12px 4px 10px; border-radius: 11px; cursor: pointer; }
 .ovcombo-i[aria-selected="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }

@@ -386,7 +386,7 @@ html[data-ov-motion=off] .ovs-field.has-ph-slide .ovs-input:placeholder-shown ~ 
 .ovs-bridge-b:hover, .ovs-bridge-b:focus-visible { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
 .ovs-bridge-b:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
 .ovs-bridge-b:active { transform: scale(.96); }
-@media (max-width: 640px) { .ovs-bridge-b { flex-direction: column; gap: 2px; min-height: 50px; padding: 4px 2px; font-size: 11.5px; } .ovs-bridge-i svg { width: 19px; height: 19px; } }
+@media (max-width: 640px) { .ovs-bridge-b { flex-direction: column; gap: 2px; min-height: 50px; padding: 4px 2px; font-size: 12px; } .ovs-bridge-i svg { width: 19px; height: 19px; } }
 /* The menu's three tabs (4.149.0): one segmented row under the field; the chosen one in the accent. */
 .ovs-starttabs { gap: 6px; padding: 2px 12px 10px; }
 .ovs-starttabs .ovs-tab { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 10px; border-radius: 12px; font-size: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); }
@@ -578,8 +578,8 @@ html[data-ov-motion=off] .ovs-place .ovs-place-from { display: none; }
 .ovs-door-wait { margin: 18px 16px; font-size: 14px; color: var(--text-muted, #93a0b4); }
 @media (min-width: 641px) { .ovs.ovs-in-door .ovs-panel { height: min(820px, 86vh); max-height: 86vh; } .ovs.ovs-in-door .ovs-foot { display: none; } }
 .ovs-in-door .ovs-foot { display: none; }
-.ovs-group { display: flex; align-items: center; gap: 8px; padding: 10px 10px 4px; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
-.ovs-group button { margin-left: auto; border: 0; background: none; color: var(--accent-light, #8ab4ff); font: inherit; font-size: 11.5px; font-weight: 650; text-transform: none; letter-spacing: 0; cursor: pointer; }
+.ovs-group { display: flex; align-items: center; gap: 8px; padding: 10px 10px 4px; font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
+.ovs-group button { margin-left: auto; border: 0; background: none; color: var(--accent-light, #8ab4ff); font: inherit; font-size: 12px; font-weight: 650; text-transform: none; letter-spacing: 0; cursor: pointer; }
 .ovs-item a { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 5px 10px; border-radius: 12px; color: inherit; text-decoration: none; }
 .ovs-opt.is-active, .ovs-opt:focus-visible { background: var(--bg-hover, rgba(255,255,255,.07)); outline: none; }
 /* A tap leaves :hover on what it touched: rows light on hover only where a pointer really hovers. */
@@ -593,7 +593,7 @@ html[data-ov-motion=off] .ovs-place .ovs-place-from { display: none; }
 .ovs-main { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .ovs-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 600; }
 .ovs-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-muted, #93a0b4); }
-.ovs-key { flex: none; font-size: 11px; color: var(--text-muted, #93a0b4); }
+.ovs-key { flex: none; font-size: 12px; color: var(--text-muted, #93a0b4); }
 .ovs-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 8px 6px; }
 .ovs-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; height: 34px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); color: inherit; text-decoration: none; font-size: 13.5px; font-weight: 600; box-sizing: border-box; }
 .ovs-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -603,7 +603,7 @@ html[data-ov-motion=off] .ovs-place .ovs-place-from { display: none; }
 .ovs-tile { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 10px; border-radius: 12px; border: 1px solid transparent; color: inherit; text-decoration: none; }
 .ovs-tile > span:last-child { min-width: 0; }
 .ovs-tile b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 650; }
-.ovs-tile small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 11.5px; line-height: 1.3; color: var(--text-muted, #93a0b4); }
+.ovs-tile small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12px; line-height: 1.3; color: var(--text-muted, #93a0b4); }
 .ovs-tile.is-here { border-color: color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); }
 .ovs-note { padding: 14px 12px; font-size: 13px; color: var(--text-muted, #93a0b4); }
 /* The menu before typing (4.128.0): the places dock, this site's pages, the live bar, counted folds. */
@@ -635,7 +635,7 @@ html[data-ov-motion=off] .ovs-place .ovs-place-from { display: none; }
 /* 4.201.0's look: Notifications' head in You; the Timer under Vibe; the Dock's actions in You. */
 .ovs-nhead { display: flex; align-items: center; gap: 8px; padding: 10px 14px 6px; }
 .ovs-nhead b { font-size: 13px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary, #a8b3c4); }
-.ovs-nhead-n { padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--live-red, #ef4444), #000 20%); color: #fff; font-size: 11.5px; font-weight: 750; }
+.ovs-nhead-n { padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--live-red, #ef4444), #000 20%); color: #fff; font-size: 12px; font-weight: 750; }
 .ovs-nhead-n[hidden], .ovs-nhead-more[hidden] { display: none; }
 .ovs-nhead-more { margin-left: auto; min-height: 32px; padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--accent-light, var(--accent, #60a5fa)); font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
 .ovs-nhead-more:hover, .ovs-nhead-more:focus-visible { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); }
@@ -653,7 +653,7 @@ html[data-ov-motion=off] .ovs-place .ovs-place-from { display: none; }
 .ovs-feeds-note { margin: 2px 6px 0; font-size: 12px; color: var(--text-muted, #8b95a7); }
 .ovs-fold[aria-expanded="true"] svg { transform: rotate(90deg); }
 .ovs-fold:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
-.ovs-tag { margin-left: 7px; padding: 1px 7px; border-radius: 999px; font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: .03em; vertical-align: 1px; color: color-mix(in srgb, var(--accent, #3b82f6) 72%, var(--text-primary, #e8ecf3)); background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); }
+.ovs-tag { margin-left: 7px; padding: 1px 7px; border-radius: 999px; font-style: normal; font-size: 12px; font-weight: 800; letter-spacing: .03em; vertical-align: 1px; color: color-mix(in srgb, var(--accent, #3b82f6) 72%, var(--text-primary, #e8ecf3)); background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); }
 .ovs-card { padding: 2px 6px 6px; }
 .ovs-guest { display: grid; gap: 8px; }
 .ovs-guest b { font-size: 15px; font-weight: 650; }
@@ -693,12 +693,12 @@ html[data-ov-motion=off] .ovs-gans, html[data-ov-motion=off] .ovs-gans-t.is-in {
 .ovs-cardbody { border-radius: 16px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); padding: 12px 14px; }
 .ovs-displayrow { padding: 4px 8px 10px; }
 .ovs-displayrow .ovnav-display { margin-top: 4px; }
-.ovs-host { display: block; margin-top: 2px; font-size: 11px; font-weight: 650; letter-spacing: .01em; color: color-mix(in srgb, var(--accent, #3b82f6) 60%, var(--text-muted, #93a0b4)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ovs-group .ovs-more { margin-left: auto; color: var(--accent-light, #8ab4ff); font-size: 11.5px; font-weight: 650; text-transform: none; letter-spacing: 0; text-decoration: none; }
+.ovs-host { display: block; margin-top: 2px; font-size: 12px; font-weight: 650; letter-spacing: .01em; color: color-mix(in srgb, var(--accent, #3b82f6) 60%, var(--text-muted, #93a0b4)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovs-group .ovs-more { margin-left: auto; color: var(--accent-light, #8ab4ff); font-size: 12px; font-weight: 650; text-transform: none; letter-spacing: 0; text-decoration: none; }
 @media (hover: hover) { .ovs-app:hover, .ovs-link:hover, .ovs-live:hover, .ovs-fold:hover { background: var(--bg-hover, rgba(255,255,255,.07)); color: inherit; } .ovs-app:hover .ovs-appic { transform: translateY(-2px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); } }
 @media (max-width: 640px) { .ovs-apps { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (pointer: coarse) { .ovs-chip { height: 44px; } .ovs-group button, .ovs-group .ovs-more { min-height: 44px; display: inline-flex; align-items: center; } }
-.ovs-foot { display: flex; gap: 14px; padding: 8px 16px; border-top: 1px solid var(--border, rgba(255,255,255,.1)); font-size: 11.5px; color: var(--text-muted, #93a0b4); }
+.ovs-foot { display: flex; gap: 14px; padding: 8px 16px; border-top: 1px solid var(--border, rgba(255,255,255,.1)); font-size: 12px; color: var(--text-muted, #93a0b4); }
 .ovs-foot kbd { font: inherit; font-weight: 700; padding: 1px 5px; border-radius: 5px; border: 1px solid var(--border, rgba(255,255,255,.14)); }
 .ovs-busy .ovs-bar { background-image: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent, #3b82f6) 40%, transparent), transparent); background-size: 40% 2px; background-repeat: no-repeat; background-position: -40% 100%; animation: ovs-scan 1s linear infinite; }
 .ovs-snip { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-size: 13px; line-height: 1.4; color: var(--text-secondary, #a8b3c4); white-space: normal; }

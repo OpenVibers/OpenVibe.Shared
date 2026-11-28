@@ -3788,7 +3788,7 @@ html[data-ov-motion=off] .ovse-agents.is-turning > .ovse-actor, html[data-ov-mot
 .ovse-yai-t { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .ovse-yai-t b { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovse-yai-t small { font-size: 12.5px; line-height: 1.35; color: var(--text-muted, #8b8b96); }
-.ovse-yai-chip { flex: none; padding: 3px 9px; border-radius: 999px; font-style: normal; font-size: 11.5px; font-weight: 750; color: var(--text-secondary, #a8b3c4);
+.ovse-yai-chip { flex: none; padding: 3px 9px; border-radius: 999px; font-style: normal; font-size: 12px; font-weight: 750; color: var(--text-secondary, #a8b3c4);
   background: color-mix(in srgb, var(--text-primary, #ececf1) 8%, transparent); }
 .ovse-yai-chip.is-ok { color: var(--success, #22c55e); background: color-mix(in srgb, var(--success, #22c55e) 14%, transparent); }
 .ovse-yai-chip.is-warn { color: var(--warning, #f5a524); background: color-mix(in srgb, var(--warning, #f5a524) 14%, transparent); }
@@ -3910,7 +3910,7 @@ html[data-ov-motion="off"] .ovse-use-seg, html[data-ov-motion="off"] .ovse-use-g
 .ovse-gm-stack .ovse-gm-face { margin-left: -8px; box-shadow: 0 0 0 2px var(--bg-primary, #0b1120); animation: ovse-gm-in .28s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 30ms); }
 .ovse-gm-stack .ovse-gm-face:first-child { margin-left: 0; }
 .ovse-group-count { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary, #a8b3c4); font-size: .82rem; font-weight: 700; }
-.ovse-gm-more { font-size: .68rem; font-weight: 800; background: var(--bg-tertiary, rgba(255,255,255,.1)) !important; color: var(--text-secondary, #a8b3c4) !important; }
+.ovse-gm-more { font-size: .75rem; font-weight: 800; background: var(--bg-tertiary, rgba(255,255,255,.1)) !important; color: var(--text-secondary, #a8b3c4) !important; }
 .ovse-gmember { cursor: default; }
 @media (max-width: 520px) { .ovse-group-b { width: 40px; padding: 0; justify-content: center; } .ovse-group-b > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } .ovse-gsheet .ovse-group-b { width: auto; padding: 0 12px; } .ovse-gsheet .ovse-group-b > span { position: static; width: auto; height: auto; clip-path: none; } }
 .ovse-gm { display: inline-flex; flex: none; align-items: center; gap: 6px; max-width: 180px; padding: 3px 10px 3px 3px; border-radius: 999px; background: var(--bg-tertiary, rgba(255,255,255,.06)); font-size: .78rem; font-weight: 700; animation: ovse-gm-in .28s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 30ms); }
@@ -3956,7 +3956,7 @@ html[data-ov-motion=off] .ovse-gm, html[data-ov-motion=off] .ovse-gsheet { anima
 .ovse-how-c:active { transform: scale(.97); }
 .ovse-how-c .ovse-g { flex: none; width: 18px; height: 18px; color: var(--ovse-acc2); }
 .ovse-how-t { display: grid; min-width: 0; line-height: 1.15; }
-.ovse-how-t small { font-size: 11px; color: var(--ovse-mute); }
+.ovse-how-t small { font-size: 12px; color: var(--ovse-mute); }
 .ovse-how-t b { font-size: 13.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
 .ovse-how-c.is-own { border-style: dashed; }
 /* the setup card for a spent allowance */
@@ -4061,7 +4061,7 @@ html[data-ov-motion="off"] .ovse-speak.is-speaking .ovse-g, html[data-ov-motion=
 .ovse-words a.ovse-lk .ovse-lk-g { flex: none; width: 15px; height: 15px; }
 .ovse-wait { padding: 12px; border-radius: 14px; border: 1px dashed var(--ovse-line); color: var(--ovse-mute); font-size: 13px; }
 .ovse-ic { padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--ovse-fg) 9%, transparent); font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
-.ovse-cite { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin: 0 2px; padding: 0 4px; border-radius: 6px; background: color-mix(in srgb, var(--ovse-acc) 22%, transparent); color: var(--ovse-acc2) !important; font-size: 11px; font-weight: 700; text-decoration: none !important; vertical-align: 2px; }
+.ovse-cite { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin: 0 2px; padding: 0 4px; border-radius: 6px; background: color-mix(in srgb, var(--ovse-acc) 22%, transparent); color: var(--ovse-acc2) !important; font-size: 12px; font-weight: 700; text-decoration: none !important; vertical-align: 2px; }
 .ovse-pre, .ovse-out { margin: 0 0 10px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--ovse-bg) 60%, #000 40%); border: 1px solid var(--ovse-line); overflow-x: auto; overflow-y: auto; font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; }
 .ovse-say.is-writing .ovse-words > :last-child::after { content: ''; display: inline-block; width: 7px; height: 15px; margin-left: 2px; vertical-align: -2px; border-radius: 2px; background: var(--ovse-acc2); animation: ovse-caret 1s steps(2) infinite; }
 /* An answer's receipt (4.298.0): one quiet line; it opens on the spend by rung. */
@@ -4150,7 +4150,7 @@ details[open] > summary > .ovse-fold { transform: rotate(180deg); }
 details.ovse-tool > .ovse-tool-h { cursor: pointer; } details.ovse-tool > .ovse-tool-h:hover { color: var(--ovse-fg); }
 .ovse-tool-h .ovse-g { width: 15px; height: 15px; color: var(--ovse-mute); }
 .ovse-tool-h span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
-.ovse-tool-h small { color: var(--ovse-mute); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.ovse-tool-h small { color: var(--ovse-mute); font-size: 12px; font-variant-numeric: tabular-nums; }
 .ovse-tool.is-failed .ovse-tool-h { color: var(--danger, #ef4444); } .ovse-bad { color: var(--danger, #ef4444) !important; }
 .ovse-out { margin: 2px 8px 8px 31px; max-height: 280px; overflow: auto; font-size: 12px; }
 /* 4.335.0: a tool's result as something to read. */
@@ -4407,7 +4407,7 @@ html[data-ov-motion="off"] .ovse-road { animation: none; transition: none; }
 @media (max-width: 480px) { .ovse-ctxrow > .ovse-cost { display: none; } }
 /* 4.311.0: the hello's card, a row per choice with what it means. */
 .ovse-how.is-list { display: grid; gap: 0; width: min(520px, 100%); box-sizing: border-box; margin: 4px auto 14px; padding: 4px 4px 6px; border: 1px solid var(--ovse-line); border-radius: 18px; background: var(--ovse-card); justify-content: stretch; }
-.ovse-how-h { margin: 8px 12px 4px; font-size: 11.5px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--ovse-mute); text-align: left; }
+.ovse-how-h { margin: 8px 12px 4px; font-size: 12px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--ovse-mute); text-align: left; }
 .ovse-how.is-list .ovse-how-c { display: grid; grid-template-columns: 36px minmax(0, 1fr) 16px; align-items: center; gap: 12px; width: 100%; max-width: none; min-height: 62px; padding: 8px 10px; border: 0; border-radius: 14px; background: transparent; text-align: left; }
 .ovse-how.is-list .ovse-how-c { position: relative; }
 .ovse-how.is-list .ovse-how-c + .ovse-how-c::before { content: ""; position: absolute; top: 0; left: 58px; right: 12px; height: 1px; background: color-mix(in srgb, var(--ovse-line) 80%, transparent); }

@@ -48,7 +48,7 @@
 .ovtip-body em{color:var(--ovtip-accent,var(--accent,#60a5fa));font-style:normal;font-weight:600}
 .ovtip-body code{background:var(--bg-tertiary,#1a1b28);padding:1px 6px;border-radius:5px;font-size:.78rem}
 .ovtip-foot{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border,rgba(255,255,255,.1));
-  font-size:.74rem;color:var(--text-muted,#8b93ad);display:flex;align-items:center;gap:6px;position:relative}
+  font-size:.75rem;color:var(--text-muted,#8b93ad);display:flex;align-items:center;gap:6px;position:relative}
 .ovtip-arrow{position:fixed;z-index:30001;width:10px;height:10px;transform:rotate(45deg);opacity:0;transition:opacity .18s;
   background:var(--bg-card,#171826);border:1px solid color-mix(in srgb, var(--ovtip-accent,var(--accent,#60a5fa)) 45%, var(--border,rgba(255,255,255,.1)))}
 .ovtip-arrow.is-on{opacity:1}

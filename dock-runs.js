@@ -5,12 +5,12 @@
     const CSS = `
 .ovdk-overview{display:grid;gap:8px;padding:4px 10px 12px}.ovdk-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .ovdk-tile{min-width:0;display:grid;align-content:start;gap:2px;padding:10px 11px;border-radius:14px;background:color-mix(in srgb,var(--text-primary,#ececf1) 5%,transparent)}
-.ovdk-tile small{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted,#8b8b96)}
+.ovdk-tile small{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted,#8b8b96)}
 .ovdk-tile b{font-size:22px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}.ovdk-tile b em{font-style:normal;font-size:12px;font-weight:650;color:var(--text-secondary,#a8a8b2);letter-spacing:0;margin-left:4px}
-.ovdk-tile span{white-space:pre-wrap;font-variant-numeric:tabular-nums;font-size:11.5px;color:var(--text-secondary,#a8a8b2);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ovdk-tile span{white-space:pre-wrap;font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary,#a8a8b2);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .ovdk-tile .ovdk-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin:0 3px 1px 0;background:var(--ok,#3fb27f)}.ovdk-tile .ovdk-dot.is-bad{background:var(--live-red,#e5484d)}
 .ovdk-tile-next b{font-size:15px;line-height:1.25;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ovdk-tile-next span{color:var(--accent-light,var(--accent,#60a5fa));font-weight:700}
-.ovdk-overview h3{font-size:11px;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted,#8b8b96);margin:8px 2px 0}.ovdk-skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.ovdk-overview h3{font-size:12px;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted,#8b8b96);margin:8px 2px 0}.ovdk-skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .ovdk-skills button{min-height:44px;padding:9px 11px;border-radius:12px;border:0;background:color-mix(in srgb,var(--accent,#3b82f6) 10%,transparent);color:inherit;text-align:left;cursor:pointer;font:inherit;font-size:12.5px;font-weight:650}
 .ovdk-skills button:hover{background:color-mix(in srgb,var(--accent,#3b82f6) 18%,transparent)}.ovdk-overview .ovdk-runs{padding:0}.ovdk-run-filters{display:flex;gap:4px;overflow-x:auto;overflow-y:hidden;padding:8px 10px;scrollbar-width:none}.ovdk-run-filters::-webkit-scrollbar{display:none}
 .ovdk-run-filters button{min-height:36px;padding:0 11px;border:1px solid var(--border,rgba(127,127,127,.2));border-radius:99px;background:transparent;color:inherit;cursor:pointer;white-space:nowrap;font:inherit;font-size:12px}

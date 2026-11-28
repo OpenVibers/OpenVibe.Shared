@@ -106,7 +106,7 @@
             .ovac-tabs button:hover, .ovac-tabs button[aria-selected="true"] { color: var(--text-primary, #ececf1); }
             .ovac-tabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2.5px; border-radius: 2px 2px 0 0; background: var(--accent, #3b82f6); }
             .ovac-tabs button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -3px; border-radius: 10px; }
-            .ovac-tabs .n { min-width: 18px; padding: 2px 5px; box-sizing: border-box; border-radius: 999px; font-size: 10.5px; font-weight: 750; line-height: 1.2; text-align: center; font-variant-numeric: tabular-nums;
+            .ovac-tabs .n { min-width: 18px; padding: 2px 5px; box-sizing: border-box; border-radius: 999px; font-size: 12px; font-weight: 750; line-height: 1.2; text-align: center; font-variant-numeric: tabular-nums;
                 color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--accent, #3b82f6) 24%, transparent); }
             .ovac-tabs [data-tab="waiting"] .n { background: color-mix(in srgb, var(--warning, #f5a524) 30%, transparent); }
             .ovac-tabs .n:empty { display: none; }
@@ -121,7 +121,7 @@
             .ovac-title:hover { text-decoration: underline; text-underline-offset: 2px; }
             .ovac-sum { margin: 2px 0 0; font-size: 12.5px; line-height: 1.42; color: var(--text-secondary, #b6b6c0); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
             .ovac-item[data-bucket="failed"] .ovac-sum { color: color-mix(in srgb, var(--live-red, #e5484d) 55%, var(--text-primary, #ececf1)); }
-            .ovac-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; font-size: 11.5px; color: var(--text-muted, #8b8b96); }
+            .ovac-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; font-size: 12px; color: var(--text-muted, #8b8b96); }
             .ovac-state { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; color: color-mix(in srgb, var(--ovac-tone) 55%, var(--text-primary, #ececf1)); }
             .ovac-state::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--ovac-tone); }
             .ovac-item[data-bucket="running"] .ovac-state::before { animation: ovac-pulse 1.4s ease-in-out infinite; }
@@ -155,7 +155,7 @@
             .ovac-mounted { display: flex; flex-direction: column; min-height: 0; color: var(--text-primary, #ececf1); }
             .ovac-mounted .ovac-list { padding: 4px 6px 10px; }
             .ovac-mounted svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-            .ovac-group { display: flex; align-items: center; gap: 8px; margin: 10px 10px 4px; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
+            .ovac-group { display: flex; align-items: center; gap: 8px; margin: 10px 10px 4px; font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
             .ovac-group span { font-variant-numeric: tabular-nums; letter-spacing: 0; color: var(--text-secondary, #b6b6c0); }
             .ovac-group[data-bucket="waiting"] { color: color-mix(in srgb, var(--warning, #f5a524) 70%, var(--text-primary, #ececf1)); }
         `;

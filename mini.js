@@ -85,7 +85,7 @@
   .ovmini { left: 8px; right: 8px; width: auto; max-width: none; bottom: calc(8px + var(--ovb-base, var(--ovnav-appbar-h, env(safe-area-inset-bottom, 0px)))); grid-template-columns: auto minmax(0, 1fr) auto auto; border-radius: 14px; }
   .ovmini-pic { grid-column: 1; width: 112px; aspect-ratio: 16 / 9; }
   .ovmini-back { display: none; }
-  .ovmini-sound { left: 4px; right: auto; top: auto; bottom: 7px; min-height: 26px; padding: 0 8px 0 5px; font-size: .68rem; }
+  .ovmini-sound { left: 4px; right: auto; top: auto; bottom: 7px; min-height: 26px; padding: 0 8px 0 5px; font-size: .75rem; }
   .ovmini-sound span { display: none; }
   .ovmini-bar { position: static; grid-column: 1 / -1; grid-row: 2; }
   .ovmini-pic .ovmini-bar { display: none; }

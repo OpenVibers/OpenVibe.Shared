@@ -15,9 +15,9 @@
 .ovpp-stats { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .ovpp-stats li { display: flex; flex-direction: column; align-items: center; padding: 6px 4px; border-radius: 10px; background: var(--bg-secondary, #101828); min-width: 0; }
 .ovpp-stats b { font-size: 1.05rem; }
-.ovpp-stats span { font-size: .72rem; color: var(--text-muted, #7386a3); }
+.ovpp-stats span { font-size: .75rem; color: var(--text-muted, #7386a3); }
 .ovpp-sec { margin-top: 12px; }
-.ovpp-h { margin: 0 0 6px; font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #7386a3); }
+.ovpp-h { margin: 0 0 6px; font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #7386a3); }
 .ovpp-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .ovpp-chip, .ovpp-chip a { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
 .ovpp-chip { padding: 4px 10px 4px 4px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--rc, var(--ovpp-r-common)) 45%, var(--border, #1f2d47)); background: var(--bg-secondary, #101828); }

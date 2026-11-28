@@ -47,7 +47,7 @@
 .ovp-find input:focus { border-color: var(--accent, #3b82f6); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
 .ovp-find svg { position: absolute; left: 12px; top: 50%; width: 17px; height: 17px; margin-top: -8.5px; color: var(--text-muted, #8b93a4); pointer-events: none; }
 .ovp-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 2px 8px 10px; }
-.ovp-sec { margin: 10px 10px 4px; font-size: 11.5px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #8b93a4); }
+.ovp-sec { margin: 10px 10px 4px; font-size: 12px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #8b93a4); }
 .ovp-row { all: unset; box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; min-height: 50px; padding: 7px 10px; border-radius: 12px; cursor: pointer; animation: ovp-row-in .26s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 18ms); transition: background-color .14s ease; }
 .ovp-row:hover, .ovp-row.is-active { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 7%, transparent); }
 .ovp-row:active { transform: scale(.985); }
@@ -60,7 +60,7 @@
 .ovp-t small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
 .ovp.is-wrap .ovp-t small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; }
 .ovp-end { display: flex; align-items: center; gap: 8px; }
-.ovp-badge { padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); }
+.ovp-badge { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); }
 .ovp-check { width: 20px; height: 20px; color: var(--accent-light, var(--accent, #60a5fa)); opacity: 0; transform: scale(.6); transition: opacity .15s ease, transform .2s cubic-bezier(.34,1.56,.64,1); }
 .ovp-row[aria-selected="true"] .ovp-check { opacity: 1; transform: none; }
 .ovp-none { padding: 22px 12px; text-align: center; color: var(--text-secondary, #a8b3c4); }

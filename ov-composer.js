@@ -90,7 +90,7 @@ html[data-ov-motion=off] .ovc-file-ai.is-busy svg { animation: none; opacity: .6
 .ovc-pop-t { min-width: 0; display: grid; line-height: 1.3; }
 .ovc-pop-t b { font-weight: 650; font-size: 14px; color: var(--text-primary, #e6edf7); }
 .ovc-pop-t span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-muted, #7386a3); }
-.ovc-pop-tag { font-size: 11px; font-weight: 650; padding: 2px 7px; border-radius: 999px; color: var(--ovt-accent, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 12%, transparent); }
+.ovc-pop-tag { font-size: 12px; font-weight: 650; padding: 2px 7px; border-radius: 999px; color: var(--ovt-accent, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 12%, transparent); }
 /* 4.249.0 (the owner, 11-14: the listening glow was cut off into a square): listening is a ring inside the disk, never a glow
    spread past it that a row clips; blocked is its own state: a red ring and a short shake, and the note says why. */
 .ovc-mic { border-radius: 50%; }
@@ -590,7 +590,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     const mods = [];
     // 4.202.0: your settings open in the one window (ov-window.js: a sheet on a phone, swiped down to close), loaded
     // from beside this file; without it, a plain <dialog>.
-    const COMPOSER_REV = { 'ov-window.js': '55f98e14ef27', 'ov-capture.js': '6bdc48bfd415', 'ov-picker.js': '46abf4b33048' };
+    const COMPOSER_REV = { 'ov-window.js': '55f98e14ef27', 'ov-capture.js': '6bdc48bfd415', 'ov-picker.js': '22958b13f9fc' };
     const selfSrc = (document.currentScript && document.currentScript.src) || '';
     function needWindow() {
         return new Promise((ok) => {

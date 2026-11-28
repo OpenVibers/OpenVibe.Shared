@@ -46,7 +46,7 @@
 .ovi-bar{height:4px;border-radius:4px;background:color-mix(in srgb,var(--ovis-c) 18%,transparent);margin-top:8px;overflow:hidden}
 .ovi-bar i{display:block;height:100%;width:0;background:var(--ovis-c);border-radius:4px;transition:width .35s cubic-bezier(.2,.8,.2,1)}
 .ovi-bar.is-ind i{width:35%;animation:ovisInd 1.2s ease-in-out infinite}
-.ovi-d{color:var(--text-muted,#7d8aa0);font-size:11.5px;margin-top:6px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.ovi-d{color:var(--text-muted,#7d8aa0);font-size:12px;margin-top:6px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .ovi-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .ovi-act{appearance:none;border:0;cursor:pointer;text-decoration:none;font:700 12px/1 system-ui,sans-serif;padding:7px 11px;border-radius:8px;color:var(--ovis-t,var(--ovis-c));background:color-mix(in srgb,var(--ovis-c) 14%,transparent)}
 .ovi-act:first-child{background:var(--ovis-c);color:var(--on-accent,#fff)}
