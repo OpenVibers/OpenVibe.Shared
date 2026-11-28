@@ -79,7 +79,12 @@ assert.ok(!f.onlineHTML(f.cleanOnline({ ...read, counts: [], items: [] })).inclu
 }
 
 // The slot stays in the footer; the strip is read from /api/frame/online, with the old line as the fallback.
-assert.ok(f.buildHTML({ service: 'live', variant: 'full' }).includes('class="ovf-pulse" data-ovf-pulse'), 'the strip slot');
+// The slot keeps its place while it waits (11-28: it appeared under a reader's eyes and pushed the footer down, the Live
+// home's narrow-window CLS ~0.39): a waiting box, not hidden; a failed read takes it away; a painted strip keeps its height.
+assert.ok(f.buildHTML({ service: 'live', variant: 'full' }).includes('<div class="ovf-pulse is-waiting" data-ovf-pulse aria-busy="true"></div>'), 'the strip slot, waiting in its place');
+assert.ok(SRC.includes('.ovf-pulse.is-waiting{min-height:var(--ovf-pulse-h,96px)'), 'its height is kept while it waits');
+assert.ok(SRC.includes("}).catch(() => { pulseFailed(); });") && SRC.includes("if (!p || typeof p !== 'object') { pulseFailed(); return; }"), 'a failed read takes the box away');
+assert.ok(SRC.includes("requestAnimationFrame(() => keepPulseHeight(el))") && SRC.includes("sessionStorage.setItem(PULSE_H_KEY"), 'the painted height is remembered for the next page');
 assert.ok(SRC.includes('const ONLINE_URL = `${NETWORK_URL}/api/frame/online`'));
 assert.ok(SRC.includes('readNetwork()') && SRC.includes('setInterval(readNetwork, PULSE_MS)'), 'read when the footer is in view, every minute while it is');
 assert.ok(SRC.includes('readPulse(); return;'), 'the old pulse line when the new read does not answer');
