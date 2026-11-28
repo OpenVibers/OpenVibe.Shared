@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.338.0 - 2026-11-27
+
+- **Runs, task details and drafts keep what is theirs** (`ov-run.js`, `ov-harness.js`, `ov-composer.js`; the doctor's
+  round of 11-24). A run's stream reads lines ending in CR, LF or CRLF (even split across reads), joins multi-line data,
+  moves its replay cursor only on real steps, and lets go of its reader when it ends or the page moves on. The coding
+  view applies a task's details and the list only while they still belong to what is open: switching task A to B, a new
+  task or overlapping refreshes no longer bring back A's links and status. A pending Send/Ask/Do clears only the words
+  and files it sent: what you type or attach meanwhile, and a new reply, stay; a refused or failed send keeps the draft.
+  Tests: run-stream, ov-harness-races, composer-pending-chrome.
+
 ## 4.337.0 - 2026-11-21
 
 - **The new session's Coding agent tile says when it is not set up** (`ov-session.js`; the owner's phone, 11-21: a Claude
