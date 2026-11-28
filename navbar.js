@@ -3,6 +3,26 @@
 (function (root) {
     'use strict';
 
+    // Cross-document view transitions (kit.css opts in) on every page with the bar, not only the account hub's
+    // (account-switcher.js, 11-01): a move to a page that does not opt in, or a resize mid-way, aborts the transition,
+    // and its promises rejected with no one listening (Live's RUM, 11-28: "Transition was aborted because of invalid
+    // state", 10 a day). Their promises are handled here; a replace navigation (a redirect) skips its transition.
+    function quietViewTransition(event) {
+        const transition = event && event.viewTransition;
+        if (!transition) return;
+        for (const promise of [transition.finished, transition.ready, transition.updateCallbackDone]) {
+            try { if (promise && typeof promise.catch === 'function') promise.catch(() => {}); } catch { /* not a promise */ }
+        }
+        const activation = event.activation;
+        if (!activation || activation.navigationType !== 'replace') return;
+        try { if (typeof transition.skipTransition === 'function') transition.skipTransition(); } catch { /* already gone */ }
+    }
+    if (typeof document !== 'undefined' && root && typeof root.addEventListener === 'function' && !root.__ovQuietVT) {
+        root.__ovQuietVT = true;
+        root.addEventListener('pageswap', quietViewTransition);
+        root.addEventListener('pagereveal', quietViewTransition);
+    }
+
     let _config = {
         service: 'network', token: null, user: null, apiBase: 'https://openvibe.network', frameBase: null,
         onLogin: null, onLogout: null, loginUrl: null, sessionUrl: null, logoutUrl: null,
@@ -682,7 +702,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '4418451da9f3', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '3e88494ddcc6', 'dock.js': '1136517bf1af', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '1626f844e2fa', 'history.js': 'f9fb9e096c65', 'bottom.js': '34c927fb7ad5', 'appbar.js': '704adec2ecb4', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'c8712c1f5025', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '67bd3552b46a', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'c1e7daded213', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '34442244d7f4', 'ov-trending.js': '8e4322324f64', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': '6c9471b2aaf7', 'soft.js': '98ab9b8080b1', 'ov-run.js': '45e0d6eacb4c', 'ov-composer.js': '8287d1c0f31d', 'items.js': '321850a5bd67', 'items.css': 'ccb7103adad6', 'ov-session.js': '9fb71fb298ac', 'ov-guest-ask.js': '6c7a4927d8c3', 'ov-face.js': 'e6ae3168452e', 'ov-embeds.js': '385383e164f0' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '4418451da9f3', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '3e88494ddcc6', 'dock.js': '493f4ad6ecce', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '1626f844e2fa', 'history.js': 'f9fb9e096c65', 'bottom.js': '34c927fb7ad5', 'appbar.js': '704adec2ecb4', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'c8712c1f5025', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '461d250be9a9', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'c1e7daded213', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '34442244d7f4', 'ov-trending.js': '8e4322324f64', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': '6c9471b2aaf7', 'soft.js': '98ab9b8080b1', 'ov-run.js': '45e0d6eacb4c', 'ov-composer.js': '8287d1c0f31d', 'items.js': '321850a5bd67', 'items.css': 'ccb7103adad6', 'ov-session.js': '9fb71fb298ac', 'ov-guest-ask.js': '6c7a4927d8c3', 'ov-face.js': 'e6ae3168452e', 'ov-embeds.js': '385383e164f0' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
