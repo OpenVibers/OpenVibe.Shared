@@ -38,7 +38,7 @@
 .ovas-tab { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 13px; border: 0; border-radius: 999px; background: none;
   color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13px; cursor: pointer; }
 .ovas-tab[aria-selected="true"] { background: var(--bg-primary, #0b1220); color: var(--text-primary, #e6edf7); font-weight: 650; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); }
-.ovas-tab em { font-style: normal; font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, #f59e0b 22%, transparent); color: #fbbf24; }
+.ovas-tab em { font-style: normal; font-size: 12px; font-weight: 700; padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, #f59e0b 22%, transparent); color: #fbbf24; }
 .ovas-tab:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
 .ovas-part { display: grid; align-content: start; gap: 8px; min-height: 90px; }
 .ovas-part[hidden] { display: none; }
@@ -48,7 +48,7 @@
 .ovas-card b { font-size: 14px; font-weight: 650; overflow-wrap: anywhere; }
 .ovas-card p { margin: 0; color: var(--text-secondary, #a8b3c4); font-size: 13px; overflow-wrap: anywhere; }
 .ovas-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: var(--text-muted, #7d8aa0); font-size: 12px; font-variant-numeric: tabular-nums; }
-.ovas-chip { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 650;
+.ovas-chip { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 650;
   background: color-mix(in srgb, var(--text-primary, #e6edf7) 8%, transparent); color: var(--text-primary, #e6edf7); }
 .ovas-chip.is-ok { background: color-mix(in srgb, #22c55e 18%, transparent); color: #4ade80; }
 .ovas-chip.is-bad { background: color-mix(in srgb, #ef4444 18%, transparent); color: #f87171; }

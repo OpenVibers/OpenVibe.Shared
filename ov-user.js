@@ -35,7 +35,7 @@
 .ovu-chips li { display: inline-flex; align-items: baseline; gap: 5px; padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
 .ovu-chips b { font-size: 14px; color: var(--text-primary, #e6edf7); }
 .ovu-sec { margin: 0 16px; }
-.ovu-sec h3 { margin: 0 0 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted, #8b98ad); }
+.ovu-sec h3 { margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted, #8b98ad); }
 .ovu-sites { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .ovu-sites a { display: inline-flex; align-items: center; min-height: 32px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); color: inherit; text-decoration: none; font-size: 13px; font-weight: 600; }
 .ovu-sites a:hover { border-color: var(--accent, #3b82f6); }

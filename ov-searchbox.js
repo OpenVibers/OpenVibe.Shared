@@ -29,7 +29,7 @@
     if (typeof document === 'undefined' || root.OVSearchBox) return;
 
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SEARCHBOX_REV = { 'ov-combo.js': '8001a3b19c2f' };
+    const SEARCHBOX_REV = { 'ov-combo.js': '4fbe71c7684c' };
     const self = document.currentScript && document.currentScript.src;
     const base = (self && /^(.*\/)ov-searchbox\.js/.exec(self)) ? /^(.*\/)ov-searchbox\.js/.exec(self)[1] : 'https://openvibe.network/shared/';
 

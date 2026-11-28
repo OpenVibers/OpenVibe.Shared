@@ -26,7 +26,7 @@
 .ovm-group[data-mine="true"][data-continued="true"] .ovm-bubble { border-top-right-radius: 6px; }
 .ovm-group[data-mine="true"][data-tail="false"] .ovm-bubble { border-bottom-right-radius: 6px; }
 .ovm-text { white-space: pre-wrap; }
-.ovm-meta { display: flex; align-items: center; gap: 4px; margin: 3px 8px 0; font-size: 11px; color: var(--text-muted, #93a0b4); }
+.ovm-meta { display: flex; align-items: center; gap: 4px; margin: 3px 8px 0; font-size: 12px; color: var(--text-muted, #93a0b4); }
 .ovm-meta time { font-variant-numeric: tabular-nums; }
 .ovm-tick { letter-spacing: -.2em; color: var(--accent-light, var(--accent, #60a5fa)); }
 .ovm-emoji-only { padding: 0 2px; background: transparent !important; font-size: 2.2rem; line-height: 1.15; }
@@ -60,7 +60,7 @@
 .ovm-cards { display: grid; gap: 4px; width: 100%; max-width: 440px; min-width: 0; }
 .ovm-group[data-mine="true"] .ovm-cards { justify-items: end; }
 @media (hover: hover) { .ovm-room:hover { background: var(--bg-hover, rgba(255, 255, 255, .05)); } }
-.ovm-room time { margin-right: 7px; font-size: 11.5px; color: var(--text-muted, #93a0b4); font-variant-numeric: tabular-nums; }
+.ovm-room time { margin-right: 7px; font-size: 12px; color: var(--text-muted, #93a0b4); font-variant-numeric: tabular-nums; }
 .ovm-room-author { font-weight: 750; color: var(--ov-author-color, hsl(var(--ovm-h, 215) 80% 68%)); }
 :root[data-theme-mode="light"] .ovm-room-author { color: var(--ov-author-color, hsl(var(--ovm-h, 215) 72% 36%)); }
 .ovm-room-author::after { content: ":"; margin-right: 6px; font-weight: 600; color: var(--text-muted, #93a0b4); }

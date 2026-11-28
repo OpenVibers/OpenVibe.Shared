@@ -533,7 +533,7 @@
 .ovf-who-list a:hover{background:color-mix(in srgb,var(--accent,#3b82f6) 16%,transparent);color:var(--text-primary,#f1f4fb)}
 .ovf-who-list a:active{transform:scale(.96)}
 .ovf-who-list img,.ovf-who-list i{flex:none;width:26px;height:26px;border-radius:50%;object-fit:cover}
-.ovf-who-list small{color:var(--text-muted,#8b93ad);font-weight:500}
+.ovf-who-list small{color:var(--text-muted,#8b93ad);font-weight:500;font-size:.75rem}
 .ovf-who-more{margin:8px 2px 0;color:var(--text-muted,#8b93ad)}
 /* 4.248.0 (the owner, 11-14): who is live wears red; where the guests are; today; open, everything stacks. */
 .ovf-who img.is-live,.ovf-who i.is-live{box-shadow:0 0 0 2px var(--bg-secondary,#0f1420),0 0 0 4px var(--live-red-text,#ef4444)!important}
@@ -566,7 +566,7 @@
 a.ovf-tile:hover{color:var(--text-primary,#f1f4fb);background:color-mix(in srgb,var(--accent,#3b82f6) 15%,transparent)}
 a.ovf-tile:active{transform:scale(.96)}
 .ovf-tile b{color:var(--text-primary,#f1f4fb);font-weight:800;font-variant-numeric:tabular-nums}
-.ovf-tile small{color:var(--text-secondary,#a8b3c4)}
+.ovf-tile small{color:var(--text-secondary,#a8b3c4);font-size:.75rem}
 .ovf-tile .ovf-ic{font-size:1.15em;color:var(--accent-light,var(--accent,#60a5fa))}
 .ovf-tile.is-live{background:color-mix(in srgb,var(--live-red-text,#ef4444) 15%,transparent)}
 .ovf-tile.is-channel{padding:0 12px;color:var(--text-primary,#f1f4fb)}

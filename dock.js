@@ -93,7 +93,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'ov-chat-cards.js': '2d6bf2953db7', 'ov-tabs.js': '0e8a449da361', 'dock-vibe.js': '62265f155371', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5', 'ov-linkcard.js': '3d91f260e702' };
+    const DOCK_REV = { 'ov-chat-cards.js': '0f08ffef9e14', 'ov-tabs.js': '0e8a449da361', 'dock-vibe.js': 'b95937c9019a', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': 'b2b62ef6a125', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '4b98cbf639ce', 'dock-timeline.js': '565644ed5237', 'dock-actor.js': 'd5a4224a8dfa', 'dock-agent.js': '1b90d8b71401', 'dock-timer.js': 'f662843a28ca', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5', 'ov-linkcard.js': '98fed0262c87' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -179,19 +179,19 @@
             .ovdk-rail-t.is-server b { font-size: 17px; font-weight: 800; }
             .ovdk-rail-i:hover .ovdk-rail-t, .ovdk-rail-i:focus-visible .ovdk-rail-t { transform: translateY(-2px); background-color: color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
             .ovdk-rail-i:hover .ovdk-rail-t.is-server, .ovdk-rail-i:focus-visible .ovdk-rail-t.is-server { background-color: hsl(var(--rh, 215) 60% 48%); }
-            .ovdk-rail-n { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 600; color: var(--text-secondary, #a8b3c4); }
+            .ovdk-rail-n { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--text-secondary, #a8b3c4); }
             .ovdk-rail-div { flex: none; align-self: center; width: 1px; height: 32px; margin: 0 2px 16px; background: var(--border, rgba(148,163,184,.2)); }
             .ovdk-rail-dot { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; display: grid; place-items: center; font: 700 10.5px/1 Inter, sans-serif; font-style: normal; color: #fff; background: #ef4444; box-shadow: 0 0 0 2px var(--bg-elevated, #1d1f27); }
             html[data-ov-motion="off"] .ovdk-rail-t { transition: none; }
             .ovdk-friends { display: grid; gap: 8px; padding: 8px 10px 4px; border-bottom: 1px solid var(--border, rgba(148,163,184,.14)); }
-            .ovdk-sec { margin: 0 2px; font-size: 11.5px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
+            .ovdk-sec { margin: 0 2px; font-size: 12px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
             .ovdk-friends-row { display: flex; gap: 10px; overflow-x: auto; overflow-y: hidden; padding: 4px 2px 6px; scrollbar-width: none; }
             .ovdk-friends-row::-webkit-scrollbar { display: none; }
             .ovdk-friend { all: unset; flex: none; display: grid; justify-items: center; gap: 4px; width: 58px; cursor: pointer; }
             .ovdk-friend .ovdk-av { width: 46px; height: 46px; transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), box-shadow .2s ease; }
             .ovdk-friend:hover .ovdk-av, .ovdk-friend:focus-visible .ovdk-av { transform: translateY(-2px); box-shadow: 0 0 0 2px var(--accent, #3b82f6); }
             .ovdk-friend .ovdk-av.is-online { box-shadow: 0 0 0 2px var(--bg-elevated, #1d1f27), 0 0 0 4px #22c55e; }
-            .ovdk-friend-n { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; font-weight: 600; color: var(--text-secondary, #a8b3c4); }
+            .ovdk-friend-n { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--text-secondary, #a8b3c4); }
             .ovdk-request { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 4px; }
             .ovdk-request .ovdk-av { width: 32px; height: 32px; font-size: 12px; }
             .ovdk-request-t { font-size: 13px; line-height: 1.35; }
@@ -217,7 +217,7 @@
             .ovdk-seg:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -2px; }
             .ovdk-seg:active { transform: scale(.96); }
             .ovdk-seg-n.is-quiet { background: color-mix(in srgb, var(--accent, #3b82f6) 30%, var(--bg-elevated, #1f2937)); color: color-mix(in srgb, var(--accent, #3b82f6) 30%, #fff); }
-            .ovdk-seg-n { position: absolute; top: 4px; left: calc(50% + 6px); min-width: 17px; height: 17px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--danger, #ef4444); color: #fff; font-size: 10.5px; font-weight: 800; line-height: 17px; text-align: center; }
+            .ovdk-seg-n { position: absolute; top: 4px; left: calc(50% + 6px); min-width: 17px; height: 17px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--danger, #ef4444); color: #fff; font-size: 12px; font-weight: 800; line-height: 17px; text-align: center; }
             .ovdk-pane { display: grid; align-content: start; gap: 2px; padding: 4px 6px 10px; animation: ovdk-pane-in .22s cubic-bezier(.2,.8,.2,1) both; }
             @keyframes ovdk-pane-in { from { opacity: 0; transform: translateY(calc(6px * var(--ov-move, 1))); } }
             .ovdk-pane .ovdk-sec { padding: 12px 8px 4px; }
@@ -264,7 +264,7 @@
             .ovdk-gl-b { display: grid; min-width: 0; gap: 1px; }
             .ovdk-gl-h { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
             .ovdk-gl-h b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
-            .ovdk-gl-h time { flex: none; font-size: 11.5px; color: var(--text-muted, #8b8b96); }
+            .ovdk-gl-h time { flex: none; font-size: 12px; color: var(--text-muted, #8b8b96); }
             .ovdk-gl-t { font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; color: var(--text-primary, #ececf1); }
             .ovdk-gl-open, .ovdk-sv-act { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; margin: 8px 4px 0; border-radius: 14px; font-weight: 700; text-decoration: none; color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); transition: background-color .15s ease; }
             .ovdk-gl-open:hover, .ovdk-sv-act:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
@@ -304,7 +304,7 @@
             /* 4.293.0, Global opens where you stopped (the owner, 11-17): the New messages line, new lines lit until they
                have been on screen (then they fade to read), the pill to what waits below, older lines as you scroll up. */
             .ovdk-gl-new { display: flex; align-items: center; gap: 10px; max-height: 40px; margin: 10px 6px 6px; color: var(--accent-light, var(--accent, #3b82f6));
-                font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; overflow: hidden; }
+                font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; overflow: hidden; }
             .ovdk-gl-new::before, .ovdk-gl-new::after { content: ""; flex: 1; height: 2px; border-radius: 2px; transform-origin: right;
                 background: linear-gradient(90deg, transparent, var(--accent, #3b82f6)); animation: ovdk-new-line .55s cubic-bezier(.2, .8, .2, 1) both; }
             .ovdk-gl-new::after { transform-origin: left; background: linear-gradient(90deg, var(--accent, #3b82f6), transparent); }
@@ -402,7 +402,7 @@
             .ovdk-chat-b b { font-size: 14px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .ovdk-chat-p { font-size: 12.5px; color: var(--text-secondary, #b6b6c0); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .is-unread .ovdk-chat-b b, .is-unread .ovdk-chat-p { color: var(--text-primary, #ececf1); font-weight: 750; }
-            .ovdk-chat-m { display: grid; justify-items: end; gap: 4px; font-size: 11.5px; color: var(--text-muted, #8b8b96); font-variant-numeric: tabular-nums; }
+            .ovdk-chat-m { display: grid; justify-items: end; gap: 4px; font-size: 12px; color: var(--text-muted, #8b8b96); font-variant-numeric: tabular-nums; }
             .ovdk-unread { min-width: 20px; padding: 1px 6px; box-sizing: border-box; border-radius: 999px; text-align: center; font-size: 11px; font-weight: 800;
                 color: var(--on-accent-strong, var(--on-accent, #fff)); background: var(--accent-strong, var(--accent, #3472d8)); }
             .ovdk-thread-h { flex: none; display: flex; align-items: center; gap: 6px; padding: 6px 10px 6px 6px; border-bottom: 1px solid var(--border, rgba(255,255,255,.08)); }
@@ -419,11 +419,11 @@
             .ovdk-msg.is-cont { margin-top: 2px; }
             .ovdk-who-row { display: inline-flex; align-items: baseline; gap: 8px; margin: 0 4px 3px; min-width: 0; max-width: 100%; }
             .ovdk-who-row .ovdk-who { margin: 0; }
-            .ovdk-time { font-size: 11.5px; font-weight: 600; color: var(--text-muted, #93a0b4); font-variant-numeric: tabular-nums; white-space: nowrap; }
-            .ovdk-day { list-style: none; display: flex; align-items: center; gap: 10px; margin: 14px 4px 6px; font-size: 11.5px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
+            .ovdk-time { font-size: 12px; font-weight: 600; color: var(--text-muted, #93a0b4); font-variant-numeric: tabular-nums; white-space: nowrap; }
+            .ovdk-day { list-style: none; display: flex; align-items: center; gap: 10px; margin: 14px 4px 6px; font-size: 12px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
             .ovdk-day::before, .ovdk-day::after { content: ''; flex: 1; height: 1px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 10%, transparent); }
             .ovdk-msg.is-mine { align-self: flex-end; justify-items: end; }
-            .ovdk-who { margin: 0 0 3px 10px; font-size: 11.5px; font-weight: 700; color: var(--text-muted, #8b8b96); }
+            .ovdk-who { margin: 0 0 3px 10px; font-size: 12px; font-weight: 700; color: var(--text-muted, #8b8b96); }
             .ovdk-text { padding: 8px 12px; border-radius: 16px; font-size: 14px; line-height: 1.42; white-space: pre-wrap; overflow-wrap: anywhere;
                 background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); }
             .ovdk-msg.is-mine .ovdk-text { color: var(--on-accent-strong, var(--on-accent, #fff)); background: var(--accent-strong, var(--accent, #3472d8)); }

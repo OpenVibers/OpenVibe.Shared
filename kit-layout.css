@@ -160,7 +160,7 @@
 }
 .ov-places > a > svg, .ov-places > button > svg, .ov-places > a > .ov-ic, .ov-places > button > .ov-ic { flex: none; width: 20px; height: 20px; color: var(--accent-light, var(--accent, #60a5fa)); }
 .ov-places > a > em, .ov-places > button > em {
-    margin-left: auto; padding: 1px 7px; border-radius: 999px; font-style: normal; font-size: .74rem; font-weight: 800;
+    margin-left: auto; padding: 1px 7px; border-radius: 999px; font-style: normal; font-size: .75rem; font-weight: 800;
     font-variant-numeric: tabular-nums; color: var(--text-primary, #f1f4fb); background: color-mix(in srgb, var(--text-primary, #f1f4fb) 10%, transparent);
 }
 .ov-places-extra { margin-top: 12px; }
@@ -177,7 +177,7 @@
         flex: 1 0 auto; flex-direction: column; justify-content: center; gap: 4px; min-width: 76px; min-height: 58px;
         padding: 8px 10px; font-size: .78rem; text-align: center; background: color-mix(in srgb, var(--text-primary, #f1f4fb) 5%, transparent);
     }
-    .ov-places > a > em, .ov-places > button > em { position: absolute; top: 4px; right: 6px; margin: 0; font-size: .66rem; padding: 0 6px; }
+    .ov-places > a > em, .ov-places > button > em { position: absolute; top: 4px; right: 6px; margin: 0; font-size: .75rem; padding: 0 6px; }
     .ov-places-extra { display: none; }
 }
 html[data-ov-motion=off] :is(.ov-places > a, .ov-places > button) { transition: none; }

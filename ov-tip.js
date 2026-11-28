@@ -25,7 +25,7 @@
         st.textContent = `
 .ovtip { position: fixed; z-index: 10050; left: 0; top: 0; max-width: min(260px, calc(100vw - 16px)); box-sizing: border-box; padding: 7px 11px 8px; border-radius: 10px; border: 1px solid var(--border-light, #2c3d5c); background: var(--bg-elevated, var(--bg-tertiary, #172238)); color: var(--text-primary, #e6edf7); font: 600 12.5px/1.3 var(--font-sans, system-ui, sans-serif); box-shadow: 0 10px 26px -10px rgba(0, 0, 0, .65), 0 1px 3px rgba(0, 0, 0, .3); pointer-events: none; opacity: 0; transform: translateY(var(--ovtip-from, -5px)) scale(.94); transform-origin: var(--ovtip-ox, 50%) var(--ovtip-oy, 0); transition: opacity .14s ease, transform .22s cubic-bezier(.2, 1.35, .3, 1); }
 .ovtip.is-on { opacity: 1; transform: none; }
-.ovtip-sub { display: block; margin-top: 2px; font-weight: 500; font-size: 11.5px; color: var(--text-secondary, #96a7c2); }
+.ovtip-sub { display: block; margin-top: 2px; font-weight: 500; font-size: 12px; color: var(--text-secondary, #96a7c2); }
 .ovtip::before { content: ""; position: absolute; left: var(--ovtip-ax, 50%); top: -5px; width: 8px; height: 8px; margin-left: -4px; background: inherit; border: inherit; border-right: 0; border-bottom: 0; transform: rotate(45deg); border-radius: 2px 0 0 0; }
 .ovtip.is-above::before { top: auto; bottom: -5px; transform: rotate(225deg); }
 html[data-ov-motion=reduced] .ovtip { transform: none; transition: opacity .14s ease; }

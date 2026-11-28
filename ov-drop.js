@@ -24,7 +24,7 @@
   background: color-mix(in srgb, var(--bg-elevated, var(--bg-secondary, #111826)) 94%, transparent); border: 1px solid var(--border, rgba(255,255,255,.12)); box-shadow: 0 18px 44px rgba(0,0,0,.42), 0 2px 6px rgba(0,0,0,.2); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
   color: var(--text-primary, #e6edf7); font: 600 14.5px/1.25 var(--font, system-ui, -apple-system, 'Segoe UI', sans-serif); transform-origin: var(--ovdrop-x, 24px) var(--ovdrop-y, 0); opacity: 0; transform: translateY(calc(var(--ovdrop-from, -6px) * var(--ov-move, 1))) scale(.94); transition: opacity .14s ease-out, transform .16s ease-in; pointer-events: none; }
 .ovdrop.is-open { opacity: 1; transform: none; pointer-events: auto; transition: opacity .16s ease-out, transform .26s cubic-bezier(.2, 1.25, .3, 1); }
-.ovdrop-label { margin: 0; padding: 7px 10px 6px; font-size: 11.5px; font-weight: 700; color: var(--text-muted, #93a0b4); }
+.ovdrop-label { margin: 0; padding: 7px 10px 6px; font-size: 12px; font-weight: 700; color: var(--text-muted, #93a0b4); }
 .ovdrop-item { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 11px; width: 100%; min-height: 44px; padding: 0 12px 0 10px; border-radius: 11px; cursor: pointer; color: inherit; opacity: 0; transform: translateY(calc(-5px * var(--ov-move, 1))); transition: background-color .12s, opacity .2s ease-out, transform .28s cubic-bezier(.2, 1.2, .3, 1); transition-delay: 0s, calc(var(--i, 0) * 22ms + 30ms), calc(var(--i, 0) * 22ms + 30ms); }
 .ovdrop.is-open .ovdrop-item { opacity: 1; transform: none; }
 .ovdrop-item:hover, .ovdrop-item:focus-visible { background: color-mix(in srgb, var(--text-primary, #e6edf7) 8%, transparent); }

@@ -61,7 +61,7 @@
                 font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 6px;
             }
             .openvibe-usercard-name .role-badge {
-                font-size: 9px; padding: 2px 6px; border-radius: 3px;
+                font-size: 12px; padding: 2px 6px; border-radius: 3px;
                 font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
             }
             .openvibe-usercard-name .role-admin { background: rgba(231,76,60,0.15); color: #e74c3c; }
@@ -71,7 +71,7 @@
             .openvibe-usercard-bio { font-size: 12px; color: var(--text-secondary, #b0b0b8); line-height: 1.4; margin-bottom: 10px; max-height: 40px; overflow: hidden; }
             .openvibe-usercard-services { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
             .openvibe-usercard-services .svc {
-                font-size: 10px; padding: 3px 8px; border-radius: 4px;
+                font-size: 12px; padding: 3px 8px; border-radius: 4px;
                 background: var(--bg-tertiary, #2a2a38); color: var(--text-secondary, #b0b0b8);
                 display: flex; align-items: center; gap: 4px;
             }

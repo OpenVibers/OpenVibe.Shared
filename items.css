@@ -423,7 +423,7 @@ html[data-theme-mode="light"] .name-fx-twofat { background-image: linear-gradien
    name effect's text fill, so a gradient name still shows them. */
 .ov-px { position: relative; display: inline-block; }
 .ov-px-p {
-    position: absolute; top: 0; pointer-events: none; font-size: 10px; line-height: 1;
+    position: absolute; top: 0; pointer-events: none; font-size: 12px; line-height: 1;
     background: none; -webkit-text-fill-color: currentColor; opacity: 0;
     animation: ovPxFloat 1.8s ease-out forwards;
 }

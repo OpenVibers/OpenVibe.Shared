@@ -419,7 +419,7 @@
             .openvibe-switcher-item img { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
             .openvibe-switcher-item .info { flex: 1; line-height: 1.3; }
             .openvibe-switcher-item .info .name { font-size: 14px; font-weight: 600; color: var(--text-primary, #e0e0e0); }
-            .openvibe-switcher-item .info .sub { font-size: 11px; color: var(--text-muted, #707080); }
+            .openvibe-switcher-item .info .sub { font-size: 12px; color: var(--text-muted, #707080); }
             .openvibe-switcher-item .remove {
                 opacity: 0; font-size: 14px; color: var(--live-red-text, var(--live-red, #e74c3c));
                 cursor: pointer; padding: 4px 6px; border-radius: 4px;
@@ -495,7 +495,7 @@
                 `).join('')}
 
                 ${anonAccounts.length > 0 ? `
-                    <div style="padding:6px 12px 2px;font-size:11px;font-weight:600;color:var(--text-muted,#707080);text-transform:uppercase;letter-spacing:0.05em;">Anonymous Identities</div>
+                    <div style="padding:6px 12px 2px;font-size:12px;font-weight:600;color:var(--text-muted,#707080);text-transform:uppercase;letter-spacing:0.05em;">Anonymous Identities</div>
                     ${anonAccounts.map(a => `
                         <div class="openvibe-switcher-item ${String(a.id) === String(activeId) ? 'active' : ''}" data-id="${a.id}">
                             <span style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:20px;border-radius:50%;background:var(--bg-secondary,#1a1a26);flex-shrink:0;">\uD83E\uDEE5</span>

@@ -180,7 +180,7 @@
             .ovnav-drawer a.active { background: var(--accent-glow, rgba(59,130,246,.14)); }
             @media (hover: hover) { .ovnav-drawer a:hover { background: var(--accent-glow, rgba(59,130,246,.14)); } }
             .ovnav-drawer a[hidden] { display: none; }
-            .ovnav-drawer .ud-label { padding: 10px 12px 3px; font-size: 10.5px; font-weight: 800; letter-spacing: .9px; text-transform: uppercase; color: var(--text-muted, #7d8aa0); }
+            .ovnav-drawer .ud-label { padding: 10px 12px 3px; font-size: 12px; font-weight: 800; letter-spacing: .9px; text-transform: uppercase; color: var(--text-muted, #7d8aa0); }
             .ovnav-drawer-net:empty { display: none; } .ovnav-drawer-net { border-top: 1px solid var(--border, rgba(255,255,255,.08)); margin-top: 4px; }
             .ovnav-drawer-net a.ovnav-net { display: flex !important; }
             /* "Across OpenVibe" in the menu (owner, 2026-10-27: icons, and set apart from the site's own links): a tinted
@@ -193,7 +193,7 @@
             .ovnav-drawer-net .ovnav-net-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; }
             .ovnav-display { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; padding: 10px 6px 4px; border-top: 1px solid var(--border, rgba(255,255,255,.08)); font-size: 12px; color: var(--text-muted, #7d8aa0); }
             .ovnav-display[hidden] { display: none; }
-            .ovnav-display .ovnav-dl { flex-basis: 100%; font-size: 10.5px; font-weight: 800; letter-spacing: .9px; text-transform: uppercase; }
+            .ovnav-display .ovnav-dl { flex-basis: 100%; font-size: 12px; font-weight: 800; letter-spacing: .9px; text-transform: uppercase; }
             .ovnav-display .ovnav-seg { display: inline-flex; border: 1px solid var(--border, rgba(255,255,255,.12)); border-radius: 9px; overflow: hidden; }
             .ovnav-display .ovnav-seg button { all: unset; cursor: pointer; padding: 6px 9px; font-size: 12px; font-weight: 650; color: var(--text-secondary, #a8b3c4); }
             .ovnav-display .ovnav-seg button[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff)); }
@@ -295,7 +295,7 @@
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand .b-tag { display: none; }
             }
             .openvibe-navbar-links a .icon { margin-right: 5px; opacity: .8; }
-            .openvibe-navbar-dropdown-menu .ud-label { padding: 8px 10px 3px; font-size: 10.5px; font-weight: 800; letter-spacing: .9px; text-transform: uppercase; color: var(--text-muted, #7d8aa0); }
+            .openvibe-navbar-dropdown-menu .ud-label { padding: 8px 10px 3px; font-size: 12px; font-weight: 800; letter-spacing: .9px; text-transform: uppercase; color: var(--text-muted, #7d8aa0); }
             .openvibe-navbar-dropdown-menu .ud-val { margin-left: auto; font-weight: 600; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
             .openvibe-navbar-dropdown-menu .icon { display: inline-grid; place-items: center; width: 22px; flex: none; }
             .openvibe-navbar-dropdown-header { background: linear-gradient(180deg, color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent), transparent); }
@@ -509,8 +509,8 @@
             .openvibe-navbar-dropdown .ud-hbtn .icon { font-size: 15px; }
             .openvibe-navbar-dropdown-header .info { line-height: 1.3; }
             .openvibe-navbar-dropdown-header .info .name { font-size: 14px; font-weight: 600; }
-            .openvibe-navbar-dropdown-header .info .email { font-size: 11px; color: var(--text-muted, #707080); }
-            .openvibe-navbar-dropdown-header .info .anon-tag { font-size: 10px; color: var(--accent-light, #60a5fa); }
+            .openvibe-navbar-dropdown-header .info .email { font-size: 12px; color: var(--text-muted, #707080); }
+            .openvibe-navbar-dropdown-header .info .anon-tag { font-size: 12px; color: var(--accent-light, #60a5fa); }
 
             /* Other accounts: a row of small pills under the name (one tap switches); Anonymous is one of them. */
             .openvibe-navbar-dropdown-accounts {
@@ -541,18 +541,18 @@
             /* Light / Dark / Auto (theme-loader.js scheme): three equal segments, the one in use filled. */
             /* Your places: a grid of icons over short names, four across (the menu was 13 rows and a display block). */
             .openvibe-navbar-dropdown-menu .ud-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 2px 0 4px; }
-            .openvibe-navbar-dropdown-menu .ud-grid .ud-tile { flex-direction: column; justify-content: flex-start; gap: 6px; min-height: 66px; padding: 9px 2px 7px; text-align: center; border-radius: 12px; font-size: 11.5px; font-weight: 600; line-height: 1.2; }
+            .openvibe-navbar-dropdown-menu .ud-grid .ud-tile { flex-direction: column; justify-content: flex-start; gap: 6px; min-height: 66px; padding: 9px 2px 7px; text-align: center; border-radius: 12px; font-size: 12px; font-weight: 600; line-height: 1.2; }
             .openvibe-navbar-dropdown-menu .ud-grid .ud-tile[hidden] { display: none; }
             .openvibe-navbar-dropdown-menu .ud-grid .ud-tile .icon { width: 38px; height: 30px; border-radius: 10px; font-size: 16px; background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
             .openvibe-navbar-dropdown-menu .ud-grid .ud-tile:hover .icon { background: color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
             .openvibe-navbar-dropdown-menu .ud-tl { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 100%; }
-            .openvibe-navbar-dropdown-menu .ud-grid .ud-tile .ud-val { margin: 0; font-size: 10.5px; }
+            .openvibe-navbar-dropdown-menu .ud-grid .ud-tile .ud-val { margin: 0; font-size: 12px; }
             .openvibe-navbar-dropdown-menu .ud-more { border-top: 1px solid var(--border, rgba(255,255,255,.08)); margin: 2px -8px 0; padding: 2px 8px; }
             .openvibe-navbar-dropdown-menu .ud-more summary { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; list-style: none; font-size: 13px; font-weight: 600; color: var(--text-secondary, #a8b3c4); }
             .openvibe-navbar-dropdown-menu .ud-more summary::-webkit-details-marker { display: none; }
             .openvibe-navbar-dropdown-menu .ud-more summary:hover { background: var(--bg-hover, #2f2f3d); }
             .openvibe-navbar-dropdown-menu .ud-more[open] summary .icon { transform: rotate(180deg); }
-            .openvibe-navbar-dropdown-menu .ud-more .ud-n { margin-left: auto; font-size: 11.5px; color: var(--text-muted, #7d8aa0); }
+            .openvibe-navbar-dropdown-menu .ud-more .ud-n { margin-left: auto; font-size: 12px; color: var(--text-muted, #7d8aa0); }
             /* The tiles never leave one alone on a row: five or fewer share one row, six make two of three, seven and
                eight two of four (the owner's phone, 2026-10-28: an Admin tile on a row of its own). */
             .openvibe-navbar-dropdown-menu .ud-grid:has(> .ud-tile:nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -561,7 +561,7 @@
             .openvibe-navbar-dropdown-menu .ud-grid .ud-tile { min-height: 60px; padding: 7px 2px 6px; gap: 5px; }
             .openvibe-navbar-dropdown-header .ud-me img { width: 52px; height: 52px; }
             /* The balances in the header: OpenCoins and Vibes side by side, each a coloured icon, a number and its name. */
-            .openvibe-navbar-dropdown-header .ud-wallet a small { font-weight: 600; opacity: .75; font-size: 10.5px; }
+            .openvibe-navbar-dropdown-header .ud-wallet a small { font-weight: 600; opacity: .75; font-size: 12px; }
             /* On a phone the menu is a sheet the width of the screen under the bar, not a narrow card off to the right. */
             @media (max-width: 560px) {
                 .openvibe-navbar .openvibe-navbar-dropdown { left: 8px; right: 8px; width: auto; max-width: none; border-radius: 18px; }
@@ -577,7 +577,7 @@
             .openvibe-navbar-dropdown-menu .ud-foot > .ud-ib { flex: 1 1 0; }
             .openvibe-navbar-dropdown-menu .ud-foot > .ud-disp { flex: 0 0 auto; gap: 7px; padding: 0 12px; font-size: 13px; font-weight: 650; }
             .openvibe-navbar-dropdown-menu .ud-foot .ud-ib .icon { width: 18px; color: inherit; }
-            .openvibe-navbar-dropdown-menu .ud-foot .ud-ib .ud-val { margin: 0; font-size: 11px; font-weight: 700; color: inherit; }
+            .openvibe-navbar-dropdown-menu .ud-foot .ud-ib .ud-val { margin: 0; font-size: 12px; font-weight: 700; color: inherit; }
             .openvibe-navbar-dropdown-menu .ud-foot .ud-ib .ud-val:empty { display: none; }
             .openvibe-navbar-dropdown-menu .ud-foot .ud-ib[aria-pressed="true"] { color: var(--accent-light, var(--accent, #60a5fa)); }
             .openvibe-navbar-dropdown-menu .ud-foot .ud-scheme .ud-ib[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff)); }
@@ -599,7 +599,7 @@
             .openvibe-navbar-dropdown-menu .ud-go { font-size: 16px; font-weight: 700; color: var(--text-muted, #7d8aa0); }
 
             .openvibe-navbar .openvibe-network-badge {
-                font-size: 10px; padding: 2px 8px; border-radius: 4px;
+                font-size: 12px; padding: 2px 8px; border-radius: 4px;
                 background: rgba(59,130,246,0.1); color: var(--accent-light, #60a5fa);
                 font-weight: 500; cursor: pointer; border: 1px solid transparent;
                 transition: all .15s;
@@ -702,7 +702,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '4418451da9f3', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '3e88494ddcc6', 'dock.js': '493f4ad6ecce', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '1626f844e2fa', 'history.js': 'f9fb9e096c65', 'bottom.js': '34c927fb7ad5', 'appbar.js': '704adec2ecb4', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'c8712c1f5025', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '144ab1996e7b', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'c1e7daded213', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '40dac12153ca', 'ov-harness.js': '34442244d7f4', 'ov-trending.js': '8e4322324f64', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': '68c223b7911c', 'soft.js': '98ab9b8080b1', 'ov-run.js': '45e0d6eacb4c', 'ov-composer.js': '8287d1c0f31d', 'items.js': '321850a5bd67', 'items.css': 'ccb7103adad6', 'ov-session.js': '9fb71fb298ac', 'ov-guest-ask.js': '6c7a4927d8c3', 'ov-face.js': 'e6ae3168452e', 'ov-embeds.js': '385383e164f0' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '4418451da9f3', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'df174239fe2b', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': 'a24d590a8e1d', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '2147e4a632a6', 'dock.js': '6effdcc80f3e', 'presence.js': '5f195d41f8c5', 'panels.js': '7ef633ac20b2', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'cef73e41ed63', 'history.js': 'f9fb9e096c65', 'bottom.js': '34c927fb7ad5', 'appbar.js': '704adec2ecb4', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'c8712c1f5025', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'b8a20891ddb5', 'nav-slots.js': 'b80356ddd969', 'ov-wallet.js': 'c1e7daded213', 'ov-wallet.css': 'd263eeaa2d0f', 'purse.js': '40dac12153ca', 'ov-harness.js': '34442244d7f4', 'ov-trending.js': '7a02bf5b3b71', 'ov-agent.js': '6665ab05e8c4', 'ov-drop.js': 'd552844e5c24', 'ov-tip.js': '4c7d01bf2efa', 'ov-arrange.js': '68c223b7911c', 'soft.js': '98ab9b8080b1', 'ov-run.js': '5052b751b4e3', 'ov-composer.js': 'efdee0a23133', 'items.js': '321850a5bd67', 'items.css': 'ccb30dc20cd1', 'ov-session.js': 'ddd378705a58', 'ov-guest-ask.js': '6c7a4927d8c3', 'ov-face.js': 'e6ae3168452e', 'ov-embeds.js': '385383e164f0' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.

@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.342.0 - 2026-11-28
+
+- **Every <small> at 12 px or more, on every site** (`theme-loader.js`): a <small> with no size of its own was the
+  browser's "smaller", 10-10.7 px under 12-13 px text. The loader's display styles carry `:where(small)
+  {font-size:max(.75rem,83%)}`: no weight, so any site's or part's own small size still wins. In place at 390 px: Tips,
+  Coupons and Help 5 → 0 small <small>s each, no sideways scroll. Test: theme-loader-small.
+- **Legal pages wear the site's share card** (`legal.js`): Chat's, Media's, Codes' and Actor's terms and privacy pages
+  had no og:image (an SEO left-over of 11-21); the site's own /shared/social/<site>.jpg now, none for a site without a
+  card. Test: legal-profiles.
+- **Shared's own parts at the 12px floor, the rest of the way** (the owner's rule). The first pass (4.340.0) read only
+  .60-.74rem and the sweep's own finds; the menu, the notifications, the navbar's account menu, the Dock, search, the
+  Run and session sheets, the kit's tables and charts, quests, the profile and user cards, tooltips, the link cards and
+  the showcase still had 9-11.5 px and .66-.74rem text: about 155 sizes, all 12 px now. Glyphs, avatar initials, count
+  bubbles in their circles, chart text, the brand tag and the timer pill keep their sizes (sized for their boxes). Checked
+  with the browser tests of every part touched, and in place on the Network (menu, search) and Quest (the showcase orb's
+  "16 sites" fits its core at 12 px). The footer's "who is here" activities and tile lines were <small> with no size of
+  their own (the browser's "smaller": 10.7 px, 11 on a channel page); they are .75rem.
+
 ## 4.341.0 - 2026-11-28
 
 - **The footer stops jumping when you reach it** (`footer.js`). The strip at its top (who is here, live now, the counts)

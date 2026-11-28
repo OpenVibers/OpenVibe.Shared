@@ -4,7 +4,7 @@
 .ov-parts-bar label{flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:0 14px;border-radius:10px;font-size:13.5px;font-weight:700;color:var(--text-secondary,#a8b3c4);white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color .2s,color .2s}
 .ov-parts-bar label:active{transform:scale(.97)}
 .pick .ov-part+.ov-part{margin-top:26px}.pick .ov-parts-bar{margin-top:10px}
-.ov-parts-n{min-width:18px;padding:0 6px;border-radius:999px;font-size:11.5px;line-height:18px;text-align:center;font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--text-primary,#e6edf7) 9%,transparent)}
+.ov-parts-n{min-width:18px;padding:0 6px;border-radius:999px;font-size:12px;line-height:18px;text-align:center;font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--text-primary,#e6edf7) 9%,transparent)}
 @supports selector(:has(*)){@media (max-width:900px){
 .ov-parts:not(.is-stacked):not(.ov-parts--front)>.ov-parts-r{display:block;position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
 .ov-parts:not(.is-stacked):not(.ov-parts--front)>.ov-parts-bar{display:flex}
@@ -86,7 +86,7 @@ a.sc-orb-node:hover .sc-orb-face>*:first-child,a.sc-orb-node:focus-visible .sc-o
 .sc-hero.sc-has-orbit{display:flex;flex-direction:column}
 .sc-hero.sc-has-orbit .sc-hero-vis{order:1;position:static;width:auto;opacity:1;pointer-events:auto;margin:22px 0 0}
 .sc-hero.sc-has-orbit .sc-vis{width:min(82vw,300px)}
-.sc-hero.sc-has-orbit .sc-orb-core small{max-width:8em;font-size:10px;line-height:1.2}
+.sc-hero.sc-has-orbit .sc-orb-core small{max-width:8em;font-size:12px;line-height:1.2}
 .sc-hero.sc-has-orbit .sc-orb-core .sc-vis-mark{width:50px!important;height:50px!important}
 .sc-orb-node{width:32px;height:32px;margin:-16px}.sc-orb-node.is-big{width:44px;height:44px;margin:-22px}.sc-orb-name{font-size:12px}
 }
@@ -191,7 +191,7 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-tile:hover,.sc-tile:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.28);outline:0}
 .sc-thumb{position:relative;display:block;aspect-ratio:var(--sc-ar,16/9);background:linear-gradient(135deg,color-mix(in srgb,var(--accent,#3b82f6) 22%,var(--bg-tertiary,#172238)),var(--bg-tertiary,#172238))}
 .sc-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .35s ease}.sc-tile:hover .sc-thumb img{transform:scale(1.04)}
-.sc-badge{position:absolute;left:10px;top:10px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.4px;color:#fff;background:rgba(0,0,0,.66)}
+.sc-badge{position:absolute;left:10px;top:10px;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:800;letter-spacing:.4px;color:#fff;background:rgba(0,0,0,.66)}
 .sc-badge.sc-live{background:color-mix(in srgb,var(--live-red,#ef4444) 80%,#000)}.sc-badge.sc-live::before{content:'';display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background:#fff;vertical-align:1px;animation:scPulse 1.4s ease-in-out infinite}
 .sc-tile-body{display:block;padding:12px 14px 14px}.sc-tile-body b{display:block;font-size:15px;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .sc-tile-body small{display:block;margin-top:4px;font-size:12.5px;color:var(--text-muted,#7386a3)}.sc-tile-text{display:block;margin-top:6px;font-size:13.5px;line-height:1.45;color:var(--text-secondary,#96a7c2)}
@@ -301,7 +301,7 @@ html{overflow-x:clip}
 @media (max-width:640px){
 .sc-hero,.sc-sec,.sc-cta{padding-left:16px;padding-right:16px}
 .sc-hero{padding-top:14px}.sc-hero::before{inset:-60px 0 auto;height:280px}
-.sc-eyebrow{margin-bottom:10px;font-size:11.5px}
+.sc-eyebrow{margin-bottom:10px;font-size:12px}
 .sc-hero h1{font-size:clamp(27px,7.6vw,34px);line-height:1.1;letter-spacing:-.8px}
 .sc-hero-lede{margin-top:10px;font-size:15.5px;line-height:1.5}
 .sc-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;margin-top:16px}
@@ -311,7 +311,7 @@ html{overflow-x:clip}
 .sc-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .sc-stat{padding:10px 10px 9px;border-radius:13px;gap:1px;justify-content:flex-end}
 .sc-stat dd{font-size:19px;gap:5px;letter-spacing:-.01em}.sc-stat-ic svg,.sc-stat-ic .ov-icon{width:15px;height:15px}
-.sc-stat dt{font-size:11.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sc-stat dt{font-size:12px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 }
 /* 4.291.0: the network section is Live's (plan §AD.15): a deep surface, a slow aurora, twinkling points, the count, a
    chip per kind and every kind open (a grid on wide screens, one sideways row on a phone). */

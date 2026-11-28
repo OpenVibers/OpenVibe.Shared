@@ -9,7 +9,7 @@
 .ov-ai-order::-webkit-scrollbar{display:none}
 .ov-ai-order button{flex:1 0 auto;min-height:36px;padding:0 12px;border:0;border-radius:999px;background:transparent;color:var(--text-secondary,#aab2c0);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 .ov-ai-order button[aria-pressed=true]{background:color-mix(in srgb,var(--accent,#87b8ff) 20%,transparent);color:var(--text-primary,#edf0f5)}
-.ov-ai-rec{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:color-mix(in srgb,var(--accent,#87b8ff) 18%,transparent);color:var(--text-primary,#edf0f5);font-size:11px;font-style:normal;font-weight:700;vertical-align:1px}
+.ov-ai-rec{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:color-mix(in srgb,var(--accent,#87b8ff) 18%,transparent);color:var(--text-primary,#edf0f5);font-size:12px;font-style:normal;font-weight:700;vertical-align:1px}
 .ov-ai-option>span:last-child{flex:none;width:20px;text-align:center;color:var(--accent,#87b8ff);font-weight:800}
 .ov-ai-sheet footer .ovk-btn{flex:none}
 @media(max-width:420px){.ov-ai-order{margin:0 14px 8px}.ov-ai-order button{padding:0 8px;font-size:12.5px}}
