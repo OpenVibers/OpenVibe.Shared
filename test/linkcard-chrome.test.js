@@ -9,6 +9,9 @@ const os = require('os');
 const path = require('path');
 const http = require('http');
 const h = require('../browser-harness');
+// The cards' pictures name production Media and Video; a test never fetches them (11-28: each run asked openvibe.media for
+// abc.png, live.png and ov-test-missing-*.jpg). Blocked, they fail to load exactly as the missing ones did.
+const OFFLINE = ['*openvibe.media*', '*openvibe.video*'];
 
 if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) { console.log('linkcard-chrome: skipped (no Chrome; set CHROME_BIN)'); process.exit(0); }
 
@@ -40,7 +43,7 @@ const server = http.createServer((req, res) => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ov-linkcard-'));
     const browser = await h.launch({ tmpDir });
     try {
-        const p = await h.openPage(browser, await browser.newContext(), { width: 390, height: 800 });
+        const p = await h.openPage(browser, await browser.newContext(), { width: 390, height: 800, block: OFFLINE });
         await p.goto(`${base}/`, { maxMs: 6000 });
         const r = await p.evaluate(`(() => {
             const M = window.OVLinkCard;
@@ -114,7 +117,7 @@ const server = http.createServer((req, res) => {
         const off = await p.evaluate(`(() => { document.documentElement.setAttribute('data-ov-motion', 'off'); const c = window.OVLinkCard.make({ url: 'https://example.com/z', title: 'Still' }); document.body.appendChild(c); return getComputedStyle(c).animationName; })()`);
         assert.strictEqual(off, 'none');
         // The menu's Chat: a room row and a bubble each get their cards under the words; the module is loaded once.
-        const m = await h.openPage(browser, await browser.newContext(), { width: 390, height: 800 });
+        const m = await h.openPage(browser, await browser.newContext(), { width: 390, height: 800, block: OFFLINE });
         await m.goto(`${base}/menu`, { maxMs: 6000 });
         await m.evaluate(`(() => {
             const card = (i) => ({ url: 'https://example.com/' + i, title: 'Card ' + i, site_name: 'Example' });

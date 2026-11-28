@@ -59,7 +59,7 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
     const until = async (p, expr, ms = 5000) => { const end = Date.now() + ms; for (;;) { const v = await p.evaluate(expr); if (v || Date.now() > end) return v; await wait(50); } };
     try {
         const context = await browser.newContext();
-        const p = await h.openPage(browser, context, { width: 390, block: ['*openvibe.tools*', '*openvibe.media*', '*jsdelivr*'] });
+        const p = await h.openPage(browser, context, { width: 390, block: ['*openvibe.tools*', '*openvibe.media*', '*openvibe.video*', '*jsdelivr*'] });
         await p.goto(`http://127.0.0.1:${server.address().port}/`, { maxMs: 5000 });
         await until(p, `!!localStorage.getItem('ov_frame_v2')`);
         await p.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true })), true`);
@@ -121,7 +121,7 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         await eventually(async () => assert.deepStrictEqual(await p.evaluate(SHOWN), ['Today', 'New worlds', 'Top stories'], 'your feeds, in your order'));
         // Signed in on a new device: the person's saved feeds come from Network, and a change is saved back.
         const ctx2 = await browser.newContext();
-        const q = await h.openPage(browser, ctx2, { width: 390, block: ['*openvibe.tools*', '*openvibe.media*', '*jsdelivr*'] });
+        const q = await h.openPage(browser, ctx2, { width: 390, block: ['*openvibe.tools*', '*openvibe.media*', '*openvibe.video*', '*jsdelivr*'] });
         await q.goto(`http://127.0.0.1:${server.address().port}/in`, { maxMs: 5000 });
         await until(q, `!!localStorage.getItem('ov_frame_v2')`);
         await q.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true })), true`);
