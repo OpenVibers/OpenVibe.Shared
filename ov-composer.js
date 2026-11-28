@@ -1425,7 +1425,13 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             refresh() { form.classList.toggle('ovc-compact', prefs.density === 'compact'); micButton(); paintTools(); syncSend(); },
             add, files: () => files.map((f) => f.file), clearFiles: () => { [...files].forEach(remove); },
             uploads: () => files.map((f) => f.id).filter(Boolean),
-            clear() { files.slice().forEach(remove); text.value = ''; if (draftKey) store.set(draftKey, null); fire(); },
+            clear(sent) {
+                // A completed send owns its original files and unchanged words; typing and new files remain a draft.
+                (sent ? files.filter((f) => sent.files.includes(f.file)) : files.slice()).forEach(remove);
+                if (!sent || (sent.text !== null && text.value === sent.text)) text.value = '';
+                if (draftKey) store.set(draftKey, text.value.trim() ? { t: text.value, at: Date.now() } : null);
+                fire();
+            },
             destroy() { live.delete(api); pop.remove(); strip.remove(); if (mic) mic.remove(); if (more) more.remove(); closeSheet(); modTools.forEach((b) => b.remove()); form.__ovc = null; },
         };
         form.__ovc = api;
@@ -2542,6 +2548,17 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 es.onerror = () => { if (es.readyState === 2) { ctl.fail('The answer stopped. Try again.'); end(); } };
             });
         }
+        const submittedDraft = () => {
+            const sent = { text: ta.value, files: api.files() }, reply = replying;
+            const changed = () => { sent.text = null; };
+            ta.addEventListener('input', changed);
+            return (clear) => {
+                ta.removeEventListener('input', changed);
+                if (!clear) return;
+                api.clear(sent);
+                if (reply && replying === reply) clearBar();
+            };
+        };
         form.addEventListener('submit', async (e) => {
             if (verb === 'post' || editing) return;
             e.preventDefault(); e.stopImmediatePropagation();
@@ -2550,13 +2567,15 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             if (!text && !api.files().length) return;
             const value = { verb, text, files: api.files(), uploads: api.uploads(), model, sources: [...sources], depth: depthChip ? depthChip.querySelector('select').value : 'balanced', context: (o.ask && o.ask.context) || null, chips: values() };
             const ctl = answer(text);
+            const finishDraft = submittedDraft();
             setBusy(true);
+            let keep = false;
             try {
                 const own = verb === 'ask' ? o.onAsk : o.onDo;
-                if (typeof own === 'function') await own(value, Object.assign(api, { card: ctl }));
+                if (typeof own === 'function') keep = (await own(value, Object.assign(api, { card: ctl }))) === false;
                 else await viaFrame({ ...value, files: undefined }, ctl);
-                api.clear();
-            } catch (err) { ctl.fail((err && err.message) || String(err)); }
+            } catch (err) { keep = true; ctl.fail((err && err.message) || String(err)); }
+            finishDraft(!keep);
             setBusy(false);
             api.refresh();
         }, true);
@@ -2582,12 +2601,13 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 e.preventDefault();
                 if (form.classList.contains('is-busy')) return;
                 const value = { run: runValue(), text: ta.value.trim(), files: api.files(), uploads: api.uploads(), audience: aud ? aud.querySelector('select').value : null, mode: md ? md.querySelector('select').value : null, chips: values(), reply: replying ? replying.data : null };
+                const finishDraft = submittedDraft();
                 setBusy(true);
                 let keep = false;
                 try { keep = (await o.onSubmit(value, api)) === false; }
                 catch (err) { keep = true; api.ctx.note(String((err && err.message) || err)); }
                 setBusy(false);
-                if (!keep) { api.clear(); if (replying) clearBar(); }
+                finishDraft(!keep);
                 api.refresh();
             });
         }

@@ -4,7 +4,7 @@
   "code": true,
   "wave": "W2",
   "package": "openvibe-shared",
-  "version": "4.337.0",
+  "version": "4.338.0",
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
@@ -63,5 +63,5 @@
     "openvibe-shared/config accepts x-unit seconds for an integer owner setting, so an owner form can label the input in seconds",
     "a navbar link can be the site's one featured piece (featured: true): a quiet accent pill with its glyph, first in the phone's menu (4.117.0)"
   ],
-  "updated": "2026-11-19"
+  "updated": "2026-11-27"
 }

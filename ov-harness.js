@@ -213,6 +213,7 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
         let view = null;
         let timer = null;
         let destroyed = false;
+        let openGeneration = 0, refreshGeneration = 0;
 
         function knownProjects() {
             const seen = new Map();
@@ -403,19 +404,34 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
         }
 
         async function loadOpen() {
+            if (destroyed) return;
+            const generation = ++openGeneration, ref = openRef;
             if (!openRef) { openRun = null; drawHead(); drawPanel(); drawProjects(); return; }
             const known = runs.find((r) => String(r.ref || r.id) === openRef);
             if (known) openRun = known;
-            try { const r = await call(`/${encodeURIComponent(openRef)}`); if (r && (r.ref || r.id)) openRun = r.run || r; } catch { /* the list's copy stays */ }
+            else if (openRun && String(openRun.ref || openRun.id) !== ref) openRun = null;
+            drawHead(); drawPanel(); drawProjects();
+            try {
+                const r = await call(`/${encodeURIComponent(ref)}`);
+                if (destroyed || generation !== openGeneration || ref !== openRef) return;
+                const run = r && (r.run || r);
+                if (run && String(run.ref || run.id) === ref) openRun = run;
+            } catch { /* the list's copy stays */ }
+            if (destroyed || generation !== openGeneration || ref !== openRef) return;
             drawHead(); drawPanel(); drawProjects();
         }
 
         async function refresh() {
+            if (destroyed) return;
+            const generation = ++refreshGeneration;
             try {
                 const out = await call('?kind=code&limit=100');
+                if (destroyed || generation !== refreshGeneration) return;
                 runs = (Array.isArray(out.runs) ? out.runs : []).filter((r) => !r.kind || r.kind === 'code');
             } catch { /* keep what is shown */ }
+            if (destroyed || generation !== refreshGeneration) return;
             if (openRef) await loadOpen(); else { drawProjects(); drawHead(); drawPanel(); }
+            if (destroyed || generation !== refreshGeneration) return;
             if (mode === 'board') drawBoard();
             schedule();
         }
@@ -427,12 +443,16 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
         }
 
         function open(ref) {
+            if (destroyed) return;
+            openGeneration++;
             openRef = String(ref || '');
             remount({ open: openRef, blank: false });
             show('task');
             loadOpen();
         }
         function blank(t) {
+            if (destroyed) return;
+            openGeneration++;
             if (t) target = t;
             openRef = ''; openRun = null;
             remount({ open: null, blank: true });
