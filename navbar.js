@@ -922,6 +922,20 @@
     }
     // What a field's ring is, from reads only; ringMark writes it. markRings reads every field before it marks any
     // (4.322.0): marking one field invalidated the page's style and the next field's read forced it again, once a field.
+    // 4.343.0: the navbar's watchers read what changed, not the whole page. Each re-read the document a moment after any
+    // change anywhere, and a page that changes all the time (the Live home's counters and rotating words) paid for every
+    // one: idle on that home at 4x CPU, 30 s cost 54 long tasks and 946 ms of blocking, most of it these scans (11-28).
+    // A batch's added elements (and, for a watcher of attributes, the elements whose attributes changed) are read; a
+    // change of text alone reads nothing.
+    function changedRoots(records, withTargets) {
+        const out = new Set();
+        for (const r of records) {
+            if (r.type === 'childList') { for (const n of r.addedNodes) if (n.nodeType === 1) out.add(n); }
+            else if (withTargets && r.target && r.target.nodeType === 1) out.add(r.target);
+        }
+        return out;
+    }
+    const addedAny = (roots, sel) => { for (const n of roots) { if (!n.isConnected) continue; if ((n.matches && n.matches(sel)) || (n.querySelector && n.querySelector(sel))) return true; } return false; };
     function ringPlan(el) {
         if (el.hasAttribute('data-ov-field') || (el.closest && el.closest('[data-ov-native]'))) return null;
         const f = el.getBoundingClientRect();
@@ -934,10 +948,15 @@
         if (p.box) p.box.setAttribute('data-ov-fieldbox', '');
     }
     function markRing(el) { const p = ringPlan(el); if (p) ringMark(p); }
-    function markRings() {
-        const all = document.querySelectorAll(RING_FIELD);
+    function markRings(roots) {
         const plans = [];
-        for (let i = 0; i < all.length && i < 300; i++) if (!all[i].hasAttribute('data-ov-field')) { const p = ringPlan(all[i]); if (p) plans.push(p); }
+        const seen = new Set();
+        const take = (el) => { if (plans.length < 300 && !seen.has(el) && !el.hasAttribute('data-ov-field')) { seen.add(el); const p = ringPlan(el); if (p) plans.push(p); } };
+        for (const root of (roots ? roots : [document])) {
+            if (root.nodeType === 1 && root.matches && root.matches(RING_FIELD)) take(root);
+            const all = root.querySelectorAll ? root.querySelectorAll(RING_FIELD) : [];
+            for (let i = 0; i < all.length && plans.length < 300; i++) take(all[i]);
+        }
         for (const p of plans) ringMark(p);
     }
     let ringWatch = null;
@@ -948,7 +967,17 @@
         }
         markRings();
         let soon = 0;
-        ringWatch = new MutationObserver(() => { if (soon) return; soon = setTimeout(() => { soon = 0; markRings(); }, 300); });
+        let changed = new Set();
+        ringWatch = new MutationObserver((records) => {
+            for (const n of changedRoots(records, true)) changed.add(n);
+            if (soon || !changed.size) return;
+            soon = setTimeout(() => {
+                soon = 0;
+                const roots = [...changed].filter((n) => n.isConnected); changed = new Set();
+                const whole = roots.length > 200 || roots.some((n) => n === document.body || n === document.documentElement);
+                if (whole || roots.length) markRings(whole ? null : roots);
+            }, 300);
+        });
         ringWatch.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'open', 'class'] });
         document.addEventListener('focusin', (e) => { const t = e.target; if (t && t.matches && t.matches(RING_FIELD)) markRing(t); }, true);
     }
@@ -976,8 +1005,8 @@
         const go = () => {
             if (loadTrending()) return;
             let soon = 0;
-            trendWatch = new MutationObserver(() => {
-                if (soon) return;
+            trendWatch = new MutationObserver((records) => {
+                if (soon || !addedAny(changedRoots(records), `${TREND_ASK}, ${TREND_FORM}`)) return;
                 soon = setTimeout(() => { soon = 0; if (loadTrending() && trendWatch && trendWatch.disconnect) { trendWatch.disconnect(); trendWatch = true; } }, 400);
             });
             trendWatch.observe(document.body, { childList: true, subtree: true });
@@ -1010,8 +1039,8 @@
         const need = () => !!document.querySelector('[data-ov-agent]');
         if (need()) { agentLib().catch(() => {}); agentWatch = true; return; }
         let soon = 0;
-        agentWatch = new MutationObserver(() => {
-            if (soon) return;
+        agentWatch = new MutationObserver((records) => {
+            if (soon || !addedAny(changedRoots(records), '[data-ov-agent]')) return;
             soon = setTimeout(() => { soon = 0; if (need() && agentWatch && agentWatch.disconnect) { agentWatch.disconnect(); agentWatch = true; agentLib().catch(() => {}); } }, 300);
         });
         agentWatch.observe(document.body, { childList: true, subtree: true });
@@ -1021,8 +1050,8 @@
         const go = () => {
             if (loadForms()) return;
             let soon = 0;
-            formWatch = new MutationObserver(() => {
-                if (soon) return;
+            formWatch = new MutationObserver((records) => {
+                if (soon || !addedAny(changedRoots(records), `${FORM_CONTROLS},input,textarea,button`)) return;
                 soon = setTimeout(() => { soon = 0; if (loadForms() && formWatch) { formWatch.disconnect(); formWatch = true; } }, 250);
             });
             formWatch.observe(document.body, { childList: true, subtree: true });
@@ -3447,22 +3476,33 @@
         }, { threshold: [0.6] });
         const SEL = '[data-ov-peek]:not([data-ov-peek="off"]), [class*="rail"], [class*="chips"], [class*="tabs"], [class*="pills"], [class*="strip"], [class*="carousel"], [class*="scroller"]';
         let queued = false;
+        let pending = new Set();   // the elements added since the last scan
+        let scanned = false;       // the first scan reads the whole page
         // A row is only observed here: whether it is wider than its box is read when it comes into view, in the
         // observer's callback, which runs after layout. Reading it here made every DOM change force a layout of the
         // whole page (11-20, Live's home: ~420 ms of main thread at 4x CPU in its first five seconds, as cards loaded).
         const scan = () => {
             queued = false;
             let n = 0;
-            document.querySelectorAll(SEL).forEach((el) => {
+            const roots = scanned ? [...pending].filter((x) => x.isConnected) : [document];
+            scanned = true;
+            pending = new Set();
+            const take = (el) => {
                 if (n > 60 || seen.has(el) || el.getAttribute('data-ov-peek') === 'off' || el.closest('.openvibe-navbar, .ovs-panel, [role=dialog]')) return;
                 seen.add(el); n++;
                 io.observe(el);
-            });
+            };
+            roots.forEach((r) => { if (r.nodeType === 1 && r.matches && r.matches(SEL)) take(r); if (r.querySelectorAll) r.querySelectorAll(SEL).forEach(take); });
             root.__ovPeekScans = (root.__ovPeekScans || 0) + 1;   // how many scans ran (test/peek-chrome.test.js)
         };
         const later = () => { if (queued) return; queued = true; (root.requestIdleCallback || ((f) => setTimeout(f, 300)))(scan, { timeout: 1500 }); };
         later();
-        if (typeof MutationObserver === 'function' && document.body) new MutationObserver(later).observe(document.body, { childList: true, subtree: true });
+        if (typeof MutationObserver === 'function' && document.body) new MutationObserver((records) => {
+            const added = changedRoots(records);
+            if (!added.size) return;
+            for (const x of added) pending.add(x);
+            later();
+        }).observe(document.body, { childList: true, subtree: true });
     }
     if (typeof document !== 'undefined' && typeof window !== 'undefined' && !(typeof module !== 'undefined' && module.exports)) {
         if (document.readyState === 'complete') setTimeout(startPeeks, 1200); else window.addEventListener('load', () => setTimeout(startPeeks, 1200), { once: true });
