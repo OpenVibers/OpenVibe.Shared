@@ -13,6 +13,10 @@
   page without the opt-in or a resize aborts left its promises rejected with no one listening (Live's real-user
   errors: "Transition was aborted because of invalid state", about ten a day). Every page with the bar now handles
   them and skips a redirect's transition, as the account hub has since 11-01. Test: view-transition-quiet.
+- **Two names nothing declared** (`ov-home.js`, `dock.js`; Live's real-user errors). The menu's Actor card used `base`,
+  lost in 4.242.0, so for a person with no Actor the "Set it up" card threw before it drew, and a tap on an Actor did
+  nothing ("base is not defined"); the Dock's Chats error path called `chatFoot`, gone since 4.200.0. Both fixed, and
+  test/undeclared-names now parses every browser script and fails on a name no scope or browser global declares.
 
 ## 4.338.0 - 2026-11-27
 

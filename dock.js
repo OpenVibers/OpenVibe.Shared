@@ -772,7 +772,7 @@
             chats.people = people && Array.isArray(people.mutual) ? { friends: people.mutual, requests: people.requests || [], asked: people.asked || [], network: true } : people && Array.isArray(people.friends) ? people : null;
             chats.list = dm.conversations || [];
             chats.vibeSummary = ai && ai.count ? { kind: 'vibe', count: ai.count, latest: ai.conversations && ai.conversations[0], last_message_at: ai.conversations && ai.conversations[0] && ai.conversations[0].last_message_at } : null;
-        } catch (e) { if (panel !== chats.panel || !panelActive('chats')) return; panel.textContent = ''; panel.append(h('div', 'ovdk-none', e.status === 401 ? 'Sign in to Chat to see your conversations.' : 'Your chats did not load. Check your connection, then open them again.')); chatFoot(panel); return; }
+        } catch (e) { if (panel !== chats.panel || !panelActive('chats')) return; panel.textContent = ''; panel.append(h('div', 'ovdk-none', e.status === 401 ? 'Sign in to Chat to see your conversations.' : 'Your chats did not load. Check your connection, then open them again.')); return; }   // chatFoot went in 4.200.0; its call here threw after the words (11-28)
         if (sharing) await sharing;
         if (panel !== chats.panel || !panelActive('chats') || chats.open) return;
         panel.textContent = '';
