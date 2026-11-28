@@ -328,6 +328,24 @@ html[data-ov-motion=off] .ovh-tab-n { animation: none; }
 .ovh-own-ic { color: hsl(var(--ovh-h, 220) 80% 72%); }
 .ovh-own-ic svg { width: 46%; height: 46%; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 html[data-ov-motion=off] .ovh-mebox .ovh-acct svg { transition: none; }
+/* Your AI plans (4.339.0): each coding agent's tightest plan window, what is left and when it resets, under the apps. */
+.ovh-plans { margin: 12px 2px 4px; padding: 6px 10px 10px; border-radius: 18px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent); border: 1px solid color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); }
+.ovh-plans[hidden] { display: none; }
+.ovh-plans-head { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 0 -4px; padding: 0 4px; border-radius: 12px; color: var(--text-primary, #e6edf7); text-decoration: none; }
+.ovh-plans-head:hover, .ovh-plans-head:focus-visible { background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
+.ovh-plans-head svg { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--accent-light, var(--accent, #60a5fa)); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-plans-head b { font-size: 14px; }
+.ovh-plans-head small { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--text-secondary, #a8b3c4); }
+.ovh-plans-list { display: grid; gap: 10px; margin: 2px 0 0; padding: 0; list-style: none; }
+.ovh-plan { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 5px 10px; font-size: 13px; }
+.ovh-plan-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; color: var(--text-primary, #e6edf7); }
+.ovh-plan-say { font-size: 12px; white-space: nowrap; color: var(--text-secondary, #a8b3c4); }
+.ovh-plan-bar { grid-column: 1 / -1; height: 6px; overflow: hidden; border-radius: 99px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 10%, transparent); }
+.ovh-plan-bar > i { display: block; width: var(--left, 0%); height: 100%; border-radius: inherit; background: var(--accent, #3b82f6); animation: ovhPlanGrow var(--ov-dur-4, .6s) var(--ov-ease-out, ease-out) both; }
+.ovh-plan.is-low .ovh-plan-bar > i { background: var(--warning, #f59e0b); }
+.ovh-plan.is-out .ovh-plan-bar > i { background: var(--danger, #f87171); }
+@keyframes ovhPlanGrow { from { width: 0; } }
+html[data-ov-motion=off] .ovh-plan-bar > i { animation: none; }
 .ovh-ib.is-own { color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 13%, transparent); }
 .ovh-ib.is-text { width: auto; padding: 0 12px; border-radius: 999px; font-size: 12.5px; font-weight: 750; white-space: nowrap; }
 @container ovh (max-width: 520px) {
@@ -854,6 +872,63 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         return meBox;
     }
 
+    /* Your AI plans (4.339.0; plan AD.39 item 9, "Shared ov-usage in every menu"): what is left of each of your coding
+     * agents' plan windows (Claude Code's week, Codex's five hours …) and when it resets, so a plan about to reset with
+     * use left is seen from any site, under the apps on You. From the Network's GET /api/me/usage, which asks
+     * OpenVibe.Codes with your token (no site's CSP allows openvibe.codes); asked once a page; nothing shows until an
+     * agent has reported. o.plans === false leaves it out. */
+    const PLANS_MORE = 'https://openvibe.codes/settings/spare';
+    let _plansGot, _plansAsk = null;
+    function plansIn(at, now) {
+        const ms = Date.parse(at) - now;
+        if (!(ms > 0)) return '';
+        const hrs = ms / 3600000;
+        return hrs < 1 ? 'resets within the hour' : hrs < 48 ? `resets in ${Math.round(hrs)} h` : `resets in ${Math.round(hrs / 24)} d`;
+    }
+    /** The rows to show: each agent's tightest window (a week with room behind a spent five hours is still spent). */
+    function plansRows(got, now = Date.now()) {
+        const agents = got && Array.isArray(got.agents) ? got.agents : [];
+        return agents.filter((a) => a && a.name && Array.isArray(a.windows) && a.windows.length).slice(0, 4).map((a) => {
+            const w = a.windows.reduce((low, x) => (Number(x.left_pct) < Number(low.left_pct) ? x : low));
+            const left = Math.max(0, Math.min(100, Math.round(Number(w.left_pct) || 0)));
+            return { name: String(a.name).slice(0, 60), window: String(w.name || '').slice(0, 40), left, level: left <= 5 ? 'out' : left <= 20 ? 'low' : '',
+                say: [`${w.name ? `${w.name}: ` : ''}${left}% left`, plansIn(w.resets_at, now)].filter(Boolean).join(' · ') };
+        });
+    }
+    function askPlans(o) {
+        if (!_plansAsk) {
+            _plansAsk = fetch(`${o.apiBase || 'https://openvibe.network'}/api/me/usage`, { credentials: 'omit', headers: { Accept: 'application/json', Authorization: `Bearer ${o.token}` } })
+                .then((r) => (r.ok ? r.json() : null)).catch(() => null).then((got) => { _plansGot = got || { agents: [] }; return _plansGot; });
+        }
+        return _plansAsk;
+    }
+    function fillPlans(box, got) {
+        const rows = plansRows(got);
+        if (!rows.length) { box.hidden = true; return; }
+        const head = h('a', 'ovh-plans-head'); head.href = PLANS_MORE;
+        head.append(svgIcon('chart'), h('b', '', 'AI plans'), h('small', '', 'Spare usage'));
+        const list = h('ul', 'ovh-plans-list');
+        rows.forEach((r) => {
+            const li = h('li', `ovh-plan${r.level ? ` is-${r.level}` : ''}`);
+            const bar = h('span', 'ovh-plan-bar'); bar.setAttribute('role', 'meter');
+            bar.setAttribute('aria-label', `${r.name}${r.window ? ` ${r.window}` : ''} left`);
+            bar.setAttribute('aria-valuemin', '0'); bar.setAttribute('aria-valuemax', '100'); bar.setAttribute('aria-valuenow', String(r.left));
+            const fill = h('i'); fill.style.setProperty('--left', `${r.left}%`); bar.append(fill);
+            li.append(h('span', 'ovh-plan-name', r.name), h('span', 'ovh-plan-say', r.say), bar);
+            list.append(li);
+        });
+        box.replaceChildren(head, list);
+        box.hidden = false;
+    }
+    /** The section under the apps: drawn at once from what was read, or empty and filled when the Network answers (it
+     *  sits after the grid, so nothing above it moves). */
+    function plansSlot(o) {
+        const box = h('section', 'ovh-plans'); box.setAttribute('aria-label', 'Your AI plans'); box.hidden = true;
+        if (_plansGot) fillPlans(box, _plansGot);
+        else askPlans(o).then((got) => fillPlans(box, got));
+        return box;
+    }
+
     function home(el, o) {   // o is replaced by update() when the menu learns more (history, the catalogue)
         styles();
         el.classList.add('ovh');
@@ -1220,6 +1295,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             const grid = h('div', 'ovh-grid'); grid.setAttribute('aria-label', 'Your home');
             L.home.forEach((id, i) => grid.append(homeTile(id, i)));
             el.append(grid);
+            if (signedIn(o) && o.plans !== false && !state.edit) el.append(plansSlot(o));
             if (state.edit) {
                 el.append(h('p', 'ovh-hint', 'Hold an app, then drag it (a quick swipe scrolls), or use the arrow keys. − takes it off Home; All puts it back.'));
             }
@@ -3046,5 +3122,5 @@ html[data-ov-motion=off] :is(.ovfd-chip,.ovfd-act-b){transition:none}
         if (typeof o.look === 'function') { try { o.look(box); } catch { /* the Display button stays a link */ } }
     }
     // glimpse: true says feed() takes { glimpse } (4.329.0); a page checks it before asking for one.
-    root.OpenVibeHome = { home, wallTop, timeline, feed, loadPulse, youCard, actorCard: (box, o) => actor(box, o), _defaultHome: defaultHome, glimpse: true };
+    root.OpenVibeHome = { home, wallTop, timeline, feed, loadPulse, youCard, actorCard: (box, o) => actor(box, o), _defaultHome: defaultHome, _plans: { rows: plansRows, in: plansIn }, glimpse: true };
 })(typeof window !== 'undefined' ? window : globalThis);

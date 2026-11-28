@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.339.0 - 2026-11-28
+
+- **Your AI plans in every menu** (`ov-home.js`; plan AD.39 item 9, "Shared ov-usage in every menu"). Under the apps
+  on You, a signed-in person sees what is left of each of their coding agents' plan windows (Claude Code's week,
+  Codex's five hours …) and when it resets: the tightest window per agent, in words and a meter that turns amber at
+  20 % and red when spent, with Spare usage on OpenVibe.Codes one tap away, where an agent with time left can work
+  through their list. Read once a page from the Network's `GET /api/me/usage` (Network #1184 asks Codes with their
+  token; no site's CSP allows openvibe.codes); nothing shows until an agent has reported, nor in the arranging mode.
+  `plans: false` in the menu's options leaves it out. Test: ov-home-plans.
+
 ## 4.338.0 - 2026-11-27
 
 - **Runs, task details and drafts keep what is theirs** (`ov-run.js`, `ov-harness.js`, `ov-composer.js`; the doctor's
