@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.343.0 - 2026-11-28
+
+- **The navbar's watchers read what changed, not the whole page** (`navbar.js`). The field rings, the trending box, the
+  agent button, the form kit and the scroll-row peeks each re-read the whole document a moment after any change
+  anywhere, so a page that changes all the time paid for every one: idle on the Live home at 4x CPU, 30 s cost 54 long
+  tasks and 946 ms of blocking, most of it these scans (querySelectorAll ~0.9-1.3 s per 30 s). Each now reads only the
+  elements a batch added (the rings also those whose hidden/open/class changed; a body or html change still reads the
+  page); a change of text alone reads nothing. Measured in place on the Live home: querySelectorAll 1,346 and 865 ms ->
+  45 and 58 ms per idle 30 s at 4x, and no navbar function left among the busiest. Test: navbar-watchers-read-changes.
+
 ## 4.342.0 - 2026-11-28
 
 - **Every <small> at 12 px or more, on every site** (`theme-loader.js`): a <small> with no size of its own was the
