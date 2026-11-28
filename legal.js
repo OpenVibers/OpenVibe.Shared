@@ -208,7 +208,10 @@ function page(kind, site) {
     const d = build(kind, site);
     const url = `https://${site.host}/${kind}`;
     let head;
-    try { head = require('./seo').headTags({ title: d.title, description: d.description, canonical: url, siteName: site.name, type: 'article' }); }
+    // The site's share card (11-28: Chat's, Media's, Codes' and Actor's legal pages had no og:image, an SEO left-over).
+    let image = null;
+    try { image = require('./social').url(site.id || site.service, '/shared'); } catch { image = null; }
+    try { head = require('./seo').headTags({ title: d.title, description: d.description, canonical: url, siteName: site.name, type: 'article', ...(image ? { image } : {}) }); }
     catch { head = `<title>${esc(d.title)}</title><meta name="description" content="${esc(d.description)}"><link rel="canonical" href="${url}">`; }
     return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 ${head}

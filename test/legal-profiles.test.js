@@ -64,4 +64,7 @@ for (const profile of legal.PROFILES) for (const kind of Object.keys(legal.TITLE
 const html = legal.page('terms', { host: 'openvibe.zone', name: 'OpenVibe.Zone', profile: 'service', id: 'zone' });
 assert.match(html, /<script src="\/shared\/navbar\.js" defer>/);
 assert.doesNotMatch(html, /src="https:\/\/openvibe\.network\/shared\//);
+// 11-28: the site's share card, from its own /shared/ (an SEO left-over: four sites' legal pages had no og:image).
+assert.match(html, /<meta property="og:image" content="https:\/\/openvibe\.zone\/shared\/social\/zone\.jpg\?v=[0-9a-f]+">/);
+assert.doesNotMatch(legal.page('terms', { host: 'x.example', name: 'X', profile: 'service', id: 'no-such-site' }), /og:image/, 'a site with no card: none');
 console.log('legal profiles: all checks passed');

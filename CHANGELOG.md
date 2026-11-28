@@ -2,6 +2,9 @@
 
 ## 4.342.0 - 2026-11-28
 
+- **Legal pages wear the site's share card** (`legal.js`): Chat's, Media's, Codes' and Actor's terms and privacy pages
+  had no og:image (an SEO left-over of 11-21); the site's own /shared/social/<site>.jpg now, none for a site without a
+  card. Test: legal-profiles.
 - **Shared's own parts at the 12px floor, the rest of the way** (the owner's rule). The first pass (4.340.0) read only
   .60-.74rem and the sweep's own finds; the menu, the notifications, the navbar's account menu, the Dock, search, the
   Run and session sheets, the kit's tables and charts, quests, the profile and user cards, tooltips, the link cards and
