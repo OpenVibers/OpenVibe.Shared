@@ -260,7 +260,7 @@ html[data-ov-motion=off] .ovk-btn--primary, html[data-ov-motion=off] .ovk-btn--p
 .ovk-tabs a:hover { color: var(--ovk-text); background: var(--ovk-panel-2); }
 .ovk-tabs a[aria-current="page"] { color: var(--ovk-text); background: var(--ovk-panel-2); box-shadow: inset 0 0 0 1px var(--ovk-line); }
 .ovk-tabs .ovk-i { width: 16px; height: 16px; }
-.ovk-tab-n { min-width: 18px; padding: 0 5px; border-radius: 999px; background: var(--ovk-panel); color: var(--ovk-muted); font-size: .72rem; font-weight: 800; text-align: center; }
+.ovk-tab-n { min-width: 18px; padding: 0 5px; border-radius: 999px; background: var(--ovk-panel); color: var(--ovk-muted); font-size: .75rem; font-weight: 800; text-align: center; }
 
 /* ── Lists: rows that read like a phone's (a mark, the name and time on one line, one line under it) ── */
 .ovk-list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0 8px; }

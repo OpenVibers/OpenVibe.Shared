@@ -66,7 +66,7 @@
         `.ov-updates{min-width:0}.ov-updates h1{margin:.2em 0 .3em}.ov-updates-lede{color:${MUTED};line-height:1.55;margin:0 0 18px}`,
         '.ov-shipped{font-size:.92rem;min-width:0}.ov-shipped h3{font-size:1rem;margin:0 0 .5rem;display:flex;gap:.4rem;align-items:center}',
         '.ov-shipped ul{list-style:none;margin:0;padding:0;display:grid;gap:.35rem}.ov-shipped li{display:flex;gap:.5rem;align-items:baseline;min-width:0}',
-        `.ov-shipped-site{flex:none;font-size:.72rem;font-weight:700;padding:.05rem .45rem;border-radius:999px;background:color-mix(in srgb,var(--accent,#3b82f6) 16%,transparent);color:${TEXT};text-decoration:none}`,
+        `.ov-shipped-site{flex:none;font-size:.75rem;font-weight:700;padding:.05rem .45rem;border-radius:999px;background:color-mix(in srgb,var(--accent,#3b82f6) 16%,transparent);color:${TEXT};text-decoration:none}`,
         `.ov-shipped a.ov-shipped-subject{color:${TEXT};text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}`,
         // Touch (4.46.0): a taller hit box with no change to the layout (padding in, margin out); overflow:hidden rules out a pseudo-element.
         '@media (pointer:coarse){.ov-shipped ul{gap:0}.ov-shipped li{min-height:44px;align-items:center}.ov-shipped a.ov-shipped-subject{padding-top:12px;padding-bottom:12px}}',
@@ -108,7 +108,7 @@
         '.ov-shipped .ov-shipped-row{display:flex;align-items:center;gap:8px;min-width:0}',
         // The kind of a change: a drawn mark (a star, an arrow up, a tick) and, for New and Fixed, the word. An improvement
         // is the mark alone: most rows are improvements, and the word beside every one of them read as noise.
-        '.ov-shipped-kind{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;line-height:1.2;padding:2px 9px 2px 6px;border-radius:999px}',
+        '.ov-shipped-kind{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:.75rem;font-weight:700;line-height:1.2;padding:2px 9px 2px 6px;border-radius:999px}',
         '.ov-shipped-kind::before{content:"";flex:none;width:11px;height:11px;background:var(--k,currentColor)}',
         '.ov-shipped-kind.is-new::before{--k:#22c55e;clip-path:polygon(50% 0,63% 37%,100% 50%,63% 63%,50% 100%,37% 63%,0 50%,37% 37%)}',
         '.ov-shipped-kind.is-better::before{--k:var(--accent-light,var(--accent,#60a5fa));clip-path:polygon(50% 0,100% 52%,68% 52%,68% 100%,32% 100%,32% 52%,0 52%)}',
