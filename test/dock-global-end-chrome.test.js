@@ -87,8 +87,10 @@ const unreadCount = `document.querySelectorAll('.ovdk-gl-list > .is-unread').len
         // A flick straight to the end: the lines passed on the way were never on screen long enough to count, and before
         // 4.316.0 they stayed new (the owner: the pill does not "clear on scroll"). At the end, all of it is read.
         await p.evaluate("const sc = document.querySelector('.ovdk-scroll'); sc.scrollTop = sc.scrollHeight;");
-        // 12 s, not 5: GitHub's macOS runner took 16 s for this file and timed out here (11-18, red on main twice).
-        await until(p, `${unreadCount} === 0 && !document.querySelector('.ovdk-seg[data-seg=global] .ovdk-seg-n:not(.is-gone)')`, 12000);
+        // 12 s, not 5: GitHub's macOS runner took 16 s for this file and timed out here (11-18, red on main twice). 20 s,
+        // and the view kept at the end while it waits (11-28, red again on macOS at 12 s): on a slow runner the list was
+        // still growing after the flick, so the view was no longer at the end; a person at the end stays there.
+        await until(p, `(() => { const sc = document.querySelector('.ovdk-scroll'); if (sc) sc.scrollTop = sc.scrollHeight; return ${unreadCount} === 0 && !document.querySelector('.ovdk-seg[data-seg=global] .ovdk-seg-n:not(.is-gone)'); })()`, 20000);
         // Off the screen, not only flagged hidden (4.332.0: the pill's display: flex beat its hidden attribute).
         await until(p, "(() => { const j = document.querySelector('.ovdk-gl-jump'); return !j || (getComputedStyle(j).display === 'none' && !j.querySelector('.ovdk-gl-jump-c').getClientRects().length); })()", 2000);
         await h.eventually(async () => assert.strictEqual(Math.max(...posted), 60, `Chat hears the newest line (${posted})`));
