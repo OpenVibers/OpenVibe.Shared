@@ -9,6 +9,10 @@
   through their list. Read once a page from the Network's `GET /api/me/usage` (Network #1184 asks Codes with their
   token; no site's CSP allows openvibe.codes); nothing shows until an agent has reported, nor in the arranging mode.
   `plans: false` in the menu's options leaves it out. Test: ov-home-plans.
+- **No unhandled rejections from page transitions** (`navbar.js`). A cross-document view transition that a move to a
+  page without the opt-in or a resize aborts left its promises rejected with no one listening (Live's real-user
+  errors: "Transition was aborted because of invalid state", about ten a day). Every page with the bar now handles
+  them and skips a redirect's transition, as the account hub has since 11-01. Test: view-transition-quiet.
 
 ## 4.338.0 - 2026-11-27
 

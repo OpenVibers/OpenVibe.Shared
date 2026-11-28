@@ -3,6 +3,26 @@
 (function (root) {
     'use strict';
 
+    // Cross-document view transitions (kit.css opts in) on every page with the bar, not only the account hub's
+    // (account-switcher.js, 11-01): a move to a page that does not opt in, or a resize mid-way, aborts the transition,
+    // and its promises rejected with no one listening (Live's RUM, 11-28: "Transition was aborted because of invalid
+    // state", 10 a day). Their promises are handled here; a replace navigation (a redirect) skips its transition.
+    function quietViewTransition(event) {
+        const transition = event && event.viewTransition;
+        if (!transition) return;
+        for (const promise of [transition.finished, transition.ready, transition.updateCallbackDone]) {
+            try { if (promise && typeof promise.catch === 'function') promise.catch(() => {}); } catch { /* not a promise */ }
+        }
+        const activation = event.activation;
+        if (!activation || activation.navigationType !== 'replace') return;
+        try { if (typeof transition.skipTransition === 'function') transition.skipTransition(); } catch { /* already gone */ }
+    }
+    if (typeof document !== 'undefined' && root && typeof root.addEventListener === 'function' && !root.__ovQuietVT) {
+        root.__ovQuietVT = true;
+        root.addEventListener('pageswap', quietViewTransition);
+        root.addEventListener('pagereveal', quietViewTransition);
+    }
+
     let _config = {
         service: 'network', token: null, user: null, apiBase: 'https://openvibe.network', frameBase: null,
         onLogin: null, onLogout: null, loginUrl: null, sessionUrl: null, logoutUrl: null,
