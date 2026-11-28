@@ -969,6 +969,8 @@
         let soon = 0;
         let changed = new Set();
         ringWatch = new MutationObserver((records) => {
+            // What left the page is let go at once: a swapped page's nodes are never kept for the next read.
+            for (const n of changed) if (!n.isConnected) changed.delete(n);
             for (const n of changedRoots(records, true)) changed.add(n);
             if (soon || !changed.size) return;
             soon = setTimeout(() => {
@@ -3498,6 +3500,7 @@
         const later = () => { if (queued) return; queued = true; (root.requestIdleCallback || ((f) => setTimeout(f, 300)))(scan, { timeout: 1500 }); };
         later();
         if (typeof MutationObserver === 'function' && document.body) new MutationObserver((records) => {
+            for (const x of pending) if (!x.isConnected) pending.delete(x);   // a swapped page's nodes are let go at once
             const added = changedRoots(records);
             if (!added.size) return;
             for (const x of added) pending.add(x);
