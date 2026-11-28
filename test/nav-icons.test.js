@@ -19,7 +19,7 @@ const ICONS = require('../nav-icons');
 // same-site links are prefetched on hover.
 // 57.4 KB (4.260.0, 2026-11-15): the bar keeps a renewed sign-in and renews a refused one (the owner: "All my chat
 // messages disappeared").
-const NAVBAR_BROTLI_BUDGET = 62.6 * 1024;   // 62.6 KB (4.343.0, 2026-11-28: the watchers read only what changed (changedRoots/addedAny); CI measured 62.5; budgets grow for a feature)
+const NAVBAR_BROTLI_BUDGET = 62.8 * 1024;   // 62.8 KB (4.343.0, 2026-11-28: the watchers read only what changed and let go of what left the page; CI measured 62.6; budgets grow for a feature)
 // Before: 62.2 * 1024;   // 62.2 KB (4.334.0, 2026-11-21: the links and the More menu polished, a drawn chevron and its styles (the owner: "make it look nicer … using our icons"); CI measured 61.4+; budgets grow for a feature)
 // Before: 61.4 * 1024;   // 61.4 KB (4.322.0, 2026-11-19: the bar batches its reads before its writes so a page load forces fewer layouts (the owner's "optimize loading"); the forge runner measured 61.0; budgets grow for a feature)
 // Before: 60.6 * 1024;   // 60.6 KB (4.293.0, 2026-11-17: the bar keeps its own token live (4.292.0) and the Dock's new content hash; CI measured 60.3; budgets grow for a feature)
