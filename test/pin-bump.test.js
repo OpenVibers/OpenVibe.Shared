@@ -190,4 +190,29 @@ fs.rmSync(dir, { recursive: true, force: true });
     assert.strictEqual(moved(code, false), json('https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.284.0'), '--github keeps codeload');
     assert.strictEqual(moved(forge, false), json('https://git.openvibe.codes/api/v1/repos/openvibers/openvibe.shared/archive/v4.284.0.tar.gz'), 'a forge pin stays on the forge');
 }
+// Files a repository builds from a pinned library are rebuilt after the bump and join its commit (11-28: Shared's
+// ov-arrange-core.js and ov-locker-core.js named SDK 0.190.0 and the 0.191.0 pin opened red). Declared in package.json
+// "pinBump", run in order, only scripts that exist; a failure changes nothing.
+{
+    const pb = require('../scripts/pin-bump');
+    const os = require('os');
+    const rdir = fs.mkdtempSync(path.join(os.tmpdir(), 'pinbump-regen-'));
+    fs.mkdirSync(path.join(rdir, 'scripts'));
+    fs.writeFileSync(path.join(rdir, 'scripts', 'build-core.js'), '');
+    fs.writeFileSync(path.join(rdir, 'scripts', 'revs.js'), '');
+    fs.writeFileSync(path.join(rdir, 'package.json'), JSON.stringify({ name: 'x', pinBump: { 'openvibe-sdk': ['scripts/build-core.js', 'scripts/missing.js', '../escape.js', 'scripts/revs.js'] } }));
+    const ran = [];
+    const io = { install: () => ({ ok: true }), run: (cwd, s) => { ran.push(s); return { code: 0, output: '' }; }, changed: () => ['ov-core.js', 'navbar.js', 'package-lock.json', 'node_modules/x/y.js'] };
+    assert.deepStrictEqual(pb.regenerate(rdir, 'openvibe-sdk', io), { changed: ['ov-core.js', 'navbar.js'], ran: ['scripts/build-core.js', 'scripts/revs.js'] });
+    assert.deepStrictEqual(ran, ['scripts/build-core.js', 'scripts/revs.js'], 'in order, only the scripts that exist, never outside the repository');
+    assert.deepStrictEqual(pb.regenerate(rdir, 'openvibe-contracts', io), { changed: [], ran: [] }, 'another library: nothing');
+    const failing = { ...io, run: (cwd, s) => ({ code: s.endsWith('revs.js') ? 1 : 0, output: '' }) };
+    assert.deepStrictEqual(pb.regenerate(rdir, 'openvibe-sdk', failing), { changed: [], ran: ['scripts/build-core.js'], skipped: 'scripts/revs.js failed' });
+    assert.match(pb.regenerate(rdir, 'openvibe-sdk', { ...io, install: () => ({ ok: false, skipped: 'npm ci failed' }) }).skipped, /npm ci failed/);
+    // Shared itself declares what it builds from the SDK.
+    const own = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')).pinBump['openvibe-sdk'];
+    assert.deepStrictEqual(own, ['scripts/build-arrange-core.js', 'scripts/build-locker-core.js', 'scripts/sibling-revs.js']);
+    own.forEach((s) => assert.ok(fs.existsSync(path.join(__dirname, '..', s)), `${s} exists`));
+    fs.rmSync(rdir, { recursive: true, force: true });
+}
 console.log('pin-bump: all checks passed');

@@ -235,6 +235,35 @@ function findBudgetFile(dir) {
 
 const lastLine = (err) => String((err && (err.stdout || err.stderr)) || (err && err.message) || err).split('\n').filter(Boolean).slice(-1)[0];
 
+/**
+ * Files a repository builds from a pinned library: its package.json names, per library, the scripts that rebuild them
+ * ("pinBump": { "openvibe-sdk": ["scripts/build-arrange-core.js", …] }), run in that order after the bump's install, and
+ * every file they changed joins the bump's commit (11-28: Shared's ov-arrange-core.js and ov-locker-core.js name the SDK
+ * version they were built from, so the 0.191.0 pin opened red until they were rebuilt by hand). A script that is not
+ * there, or a repository that declares none, changes nothing. `io` replaces the install, the runs and git (tests).
+ * → { changed: [file], ran: [script], skipped?: reason }
+ */
+function regenerate(dir, library, io = null) {
+    let steps = [];
+    try {
+        const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'));
+        const declared = pkg && pkg.pinBump && Array.isArray(pkg.pinBump[library]) ? pkg.pinBump[library] : [];
+        steps = declared.map(String).filter((s) => /^[\w./-]+\.js$/.test(s) && !s.includes('..') && fs.existsSync(path.join(dir, s)));
+    } catch { return { changed: [], ran: [] }; }
+    if (!steps.length) return { changed: [], ran: [] };
+    const x = io || { install: realInstall, run: realRun, changed: (cwd) => run('git', ['-C', cwd, 'status', '--porcelain']).split('\n').filter(Boolean).map((l) => l.slice(3).trim()) };
+    const installed = x.install(dir);
+    if (!installed.ok) return { changed: [], ran: [], skipped: installed.skipped || 'install failed' };
+    const ran = [];
+    for (const s of steps) {
+        const r = x.run(dir, s);
+        if (r.code !== 0) return { changed: [], ran, skipped: `${s} failed` };
+        ran.push(s);
+    }
+    const changed = x.changed(dir).filter((f) => f !== 'package-lock.json' && !f.startsWith('node_modules/'));
+    return { changed, ran };
+}
+
 function realInstall(cwd) {
     if (!fs.existsSync(path.join(cwd, 'package-lock.json'))) {
         return fs.existsSync(path.join(cwd, 'pnpm-lock.yaml'))
@@ -444,6 +473,10 @@ function main() {
             if (stale.length && opts.apply) {
                 budgets = raiseBudgets(dir, { library, tag });
                 if (budgets.raised && budgets.raised.length) changed.add(budgets.file);
+                // Files the repository builds from this library are rebuilt from the new pin, in the same commit.
+                const rebuilt = regenerate(dir, library);
+                rebuilt.changed.forEach((f) => changed.add(f));
+                if (rebuilt.skipped) console.error(`pin-bump: ${repo}: rebuilding from ${library} skipped (${rebuilt.skipped})`);
             }
             const title = stale.length
                 ? `${library} ${tag} (was ${from.join(', ')})`
@@ -524,4 +557,4 @@ if (require.main === module) {
     try { main(); } catch (err) { console.error(`pin-bump: ${err.message}`); process.exitCode = 1; }
 }
 
-module.exports = { stalePins, staleSecurityPins, updateSecurityPins, updateVersionLines, pinUrl, forgeUrl, PIN_RE, movePin, parseArgs, parseOverBudget, nextHalf, raiseBudgetText, findBudgetFile, raiseBudgets, SERVICE, shipOrder, shipCommand };
+module.exports = { stalePins, staleSecurityPins, updateSecurityPins, updateVersionLines, pinUrl, forgeUrl, PIN_RE, movePin, parseArgs, parseOverBudget, nextHalf, raiseBudgetText, findBudgetFile, raiseBudgets, regenerate, SERVICE, shipOrder, shipCommand };
