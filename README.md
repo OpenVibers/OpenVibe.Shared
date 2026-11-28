@@ -1272,5 +1272,5 @@ The Locker browser core and the arrange core are generated from the pinned SDK r
 
 <!-- versions:start -->
 - openvibe-contracts: v0.455.0
-- openvibe-sdk: v0.190.0
+- openvibe-sdk: v0.191.0
 <!-- versions:end -->
