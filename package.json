@@ -234,5 +234,12 @@
     "express": "^4.22.3",
     "openvibe-contracts": "https://git.openvibe.codes/api/v1/repos/openvibers/openvibe.contracts/archive/v0.455.0.tar.gz",
     "openvibe-sdk": "https://git.openvibe.codes/api/v1/repos/openvibers/openvibe.sdk/archive/v0.191.0.tar.gz"
+  },
+  "pinBump": {
+    "openvibe-sdk": [
+      "scripts/build-arrange-core.js",
+      "scripts/build-locker-core.js",
+      "scripts/sibling-revs.js"
+    ]
   }
 }
