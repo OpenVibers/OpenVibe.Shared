@@ -362,7 +362,7 @@
         const networkLinks = network.slice(0, 8);
 
         return `<div class="ovf-inner${compact ? ' ovf-inner--expanded' : ''}">
-            ${c.pulse === false ? '' : '<div class="ovf-pulse" data-ovf-pulse hidden></div>'}
+            ${c.pulse === false ? '' : '<div class="ovf-pulse is-waiting" data-ovf-pulse aria-busy="true"></div>'}
             <div class="ovf-cols">
                 <div class="ovf-col ovf-col--brand">
                     <a class="ovf-brand" href="/"><span class="ov-mark" data-size="38" data-wide></span><span>${esc(brand)}</span></a>
@@ -476,7 +476,7 @@
 .ovf-account-who{display:inline-flex;align-items:center;gap:8px;font-size:.84rem;color:var(--text-secondary,#b6bdd2)}
 .ovf-account-who strong{color:var(--text-primary,#f1f4fb)}
 .ovf-avatar{width:24px;height:24px;border-radius:50%;overflow:hidden;display:grid;place-items:center;
-  background:var(--accent-strong,var(--accent,#3472d8));color:var(--on-accent-strong,var(--on-accent,#fff));font-size:.7rem;font-weight:800;flex:none}
+  background:var(--accent-strong,var(--accent,#3472d8));color:var(--on-accent-strong,var(--on-accent,#fff));font-size:.75rem;font-weight:800;flex:none}
 .ovf-avatar img{width:100%;height:100%;object-fit:cover}
 .ovf-account-links{display:flex;flex-wrap:wrap;gap:6px}
 .ovf-account-links a{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:.78rem;font-weight:600;
@@ -511,6 +511,7 @@
 .ovf-inner--expanded{animation:ovfIn .3s ease-out both}
 .ovf-pulse{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 clamp(18px,2.5vw,24px);padding:9px 14px;border-radius:12px;font-size:.8rem;color:var(--text-secondary,#b6bdd2);
   background:color-mix(in srgb, var(--accent,#60a5fa) 6%, var(--bg-tertiary,#1a1b28));border:1px solid var(--border,rgba(255,255,255,.08));animation:ovfIn .4s ease-out both}
+.ovf-pulse.is-waiting{min-height:var(--ovf-pulse-h,96px);box-sizing:border-box}
 .ovf-pulse a{color:inherit;text-decoration:none;font-weight:600}
 .ovf-now{flex:1 1 100%;min-width:0;display:grid;gap:8px}
 .ovf-who>summary{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:4px 9px;min-height:36px;color:var(--text-primary,#f1f4fb)}
@@ -525,7 +526,7 @@
 .ovf-who-when{margin:6px 2px 0;color:var(--text-muted,#8b93ad)}
 .ovf-who-faces{display:inline-flex;padding-left:7px}
 .ovf-who-faces img,.ovf-who-faces i{width:24px;height:24px;margin-left:-7px;border-radius:50%;box-shadow:0 0 0 2px var(--bg-secondary,#0f1420);object-fit:cover}
-.ovf-who i{display:grid;place-items:center;font-style:normal;font-size:.72rem;font-weight:800;color:var(--text-primary,#f1f4fb);background:color-mix(in srgb,var(--accent,#3b82f6) 38%,var(--bg-secondary,#0f1420))}
+.ovf-who i{display:grid;place-items:center;font-style:normal;font-size:.75rem;font-weight:800;color:var(--text-primary,#f1f4fb);background:color-mix(in srgb,var(--accent,#3b82f6) 38%,var(--bg-secondary,#0f1420))}
 .ovf-who-list{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0;padding:0;animation:ovf-list .3s cubic-bezier(.2,.9,.3,1.1) both}
 @keyframes ovf-list{from{opacity:0;transform:translateY(calc(-6px*var(--ov-move,1)))}}
 .ovf-who-list a{display:inline-flex;align-items:center;gap:7px;min-height:36px;box-sizing:border-box;padding:3px 12px 3px 4px;border-radius:999px;color:var(--text-primary,#f1f4fb);background:color-mix(in srgb,var(--text-primary,#f1f4fb) 6%,transparent);transition:background-color .15s,transform .12s}
@@ -537,7 +538,7 @@
 /* 4.248.0 (the owner, 11-14): who is live wears red; where the guests are; today; open, everything stacks. */
 .ovf-who img.is-live,.ovf-who i.is-live{box-shadow:0 0 0 2px var(--bg-secondary,#0f1420),0 0 0 4px var(--live-red-text,#ef4444)!important}
 .ovf-who-list li.is-live a{background:color-mix(in srgb,var(--live-red-text,#ef4444) 14%,transparent)}
-.ovf-who-live{font-style:normal;font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;color:#fff;background:var(--live-red,#dc2626)}
+.ovf-who-live{font-style:normal;font-size:.75rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;color:#fff;background:var(--live-red,#dc2626)}
 .ovf-who-today{margin:4px 2px 0;color:var(--text-secondary,#b6bdd2)}.ovf-who-today b{color:var(--text-primary,#f1f4fb);font-variant-numeric:tabular-nums}
 .ovf-split{display:flex;gap:2px;height:10px;margin:12px 0 0;border-radius:999px;overflow:hidden;background:color-mix(in srgb,var(--text-primary,#f1f4fb) 6%,transparent)}
 .ovf-split-s{flex:1 1 0;min-width:4px;transition:filter .15s,flex-grow .4s cubic-bezier(.2,.9,.3,1)}.ovf-split-s:hover{filter:brightness(1.25)}
@@ -797,28 +798,46 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
         const more = o.counts.length || o.items.length;
         return `<div class="ovf-now">${who}${tiles.length ? `<div class="ovf-tiles${more ? ' ovf-online-actions' : ''}">${tiles.join('')}</div>` : ''}</div>`;
     }
+    // The strip at the footer's top was hidden until its read came back, and the read starts only when the footer nears
+    // the screen: it appeared (about 100 px) while the person looked at the footer and pushed it down, the Live home's
+    // narrow-window CLS of ~0.39 (11-28). Its place is kept from the start at the height it had last time on this
+    // device; it fills in place, and only a read that fails takes the box away.
+    const PULSE_H_KEY = 'ovf-pulse-h';
+    function keptPulseHeight() { try { return Number(sessionStorage.getItem(PULSE_H_KEY)) || 0; } catch { return 0; } }
+    function keepPulseHeight(el) {
+        try {
+            const h = Math.round(el.getBoundingClientRect().height);
+            if (h > 20 && h < 600) sessionStorage.setItem(PULSE_H_KEY, String(h));
+        } catch { /* private window: the default height */ }
+    }
+    function pulseFailed() {
+        if (!_mounted || _online || _pulse) return;
+        for (const el of _mounted.querySelectorAll('[data-ovf-pulse]')) { el.classList.remove('is-waiting'); el.removeAttribute('aria-busy'); el.hidden = true; }
+    }
     function paintPulse() {
         if (!_mounted) return;
         const html = _online ? onlineHTML(_online) : (_pulse ? pulseHTML(_pulse) : '');
+        if (!html) return;
         for (const el of _mounted.querySelectorAll('[data-ovf-pulse]')) {
             // Keep an open box open across the 60 s repaint (it used to snap shut under a reading finger).
             const wasOpen = !!el.querySelector('details.ovf-who[open]');
-            el.innerHTML = html; el.hidden = !html;
+            el.innerHTML = html; el.hidden = false; el.classList.remove('is-waiting'); el.removeAttribute('aria-busy');
             if (wasOpen) { const d = el.querySelector('details.ovf-who'); if (d) d.open = true; }
             el.querySelectorAll('[data-grow]').forEach((seg) => { seg.style.flexGrow = String(Number(seg.getAttribute('data-grow')) || 1); });
             try { const L = typeof window !== 'undefined' && window.OpenVibeThemeLoader; if (L && L.time) L.time.upgrade(el); } catch { /* the UTC fallback stays */ }
+            if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => keepPulseHeight(el));
         }
     }
     function readPulse() {
         if (typeof fetch === 'undefined' || (typeof document !== 'undefined' && document.hidden)) return;
         if (_pulse && Date.now() - _pulseAt < PULSE_MS - 1000) { paintPulse(); return; }
         fetch(PULSE_URL, { credentials: 'omit' }).then(r => (r.ok ? r.json() : null)).then((p) => {
-            if (!p || typeof p !== 'object') return;
+            if (!p || typeof p !== 'object') { pulseFailed(); return; }
             const n = (v) => (Number.isFinite(Number(v)) && v !== null ? Math.max(0, Math.floor(Number(v))) : null);
             _pulse = { live_now: n(p.live_now), watching: n(p.watching), sites: n(p.sites), views_7d: n(p.views_7d) };
             _pulseAt = Date.now();
             paintPulse();
-        }).catch(() => { /* a quiet footer is fine */ });
+        }).catch(() => { pulseFailed(); });
     }
     /** The strip's one read; the old pulse endpoint only when it does not answer, until the design lands. */
     function readNetwork() {
@@ -837,6 +856,7 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
     }
     function watchPulse() {
         if (!_mounted || _cfg.pulse === false || typeof window === 'undefined') return;
+        { const h = keptPulseHeight(); if (h) for (const el of _mounted.querySelectorAll('[data-ovf-pulse].is-waiting')) el.style.setProperty('--ovf-pulse-h', `${h}px`); }
         if (_online || _pulse) paintPulse();
         if (_pulseObserver) return;
         if (typeof IntersectionObserver !== 'function') { readNetwork(); return; }
@@ -855,7 +875,7 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
     let _shippedLoading = false;
     // shipped.js's content hash (scripts/sibling-revs.js writes it), and the footer's "shipped" line is fetched only when the
     // footer comes near the screen (4.138.0): most visits never scroll there, and it is 12 KB.
-    const FOOTER_REV = { 'shipped.js': '8afadcbe8c86' };
+    const FOOTER_REV = { 'shipped.js': 'c695f0f34858' };
     let _shippedSeen = null;
     function shippedWhenNear(el) {
         if (typeof IntersectionObserver !== 'function' || !el || !el.getBoundingClientRect) { loadShipped(); return; }

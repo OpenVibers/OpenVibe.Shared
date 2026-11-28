@@ -224,7 +224,9 @@
         recentUser = user;
         if (running) return runningUser === user ? running : running.then(() => catchUp(options));
         runningUser = user;
-        const base = String(frameBase).replace(/\/+$/, '');
+        // 4.341.0: a null frameBase (the navbar's default) skipped the default above, and "null/wallet/changes" was
+        // asked of the page's own site (Live, Restream, Network: ~40 404s a day). Only an absolute address is used.
+        const base = (/^https?:\/\//.test(String(frameBase || '')) ? String(frameBase) : 'https://openvibe.network/api/frame').replace(/\/+$/, '');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const credentials = token ? 'omit' : 'include';
         const channel = /^[1-9]\d{0,15}$/.test(String(streamer || '')) ? String(streamer) : '';

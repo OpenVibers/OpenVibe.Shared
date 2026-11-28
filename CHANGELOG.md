@@ -1,5 +1,26 @@
 # Changelog
 
+## 4.341.0 - 2026-11-28
+
+- **The footer stops jumping when you reach it** (`footer.js`). The strip at its top (who is here, live now, the counts)
+  was hidden until its read came back, and the read starts only when the footer nears the screen, so the strip (about
+  100 px) appeared while the person was looking at the footer and pushed everything below it down: the Live home's
+  narrow-window CLS of ~0.39 (11-28, scrolled to the end at 1000x700). Its place is kept from the start (a waiting box
+  at the height it had last time on this device, 96 px the first time), it fills in place, and only a read that fails
+  takes the box away. Measured on the Live home, scrolled to the end at 1000x700: CLS 0.394 → 0.013 and 0.097 → 0.014.
+  Test: footer-online.
+- **An event's start in your own time, description or not** (`ov-home.js`, the menu Feed). Only Today's bare
+  "Starts 2026-11-12 18:00 UTC" line was turned into the reader's time; an event with a description ("Starts … UTC ·
+  Bring snacks") showed the UTC line and lost its date tile. The start now comes from the card's `starts_at` (the Network
+  sends it), else that line at the head of the words, and the rest of the words stay. Test: menu-feed-v2-chrome.
+- **No more "null/wallet/changes"** (`purse.js`, `navbar.js`). The navbar's `frameBase` defaults to null, and a null
+  skipped the purse catch-up's default, so the wallet's recent changes were asked of the page's own site as
+  `null/wallet/changes` (relative: `/@name/null/wallet/changes` on a channel), about 40 404s a day on Live, Restream,
+  the Network and others, and the purse never caught up there. The navbar passes the Network's frame like its other
+  wallet calls, and the purse uses only an absolute address. Test: purse-null-base.
+- **The last small text in the footer and what-shipped** at the 12px floor: the footer's avatar initials, who-is-here
+  initials and LIVE badge (.7-.72rem) and what-shipped's count, developer label and area chips (.68-.72rem) are .75rem.
+
 ## 4.340.0 - 2026-11-28
 
 - **Text at the 12px floor in the shared parts** (the owner's rule; a sweep of every site's home at 390 px on 11-28 found

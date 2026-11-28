@@ -89,7 +89,7 @@
         `.ov-shipped-empty{color:${MUTED};text-align:center;padding:24px 0;margin:0}`,
         // 4.47.2: the same change on many sites is one row (a pin round was 31 rows of the same line).
         '.ov-shipped-group{flex-wrap:wrap}',
-        `.ov-shipped-count{flex:none;min-width:2em;text-align:center;font-size:.72rem;font-weight:800;padding:.12rem .45rem;border-radius:999px;background:color-mix(in srgb,var(--accent,#3b82f6) 22%,transparent);color:${TEXT}}`,
+        `.ov-shipped-count{flex:none;min-width:2em;text-align:center;font-size:.75rem;font-weight:800;padding:.12rem .45rem;border-radius:999px;background:color-mix(in srgb,var(--accent,#3b82f6) 22%,transparent);color:${TEXT}}`,
         `.ov-shipped-notes{color:${ACCENT};font-size:.82rem;font-weight:600;text-decoration:none;white-space:nowrap}.ov-shipped-notes:hover{text-decoration:underline}`,
         // 4.53.1: the patch-notes link under the list carries a whole post title ("Patch notes: 81 changes across 43 sites
         // (Oct 30) →"); kept on one line it ran past a 320 px screen. It wraps there; the short "What's in it" stays whole.
@@ -102,7 +102,7 @@
         `.ov-shipped-dev{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:center;margin:0 0 12px;padding:8px;border:1px solid ${BORDER};border-radius:14px;text-decoration:none;color:${TEXT}}`,
         '.ov-shipped-dev:not(:has(img)){grid-template-columns:minmax(0,1fr)}',
         `.ov-shipped-dev:hover{border-color:var(--accent,#3b82f6)}.ov-shipped-dev img{width:96px;height:64px;object-fit:cover;border-radius:10px;display:block;background:${BORDER}}`,
-        `.ov-shipped-dev-text{display:grid;gap:2px;min-width:0}.ov-shipped-dev-text small{font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:${ACCENT}}`,
+        `.ov-shipped-dev-text{display:grid;gap:2px;min-width:0}.ov-shipped-dev-text small{font-size:.75rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:${ACCENT}}`,
         '.ov-shipped-dev-text b{font-size:.95rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}',
         `.ov-shipped-dev-text>span{font-size:.82rem;color:${MUTED};display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}`,
         '.ov-shipped .ov-shipped-row{display:flex;align-items:center;gap:8px;min-width:0}',
@@ -115,7 +115,7 @@
         '.ov-shipped-kind.is-fixed::before{--k:#f59e0b;clip-path:polygon(6% 54%,22% 38%,40% 56%,78% 12%,94% 28%,40% 88%)}',
         '.ov-shipped-kind.is-better{gap:0;padding:5px;font-size:0}',
         `.ov-shipped-kind.is-new{background:color-mix(in srgb,#22c55e 20%,transparent);color:${TEXT}}.ov-shipped-kind.is-better{background:color-mix(in srgb,var(--accent,#3b82f6) 20%,transparent);color:${TEXT}}.ov-shipped-kind.is-fixed{background:color-mix(in srgb,#f59e0b 22%,transparent);color:${TEXT}}`,
-        `.ov-shipped-areas{display:inline-flex;gap:4px;flex:none}.ov-shipped-areas span{font-size:.68rem;padding:1px 7px;border-radius:999px;border:1px solid ${BORDER};color:${MUTED};white-space:nowrap}`,
+        `.ov-shipped-areas{display:inline-flex;gap:4px;flex:none}.ov-shipped-areas span{font-size:.75rem;padding:1px 7px;border-radius:999px;border:1px solid ${BORDER};color:${MUTED};white-space:nowrap}`,
         '@media (max-width:520px){.ov-shipped .ov-shipped-row{flex-wrap:wrap;row-gap:2px}.ov-shipped .ov-shipped-row .ov-shipped-subject{flex:1 1 60%;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.ov-shipped-areas{order:5}}',
     ].join('');
     const ROCKET = 'M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2zM9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5';

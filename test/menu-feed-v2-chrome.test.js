@@ -53,7 +53,7 @@ const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="ut
           { id: 'm', kind: 'member', url: 'https://openvibe.network/stats', title: '3 people joined today', text: '520 people on OpenVibe so far', at: at(0.01), site: 'network', site_name: 'Network', actor: null, media: null, counts: {} },
           { id: 'c', kind: 'chat', url: 'https://openvibe.chat/rooms/general', title: '#general: 15 messages this hour', text: '', at: at(0.02), site: 'chat', site_name: 'Chat', actor: null, media: null, counts: {} },
           { id: 'q', kind: 'quest', url: 'https://openvibe.quest/', title: 'Finished a quest: First Post', text: '', at: y.toISOString(), site: 'quest', site_name: 'Quest', actor: { name: 'Josh', avatar: null }, media: null, counts: {} },
-          { id: 'e', kind: 'event', url: 'https://openvibe.today/e/1', title: 'Event: Launch party', text: 'Starts 2026-11-12 18:00 UTC', at: y.toISOString(), site: 'today', site_name: 'Today', actor: null, media: null, counts: {} },
+          { id: 'e', kind: 'event', url: 'https://openvibe.today/e/1', title: 'Event: Launch party', text: 'Starts 2026-11-12 18:00 UTC · Bring snacks', starts_at: '2026-11-12T18:00:00.000Z', at: y.toISOString(), site: 'today', site_name: 'Today', actor: null, media: null, counts: {} },
           { id: 'w', kind: 'wiki', url: 'https://openvibe.wiki/openvibe/japanese-old-guy', title: 'Wiki: openvibe / japanese-old-guy', text: '', at: y.toISOString(), site: 'wiki', site_name: 'Wiki', actor: { name: '2fat', avatar: '' }, media: null, counts: {} },
         ], next_cursor: null }); }
       const kinds = kind ? [kind] : ['live', 'clip', 'pic', 'post', 'update'];
@@ -164,12 +164,14 @@ const server = http.createServer((req, res) => {
         await p.evaluate(`[...document.querySelectorAll('.ovfd-chip')].find((b) => b.textContent === 'Events').click(), true`);
         assert.ok(await until(p, `document.querySelectorAll('.ovfd-act').length === 5`), 'every activity kind is one row');
         const acts = await p.evaluate(`({ titles: [...document.querySelectorAll('.ovfd-act-txt > b')].map((b) => b.textContent), days: [...document.querySelectorAll('.ovfd-day')].map((d) => d.textContent),
-            plus: (document.querySelector('.ovfd-tile-num b') || {}).textContent, date: (document.querySelector('.ovfd-tile-date') || {}).textContent || '', badge: !!document.querySelector('.ovfd-badge svg'),
+            plus: (document.querySelector('.ovfd-tile-num b') || {}).textContent, date: (document.querySelector('.ovfd-tile-date') || {}).textContent || '', eventMore: (document.querySelector('.ovfd-k-event .ovfd-act-more') || {}).textContent || '', badge: !!document.querySelector('.ovfd-badge svg'),
             selfImages: [...document.querySelectorAll('.ovfd-list img')].filter((i) => !i.getAttribute('src') || i.src === location.href).length })`);
         assert.deepStrictEqual(acts.titles, ['3 people joined today', '#general is busy', 'First Post', 'Launch party', 'Japanese old guy'], `rows say what happened (${acts.titles})`);
         assert.deepStrictEqual(acts.days, ['Today', 'Yesterday'], 'a day line where the day changes');
         assert.strictEqual(acts.plus, '+3', 'people joined: the count on the tile');
         assert.ok(/^Nov1[12]$/.test(acts.date), `an event with a start: the date tile (${acts.date})`);
+        // 4.341.0: an event with a description says its start in the reader's time and keeps the rest (no UTC line).
+        assert.ok(/^Starts .+ · Bring snacks$/.test(acts.eventMore) && !/UTC|2026-11-12/.test(acts.eventMore), `an event's start in the reader's time, then its words (${acts.eventMore})`);
         assert.ok(acts.badge, 'a quest: the trophy on the face');
         assert.strictEqual(acts.selfImages, 0, 'no picture means no image (an empty address drew the page itself)');
         // 4.226.0, the one feed's new kinds (feed.item@1): a report is its number with its trend; a folded run lists its
