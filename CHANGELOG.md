@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.340.0 - 2026-11-28
+
+- **Text at the 12px floor in the shared parts** (the owner's rule; a sweep of every site's home at 390 px on 11-28 found
+  text under 12 px on 34 sites, most of it from shared parts): the card badge (`room.css`, 11.5 px), a tab's count
+  (`kit.css`, .72rem), the one-network showcase's eyebrow, counts, jump counts and orb names (`showcase.css` and its copy
+  in `showcase.js`, .7-.72rem and 10.5-11.5 px) and what-shipped's kind and site (`shipped.js`, .72rem) are 12 px. Checked
+  in place at 390 px on Coupons, Tours, Quest and Network: text under 12 px 17→0, 28→4, 63→2, 38→24, no sideways scroll.
+
 ## 4.339.0 - 2026-11-28
 
 - **Your AI plans in every menu** (`ov-home.js`; plan AD.39 item 9, "Shared ov-usage in every menu"). Under the apps
